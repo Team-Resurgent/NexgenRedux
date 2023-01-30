@@ -21,10 +21,10 @@ add_library(GLAD STATIC "${PROJECT_SOURCE_DIR}/Libraries/GLAD/Source/glad.c")
 add_definitions(-DCMAKE_EXPORT_COMPILE_COMMANDS=ON)
 
 add_executable(${PROJECT_NAME} 
-    "${PROJECT_SOURCE_DIR}/${OperatingSystem}/main.cpp"
+    "${PROJECT_SOURCE_DIR}/NexgenRedux/main.cpp"
 )
 
-set(INCLUDE_DIRS "${PROJECT_NAME}/${OperatingSystem}")
+set(INCLUDE_DIRS "${PROJECT_NAME}/NexgenRedux")
 list(APPEND INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/Libraries/GLAD/Includes/")
 list(APPEND INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/Libraries/GLFW/Includes/")
 include_directories(${INCLUDE_DIRS})
@@ -35,7 +35,7 @@ list(APPEND LIBRARIES GLAD)
 if (${OperatingSystem} MATCHES "Win")
     list(APPEND LIBRARIES "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libEGL.lib")
     list(APPEND LIBRARIES "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libGLESv2.lib")
-    list(APPEND LIBRARIES "${PROJECT_SOURCE_DIR}/Libraries/GLFW/Lib/${OperatingSystem}/glfw3dll.lib")
+    list(APPEND LIBRARIES "${PROJECT_SOURCE_DIR}/Libraries/GLFW/Lib/${OperatingSystem}/libglfw3.lib")
 elseif (${OperatingSystem} MATCHES "Mac")
     list(APPEND LIBRARIES "/System/Library/Frameworks/Cocoa.framework")
     list(APPEND LIBRARIES "/System/Library/Frameworks/IOKit.framework")
@@ -53,7 +53,6 @@ if (${OperatingSystem} MATCHES "Win")
         TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libEGL.dll" "${PROJECT_BINARY_DIR}"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libGLESv2.dll" "${PROJECT_BINARY_DIR}"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/Libraries/GLFW/Lib/${OperatingSystem}/glfw3.dll" "${PROJECT_BINARY_DIR}"
         COMMAND_EXPAND_LISTS
     )
 elseif (${OperatingSystem} MATCHES "Mac")

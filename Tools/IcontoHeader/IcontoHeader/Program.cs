@@ -4,7 +4,7 @@ using SixLabors.ImageSharp.Processing;
 using System.Text;
 
 using var icon = Image.Load<Rgba32>("Icon.png");
-icon.Mutate(i => i.Resize(32, 32));
+icon.Mutate(i => i.Resize(64, 64));
 var buffer = new byte[icon.Width * icon.Height * 4];
 icon.CopyPixelDataTo(buffer);
 

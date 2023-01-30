@@ -63,6 +63,13 @@ elseif (${OperatingSystem} MATCHES "Mac")
         COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libGLESv2.dylib" "${PROJECT_BINARY_DIR}"
         COMMAND_EXPAND_LISTS
     )
+elseif (${OperatingSystem} MATCHES "Linux")
+    add_custom_command(
+        TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libEGL.so" "${PROJECT_BINARY_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libGLESv2.so" "${PROJECT_BINARY_DIR}"
+        COMMAND_EXPAND_LISTS
+    )
 endif()
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})

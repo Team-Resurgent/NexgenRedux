@@ -30,7 +30,7 @@ add_custom_command(
     COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/../Libraries/Angle/Lib/Mac/libEGL.dylib" "${CMAKE_BINARY_DIR}"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/../Libraries/Angle/Lib/Mac/libGLESv2.dylib" "${CMAKE_BINARY_DIR}"
     COMMAND_EXPAND_LISTS
-  )
+)
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})

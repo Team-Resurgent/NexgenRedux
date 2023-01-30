@@ -10,7 +10,8 @@
 			"ostream": "cpp",
 			"ios": "cpp",
 			"iosfwd": "cpp",
-			"cwchar": "cpp"
+			"cwchar": "cpp",
+			"xiosbase": "cpp"
 		}
 	}
 }

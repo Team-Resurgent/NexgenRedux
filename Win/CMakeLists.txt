@@ -14,9 +14,6 @@ add_executable(${PROJECT_NAME}
     main.cpp 
 )
 
-#set(OpenGL_GL_PREFERENCE "GLVND")
-#find_package(OpenGL REQUIRED)
-
 set(INCLUDE_DIRS ${PROJECT_NAME})
 list(APPEND INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/../Libraries/GLAD/Includes/")
 list(APPEND INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/../Libraries/GLFW/Includes/")
@@ -28,6 +25,14 @@ list(APPEND LIBRARIES "${PROJECT_SOURCE_DIR}/../Libraries/Angle/Lib/Win/libEGL.l
 list(APPEND LIBRARIES "${PROJECT_SOURCE_DIR}/../Libraries/Angle/Lib/Win/libGLESv2.lib")
 list(APPEND LIBRARIES "${PROJECT_SOURCE_DIR}/../Libraries/GLFW/Lib/Win/glfw3dll.lib")
 target_link_libraries(${LIBRARIES}) 
+
+add_custom_command(
+    TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/../Libraries/Angle/Lib/Win/libEGL.dll" "${CMAKE_BINARY_DIR}"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/../Libraries/Angle/Lib/Win/libGLESv2.dll" "${CMAKE_BINARY_DIR}"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/../Libraries/GLFW/Lib/Win/glfw3.dll" "${CMAKE_BINARY_DIR}"
+    COMMAND_EXPAND_LISTS
+)
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})

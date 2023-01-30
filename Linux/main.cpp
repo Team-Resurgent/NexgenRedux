@@ -1,6 +1,7 @@
 #include "GLAD/glad.h"
 #include "GLFW/glfw3.h"
 
+#include "Icon.h"
 #include <array>
 #include <chrono>
 #include <cmath>
@@ -9,39 +10,41 @@
 #include <vector>
 #include <cstring>
 
-constexpr static char vs[] = R"(#version 310 es
-precision highp float;
-uniform vec2 window;
-uniform float T;
-layout(location=0) in vec3 bubble;
-layout(location=1) in vec2 speed;
-layout(location=2) in vec4 incolor;
-out vec2 coord;
-out vec4 color;
-void main() {
-    vec2 offset = vec2((gl_VertexID & 1) == 0 ? -1.0 : 1.0, (gl_VertexID & 2) == 0 ? -1.0 : 1.0);
-    coord = offset;
-    color = incolor;
-    float r = bubble.z;
-    vec2 center = bubble.xy + speed * T;
-    vec2 span = window - 2.0 * r;
-    center = span - abs(span - mod(center - r, span * 2.0)) + r;
-    gl_Position.xy = (center + offset * r) * 2.0 / window - 1.0;
-    gl_Position.zw = vec2(0, 1);
-})";
+const char *vs = 
+"(#version 310 es" 
+"precision highp float;" 
+"uniform vec2 window;" 
+"uniform float T;"
+"layout(location=0) in vec3 bubble;"
+"layout(location=1) in vec2 speed;"
+"layout(location=2) in vec4 incolor;"
+"out vec2 coord;"
+"out vec4 color;"
+"void main() {"
+"    vec2 offset = vec2((gl_VertexID & 1) == 0 ? -1.0 : 1.0, (gl_VertexID & 2) == 0 ? -1.0 : 1.0);"
+"    coord = offset;"
+"    color = incolor;"
+"    float r = bubble.z;"
+"    vec2 center = bubble.xy + speed * T;"
+"    vec2 span = window - 2.0 * r;"
+"    center = span - abs(span - mod(center - r, span * 2.0)) + r;"
+"    gl_Position.xy = (center + offset * r) * 2.0 / window - 1.0;"
+"    gl_Position.zw = vec2(0, 1);"
+"})";
 
-constexpr static char fs[] = R"(#version 310 es
-precision mediump float;
-in vec2 coord;
-in vec4 color;
-layout(binding=0, r32ui) uniform highp coherent writeonly uimage2D framebuffer;
-void main() {
-    ivec2 pixelCoord = ivec2(floor(gl_FragCoord.xy));
-    float f = coord.x * coord.x + coord.y * coord.y - 1.0;
-    float coverage = clamp(.5 - f/fwidth(f), 0.0, 1.0);
-    vec4 s = vec4(color.rgb, 1) * (color.a * mix(.25, 1.0, dot(coord, coord)) * coverage);
-    imageStore(framebuffer, pixelCoord, uvec4(packUnorm4x8(s)));
-})";
+const char *fs = 
+"(#version 310 es"
+"precision mediump float;"
+"in vec2 coord;"
+"in vec4 color;"
+"layout(binding=0, r32ui) uniform highp coherent writeonly uimage2D framebuffer;"
+"void main() {"
+"    ivec2 pixelCoord = ivec2(floor(gl_FragCoord.xy));"
+"    float f = coord.x * coord.x + coord.y * coord.y - 1.0;"
+"    float coverage = clamp(.5 - f/fwidth(f), 0.0, 1.0);"
+"    vec4 s = vec4(color.rgb, 1) * (color.a * mix(.25, 1.0, dot(coord, coord)) * coverage);"
+"    imageStore(framebuffer, pixelCoord, uvec4(packUnorm4x8(s)));"
+"})";
 
 static bool compile_and_attach_shader(GLuint program, GLuint type, const char* source)
 {
@@ -104,6 +107,26 @@ double now()
     auto now = std::chrono::high_resolution_clock::now();
     return std::chrono::time_point_cast<std::chrono::nanoseconds>(now).time_since_epoch().count() *
            1e-9;
+}
+
+void window_iconify(GLFWwindow* window, int iconified)
+{
+    printf("window iconify: %i\n", iconified);
+}
+
+void window_maximize(GLFWwindow* window, int maximized)
+{
+    printf("window maximize: %i\n", maximized);
+}
+
+void window_size(GLFWwindow* window, int width, int height)
+{
+    printf("window size: %i,%i\n", width, height);
+}
+
+void window_focus(GLFWwindow* window, int focused)
+{
+    printf("window focus: %i\n", focused);
 }
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
@@ -171,26 +194,27 @@ int main(int argc, const char* argv[])
         return 1;
     }
 
-    glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_EGL_CONTEXT_API);
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_SAMPLES, 0);
-    glfwWindowHint(GLFW_RED_BITS, 8);
-    glfwWindowHint(GLFW_GREEN_BITS, 8);
-    glfwWindowHint(GLFW_BLUE_BITS, 8);
-    glfwWindowHint(GLFW_ALPHA_BITS, 8);
-
+    
     GLFWwindow* window = glfwCreateWindow(W, H, "Nexgen Redux", nullptr, nullptr);
-    if (!window)
+    if (window == nullptr)
     {
         glfwTerminate();
         fprintf(stderr, "Failed to create window.\n");
         return -1;
     }
 
+    GLFWimage iconImages[1]; 
+    iconImages[0].pixels = iconData;
+    iconImages[0].width = iconWidth;
+    iconImages[0].height = iconHeight;
+    glfwSetWindowIcon(window, 1, iconImages); 
+
     glfwMakeContextCurrent(window);
+    glfwSetWindowIconifyCallback(window, window_iconify);
+    glfwSetWindowMaximizeCallback(window, window_maximize);
+    glfwSetWindowSizeCallback(window, window_size);
+    glfwSetWindowFocusCallback(window, window_focus);
     glfwSetKeyCallback(window, key_callback);
     glfwSetCharCallback(window, character_callback);
     glfwSetCursorPosCallback(window, cursor_position_callback);

@@ -1,6 +1,7 @@
 #include "GLAD/glad.h"
 #include "GLFW/glfw3.h"
 
+#include "Icon.h"
 #include <array>
 #include <chrono>
 #include <cmath>
@@ -108,6 +109,26 @@ double now()
            1e-9;
 }
 
+void window_iconify(GLFWwindow* window, int iconified)
+{
+    printf("window iconify: %i\n", iconified);
+}
+
+void window_maximize(GLFWwindow* window, int maximized)
+{
+    printf("window maximize: %i\n", maximized);
+}
+
+void window_size(GLFWwindow* window, int width, int height)
+{
+    printf("window size: %i,%i\n", width, height);
+}
+
+void window_focus(GLFWwindow* window, int focused)
+{
+    printf("window focus: %i\n", focused);
+}
+
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
     printf("keyboard state: %i,%i,%i,%i\n", key, scancode, action, mods);
@@ -174,7 +195,7 @@ int main(int argc, const char* argv[])
     }
 
     glfwWindowHint(GLFW_SAMPLES, 0);
-
+    
     GLFWwindow* window = glfwCreateWindow(W, H, "Nexgen Redux", nullptr, nullptr);
     if (window == nullptr)
     {
@@ -183,7 +204,17 @@ int main(int argc, const char* argv[])
         return -1;
     }
 
+    GLFWimage iconImages[1]; 
+    iconImages[0].pixels = iconData;
+    iconImages[0].width = iconWidth;
+    iconImages[0].height = iconHeight;
+    glfwSetWindowIcon(window, 1, iconImages); 
+
     glfwMakeContextCurrent(window);
+    glfwSetWindowIconifyCallback(window, window_iconify);
+    glfwSetWindowMaximizeCallback(window, window_maximize);
+    glfwSetWindowSizeCallback(window, window_size);
+    glfwSetWindowFocusCallback(window, window_focus);
     glfwSetKeyCallback(window, key_callback);
     glfwSetCharCallback(window, character_callback);
     glfwSetCursorPosCallback(window, cursor_position_callback);

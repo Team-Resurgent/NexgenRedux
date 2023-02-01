@@ -83,11 +83,16 @@ add_custom_target(ALWAYS_DO_POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E touch ${PROJECT_SOURCE_DIR}/NexgenRedux/Icon.h
 )
 
+# Create install package
 if (${CMAKE_BUILD_TYPE} MATCHES "Release")
     if (${OperatingSystem} MATCHES "Win")
         add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
             COMMAND ${PROJECT_SOURCE_DIR}/Tools/InnoSetup/iscc.exe ${PROJECT_SOURCE_DIR}/Tools/InnoSetup/NexgenRedux.iss /DAppRepoPath=${PROJECT_SOURCE_DIR} /DAppVersion=1.0.0
         )
+    elseif (${OperatingSystem} MATCHES "Mac")
+
+    elseif (${OperatingSystem} MATCHES "Linux")    
+
     endif()
 endif()
 

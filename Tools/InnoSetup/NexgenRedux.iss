@@ -21,6 +21,8 @@ SetupIconFile={#AppRepoPath}\Artwork\Icon.ico
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
+WizardImageFile="{#AppRepoPath}\Artwork\SetupTeamResurgentBanner.bmp"
+WizardSmallImageFile="{#AppRepoPath}\Artwork\SetupTeamResurgentIcon.bmp"
 
 [Code]
 function VCRedistNeedsInstall: Boolean;

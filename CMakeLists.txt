@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.7)
-set(VERSION_MAJOR 1)
-set(VERSION_MINOR 0)
-set(VERSION_PATCH 0)
-project(NexgenRedux VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
+set(NEXGEN_VERSION_MAJOR 1)
+set(NEXGEN_VERSION_MINOR 0)
+set(NEXGEN_VERSION_PATCH 0)
+project(NexgenRedux VERSION ${NEXGEN_VERSION_MAJOR}.${NEXGEN_VERSION_MINOR}.${NEXGEN_VERSION_PATCH})
 
 # Detect operating system
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
@@ -14,7 +14,7 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 else()
     message(FATAL_ERROR "Unrecognized operating system '${CMAKE_SYSTEM_NAME}'")
 endif()
-message(STATUS "Nexgen Redux build for ${OperatingSystem}...")
+message(STATUS "Nexgen Redux build for ${OperatingSystem} ${CMAKE_BUILD_TYPE}...")
 
 # Build GLAD library
 add_library(GLAD STATIC "${PROJECT_SOURCE_DIR}/Libraries/GLAD/Source/glad.c")
@@ -23,7 +23,7 @@ add_library(GLAD STATIC "${PROJECT_SOURCE_DIR}/Libraries/GLAD/Source/glad.c")
 add_definitions(-DCMAKE_EXPORT_COMPILE_COMMANDS=ON)
 
 # Define include folders
-set(INCLUDE_DIRS "${PROJECT_NAME}/NexgenRedux")
+set(INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/NexgenRedux")
 list(APPEND INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/Libraries/GLAD/Includes/")
 list(APPEND INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/Libraries/GLFW/Includes/")
 include_directories(${INCLUDE_DIRS})
@@ -36,7 +36,7 @@ if (${OperatingSystem} MATCHES "Win")
 endif()
 add_executable(${APP_SOURCE})
 
-# Defome libraries to link
+# Define libraries to link
 set(LIBRARIES ${PROJECT_NAME})
 list(APPEND LIBRARIES GLAD)
 if (${OperatingSystem} MATCHES "Win")
@@ -78,39 +78,52 @@ elseif (${OperatingSystem} MATCHES "Linux")
     )
 endif()
 
-# CPack settings
-include(CPack)
-set(CPACK_PACKAGE_NAME "Nexgen Redux")
-set(CPACK_PACKAGE_VENDOR "Team Resurgent")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Nexgen Redux Installer")
-set(CPACK_PACKAGE_VERSION "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})")
-set(CPACK_PACKAGE_VERSION_MAJOR ${VERSION_MAJOR})
-set(CPACK_PACKAGE_VERSION_MINOR ${VERSION_MINOR})
-set(CPACK_PACKAGE_VERSION_PATCH ${VERSION_PATCH})
-set(CPACK_PACKAGE_INSTALL_DIRECTORY "Nexgen Redux")
-set(CPACK_CREATE_DESKTOP_LINKS "Nexgen Redux")
-set(CPACK_NSIS_IGNORE_LICENSE_PAGE 1)
-SET(CPACK_NSIS_MODIFY_PATH ON)
-install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)
-if (${OperatingSystem} MATCHES "Win")
-    install(FILES "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libEGL.dll" DESTINATION bin)
-    install(FILES "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libGLESv2.dll" DESTINATION bin)
-    set(CPACK_GENERATOR NSIS)
-    set(CPACK_NSIS_MUI_ICON "${PROJECT_SOURCE_DIR}/Artwork\\\\Icon.ico")
-    set(CPACK_NSIS_CREATE_ICONS_EXTRA "CreateShortCut '$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Nexgen Redux.lnk' '$INSTDIR\\\\NexgenRedux.exe' ''")
-    set(CPACK_NSIS_DELETE_ICONS_EXTRA "Delete '$SMPROGRAMS\\\\$START_MENU\\\\Nexgen Redux.lnk'")
-elseif (${OperatingSystem} MATCHES "Mac")
-    install(FILES "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libEGL.dylib" DESTINATION bin)
-    install(FILES "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libGLESv2.dylib" DESTINATION bin)    
-elseif (${OperatingSystem} MATCHES "Linux")
-    install(FILES "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libEGL.so" DESTINATION bin)
-    install(FILES "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libGLESv2.so" DESTINATION bin)
-    set(CPACK_GENERATOR TGZ)
+# Force POST_BUILD always
+add_custom_target(ALWAYS_DO_POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E touch ${PROJECT_SOURCE_DIR}/NexgenRedux/Icon.h
+)
+
+if (${CMAKE_BUILD_TYPE} MATCHES "Release")
+    if (${OperatingSystem} MATCHES "Win")
+        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+            COMMAND ${PROJECT_SOURCE_DIR}/Tools/InnoSetup/iscc.exe ${PROJECT_SOURCE_DIR}/Tools/InnoSetup/NexgenRedux.iss /DAppRepoPath=${PROJECT_SOURCE_DIR} /DAppVersion=1.0.0
+        )
+    endif()
 endif()
 
-# After build run CPack
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-    COMMAND "${CMAKE_CPACK_COMMAND}" "-C" "Release"
-    COMMENT "Packing"
-    DEPENDS ${PROJECT_NAME}
-)
+add_dependencies(${PROJECT_NAME} ALWAYS_DO_POST_BUILD)
+
+# CPack settings
+# include(CPack)
+# install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)
+# if (${OperatingSystem} MATCHES "Win")
+#     install(FILES "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libEGL.dll" DESTINATION bin)
+#     install(FILES "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libGLESv2.dll" DESTINATION bin)
+#     install(FILES "${PROJECT_SOURCE_DIR}/Libraries/VisualC/VC_redist.x64.exe" DESTINATION bin)
+#     set(CPACK_GENERATOR NSIS)
+#     #set(CPACK_PACKAGE_INSTALL_DIRECTORY "Nexgen Redux")
+#     #set(CPACK_NSIS_IGNORE_LICENSE_PAGE 1)
+#     set(CPACK_NSIS_MUI_ICON "${PROJECT_SOURCE_DIR}/Artwork\\\\Icon.ico")
+#     set(CPACK_NSIS_MUI_UNIICON "${PROJECT_SOURCE_DIR}/Artwork\\\\Icon.ico")
+#     set(CPACK_NSIS_CREATE_ICONS_EXTRA "CreateShortCut '$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Nexgen Redux.lnk' '$INSTDIR\\\\bin\\\\NexgenRedux.exe' ''")
+#     set(CPACK_NSIS_DELETE_ICONS_EXTRA "Delete '$SMPROGRAMS\\\\$START_MENU\\\\Nexgen Redux.lnk'")
+#     set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "ExecWait '\\\\$INSTDIR\\\\bin\\\\VC_redist.x64.exe' ''")
+#     set(CPACK_NSIS_MODIFY_PATH "ON")
+#     set(CPACK_VERBATIM_VARIABLES TRUE)
+#     set(CPACK_PACKAGE_FILE_NAME \"yourpackagename_${BUILD_TYPE}\")
+#     #set(CPACK_SOURCE_PACKAGE_FILE_NAME "Nex")
+# elseif (${OperatingSystem} MATCHES "Mac")
+#     install(FILES "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libEGL.dylib" DESTINATION bin)
+#     install(FILES "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libGLESv2.dylib" DESTINATION bin)    
+# elseif (${OperatingSystem} MATCHES "Linux")
+#     install(FILES "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libEGL.so" DESTINATION bin)
+#     install(FILES "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libGLESv2.so" DESTINATION bin)
+#     set(CPACK_GENERATOR TGZ)
+# endif()
+
+# # After build run CPack
+# add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+#     COMMAND "${CMAKE_CPACK_COMMAND}" "-C" "Release"
+#     COMMENT "Packing"
+#     DEPENDS ${PROJECT_NAME}
+# )

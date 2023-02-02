@@ -90,7 +90,9 @@ if (${CMAKE_BUILD_TYPE} MATCHES "Release")
             COMMAND ${PROJECT_SOURCE_DIR}/Tools/InnoSetup/iscc.exe ${PROJECT_SOURCE_DIR}/Tools/InnoSetup/NexgenRedux.iss /DAppRepoPath=${PROJECT_SOURCE_DIR} /DAppVersion=1.0.0
         )
     elseif (${OperatingSystem} MATCHES "Mac")
-
+        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+            COMMAND ${PROJECT_SOURCE_DIR}/Tools/Packages/packagesbuild ${PROJECT_SOURCE_DIR}/Tools/Packages/NexgenRedux.pkgproj
+        )     
     elseif (${OperatingSystem} MATCHES "Linux")    
 
     endif()

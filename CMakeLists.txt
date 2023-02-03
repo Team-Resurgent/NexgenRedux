@@ -23,14 +23,14 @@ add_library(GLAD STATIC "${PROJECT_SOURCE_DIR}/Libraries/GLAD/Source/glad.c")
 add_definitions(-DCMAKE_EXPORT_COMPILE_COMMANDS=ON)
 
 # Define include folders
-set(INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/NexgenRedux")
+set(INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/NexgenRedux-PC")
 list(APPEND INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/Libraries/GLAD/Includes/")
 list(APPEND INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/Libraries/GLFW/Includes/")
 include_directories(${INCLUDE_DIRS})
 
 # Define source code files
 set(APP_SOURCE ${PROJECT_NAME})
-list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/NexgenRedux/main.cpp")
+list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/NexgenRedux-PC/main.cpp")
 if (${OperatingSystem} MATCHES "Win")
     list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/Artwork/Icon.rc")
 endif()
@@ -80,7 +80,7 @@ endif()
 
 # Force POST_BUILD always
 add_custom_target(ALWAYS_DO_POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E touch ${PROJECT_SOURCE_DIR}/NexgenRedux/Icon.h
+  COMMAND ${CMAKE_COMMAND} -E touch ${PROJECT_SOURCE_DIR}/NexgenRedux-PC/Icon.h
 )
 
 # Create install package

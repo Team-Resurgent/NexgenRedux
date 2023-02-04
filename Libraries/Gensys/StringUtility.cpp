@@ -10,10 +10,10 @@ std::wstring StringUtility::FormatString(std::wstring const format, ...)
 {
 	va_list va;
 	va_start(va, format);
-	wchar_t buffer[1024];
-	vswprintf(buffer, format.c_str(), va);	
+	char buffer[1024];
+	vsprintf(buffer, StringUtility::ToString(format).c_str(), va);	
 	va_end(va);
-	return std::wstring(buffer);
+	return ToWideString(std::string(buffer));
 }
 
 std::wstring StringUtility::LowerCase(std::wstring const value)
@@ -134,7 +134,7 @@ std::wstring StringUtility::ToWideString(std::string const value)
 		return std::wstring(L"");
 	}
 	const char* value_char = value.c_str();
-	size_t length = strlen(value_char);
+	size_t length = value.length();
 	std::wstring result(length, L'#');
 	mbstowcs(&result[0], value_char, length);
 	return result;

@@ -14,6 +14,7 @@
 #include "Int.h"
 #include <string>
 #include <vector>
+#include <time.h>
 
 namespace Gensys
 {
@@ -33,8 +34,8 @@ namespace Gensys
 			std::wstring name;	
 			std::wstring path;
 			uint32_t size;
-			time_t lastAccessTime;
-			time_t lastWriteTime;			
+			tm lastAccessTime;
+			tm lastWriteTime;			
         } FileInfoDetail;
 
 		typedef enum FileMode

@@ -95,6 +95,7 @@ std::wstring Drive::GetSystemPath()
 
 void Drive::RefreshDetails()
 {
+#ifdef XBOX_OG
 	std::wstring rootPath = m_mountPoint + L":\\";
 
 	ULARGE_INTEGER freeBytesAvailable;
@@ -116,6 +117,7 @@ void Drive::RefreshDetails()
 	} else {
 		m_volumeSerialNumber = 0;
 	}
+#endif
 }
 
 long Drive::GetTotalNumberOfBytes()

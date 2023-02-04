@@ -10,6 +10,15 @@
 #include <vector>
 #include <cstring>
 
+#include "DebugUtility.h"
+#include "StringUtility.h"
+#include "FileSystem.h"
+
+
+//using namespace NexgenRedux;
+using namespace Gensys;
+//using namespace AngelScript;
+
 const char *vs = 
 "(#version 310 es" 
 "precision highp float;" 
@@ -187,6 +196,10 @@ void drop_callback(GLFWwindow* window, int count, const char** paths)
 
 int main(int argc, const char* argv[])
 {
+	std::vector<FileSystem::FileInfoDetail> fileInfoDetails;
+	bool x = FileSystem::FileGetFileInfoDetails(L"/usr/bin", fileInfoDetails);
+
+
     glfwInitHint(GLFW_ANGLE_PLATFORM_TYPE, GLFW_ANGLE_PLATFORM_TYPE_VULKAN);
     if (!glfwInit())
     {

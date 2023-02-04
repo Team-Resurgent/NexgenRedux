@@ -11,7 +11,9 @@
 			"ios": "cpp",
 			"iosfwd": "cpp",
 			"cwchar": "cpp",
-			"xiosbase": "cpp"
+			"xiosbase": "cpp",
+			"string": "cpp",
+			"random": "cpp"
 		}
 	}
 }

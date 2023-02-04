@@ -2,8 +2,9 @@
 #include "StringUtility.h"
 #include "XboxInternals.h"
 #include "DriveManager.h"
-#include <time.h>
 #include <sys/stat.h>
+#include <cstring>
+#include <dirent.h>
 
 using namespace Gensys;
 
@@ -22,11 +23,12 @@ time_t FileTimeToTime(FILETIME fileTime)
 
 bool FileSystem::FileGetFileInfoDetails(std::wstring const path, std::vector<FileInfoDetail>& fileInfoDetails)
 {
+	std::wstring searchPath = StringUtility::RightTrim(path, GetPathSeparator()) + GetPathSeparator();
+
 #if defined XBOX_OG || defined XBOX_360 || defined UWP_ANGLE || defined WIN_ANGLE
 	HANDLE handle;
 	WIN32_FIND_DATA findData;
-	
-	std::wstring searchPath = StringUtility::RightTrim(path, GetPathSeparator()) + GetPathSeparator();
+
 	#if defined XBOX_OG
 	handle = FindFirstFile(StringUtility::ToString(searchPath + L'*').c_str(), &findData);
 	#else
@@ -50,15 +52,35 @@ bool FileSystem::FileGetFileInfoDetails(std::wstring const path, std::vector<Fil
 	} 
 	while(FindNextFile(handle, &findData)); 
 	FindClose(handle);
-#else
-	//DIR *dir;
-	//struct dirent *ent;
-	//if ((dir = opendir ("c:\\src\\")) != NULL) {
-	///* print all the files and directories within directory */
-	//while ((ent = readdir (dir)) != NULL) {
-	//	printf ("%s\n", ent->d_name);
-	//}
-	//closedir(dir);
+#else		
+	struct stat statBuffer;
+	DIR* dir = opendir(StringUtility::ToString(searchPath).c_str());
+	if (dir == NULL) 
+	{
+		return false;
+	}
+	struct dirent *entry = readdir(dir);
+	while (entry != NULL) 
+	{
+		std::wstring wideName = StringUtility::ToWideString(entry->d_name);
+		if (stat(StringUtility::ToString(CombinePath(searchPath, wideName)).c_str(), &statBuffer) != 0)
+		{
+			continue;
+		}
+		FileInfoDetail fileInfoDetail;
+		fileInfoDetail.isDirectory = (entry->d_type & DT_REG) != 0;
+		fileInfoDetail.isNormal = (entry->d_type & DT_DIR) != 0;
+		fileInfoDetail.name =wideName;
+		fileInfoDetail.path = searchPath;
+		fileInfoDetail.size = statBuffer.st_size;
+		struct tm *lastAccessTime = localtime(&statBuffer.st_atim.tv_sec);
+ 		memcpy(&fileInfoDetail.lastAccessTime, lastAccessTime, sizeof(fileInfoDetail.lastAccessTime));
+		struct tm *lastWriteTime = localtime(&statBuffer.st_mtim.tv_sec);
+ 		memcpy(&fileInfoDetail.lastWriteTime, lastWriteTime, sizeof(fileInfoDetail.lastWriteTime));
+		fileInfoDetails.push_back(fileInfoDetail);		
+		entry = readdir(dir);
+	}
+	closedir(dir);
 #endif
 	return true;
 }
@@ -85,7 +107,7 @@ bool FileSystem::FileOpen(std::wstring const path, FileMode const fileMode, File
 		access = L"a+";
 	}
 	access = access + L"b";
-	fileInfo.file = _wfopen(path.c_str(), access.c_str());
+	fileInfo.file = fopen(StringUtility::ToString(path).c_str(), StringUtility::ToString(access).c_str());
     return fileInfo.file != NULL;
 }
 
@@ -97,7 +119,7 @@ bool FileSystem::FileRead(FileInfo const fileInfo, char* readBuffer, uint32_t co
 
 bool FileSystem::FileReadAllAsString(std::wstring const path, std::string* buffer)
 {
-	FILE *file = _wfopen(path.c_str(), L"rb");
+	FILE *file = fopen(StringUtility::ToString(path).c_str(), "rb");
 	if(file == NULL)
 	{
 		return false;
@@ -198,7 +220,7 @@ bool FileSystem::DirectoryDelete(std::wstring const path, bool const recursive)
 
 bool FileSystem::FileDelete(std::wstring const path)
 {
-	return _wremove(path.c_str()) == 0;
+	return remove(StringUtility::ToString(path).c_str()) == 0;
 }
 
 bool FileSystem::FileCopy(std::wstring const sourcePath, std::wstring const destPath)

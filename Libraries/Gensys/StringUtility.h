@@ -11,11 +11,12 @@ namespace Gensys
 		static std::wstring FormatString(std::wstring const format, ...);
 		static std::wstring LowerCase(std::wstring const value);
 		static std::wstring UpperCase(std::wstring const value);
-		static bool StartsWith(std::wstring const value, std::wstring const starts_with, bool const case_insensitive);
+		static bool StartsWith(std::wstring const value, std::wstring const startWith, bool const caseInsensitive);
+		static bool EndsWith(std::wstring const value, std::wstring const endsWith, bool const caseInsensitive);
 		static std::wstring Replace(std::wstring const value, std::wstring const search, std::wstring const with);
-		static std::wstring LeftTrim(std::wstring const value, wchar_t const trim_char);
-		static std::wstring RightTrim(std::wstring const value, wchar_t const trim_char);
-		static std::wstring Trim(std::wstring const value, wchar_t const trim_char);
+		static std::wstring LeftTrim(std::wstring const value, wchar_t const trimChar);
+		static std::wstring RightTrim(std::wstring const value, wchar_t const trimChar);
+		static std::wstring Trim(std::wstring const value, wchar_t const trimChar);
 		static std::vector<std::wstring> Split(std::wstring const value, wchar_t const delimiter);
 		static std::wstring Convert(int const value);
 		static std::wstring Convert(long const value);

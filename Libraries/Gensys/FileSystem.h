@@ -72,17 +72,17 @@ namespace Gensys
 		static bool FileSize(FileInfo const fileInfo, uint32_t& size);
 		static bool FileExists(std::wstring const path, bool& exists);
 		static bool DirectoryExists(std::wstring const path, bool& exists);
-		static bool GetDriveLetters(std::vector<std::wstring>& driveLetters);
+		static bool GetMountedDrives(std::vector<std::wstring>& drives);
 
-		static std::wstring MapSystemPath(std::wstring const path);
-		static std::wstring GetFile(std::wstring const path);
-		static std::wstring GetDirectory(std::wstring const path);
-		static std::wstring GetAppDirectory();
-		static std::wstring GetMediaDirectory();
+		//static std::wstring MapSystemPath(std::wstring const path);
+		static std::wstring GetFileName(std::wstring const path);
+		static std::wstring GetDirectoryName(std::wstring const path);
+		static bool GetAppDirectory(std::wstring& appDirectory);
+		static bool GetMediaDirectory(std::wstring& mediaDirectory);
 		static wchar_t GetPathSeparator();
 		static std::wstring CombinePath(std::wstring const first, std::wstring const second);
 		static std::wstring GetExtension(std::wstring const path);
-		static std::wstring GetDriveLetter(std::wstring const path);
-		static std::wstring ReplaceDriveLetter(std::wstring const path, std::wstring const driveLetter);
+		//static std::wstring GetDriveLetter(std::wstring const path);
+		//static std::wstring ReplaceDriveLetter(std::wstring const path, std::wstring const driveLetter);
 	};
 }

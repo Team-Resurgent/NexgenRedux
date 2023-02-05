@@ -4,11 +4,19 @@
 #include "DriveManager.h"
 #include <sys/stat.h>
 #include <cstring>
+
+//#include <string>
+//#include <limits.h>
+
+#if defined NEXGEN_MAC || defined NEXGEN_LINUX
 #include <dirent.h>
+#include <mntent.h>
+#include <unistd.h>
+#endif
 
 using namespace Gensys;
 
-#if defined XBOX_OG || defined XBOX_360 || defined UWP_ANGLE || defined WIN_ANGLE
+#if defined NEXGEN_OG || defined NEXGEN_360 || defined NEXGEN_WIN
 
 time_t FileTimeToTime(FILETIME fileTime)
 {
@@ -25,7 +33,7 @@ bool FileSystem::FileGetFileInfoDetails(std::wstring const path, std::vector<Fil
 {
 	std::wstring searchPath = StringUtility::RightTrim(path, GetPathSeparator()) + GetPathSeparator();
 
-#if defined XBOX_OG || defined XBOX_360 || defined UWP_ANGLE || defined WIN_ANGLE
+#if defined NEXGEN_OG || defined NEXGEN_360 || defined NEXGEN_WIN
 	HANDLE handle;
 	WIN32_FIND_DATA findData;
 
@@ -52,7 +60,8 @@ bool FileSystem::FileGetFileInfoDetails(std::wstring const path, std::vector<Fil
 	} 
 	while(FindNextFile(handle, &findData)); 
 	FindClose(handle);
-#else		
+	return true;
+#elif defined NEXGEN_MAC || defined NEXGEN_LINUX
 	struct stat statBuffer;
 	DIR* dir = opendir(StringUtility::ToString(searchPath).c_str());
 	if (dir == NULL) 
@@ -68,8 +77,8 @@ bool FileSystem::FileGetFileInfoDetails(std::wstring const path, std::vector<Fil
 			continue;
 		}
 		FileInfoDetail fileInfoDetail;
-		fileInfoDetail.isDirectory = (entry->d_type & DT_REG) != 0;
-		fileInfoDetail.isNormal = (entry->d_type & DT_DIR) != 0;
+		fileInfoDetail.isDirectory = (entry->d_type & DT_DIR) != 0;
+		fileInfoDetail.isNormal = (entry->d_type & DT_REG) != 0;
 		fileInfoDetail.name =wideName;
 		fileInfoDetail.path = searchPath;
 		fileInfoDetail.size = statBuffer.st_size;
@@ -81,8 +90,10 @@ bool FileSystem::FileGetFileInfoDetails(std::wstring const path, std::vector<Fil
 		entry = readdir(dir);
 	}
 	closedir(dir);
-#endif
 	return true;
+#elif
+	return false;
+#endif
 }
 
 bool FileSystem::FileOpen(std::wstring const path, FileMode const fileMode, FileInfo& fileInfo)
@@ -254,8 +265,8 @@ bool FileSystem::FileMove(std::wstring const sourcePath, std::wstring const dest
 
 bool FileSystem::DirectoryCopy(std::wstring const sourcePath, std::wstring const destPath)
 {
-	std::wstring directory = GetFile(sourcePath);
-	std::wstring baseSourcePath = GetDirectory(sourcePath);
+	std::wstring directory = GetFileName(sourcePath);
+	std::wstring baseSourcePath = GetDirectoryName(sourcePath);
 		
 	std::vector<std::wstring> directoriesToCopy;
 	directoriesToCopy.push_back(directory);
@@ -333,13 +344,13 @@ bool FileSystem::DirectoryExists(std::wstring const path, bool& exists)
 	return true;
 }
 
-bool FileSystem::GetDriveLetters(std::vector<std::wstring>& driveLetters)
+bool FileSystem::GetMountedDrives(std::vector<std::wstring>& drives)
 {
-#if defined XBOX_OG || defined XBOX_360
+#if defined NEXGEN_OG || defined NEXGEN_360
 
 	return false;
 	
-#elif defined UWP_ANGLE || defined WIN_ANGLE 
+#elif defined NEXGEN_WIN
 
 	char buffer[2];
 	buffer[1] = 0;
@@ -359,80 +370,114 @@ bool FileSystem::GetDriveLetters(std::vector<std::wstring>& driveLetters)
 	}
 	return true;
 
-#elif defined MAC_ANGLE
+#elif defined NEXGEN_MAC || defined NEXGEN_LINUX
+
+  	FILE *file = setmntent("/etc/mtab", "r");
+    if (file == NULL) 
+	{
+        return false;
+    }
+
+	const std::string filters[] = { "/dev/sd", "/dev/hd", "/dev/fd", "/dev/sr", "/dev/scd", "/dev/mmcblk"};
+
+	struct mntent *entry = getmntent(file);
+    while (entry != NULL) 
+	{
+		std::string name = std::string(entry->mnt_fsname);
+		for (uint32_t i = 0; i < 6; i++) 
+		{
+			if (name.find(filters[i]) == 0)
+			{
+				drives.push_back(StringUtility::ToWideString(entry->mnt_dir));
+				break;
+			}
+		}
+		entry = getmntent(file);
+    }
+    endmntent(file);
     return false;
 #else
     return false;
 #endif
 }
-std::wstring FileSystem::MapSystemPath(std::wstring const path)
-{
-	std::vector<std::wstring> systemPaths = DriveManager::GetAllSystemPaths();
-	for (size_t i = 0; i < systemPaths.size(); i++) {
-		std::wstring systemPath = systemPaths.at(i);
-		if (StringUtility::StartsWith(path, systemPath + L"\\", true)) {
-			std::wstring mountPoint = DriveManager::GetMountPoint(systemPath);
-			std::wstring temp = path.substr(systemPath.length());
-			std::wstring result = mountPoint + L":" + temp;
-			return result;
-		}
-	}
-	return path;
-}
 
-std::wstring FileSystem::GetFile(std::wstring const path)
+// std::wstring FileSystem::MapSystemPath(std::wstring const path)
+// {
+// 	std::vector<std::wstring> systemPaths = DriveManager::GetAllSystemPaths();
+// 	for (size_t i = 0; i < systemPaths.size(); i++) {
+// 		std::wstring systemPath = systemPaths.at(i);
+// 		if (StringUtility::StartsWith(path, systemPath + L"\\", true)) {
+// 			std::wstring mountPoint = DriveManager::GetMountPoint(systemPath);
+// 			std::wstring temp = path.substr(systemPath.length());
+// 			std::wstring result = mountPoint + L":" + temp;
+// 			return result;
+// 		}
+// 	}
+// 	return path;
+// }
+
+std::wstring FileSystem::GetFileName(std::wstring const path)
 {
-	const std::size_t found = path.find_last_of(L'\\');
+	const std::size_t found = path.find_last_of(GetPathSeparator());
 	return found == std::wstring::npos ? L"" : path.substr(found + 1);
 }
 
-std::wstring FileSystem::GetDirectory(std::wstring const path)
+std::wstring FileSystem::GetDirectoryName(std::wstring const path)
 {
-	const std::size_t found = path.find_last_of(L'\\');
+	const std::size_t found = path.find_last_of(GetPathSeparator());
 	return found == std::wstring::npos ? path : path.substr(0, found);
 }
 
-std::wstring FileSystem::GetAppDirectory()
+bool FileSystem::GetAppDirectory(std::wstring& appDirectory)
 {
-#if defined XBOX_OG
-
+#if defined NEXGEN_OG
 	char buffer[260];
 	STRING *temp = (STRING*)XeImageFileName;
 	sprintf(buffer, temp->Buffer);
 	std::wstring path = GetDirectory(StringUtility::ToWideString(std::string(&buffer[0], temp->Length)));	
-	std::wstring result = MapSystemPath(path);
-	return result;
-
-#elif defined XBOX_360
-	return L"Game:";
-#elif defined UWP_ANGLE || defined WIN_ANGLE
+	appDirectory = MapSystemPath(path);
+	return true;
+#elif defined NEXGEN_360
+	appDirectory = L"Game:";
+	return true;
+#elif defined NEXGEN_WIN
 	wchar_t buffer[260];
 	const size_t length = GetModuleFileNameW(0, &buffer[0], 260);
 	std::wstring exeFilePath = std::wstring(buffer, length);
-	std::wstring result = GetDirectory(exeFilePath);
-	return result;	
-#elif defined MAC_ANGLE
-    return L"";
+	appDirectory = GetDirectory(exeFilePath);
+	return true;	
+#elif defined NEXGEN_MAC || defined NEXGEN_LINUX
+  	char result[PATH_MAX];
+  	ssize_t count = readlink( "/proc/self/exe", result, PATH_MAX );
+  	appDirectory = StringUtility::ToWideString(std::string( result, (count > 0) ? count : 0 ));
+	return true;
 #else
-    return L"";
+    return false;
 #endif
 }
 
-std::wstring FileSystem::GetMediaDirectory()
+bool FileSystem::GetMediaDirectory(std::wstring& mediaDirectory)
 {
-#if defined UWP_ANGLE
+#if defined NEXGEN_UWP
 	std::wstring dataPath = Windows::Storage::ApplicationData::Current->LocalFolder->Path->Data();
-	std::wstring result = CombinePath(dataPath, L"Media");
-	return result;
+	mediaDirectory = CombinePath(dataPath, L"Media");
+	return true;
+#elif defined NEXGEN_OG || defined NEXGEN_360 || defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX
+	std::wstring appDirectory;
+	if (!GetAppDirectory(appDirectory))
+	{
+		return false;
+	}
+	mediaDirectory = CombinePath(appDirectory, L"Media");
+	return true;
 #else
-	std::wstring result = CombinePath(GetAppDirectory(), L"Media");
-	return result;
+	return false;
 #endif
 }
 
 wchar_t FileSystem::GetPathSeparator()
 {
-#if defined XBOX_OG || defined XBOX_360 || defined UWP_ANGLE || defined WIN_ANGLE
+#if defined NEXGEN_OG || defined NEXGEN_360 || defined NEXGEN_WIN
 	return L'\\';
 #else
 	return L'/';
@@ -450,19 +495,19 @@ std::wstring FileSystem::GetExtension(std::wstring const path)
 	return found == std::wstring::npos ? L"" : path.substr(found + 1);
 }
 
-std::wstring FileSystem::GetDriveLetter(std::wstring const path)
-{
-	if (path.length() > 1 && path.at(1) == L':') {
-		return path.substr(0, 1);
-	}
-	return L"";
-}
+// std::wstring FileSystem::GetDriveLetter(std::wstring const path)
+// {
+// 	if (path.length() > 1 && path.at(1) == L':') {
+// 		return path.substr(0, 1);
+// 	}
+// 	return L"";
+// }
 
-std::wstring FileSystem::ReplaceDriveLetter(std::wstring const path, std::wstring const driveLetter)
-{
-	if (path.length() > 1 && path.at(1) == L':') {
-		return driveLetter + path.substr(1);
-	}
-	return L"";
-}
+// std::wstring FileSystem::ReplaceDriveLetter(std::wstring const path, std::wstring const driveLetter)
+// {
+// 	if (path.length() > 1 && path.at(1) == L':') {
+// 		return driveLetter + path.substr(1);
+// 	}
+// 	return L"";
+// }
 

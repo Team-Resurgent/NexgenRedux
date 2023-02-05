@@ -1,4 +1,5 @@
 #include "TimeUtility.h"
+#include <cstring>
 
 using namespace Gensys;
 

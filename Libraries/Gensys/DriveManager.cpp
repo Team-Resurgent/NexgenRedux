@@ -73,7 +73,7 @@ void DriveManager::Init()
 #else
 
 	std::vector<std::wstring> driveLetters;
-	FileSystem::GetDriveLetters(driveLetters);
+	FileSystem::GetMountedDrives(driveLetters);
     for (int i = 0; i < driveLetters.size(); i++)
 	{
         std::wstring driveLetter = driveLetters[i];

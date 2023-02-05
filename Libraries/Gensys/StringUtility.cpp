@@ -30,12 +30,20 @@ std::wstring StringUtility::UpperCase(std::wstring const value)
 	return result;
 }
 
-bool StringUtility::StartsWith(std::wstring const value, std::wstring const starts_with, bool const case_insensitive)
+bool StringUtility::StartsWith(std::wstring const value, std::wstring const startsWith, bool const caseInsensitive)
 {
-	if (case_insensitive) {
-		return LowerCase(value).rfind(LowerCase(starts_with), 0) == 0;
+	if (caseInsensitive) {
+		return LowerCase(value).find(LowerCase(startsWith)) == 0;
 	}
-	return value.rfind(starts_with, 0) == 0;
+	return value.find(startsWith, 0) == 0;
+}
+
+bool StringUtility::EndsWith(std::wstring const value, std::wstring const endsWith, bool const caseInsensitive)
+{
+	if (caseInsensitive) {
+		return LowerCase(value).rfind(LowerCase(endsWith)) == value.length() - endsWith.length();
+	}
+	return value.rfind(endsWith) == value.length() - endsWith.length();
 }
 
 std::wstring StringUtility::Replace(std::wstring const value, std::wstring const from, std::wstring const to)
@@ -50,25 +58,25 @@ std::wstring StringUtility::Replace(std::wstring const value, std::wstring const
     return result;
 }
 
-std::wstring StringUtility::LeftTrim(std::wstring const value, wchar_t const trim_char)
+std::wstring StringUtility::LeftTrim(std::wstring const value, wchar_t const trimChar)
 {
 	std::wstring new_value(value);
-	new_value.erase(0, new_value.find_first_not_of(trim_char));
+	new_value.erase(0, new_value.find_first_not_of(trimChar));
 	return new_value;
 }
 
-std::wstring StringUtility::RightTrim(std::wstring const value, wchar_t const trim_char)
+std::wstring StringUtility::RightTrim(std::wstring const value, wchar_t const trimChar)
 {
 	std::wstring new_value(value);
-	new_value.erase(new_value.find_last_not_of(trim_char) + 1);
+	new_value.erase(new_value.find_last_not_of(trimChar) + 1);
 	return new_value;
 }
 
-std::wstring StringUtility::Trim(std::wstring const value, wchar_t const trim_char)
+std::wstring StringUtility::Trim(std::wstring const value, wchar_t const trimChar)
 {
 	std::wstring new_value(value);
-	new_value.erase(0, new_value.find_first_not_of(trim_char));
-	new_value.erase(new_value.find_last_not_of(trim_char) + 1);
+	new_value.erase(0, new_value.find_first_not_of(trimChar));
+	new_value.erase(new_value.find_last_not_of(trimChar) + 1);
 	return new_value;
 }
 

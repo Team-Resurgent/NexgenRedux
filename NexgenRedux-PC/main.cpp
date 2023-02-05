@@ -196,9 +196,11 @@ void drop_callback(GLFWwindow* window, int count, const char** paths)
 
 int main(int argc, const char* argv[])
 {
-	std::vector<FileSystem::FileInfoDetail> fileInfoDetails;
-	bool x = FileSystem::FileGetFileInfoDetails(L"/usr/bin", fileInfoDetails);
+	std::wstring appdir;
+	bool x = FileSystem::GetAppDirectory(appdir);
 
+    std::vector<std::wstring> drives;
+    bool y = FileSystem::GetMountedDrives(drives);
 
     glfwInitHint(GLFW_ANGLE_PLATFORM_TYPE, GLFW_ANGLE_PLATFORM_TYPE_VULKAN);
     if (!glfwInit())

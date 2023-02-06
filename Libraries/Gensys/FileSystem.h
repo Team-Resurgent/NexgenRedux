@@ -40,19 +40,19 @@ namespace Gensys
 
 		typedef enum FileMode
 		{
-			Read = 0,
-			Write = 1,
-			Append = 2,
-			ReadUpdate = 3,
-			WriteUpdate = 4,
-			AppendUpdate = 5
+			FileModeRead = 0,
+			FileModeWrite = 1,
+			FileModeAppend = 2,
+			FileModeReadUpdate = 3,
+			FileModeWriteUpdate = 4,
+			FileModeAppendUpdate = 5
 		} FileMode;
 
 		typedef enum FileSeekMode
 		{
-			Start = 0,
-			End = 1,
-			Current = 2
+			FileSeekModeStart = 0,
+			FileSeekModeEnd = 1,
+			FileSeekModeCurrent = 2
 		} FileSeekMode;
 		
 		static bool FileGetFileInfoDetails(std::wstring const path, std::vector<FileInfoDetail>& fileInfoDetails);

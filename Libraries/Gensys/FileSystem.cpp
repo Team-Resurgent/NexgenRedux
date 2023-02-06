@@ -5,13 +5,12 @@
 #include <sys/stat.h>
 #include <cstring>
 
-//#include <string>
-//#include <limits.h>
-
 #if defined NEXGEN_MAC || defined NEXGEN_LINUX
 #include <dirent.h>
-#include <mntent.h>
 #include <unistd.h>
+#endif
+#if defined NEXGEN_LINUX
+#include <mntent.h>
 #endif
 
 using namespace Gensys;
@@ -82,10 +81,17 @@ bool FileSystem::FileGetFileInfoDetails(std::wstring const path, std::vector<Fil
 		fileInfoDetail.name =wideName;
 		fileInfoDetail.path = searchPath;
 		fileInfoDetail.size = statBuffer.st_size;
+		#if defined NEXGEN_MAC
+		struct tm *lastAccessTime = localtime(&statBuffer.st_atimespec.tv_sec);
+ 		memcpy(&fileInfoDetail.lastAccessTime, lastAccessTime, sizeof(fileInfoDetail.lastAccessTime));
+		struct tm *lastWriteTime = localtime(&statBuffer.st_mtimespec.tv_sec);
+ 		memcpy(&fileInfoDetail.lastWriteTime, lastWriteTime, sizeof(fileInfoDetail.lastWriteTime));
+		#else
 		struct tm *lastAccessTime = localtime(&statBuffer.st_atim.tv_sec);
  		memcpy(&fileInfoDetail.lastAccessTime, lastAccessTime, sizeof(fileInfoDetail.lastAccessTime));
 		struct tm *lastWriteTime = localtime(&statBuffer.st_mtim.tv_sec);
  		memcpy(&fileInfoDetail.lastWriteTime, lastWriteTime, sizeof(fileInfoDetail.lastWriteTime));
+		#endif
 		fileInfoDetails.push_back(fileInfoDetail);		
 		entry = readdir(dir);
 	}
@@ -99,22 +105,22 @@ bool FileSystem::FileGetFileInfoDetails(std::wstring const path, std::vector<Fil
 bool FileSystem::FileOpen(std::wstring const path, FileMode const fileMode, FileInfo& fileInfo)
 {
 	std::wstring access = L"";
-	if (fileMode == FileMode::Read) {
+	if (fileMode == FileModeRead) {
 		access = L"r";
 	}
-	else if (fileMode == FileMode::Write) {
+	else if (fileMode == FileModeWrite) {
 		access = L"w";
 	}
-	else if (fileMode == FileMode::Append) {
+	else if (fileMode == FileModeAppend) {
 		access = L"a";
 	}
-	else if (fileMode == FileMode::ReadUpdate) {
+	else if (fileMode == FileModeReadUpdate) {
 		access = L"r+";
 	}
-	else if (fileMode == FileMode::WriteUpdate) {
+	else if (fileMode == FileModeWriteUpdate) {
 		access = L"w+";
 	}
-	else if (fileMode == FileMode::AppendUpdate) {
+	else if (fileMode == FileModeAppendUpdate) {
 		access = L"a+";
 	}
 	access = access + L"b";
@@ -161,11 +167,11 @@ bool FileSystem::FileClose(FileInfo const fileInfo)
 bool FileSystem::FileSeek(FileInfo const fileInfo, FileSeekMode const fileSeekMode, uint32_t const offset)
 {
 	int seek = SEEK_CUR;
-	if (fileSeekMode == FileSeekMode::Start)
+	if (fileSeekMode == FileSeekModeStart)
 	{
 		seek = SEEK_SET;
 	}
-	else if (fileSeekMode == FileSeekMode::End)
+	else if (fileSeekMode == FileSeekModeEnd)
 	{
 		seek = SEEK_END;
 	}
@@ -237,10 +243,10 @@ bool FileSystem::FileDelete(std::wstring const path)
 bool FileSystem::FileCopy(std::wstring const sourcePath, std::wstring const destPath)
 {
 	FileInfo sourceFileInfo;
-	FileOpen(sourcePath, FileMode::Read, sourceFileInfo);
+	FileOpen(sourcePath, FileModeRead, sourceFileInfo);
 	
 	FileInfo destFileInfo;
-	FileOpen(destPath, FileMode::Write, destFileInfo);
+	FileOpen(destPath, FileModeWrite, destFileInfo);
 	
 	char *buffer = (char*)malloc(32758);
 	uint32_t bytesRead = fread(buffer, 1, 32768, (FILE*)sourceFileInfo.file);
@@ -370,7 +376,11 @@ bool FileSystem::GetMountedDrives(std::vector<std::wstring>& drives)
 	}
 	return true;
 
-#elif defined NEXGEN_MAC || defined NEXGEN_LINUX
+#elif defined NEXGEN_MAC
+
+	return true;
+
+#elif defined NEXGEN_LINUX
 
   	FILE *file = setmntent("/etc/mtab", "r");
     if (file == NULL) 

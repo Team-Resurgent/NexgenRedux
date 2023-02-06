@@ -97,7 +97,7 @@ bool FileSystem::FileGetFileInfoDetails(std::wstring const path, std::vector<Fil
 	}
 	closedir(dir);
 	return true;
-#elif
+#else
 	return false;
 #endif
 }
@@ -352,6 +352,8 @@ bool FileSystem::DirectoryExists(std::wstring const path, bool& exists)
 
 bool FileSystem::GetMountedDrives(std::vector<std::wstring>& drives)
 {
+	drives.clear();
+
 #if defined NEXGEN_OG || defined NEXGEN_360
 
 	return false;
@@ -361,7 +363,6 @@ bool FileSystem::GetMountedDrives(std::vector<std::wstring>& drives)
 	char buffer[2];
 	buffer[1] = 0;
 	
-	driveLetters.clear();
 	DWORD driveFlags = GetLogicalDrives();
 	for (char i = 0; i < 26; i++)
 	{
@@ -371,13 +372,26 @@ bool FileSystem::GetMountedDrives(std::vector<std::wstring>& drives)
 		if ((driveFlags & testFlag) > 0)
 		{
 			buffer[0] = driveLetter;
-			driveLetters.push_back(StringUtility::ToWideString(std::string(buffer)));
+			drives.push_back(StringUtility::ToWideString(std::string(buffer)));
 		}
 	}
 	return true;
 
 #elif defined NEXGEN_MAC
 
+	std::vector<FileInfoDetail> fileInfoDetails;
+	if (!FileGetFileInfoDetails(L"/Volumes", fileInfoDetails))
+	{
+		return false;
+	}
+	for (uint32_t i = 0; i < fileInfoDetails.size(); i++)
+	{
+		if (fileInfoDetails.at(i).name == L"." || fileInfoDetails.at(i).name == L"..") 
+		{
+			continue;
+		}
+		drives.push_back(CombinePath(L"/Volumes", fileInfoDetails.at(i).name));
+	}
 	return true;
 
 #elif defined NEXGEN_LINUX
@@ -456,7 +470,12 @@ bool FileSystem::GetAppDirectory(std::wstring& appDirectory)
 	std::wstring exeFilePath = std::wstring(buffer, length);
 	appDirectory = GetDirectory(exeFilePath);
 	return true;	
-#elif defined NEXGEN_MAC || defined NEXGEN_LINUX
+#elif defined NEXGEN_MAC 
+	char result[PATH_MAX];
+	getcwd(result, PATH_MAX);
+  	appDirectory = StringUtility::ToWideString(std::string( result));
+	return true;
+#elif defined NEXGEN_LINUX
   	char result[PATH_MAX];
   	ssize_t count = readlink( "/proc/self/exe", result, PATH_MAX );
   	appDirectory = StringUtility::ToWideString(std::string( result, (count > 0) ? count : 0 ));

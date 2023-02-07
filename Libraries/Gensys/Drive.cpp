@@ -17,7 +17,7 @@ bool Drive::Mount()
 		Unmount();
 	}
 
-#if defined XBOX_OG
+#if defined NEXGEN_OG
 
 	char mountPoint[260];
 	sprintf(mountPoint, "\\??\\%s:", StringUtility::ToString(m_mountPoint).c_str());
@@ -28,7 +28,7 @@ bool Drive::Mount()
 	int result = IoCreateSymbolicLink(&sMountPoint, &sSystemPath);
 	return result == 0;
 
-#elif defined XBOX_360
+#elif defined NEXGEN_360
 
 	if (_wcsicmp(m_mountPoint.c_str(), L"Game") == 0)
 	{
@@ -51,7 +51,7 @@ bool Drive::Mount()
 
 bool Drive::Unmount()
 {
-#if defined XBOX_OG
+#if defined NEXGEN_OG
 
 	char MountPoint[16];
 	sprintf(MountPoint, "\\??\\%s:", StringUtility::ToString(m_mountPoint).c_str());
@@ -59,7 +59,7 @@ bool Drive::Unmount()
 	int result = IoDeleteSymbolicLink(&sMountPoint);
 	return result == 0;
 
-#elif defined XBOX_360
+#elif defined NEXGEN_360
 
 	if (_wcsicmp(m_mountPoint.c_str(), L"Game") == 0)
 	{
@@ -95,7 +95,7 @@ std::wstring Drive::GetSystemPath()
 
 void Drive::RefreshDetails()
 {
-#ifdef XBOX_OG
+#ifdef NEXGEN_OG
 	std::wstring rootPath = m_mountPoint + L":\\";
 
 	ULARGE_INTEGER freeBytesAvailable;

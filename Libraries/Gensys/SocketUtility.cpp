@@ -75,7 +75,7 @@ bool SocketUtility::SetSocketOptions(uint64_t socket)
 {
 	bool success = true;
 
-#if defined XBOX_360
+#if defined NEXGEN_360
 
 	BOOL bBroadcast = TRUE;
 	int result = setsockopt(socket, SOL_SOCKET, 0x5802, (PCSTR)&bBroadcast, sizeof(BOOL));

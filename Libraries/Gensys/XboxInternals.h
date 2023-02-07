@@ -1,6 +1,6 @@
 #pragma once
 
-#if defined XBOX_OG || defined XBOX_360
+#if defined NEXGEN_OG || defined NEXGEN_360
 
 #include <xtl.h>
 
@@ -12,7 +12,7 @@ typedef struct _STRING {
 
 extern "C" {
 
-	#if defined XBOX_OG
+	#if defined NEXGEN_OG
 
 	enum SMBUS_DEVICES
 	{

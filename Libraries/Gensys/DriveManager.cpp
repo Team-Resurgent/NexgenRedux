@@ -11,7 +11,7 @@ namespace
 
 void DriveManager::Init()
 {
-#if defined XBOX_OG
+#if defined NEXGEN_OG
 	m_drives.push_back(new Drive(L"C", L"\\Device\\Harddisk0\\Partition2"));
 	m_drives.push_back(new Drive(L"D", L"\\Device\\Cdrom0"));
 	m_drives.push_back(new Drive(L"E", L"\\Device\\Harddisk0\\Partition1"));
@@ -41,7 +41,7 @@ void DriveManager::Init()
     {
 		m_drives.at(i)->Mount();
     }
-#elif defined XBOX_360
+#elif defined NEXGEN_360
 	m_drives.push_back(new Drive(L"Game", L"\\Device\\Game"));
 	m_drives.push_back(new Drive(L"Flash", L"\\Device\\Flash"));
 	m_drives.push_back(new Drive(L"Memunit0", L"\\Device\\Mu0"));
@@ -138,7 +138,7 @@ std::wstring DriveManager::GetMountPoint(std::wstring systemPath)
 
 bool DriveManager::IsMounted(std::wstring mountPoint)
 {
-#if defined UWP_ANGLE || defined WIN_ANGLE
+#if defined UWP_ANGLE || defined NEXGEN_WIN
 	return true;
 #else	
 	for (size_t i = 0; i < m_drives.size(); i++) {

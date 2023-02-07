@@ -6,10 +6,10 @@
 #include <iostream>
 #include <stdarg.h>
 
-#if defined UWP_ANGLE || defined WIN_ANGLE
+#if defined UWP_ANGLE || defined NEXGEN_WIN
 #include <WinSock2.h>
 #include <Windows.h>
-#elif defined XBOX_360 || defined XBOX_OG
+#elif defined NEXGEN_360 || defined NEXGEN_OG
 #include <xtl.h>
 #include <winsockx.h>
 #endif
@@ -23,6 +23,10 @@ namespace {
 }
 
 #define MIN_LOGLEVEL LOGLEVEL_INFO
+
+#ifndef vsnprintf
+#define vsnprintf _vsnprintf
+#endif
 
 void DebugUtility::SetLogFile(std::wstring const logFile)
 {
@@ -39,7 +43,7 @@ void DebugUtility::LogMessage(LogLevel const logLevel, std::wstring const format
 	va_list args;
 	va_start(args, format);	
 	char buffer[1024];
-	vsnprintf(buffer, sizeof(buffer), StringUtility::ToString(format).c_str(), args);
+	vsnprintf_s(buffer, sizeof(buffer), StringUtility::ToString(format).c_str(), args);	
 	va_end(args);
 
 	std::string message = std::string(buffer);
@@ -69,11 +73,11 @@ void DebugUtility::LogMessage(LogLevel const logLevel, std::wstring const format
 		file.close();
 	}
 
-#ifdef WIN_ANGLE
-	OutputDebugString(level.c_str());
-	OutputDebugString(": ");
-	OutputDebugString(message.c_str());
-	OutputDebugString("\n");
+#ifdef NEXGEN_WIN
+	OutputDebugStringA(level.c_str());
+	OutputDebugStringA(": ");
+	OutputDebugStringA(message.c_str());
+	OutputDebugStringA("\n");
 #else
 	printf("%s", level.c_str());
 	printf(": ");
@@ -81,7 +85,7 @@ void DebugUtility::LogMessage(LogLevel const logLevel, std::wstring const format
 	printf("\n");
 #endif
 
-// #ifdef WIN_ANGLE
+// #ifdef NEXGEN_WIN
 
 // 	HANDLE stdOutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 // 	if (stdOutHandle <= 0) {

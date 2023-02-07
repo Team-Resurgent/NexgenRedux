@@ -60,7 +60,30 @@
 			"stdexcept": "cpp",
 			"streambuf": "cpp",
 			"cinttypes": "cpp",
-			"typeinfo": "cpp"
+			"typeinfo": "cpp",
+			"format": "cpp",
+			"charconv": "cpp",
+			"forward_list": "cpp",
+			"iomanip": "cpp",
+			"locale": "cpp",
+			"mutex": "cpp",
+			"optional": "cpp",
+			"stop_token": "cpp",
+			"thread": "cpp",
+			"xfacet": "cpp",
+			"xlocale": "cpp",
+			"xlocbuf": "cpp",
+			"xlocinfo": "cpp",
+			"xlocmes": "cpp",
+			"xlocmon": "cpp",
+			"xlocnum": "cpp",
+			"xloctime": "cpp",
+			"xmemory": "cpp",
+			"xstddef": "cpp",
+			"xstring": "cpp",
+			"xtr1common": "cpp",
+			"xtree": "cpp",
+			"xutility": "cpp"
 		}
 	}
 }

@@ -10,7 +10,12 @@ using namespace NexgenRedux;
 
 bool ConfigLoader::LoadConfig(ConfigData *configData)
 {
-	const std::wstring mediaPath = FileSystem::GetMediaDirectory();
+	std::wstring mediaPath;
+	if (!FileSystem::GetMediaDirectory(mediaPath))
+	{
+		return false;
+	}
+
 	const std::wstring configPath = FileSystem::CombinePath(mediaPath, L"config.ini");
 
 	std::string buffer;

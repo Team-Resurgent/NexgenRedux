@@ -2,10 +2,13 @@
 #include "StringUtility.h"
 #include "XboxInternals.h"
 #include "DriveManager.h"
-#include <sys/stat.h>
 #include <cstring>
 
+#if defined NEXGEN_WIN
+#include <windows.h>
+#endif
 #if defined NEXGEN_MAC || defined NEXGEN_LINUX
+#include <sys/stat.h>
 #include <dirent.h>
 #include <unistd.h>
 #endif
@@ -30,17 +33,13 @@ time_t FileTimeToTime(FILETIME fileTime)
 
 bool FileSystem::FileGetFileInfoDetails(std::wstring const path, std::vector<FileInfoDetail>& fileInfoDetails)
 {
-	std::wstring searchPath = StringUtility::RightTrim(path, GetPathSeparator()) + GetPathSeparator();
+	std::wstring searchPath = StringUtility::RightTrim(path, GetPathSeparator());
 
-#if defined NEXGEN_OG || defined NEXGEN_360 || defined NEXGEN_WIN
+#if defined NEXGEN_OG || defined NEXGEN_360
 	HANDLE handle;
 	WIN32_FIND_DATA findData;
 
-	#if defined XBOX_OG
-	handle = FindFirstFile(StringUtility::ToString(searchPath + L'*').c_str(), &findData);
-	#else
-	handle = FindFirstFile((searchPath + L'*').c_str(), &findData);
-	#endif
+	handle = FindFirstFile(CombinePath(path, L"*").c_str(), &findData);
 	if (handle == INVALID_HANDLE_VALUE) 
 	{     
 		return false;
@@ -53,11 +52,38 @@ bool FileSystem::FileGetFileInfoDetails(std::wstring const path, std::vector<Fil
 		fileInfoDetail.name = StringUtility::ToWideString(findData.cFileName);
 		fileInfoDetail.path = searchPath;
 		fileInfoDetail.size = findData.nFileSizeLow;
-		fileInfoDetail.lastAccessTime = FileTimeToTime(findData.ftLastAccessTime);
-		fileInfoDetail.lastWriteTime = FileTimeToTime(findData.ftLastWriteTime);
+		time_t lastAccessTime = FileTimeToTime(findData.ftLastAccessTime);
+		memcpy(&fileInfoDetail.lastAccessTime, &lastAccessTime, sizeof(fileInfoDetail.lastAccessTime));		
+		time_t lastWriteTime = FileTimeToTime(findData.ftLastWriteTime);
+		memcpy(&fileInfoDetail.lastWriteTime, &lastWriteTime, sizeof(fileInfoDetail.lastWriteTime));
 		fileInfoDetails.push_back(fileInfoDetail);			
 	} 
 	while(FindNextFile(handle, &findData)); 
+	FindClose(handle);
+	return true;
+#elif defined NEXGEN_WIN
+	HANDLE handle;
+	WIN32_FIND_DATAW findData;
+	handle = FindFirstFileW(CombinePath(path, L"*").c_str(), &findData);
+	if (handle == INVALID_HANDLE_VALUE) 
+	{     
+		return false;
+	} 
+	do 
+	{ 
+		FileInfoDetail fileInfoDetail;
+		fileInfoDetail.isDirectory = (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+		fileInfoDetail.isNormal = (findData.dwFileAttributes & FILE_ATTRIBUTE_NORMAL) != 0;
+		fileInfoDetail.name = findData.cFileName;
+		fileInfoDetail.path = searchPath;
+		fileInfoDetail.size = findData.nFileSizeLow;
+		time_t lastAccessTime = FileTimeToTime(findData.ftLastAccessTime);
+		memcpy(&fileInfoDetail.lastAccessTime, &lastAccessTime, sizeof(fileInfoDetail.lastAccessTime));		
+		time_t lastWriteTime = FileTimeToTime(findData.ftLastWriteTime);
+		memcpy(&fileInfoDetail.lastWriteTime, &lastWriteTime, sizeof(fileInfoDetail.lastWriteTime));
+		fileInfoDetails.push_back(fileInfoDetail);			
+	} 
+	while(FindNextFileW(handle, &findData)); 
 	FindClose(handle);
 	return true;
 #elif defined NEXGEN_MAC || defined NEXGEN_LINUX
@@ -124,19 +150,28 @@ bool FileSystem::FileOpen(std::wstring const path, FileMode const fileMode, File
 		access = L"a+";
 	}
 	access = access + L"b";
+#if defined NEXGEN_OG || defined NEXGEN_360 || defined NEXGEN_MAC || defined NEXGEN_LINUX
 	fileInfo.file = fopen(StringUtility::ToString(path).c_str(), StringUtility::ToString(access).c_str());
+#elif defined NEXGEN_WIN
+	fopen_s((FILE **)&fileInfo.file, StringUtility::ToString(path).c_str(), StringUtility::ToString(access).c_str());
+#endif
     return fileInfo.file != NULL;
 }
 
 bool FileSystem::FileRead(FileInfo const fileInfo, char* readBuffer, uint32_t const bytesToRead, uint32_t& bytesRead)
 {
-	bytesRead = fread(readBuffer, bytesToRead, 1, (FILE*)fileInfo.file);
+	bytesRead = (uint32_t)fread(readBuffer, bytesToRead, 1, (FILE*)fileInfo.file);
 	return true;
 }
 
 bool FileSystem::FileReadAllAsString(std::wstring const path, std::string* buffer)
 {
-	FILE *file = fopen(StringUtility::ToString(path).c_str(), "rb");
+	FILE *file;
+#if defined NEXGEN_OG || defined NEXGEN_360 || defined NEXGEN_MAC || defined NEXGEN_LINUX
+	file = fopen(StringUtility::ToString(path).c_str(), "rb");
+#elif defined NEXGEN_WIN
+	fopen_s(&file, StringUtility::ToString(path).c_str(), "rb");
+#endif
 	if(file == NULL)
 	{
 		return false;
@@ -147,7 +182,7 @@ bool FileSystem::FileReadAllAsString(std::wstring const path, std::string* buffe
 	fseek(file, 0, SEEK_SET);
 
 	buffer->resize(fileLength);
-	uint32_t bytesRead = fread((void*)buffer->data(), 1, fileLength, file);
+	uint32_t bytesRead = (uint32_t)fread((void*)buffer->data(), 1, fileLength, file);
 	fclose(file);
 
 	return bytesRead == fileLength;
@@ -155,7 +190,7 @@ bool FileSystem::FileReadAllAsString(std::wstring const path, std::string* buffe
 
 bool FileSystem::FileWrite(FileInfo const fileInfo, char* writeBuffer, uint32_t bytesToWrite, uint32_t& bytesWritten)
 {
-	bytesWritten = fwrite(writeBuffer, 1, bytesToWrite, (FILE*)fileInfo.file);
+	bytesWritten = (uint32_t)fwrite(writeBuffer, 1, bytesToWrite, (FILE*)fileInfo.file);
 	return bytesWritten == bytesToWrite;
 }
 
@@ -188,13 +223,15 @@ bool FileSystem::FilePosition(FileInfo const fileInfo, uint32_t& position)
 }
 
 bool FileSystem::DirectoryCreate(const std::wstring path)
-{
-#if defined XBOX_OG || defined XBOX_360
+{	
+#if defined NEXGEN_OG || defined NEXGEN_360
     return CreateDirectoryA(StringUtility::ToString(path).c_str(), NULL) == TRUE;
-#elif defined UWP_ANGLE || defined WIN_ANGLE
+#elif defined NEXGEN_WIN
 	return CreateDirectoryW(path.c_str(), NULL) == TRUE;
-#else
+#elif defined NEXGEN_MAC || defined NEXGEN_LINUX
 	return mkdir(StringUtility::ToString(path).c_str(), 0777) == 0;
+#else
+	return false;
 #endif
 }
 
@@ -249,11 +286,11 @@ bool FileSystem::FileCopy(std::wstring const sourcePath, std::wstring const dest
 	FileOpen(destPath, FileModeWrite, destFileInfo);
 	
 	char *buffer = (char*)malloc(32758);
-	uint32_t bytesRead = fread(buffer, 1, 32768, (FILE*)sourceFileInfo.file);
+	uint32_t bytesRead = (uint32_t)fread(buffer, 1, 32768, (FILE*)sourceFileInfo.file);
 	while (bytesRead > 0)
 	{
 		fwrite(buffer, 1, bytesRead, (FILE*)destFileInfo.file);
-		bytesRead = fread(buffer, 1, 32768, (FILE*)sourceFileInfo.file);
+		bytesRead = (uint32_t)fread(buffer, 1, 32768, (FILE*)sourceFileInfo.file);
 	}
 	free(buffer);
 	
@@ -330,6 +367,27 @@ bool FileSystem::FileSize(FileInfo const fileInfo, uint32_t& size)
 
 bool FileSystem::FileExists(std::wstring const path, bool& exists)
 {
+#if defined NEXGEN_OG || defined NEXGEN_360
+	WIN32_FIND_DATA findData;
+	HANDLE handle = FindFirstFile(path.c_str(), &findData);
+	if (handle == INVALID_HANDLE_VALUE) 
+	{     
+		return false;
+	} 
+    exists = (findData.dwFileAttributes & FILE_ATTRIBUTE_NORMAL) != 0;
+	FindClose(handle);
+	return true;
+#elif defined NEXGEN_WIN
+	WIN32_FIND_DATAW findData;
+	HANDLE handle = FindFirstFileW(path.c_str(), &findData);
+	if (handle == INVALID_HANDLE_VALUE) 
+	{     
+		return false;
+	} 
+    exists = (findData.dwFileAttributes & FILE_ATTRIBUTE_NORMAL) != 0;
+	FindClose(handle);
+	return true;
+#elif defined NEXGEN_MAC || NEXGEN_LINUX
 	struct stat statBuffer;
 	if (stat(StringUtility::ToString(path).c_str(), &statBuffer) != 0)
 	{
@@ -337,10 +395,34 @@ bool FileSystem::FileExists(std::wstring const path, bool& exists)
 	}
     exists = (statBuffer.st_mode & S_IFMT) == S_IFREG;
 	return true;
+#else
+	return false;
+#endif
 }
 
 bool FileSystem::DirectoryExists(std::wstring const path, bool& exists)
 {
+#if defined NEXGEN_OG || defined NEXGEN_360
+	WIN32_FIND_DATA findData;
+	HANDLE handle = FindFirstFile(path.c_str(), &findData);
+	if (handle == INVALID_HANDLE_VALUE) 
+	{     
+		return false;
+	} 
+    exists = (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+	FindClose(handle);
+	return true;
+#elif defined NEXGEN_WIN
+	WIN32_FIND_DATAW findData;
+	HANDLE handle = FindFirstFileW(path.c_str(), &findData);
+	if (handle == INVALID_HANDLE_VALUE) 
+	{     
+		return false;
+	} 
+    exists = (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+	FindClose(handle);
+	return true;
+#elif defined NEXGEN_MAC || NEXGEN_LINUX
 	struct stat statBuffer;
 	if (stat(StringUtility::ToString(path).c_str(), &statBuffer) != 0)
 	{
@@ -348,6 +430,9 @@ bool FileSystem::DirectoryExists(std::wstring const path, bool& exists)
 	}
     exists = (statBuffer.st_mode & S_IFMT) == S_IFDIR;
 	return true;
+#else
+	return false;
+#endif
 }
 
 bool FileSystem::GetMountedDrives(std::vector<std::wstring>& drives)
@@ -458,8 +543,8 @@ bool FileSystem::GetAppDirectory(std::wstring& appDirectory)
 	char buffer[260];
 	STRING *temp = (STRING*)XeImageFileName;
 	sprintf(buffer, temp->Buffer);
-	std::wstring path = GetDirectory(StringUtility::ToWideString(std::string(&buffer[0], temp->Length)));	
-	appDirectory = MapSystemPath(path);
+	std::wstring path = GetDirectoryName(StringUtility::ToWideString(std::string(&buffer[0], temp->Length)));	
+	appDirectory = L"";//MapSystemPath(path);
 	return true;
 #elif defined NEXGEN_360
 	appDirectory = L"Game:";
@@ -468,7 +553,7 @@ bool FileSystem::GetAppDirectory(std::wstring& appDirectory)
 	wchar_t buffer[260];
 	const size_t length = GetModuleFileNameW(0, &buffer[0], 260);
 	std::wstring exeFilePath = std::wstring(buffer, length);
-	appDirectory = GetDirectory(exeFilePath);
+	appDirectory = GetDirectoryName(exeFilePath);
 	return true;	
 #elif defined NEXGEN_MAC 
 	char result[PATH_MAX];

@@ -164,7 +164,7 @@
 //	while (findData.treeNode) {
 //		str = findData.treeNode->virtualPath;
 //
-//#if defined XBOX_OG || defined XBOX_360
+//#if defined NEXGEN_OG || defined NEXGEN_360
 //		if (findData.virtualPath == L"/*" && !DriveManager::IsMounted(str)) {
 //			findData.treeNode = findData.treeNode->m_right;
 //			continue;

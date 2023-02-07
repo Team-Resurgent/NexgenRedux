@@ -1,4 +1,4 @@
-#ifdef XBOX_OG
+#ifdef NEXGEN_OG
 
 #define INT8_MIN         (-127i8 - 1)
 #define INT16_MIN        (-32767i16 - 1)

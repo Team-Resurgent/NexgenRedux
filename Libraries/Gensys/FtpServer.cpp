@@ -16,7 +16,7 @@
 //
 //namespace {
 //
-//#if defined XBOX_OG || defined XBOX_360
+//#if defined NEXGEN_OG || defined NEXGEN_360
 //	LONG activeConnections = 0;
 //#else
 //	unsigned int activeConnections = 0;
@@ -301,7 +301,7 @@
 //
 //				static u_short portTest = 6000;
 //
-//#if defined XBOX_OG || defined XBOX_360
+//#if defined NEXGEN_OG || defined NEXGEN_360
 //
 //				XNADDR addr;
 //				XNetGetTitleXnAddr(&addr);
@@ -802,7 +802,7 @@
 //{
 //	mStopped = false;
 //
-//#if defined XBOX_OG || defined XBOX_360
+//#if defined NEXGEN_OG || defined NEXGEN_360
 //	XSetFileCacheSize(4*1024*1024);
 //#endif
 //

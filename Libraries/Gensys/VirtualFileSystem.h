@@ -3,10 +3,10 @@
 //#include "FileSystem.h"
 //#include "TreeNode.h"
 //
-//#if defined UWP_ANGLE || defined WIN_ANGLE
+//#if defined UWP_ANGLE || defined NEXGEN_WIN
 //#include <WinSock2.h>
 //#include <Windows.h>
-//#elif defined XBOX_360 || defined XBOX_OG
+//#elif defined NEXGEN_360 || defined NEXGEN_OG
 //#include <xtl.h>
 //#include <winsockx.h>
 //#endif	

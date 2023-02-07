@@ -153,7 +153,7 @@ bool FileSystem::FileOpen(std::wstring const path, FileMode const fileMode, File
 #if defined NEXGEN_OG || defined NEXGEN_360 || defined NEXGEN_MAC || defined NEXGEN_LINUX
 	fileInfo.file = fopen(StringUtility::ToString(path).c_str(), StringUtility::ToString(access).c_str());
 #elif defined NEXGEN_WIN 
-	fopen_s((FILE **)&fileInfo.file, StringUtility::ToString(path).c_str(), access.c_str());
+	fopen_s((FILE **)&fileInfo.file, StringUtility::ToString(path).c_str(), StringUtility::ToString(access).c_str());
 #endif
     return fileInfo.file != NULL;
 }
@@ -170,7 +170,7 @@ bool FileSystem::FileReadAllAsString(std::wstring const path, std::string* buffe
 #if defined NEXGEN_OG || defined NEXGEN_360 || defined NEXGEN_MAC || defined NEXGEN_LINUX
 	file = fopen(StringUtility::ToString(path).c_str(), "rb");
 #elif defined NEXGEN_WIN
-	fopen_s(&file, StringUtility::ToString(path).c_str(), L"rb");
+	fopen_s(&file, StringUtility::ToString(path).c_str(), "rb");
 #endif
 	if(file == NULL)
 	{
@@ -309,7 +309,7 @@ bool FileSystem::FileMove(std::wstring const sourcePath, std::wstring const dest
 bool FileSystem::DirectoryCopy(std::wstring const sourcePath, std::wstring const destPath)
 {
 	std::wstring directory = GetFileName(sourcePath);
-	std::wstring baseSourcePath = GetDirectoryName(sourcePath);
+	std::wstring baseSourcePath = GetDirectory(sourcePath);
 		
 	std::vector<std::wstring> directoriesToCopy;
 	directoriesToCopy.push_back(directory);
@@ -531,7 +531,7 @@ std::wstring FileSystem::GetFileName(std::wstring const path)
 	return found == std::wstring::npos ? L"" : path.substr(found + 1);
 }
 
-std::wstring FileSystem::GetDirectoryName(std::wstring const path)
+std::wstring FileSystem::GetDirectory(std::wstring const path)
 {
 	const std::size_t found = path.find_last_of(GetPathSeparator());
 	return found == std::wstring::npos ? path : path.substr(0, found);
@@ -543,8 +543,7 @@ bool FileSystem::GetAppDirectory(std::wstring& appDirectory)
 	char buffer[260];
 	STRING *temp = (STRING*)XeImageFileName;
 	sprintf(buffer, temp->Buffer);
-	std::wstring path = GetDirectoryName(StringUtility::ToWideString(std::string(&buffer[0], temp->Length)));	
-	appDirectory = L"";//MapSystemPath(path);
+	appDirectory = GetDirectory(StringUtility::ToWideString(std::string(&buffer[0], temp->Length)));	
 	return true;
 #elif defined NEXGEN_360
 	appDirectory = L"Game:";
@@ -553,7 +552,7 @@ bool FileSystem::GetAppDirectory(std::wstring& appDirectory)
 	wchar_t buffer[260];
 	const size_t length = GetModuleFileNameW(0, &buffer[0], 260);
 	std::wstring exeFilePath = std::wstring(buffer, length);
-	appDirectory = GetDirectoryName(exeFilePath);
+	appDirectory = GetDirectory(exeFilePath);
 	return true;	
 #elif defined NEXGEN_MAC 
 	char result[PATH_MAX];

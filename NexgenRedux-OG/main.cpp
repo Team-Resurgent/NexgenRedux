@@ -155,6 +155,8 @@ void __cdecl main(int, char **)
 
 	BootLoader::Run();
 
+	std::wstring path;
+	FileSystem::GetAppDirectory(path);
 
 	//FileSystem::FindInfo findInfo;
 	//bool a = FileSystem::FileFindFirst(L"E:\\Devkit\\NexgenRedux-OG\\Media\\Default\\", findInfo); 

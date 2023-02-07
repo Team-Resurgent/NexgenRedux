@@ -76,7 +76,7 @@ namespace Gensys
 
 		//static std::wstring MapSystemPath(std::wstring const path);
 		static std::wstring GetFileName(std::wstring const path);
-		static std::wstring GetDirectoryName(std::wstring const path);
+		static std::wstring GetDirectory(std::wstring const path);
 		static bool GetAppDirectory(std::wstring& appDirectory);
 		static bool GetMediaDirectory(std::wstring& mediaDirectory);
 		static wchar_t GetPathSeparator();

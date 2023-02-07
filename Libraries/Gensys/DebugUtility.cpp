@@ -40,7 +40,7 @@ void DebugUtility::LogMessage(LogLevel const logLevel, std::wstring const format
 	va_start(args, format);	
 	char buffer[1024];
 #if defined NEXGEN_OG || defined NEXGEN_360
-	vsnprintf(buffer, sizeof(buffer), StringUtility::ToString(format).c_str(), args);	
+	vsprintf(buffer, StringUtility::ToString(format).c_str(), args);	
 #elif defined NEGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX
 	vsnprintf(buffer, sizeof(buffer), StringUtility::ToString(format).c_str(), args);	
 #endif

@@ -24,10 +24,6 @@ namespace {
 
 #define MIN_LOGLEVEL LOGLEVEL_INFO
 
-#ifndef vsnprintf_s
-#define vsnprintf_s _vsnprintf_s
-#endif
-
 void DebugUtility::SetLogFile(std::wstring const logFile)
 {
 	m_LogFile = logFile;
@@ -43,7 +39,11 @@ void DebugUtility::LogMessage(LogLevel const logLevel, std::wstring const format
 	va_list args;
 	va_start(args, format);	
 	char buffer[1024];
-	vsnprintf_s(buffer, sizeof(buffer), StringUtility::ToString(format).c_str(), args);	
+#if defined NEXGEN_OG || defined NEXGEN_360
+	vsnprintf(buffer, sizeof(buffer), StringUtility::ToString(format).c_str(), args);	
+#elif defined NEGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX
+	vsnprintf(buffer, sizeof(buffer), StringUtility::ToString(format).c_str(), args);	
+#endif
 	va_end(args);
 
 	std::string message = std::string(buffer);

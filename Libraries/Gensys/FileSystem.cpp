@@ -37,9 +37,9 @@ bool FileSystem::FileGetFileInfoDetails(std::wstring const path, std::vector<Fil
 
 #if defined NEXGEN_OG || defined NEXGEN_360
 	HANDLE handle;
-	WIN32_FIND_DATA findData;
+	WIN32_FIND_DATAA findData;
 
-	handle = FindFirstFile(CombinePath(path, L"*").c_str(), &findData);
+	handle = FindFirstFileA(StringUtility::ToString(CombinePath(path, L"*")).c_str(), &findData);
 	if (handle == INVALID_HANDLE_VALUE) 
 	{     
 		return false;
@@ -150,10 +150,10 @@ bool FileSystem::FileOpen(std::wstring const path, FileMode const fileMode, File
 		access = L"a+";
 	}
 	access = access + L"b";
-#if defined NEXGEN_OG || defined NEXGEN_360 || defined NEXGEN_MAC || defined NEXGEN_LINUX
+#if defined NEXGEN_OG || defined NEXGEN_360 
 	fileInfo.file = fopen(StringUtility::ToString(path).c_str(), StringUtility::ToString(access).c_str());
-#elif defined NEXGEN_WIN
-	fopen_s((FILE **)&fileInfo.file, StringUtility::ToString(path).c_str(), StringUtility::ToString(access).c_str());
+#elif defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX
+	_wfopen_s((FILE **)&fileInfo.file, path.c_str(), access.c_str());
 #endif
     return fileInfo.file != NULL;
 }
@@ -167,10 +167,10 @@ bool FileSystem::FileRead(FileInfo const fileInfo, char* readBuffer, uint32_t co
 bool FileSystem::FileReadAllAsString(std::wstring const path, std::string* buffer)
 {
 	FILE *file;
-#if defined NEXGEN_OG || defined NEXGEN_360 || defined NEXGEN_MAC || defined NEXGEN_LINUX
+#if defined NEXGEN_OG || defined NEXGEN_360
 	file = fopen(StringUtility::ToString(path).c_str(), "rb");
-#elif defined NEXGEN_WIN
-	fopen_s(&file, StringUtility::ToString(path).c_str(), "rb");
+#elif defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX
+	_wfopen_s(&file, path.c_str(), L"rb");
 #endif
 	if(file == NULL)
 	{
@@ -368,8 +368,8 @@ bool FileSystem::FileSize(FileInfo const fileInfo, uint32_t& size)
 bool FileSystem::FileExists(std::wstring const path, bool& exists)
 {
 #if defined NEXGEN_OG || defined NEXGEN_360
-	WIN32_FIND_DATA findData;
-	HANDLE handle = FindFirstFile(path.c_str(), &findData);
+	WIN32_FIND_DATAA findData;
+	HANDLE handle = FindFirstFileA(StringUtility::ToString(path).c_str(), &findData);
 	if (handle == INVALID_HANDLE_VALUE) 
 	{     
 		return false;
@@ -403,8 +403,8 @@ bool FileSystem::FileExists(std::wstring const path, bool& exists)
 bool FileSystem::DirectoryExists(std::wstring const path, bool& exists)
 {
 #if defined NEXGEN_OG || defined NEXGEN_360
-	WIN32_FIND_DATA findData;
-	HANDLE handle = FindFirstFile(path.c_str(), &findData);
+	WIN32_FIND_DATAA findData;
+	HANDLE handle = FindFirstFileA(StringUtility::ToString(path).c_str(), &findData);
 	if (handle == INVALID_HANDLE_VALUE) 
 	{     
 		return false;

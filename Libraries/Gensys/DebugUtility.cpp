@@ -24,8 +24,8 @@ namespace {
 
 #define MIN_LOGLEVEL LOGLEVEL_INFO
 
-#ifndef vsnprintf
-#define vsnprintf _vsnprintf
+#ifndef vsnprintf_s
+#define vsnprintf_s _vsnprintf_s
 #endif
 
 void DebugUtility::SetLogFile(std::wstring const logFile)
@@ -73,7 +73,7 @@ void DebugUtility::LogMessage(LogLevel const logLevel, std::wstring const format
 		file.close();
 	}
 
-#ifdef NEXGEN_WIN
+#if defined NEXGEN_OG || NEXGEN_360 || NEXGEN_WIN
 	OutputDebugStringA(level.c_str());
 	OutputDebugStringA(": ");
 	OutputDebugStringA(message.c_str());

@@ -697,7 +697,7 @@ bool FileSystem::GetAppDirectory(std::wstring& appDirectory)
 #elif defined NEXGEN_MAC 
 	char result[PATH_MAX];
 	getcwd(result, PATH_MAX);
-  	appDirectory = StringUtility::ToWideString(std::string( result));
+  	appDirectory = StringUtility::ToWideString(std::string(result));
 	return true;
 #elif defined NEXGEN_LINUX
   	char result[PATH_MAX];

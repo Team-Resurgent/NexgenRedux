@@ -225,7 +225,7 @@ bool DriveManager::GetMountedDrives(std::vector<std::wstring>& drives)
 
 #if defined NEXGEN_OG || defined NEXGEN_360
 
-	return false;
+	return true;
 	
 #elif defined NEXGEN_WIN
 
@@ -284,8 +284,11 @@ bool DriveManager::GetMountedDrives(std::vector<std::wstring>& drives)
 		entry = getmntent(file);
     }
     endmntent(file);
-    return false;
+    return true;
+
 #else
+
     return false;
+
 #endif
 }

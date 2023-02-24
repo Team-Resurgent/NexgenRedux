@@ -274,6 +274,10 @@ bool FileSystem::FileGetFileInfoDetails(std::wstring const path, std::vector<Fil
 	} 
 	do 
 	{ 
+		if (findData.cFileName == "." || findData.cFileName == "..")
+		{
+			continue;
+		}
 		FileInfoDetail fileInfoDetail;
 		std::wstring currentPath = CombinePath(path, StringUtility::ToWideString(findData.cFileName));
 		if (FileGetFileInfoDetail(currentPath, fileInfoDetail) == false)
@@ -297,6 +301,10 @@ bool FileSystem::FileGetFileInfoDetails(std::wstring const path, std::vector<Fil
 	} 
 	do 
 	{ 
+		if (findData.cFileName == "." || findData.cFileName == "..")
+		{
+			continue;
+		}
 		FileInfoDetail fileInfoDetail;
 		std::wstring currentPath = CombinePath(path, findData.cFileName);
 		if (FileGetFileInfoDetail(currentPath, fileInfoDetail) == false)

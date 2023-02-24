@@ -1,6 +1,7 @@
 #include "Test.h"
 
 #include "FileSystem.h"
+#include "DriveManager.h"
 #include "DebugUtility.h"
 
 #include <string>
@@ -73,7 +74,7 @@ static bool FileSystem_FileGetFileInfoDetail(void)
 }
 
 
-static bool FileSystem_FileGetFileInfoDetails(void)
+static bool DriveManager_GetMountedDrives(void)
 {
 	std::vector<FileSystem::FileInfoDetail> fileInfoDetails;
 
@@ -84,6 +85,24 @@ static bool FileSystem_FileGetFileInfoDetails(void)
 	}
 
 	if (fileInfoDetails.size() == 0) 
+	{
+		return false;
+	}
+	
+	return true;
+}
+
+static bool FileSystem_FileGetFileInfoDetails(void)
+{
+	std::vector<std::wstring> drives;
+
+	bool result = DriveManager::GetMountedDrives(drives);
+	if (result == false) 
+	{
+		return false;
+	}
+
+	if (drives.size() == 0) 
 	{
 		return false;
 	}
@@ -104,4 +123,7 @@ void Test::RunTests(void)
 
 	DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, L"Testing FileSystem_FileGetFileInfoDetails");
 	assert(FileSystem_FileGetFileInfoDetails());
+
+	DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, L"Testing DriveManager_GetMountedDrives");
+	assert(DriveManager_GetMountedDrives());
 }

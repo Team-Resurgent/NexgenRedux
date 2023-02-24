@@ -248,18 +248,18 @@ bool DriveManager::GetMountedDrives(std::vector<std::wstring>& drives)
 
 #elif defined NEXGEN_MAC
 
-	std::vector<FileInfoDetail> fileInfoDetails;
-	if (!FileGetFileInfoDetails(L"/Volumes", fileInfoDetails))
+	std::vector<FileSystem::FileInfoDetail> fileInfoDetails;
+	if (!FileSystem::FileGetFileInfoDetails(L"/Volumes", fileInfoDetails))
 	{
 		return false;
 	}
 	for (uint32_t i = 0; i < fileInfoDetails.size(); i++)
 	{
-		if (fileInfoDetails.at(i).name == L"." || fileInfoDetails.at(i).name == L"..") 
+		if (StringUtility::EndsWith(fileInfoDetails.at(i).path, L"/.", false) || StringUtility::EndsWith(fileInfoDetails.at(i).path, L"/..", false))
 		{
 			continue;
 		}
-		drives.push_back(CombinePath(L"/Volumes", fileInfoDetails.at(i).name));
+		drives.push_back(fileInfoDetails.at(i).path);
 	}
 	return true;
 

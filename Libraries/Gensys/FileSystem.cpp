@@ -88,7 +88,6 @@ bool FileSystem::FileGetFileInfoDetail(std::wstring const path, FileInfoDetail& 
 	fileInfoDetail.accessTime.hour = systemTimeAccessLocal.wHour;
 	fileInfoDetail.accessTime.minute = systemTimeAccessLocal.wMinute;
 	fileInfoDetail.accessTime.second = systemTimeAccessLocal.wSecond;
-	fileInfoDetail.accessTime.milliseconds = systemTimeAccessLocal.wMilliseconds;
 
 	FILETIME fileTimeWriteLocal;
 	if (FileTimeToLocalFileTime(&fileTimeWrite, &fileTimeWriteLocal) == FALSE)
@@ -108,7 +107,6 @@ bool FileSystem::FileGetFileInfoDetail(std::wstring const path, FileInfoDetail& 
 	fileInfoDetail.writeTime.hour = systemTimeWriteLocal.wHour;
 	fileInfoDetail.writeTime.minute = systemTimeWriteLocal.wMinute;
 	fileInfoDetail.writeTime.second = systemTimeAccessLocal.wSecond;
-	fileInfoDetail.writeTime.milliseconds = systemTimeAccessLocal.wMilliseconds;
 
 	DWORD fileSize = GetFileSize(fileHandle, NULL);
 	fileInfoDetail.size = fileSize;
@@ -126,6 +124,7 @@ bool FileSystem::FileGetFileInfoDetail(std::wstring const path, FileInfoDetail& 
 		return false;
 	}
 
+	fileInfoDetail.path = path;
 	fileInfoDetail.isDirectory = (attributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
 	fileInfoDetail.isNormal = (attributes & FILE_ATTRIBUTE_NORMAL) != 0;
 
@@ -154,14 +153,12 @@ bool FileSystem::FileGetFileInfoDetail(std::wstring const path, FileInfoDetail& 
 		return false;
 	}
 
-	fileInfoDetail.path = path;
 	fileInfoDetail.accessTime.month = systemTimeAccessLocal.wMonth;
 	fileInfoDetail.accessTime.day = systemTimeAccessLocal.wDay;
 	fileInfoDetail.accessTime.year = systemTimeAccessLocal.wYear;
 	fileInfoDetail.accessTime.hour = systemTimeAccessLocal.wHour;
 	fileInfoDetail.accessTime.minute = systemTimeAccessLocal.wMinute;
 	fileInfoDetail.accessTime.second = systemTimeAccessLocal.wSecond;
-	fileInfoDetail.accessTime.milliseconds = systemTimeAccessLocal.wMilliseconds;
 
 	FILETIME fileTimeWriteLocal;
 	if (FileTimeToLocalFileTime(&fileTimeWrite, &fileTimeWriteLocal) == FALSE)
@@ -181,7 +178,6 @@ bool FileSystem::FileGetFileInfoDetail(std::wstring const path, FileInfoDetail& 
 	fileInfoDetail.writeTime.hour = systemTimeWriteLocal.wHour;
 	fileInfoDetail.writeTime.minute = systemTimeWriteLocal.wMinute;
 	fileInfoDetail.writeTime.second = systemTimeAccessLocal.wSecond;
-	fileInfoDetail.writeTime.milliseconds = systemTimeAccessLocal.wMilliseconds;
 
 	DWORD fileSize = GetFileSize(fileHandle, NULL);
 	fileInfoDetail.size = fileSize;
@@ -189,9 +185,73 @@ bool FileSystem::FileGetFileInfoDetail(std::wstring const path, FileInfoDetail& 
 	CloseHandle(fileHandle);
 	return true;
 
-#elif defined NEXGEN_MAC || defined NEXGEN_LINUX
+#elif defined NEXGEN_MAC
 
-	return false;
+	struct stat statBuffer;
+	if (stat(StringUtility::ToString(path).c_str(), &statBuffer) != 0)
+	{
+		return false;
+	}
+
+	fileInfoDetail.path = path;
+	fileInfoDetail.isDirectory = S_ISDIR(statBuffer.st_mode);
+	fileInfoDetail.isNormal = S_ISREG(statBuffer.st_mode);
+
+	struct tm *accessTime = localtime(&statBuffer.st_atimespec.tv_sec);
+
+	fileInfoDetail.accessTime.month = accessTime->tm_mon;
+	fileInfoDetail.accessTime.day = accessTime->tm_mday;
+	fileInfoDetail.accessTime.year = accessTime->tm_year + 1900;
+	fileInfoDetail.accessTime.hour = accessTime->tm_hour;
+	fileInfoDetail.accessTime.minute = accessTime->tm_min;
+	fileInfoDetail.accessTime.second = accessTime->tm_sec;
+
+	struct tm *writeTime = localtime(&statBuffer.st_mtimespec.tv_sec);
+
+	fileInfoDetail.writeTime.month = writeTime->tm_mon;
+	fileInfoDetail.writeTime.day = writeTime->tm_mday;
+	fileInfoDetail.writeTime.year = writeTime->tm_year + 1900;
+	fileInfoDetail.writeTime.hour = writeTime->tm_hour;
+	fileInfoDetail.writeTime.minute = writeTime->tm_min;
+	fileInfoDetail.writeTime.second = writeTime->tm_sec;
+
+	fileInfoDetail.size = statBuffer.st_size;
+
+	return true;
+
+#elif defined NEXGEN_LINUX
+
+	struct stat statBuffer;
+	if (stat(StringUtility::ToString(path).c_str(), &statBuffer) != 0)
+	{
+		return false;
+	}
+
+	fileInfoDetail.path = path;
+	fileInfoDetail.isDirectory = S_ISDIR(statBuffer.st_mode);
+	fileInfoDetail.isNormal = S_ISREG(statBuffer.st_mode);
+
+	struct tm *accessTime = localtime(&statBuffer.st_atim.tv_sec);
+
+	fileInfoDetail.accessTime.month = accessTime->tm_mon;
+	fileInfoDetail.accessTime.day = accessTime->tm_mday;
+	fileInfoDetail.accessTime.year = accessTime->tm_year + 1900;
+	fileInfoDetail.accessTime.hour = accessTime->tm_hour;
+	fileInfoDetail.accessTime.minute = accessTime->tm_min;
+	fileInfoDetail.accessTime.second = accessTime->tm_sec;
+
+	struct tm *writeTime = localtime(&statBuffer.st_mtim.tv_sec);
+
+	fileInfoDetail.writeTime.month = writeTime->tm_mon;
+	fileInfoDetail.writeTime.day = writeTime->tm_mday;
+	fileInfoDetail.writeTime.year = writeTime->tm_year + 1900;
+	fileInfoDetail.writeTime.hour = writeTime->tm_hour;
+	fileInfoDetail.writeTime.minute = writeTime->tm_min;
+	fileInfoDetail.writeTime.second = writeTime->tm_sec;
+
+	fileInfoDetail.size = statBuffer.st_size;
+
+	return true;
 
 #else
 
@@ -258,31 +318,20 @@ bool FileSystem::FileGetFileInfoDetails(std::wstring const path, std::vector<Fil
 		return false;
 	}
 	struct dirent *entry = readdir(dir);
-	while (entry != NULL) 
+	if (entry == NULL) 
 	{
-		std::wstring wideName = StringUtility::ToWideString(entry->d_name);
-		if (stat(StringUtility::ToString(CombinePath(searchPath, wideName)).c_str(), &statBuffer) != 0)
-		{
-			continue;
-		}
+		return false;
+	}
+	while (entry != NULL)
+	{
 		FileInfoDetail fileInfoDetail;
-		fileInfoDetail.isDirectory = (entry->d_type & DT_DIR) != 0;
-		fileInfoDetail.isNormal = (entry->d_type & DT_REG) != 0;
-		fileInfoDetail.name =wideName;
-		fileInfoDetail.path = searchPath;
-		fileInfoDetail.size = statBuffer.st_size;
-		#if defined NEXGEN_MAC
-		struct tm *lastAccessTime = localtime(&statBuffer.st_atimespec.tv_sec);
- 		memcpy(&fileInfoDetail.lastAccessTime, lastAccessTime, sizeof(fileInfoDetail.lastAccessTime));
-		struct tm *lastWriteTime = localtime(&statBuffer.st_mtimespec.tv_sec);
- 		memcpy(&fileInfoDetail.lastWriteTime, lastWriteTime, sizeof(fileInfoDetail.lastWriteTime));
-		#else
-		struct tm *lastAccessTime = localtime(&statBuffer.st_atim.tv_sec);
- 		memcpy(&fileInfoDetail.lastAccessTime, lastAccessTime, sizeof(fileInfoDetail.lastAccessTime));
-		struct tm *lastWriteTime = localtime(&statBuffer.st_mtim.tv_sec);
- 		memcpy(&fileInfoDetail.lastWriteTime, lastWriteTime, sizeof(fileInfoDetail.lastWriteTime));
-		#endif
-		fileInfoDetails.push_back(fileInfoDetail);		
+		std::wstring currentPath = CombinePath(path, StringUtility::ToWideString(entry->d_name));
+		if (FileGetFileInfoDetail(currentPath, fileInfoDetail) == false)
+		{
+			closedir(dir);
+			return false;
+		}
+		fileInfoDetails.push_back(fileInfoDetail);
 		entry = readdir(dir);
 	}
 	closedir(dir);
@@ -636,7 +685,7 @@ bool FileSystem::GetAppDirectory(std::wstring& appDirectory)
 #elif defined NEXGEN_LINUX
   	char result[PATH_MAX];
   	ssize_t count = readlink( "/proc/self/exe", result, PATH_MAX );
-  	appDirectory = StringUtility::ToWideString(std::string( result, (count > 0) ? count : 0 ));
+  	appDirectory = GetDirectory(StringUtility::ToWideString(std::string(result, (count > 0) ? count : 0 )));
 	return true;
 #else
     return false;

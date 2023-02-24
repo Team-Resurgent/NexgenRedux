@@ -35,7 +35,6 @@ namespace Gensys
 			uint16_t hour;
 			uint16_t minute;
 			uint16_t second;
-			uint16_t milliseconds;
 		} FileTime;
         
 		typedef struct FileInfoDetail

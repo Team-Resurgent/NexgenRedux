@@ -3,6 +3,10 @@
 #include "Drive.h"
 #include "StringUtility.h"
 
+#if defined NEXGEN_LINUX
+#include <mntent.h>
+#endif
+
 using namespace Gensys;
 
 namespace

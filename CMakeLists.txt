@@ -141,31 +141,31 @@ target_link_libraries(${LIBRARIES})
 
 set_target_properties(NexgenRedux
     PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/$<CONFIG>"
 )
 
 # Copy dependancies to app folder
 if (${OperatingSystem} MATCHES "Win")
     add_custom_command(
         TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libEGL.dll" "${CMAKE_BINARY_DIR}/bin/$<CONFIG>"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libGLESv2.dll" "${CMAKE_BINARY_DIR}/bin/$<CONFIG>"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libEGL.dll" "${CMAKE_BINARY_DIR}/bin/$<CONFIG>/libEGL.dll"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libGLESv2.dll" "${CMAKE_BINARY_DIR}/bin/$<CONFIG>/libGLESv2.dll"
         COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/Media" "${CMAKE_BINARY_DIR}/bin/$<CONFIG>/Media/"
         COMMAND_EXPAND_LISTS
     )
 elseif (${OperatingSystem} MATCHES "Mac")
     add_custom_command(
         TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libEGL.dylib" "${CMAKE_BINARY_DIR}/bin/$<CONFIG>"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libGLESv2.dylib" "${CMAKE_BINARY_DIR}/bin/$<CONFIG>"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libEGL.dylib" "${CMAKE_BINARY_DIR}/bin/$<CONFIG>/libEGL.dylib"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libGLESv2.dylib" "${CMAKE_BINARY_DIR}/bin/$<CONFIG>/libGLESv2.dylib"
         COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/Media" "${CMAKE_BINARY_DIR}/bin/$<CONFIG>/Media/"
         COMMAND_EXPAND_LISTS
     )
 elseif (${OperatingSystem} MATCHES "Linux")
     add_custom_command(
         TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libEGL.so" "${CMAKE_BINARY_DIR}/bin/$<CONFIG>"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libGLESv2.so" "${CMAKE_BINARY_DIR}/bin/$<CONFIG>"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libEGL.so" "${CMAKE_BINARY_DIR}/bin/$<CONFIG>/libEGL.so"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libGLESv2.so" "${CMAKE_BINARY_DIR}/bin/$<CONFIG>/libGLESv2.so"
         COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/Media" "${CMAKE_BINARY_DIR}/bin/$<CONFIG>/Media/"
         COMMAND_EXPAND_LISTS
     )

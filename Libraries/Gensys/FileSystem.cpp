@@ -20,7 +20,7 @@ using namespace Gensys;
 
 namespace {
 
-#if defined NEXGEN_OG 
+#if defined NEXGEN_OG || defined NEXGEN_360
 
 	std::wstring MapSystemPath(std::wstring const path)
 	{
@@ -40,19 +40,6 @@ namespace {
 #endif
 
 }
-
-//#if defined NEXGEN_OG || defined NEXGEN_360 || defined NEXGEN_WIN
-//
-//time_t FileTimeToTime(FILETIME fileTime)
-//{
-//	const uint64_t WINDOWS_TICK = 10000000ULL;
-//	const uint64_t SEC_TO_UNIX_EPOCH = 11644473600ULL;
-//
-//	uint64_t windowsTicks = ((uint64_t)fileTime.dwHighDateTime << 32) | fileTime.dwLowDateTime;
-//	return (time_t)(windowsTicks / WINDOWS_TICK - SEC_TO_UNIX_EPOCH);
-//}
-//
-//#endif
 
 bool FileSystem::FileGetFileInfoDetail(std::wstring const path, FileInfoDetail& fileInfoDetail)
 {

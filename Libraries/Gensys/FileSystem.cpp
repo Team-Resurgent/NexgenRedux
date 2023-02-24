@@ -18,74 +18,247 @@
 
 using namespace Gensys;
 
-#if defined NEXGEN_OG || defined NEXGEN_360 || defined NEXGEN_WIN
+namespace {
 
-time_t FileTimeToTime(FILETIME fileTime)
-{
-	const uint64_t WINDOWS_TICK = 10000000ULL;
-	const uint64_t SEC_TO_UNIX_EPOCH = 11644473600ULL;
+ std::wstring MapSystemPath(std::wstring const path)
+ {
+ 	std::vector<std::wstring> systemPaths = DriveManager::GetAllSystemPaths();
+ 	for (size_t i = 0; i < systemPaths.size(); i++) {
+ 		std::wstring systemPath = systemPaths.at(i);
+ 		if (StringUtility::StartsWith(path, systemPath + L"\\", true)) {
+ 			std::wstring mountPoint = DriveManager::GetMountPoint(systemPath);
+ 			std::wstring temp = path.substr(systemPath.length());
+ 			std::wstring result = mountPoint + L":" + temp;
+ 			return result;
+ 		}
+ 	}
+ 	return path;
+ }
 
-	uint64_t windowsTicks = ((uint64_t)fileTime.dwHighDateTime << 32) | fileTime.dwLowDateTime;
-	return (time_t)(windowsTicks / WINDOWS_TICK - SEC_TO_UNIX_EPOCH);
 }
 
+//#if defined NEXGEN_OG || defined NEXGEN_360 || defined NEXGEN_WIN
+//
+//time_t FileTimeToTime(FILETIME fileTime)
+//{
+//	const uint64_t WINDOWS_TICK = 10000000ULL;
+//	const uint64_t SEC_TO_UNIX_EPOCH = 11644473600ULL;
+//
+//	uint64_t windowsTicks = ((uint64_t)fileTime.dwHighDateTime << 32) | fileTime.dwLowDateTime;
+//	return (time_t)(windowsTicks / WINDOWS_TICK - SEC_TO_UNIX_EPOCH);
+//}
+//
+//#endif
+
+bool FileSystem::FileGetFileInfoDetail(std::wstring const path, FileInfoDetail& fileInfoDetail)
+{
+#if defined NEXGEN_OG || defined NEXGEN_360
+
+	const DWORD invalidFileAttributes = (DWORD)0xFFFFFFFF;
+
+	DWORD attributes = GetFileAttributesA(StringUtility::ToString(path).c_str());
+	if (attributes == invalidFileAttributes)
+	{
+		return false;
+	}
+
+	fileInfoDetail.path = path;
+	fileInfoDetail.isDirectory = (attributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+	fileInfoDetail.isNormal = (attributes & FILE_ATTRIBUTE_NORMAL) != 0;
+
+	HANDLE fileHandle = CreateFileA(StringUtility::ToString(path).c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, fileInfoDetail.isDirectory ? FILE_FLAG_BACKUP_SEMANTICS : 0, NULL);
+	if (fileHandle == INVALID_HANDLE_VALUE)
+    {
+        return false;
+    }
+
+	FILETIME fileTimeAccess;
+	FILETIME fileTimeWrite;
+	if (GetFileTime(fileHandle, NULL, &fileTimeAccess, &fileTimeWrite) == FALSE)
+	{
+		return false;
+	}
+
+	FILETIME fileTimeAccessLocal;
+	if (FileTimeToLocalFileTime(&fileTimeAccess, &fileTimeAccessLocal) == FALSE)
+	{
+		return false;
+	}
+
+	SYSTEMTIME systemTimeAccessLocal;
+	if (FileTimeToSystemTime(&fileTimeAccessLocal, &systemTimeAccessLocal) == FALSE)
+	{
+		return false;
+	}
+
+	fileInfoDetail.accessTime.month = systemTimeAccessLocal.wMonth;
+	fileInfoDetail.accessTime.day = systemTimeAccessLocal.wDay;
+	fileInfoDetail.accessTime.year = systemTimeAccessLocal.wYear;
+	fileInfoDetail.accessTime.hour = systemTimeAccessLocal.wHour;
+	fileInfoDetail.accessTime.minute = systemTimeAccessLocal.wMinute;
+	fileInfoDetail.accessTime.second = systemTimeAccessLocal.wSecond;
+	fileInfoDetail.accessTime.milliseconds = systemTimeAccessLocal.wMilliseconds;
+
+	FILETIME fileTimeWriteLocal;
+	if (FileTimeToLocalFileTime(&fileTimeWrite, &fileTimeWriteLocal) == FALSE)
+	{
+		return false;
+	}
+
+	SYSTEMTIME systemTimeWriteLocal;
+	if (FileTimeToSystemTime(&fileTimeWriteLocal, &systemTimeWriteLocal) == FALSE)
+	{
+		return false;
+	}
+
+	fileInfoDetail.writeTime.month = systemTimeWriteLocal.wMonth;
+	fileInfoDetail.writeTime.day = systemTimeWriteLocal.wDay;
+	fileInfoDetail.writeTime.year = systemTimeWriteLocal.wYear;
+	fileInfoDetail.writeTime.hour = systemTimeWriteLocal.wHour;
+	fileInfoDetail.writeTime.minute = systemTimeWriteLocal.wMinute;
+	fileInfoDetail.writeTime.second = systemTimeAccessLocal.wSecond;
+	fileInfoDetail.writeTime.milliseconds = systemTimeAccessLocal.wMilliseconds;
+
+	DWORD fileSize = GetFileSize(fileHandle, NULL);
+	fileInfoDetail.size = fileSize;
+		
+	CloseHandle(fileHandle);
+	return true;
+
+#elif defined NEXGEN_WIN
+
+	const DWORD invalidFileAttributes = (DWORD)0xFFFFFFFF;
+
+	DWORD attributes = GetFileAttributesW(path.c_str());
+	if (attributes == invalidFileAttributes)
+	{
+		return false;
+	}
+
+	fileInfoDetail.isDirectory = (attributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+	fileInfoDetail.isNormal = (attributes & FILE_ATTRIBUTE_NORMAL) != 0;
+
+	HANDLE fileHandle = CreateFileW(path.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, fileInfoDetail.isDirectory ? FILE_FLAG_BACKUP_SEMANTICS : 0, NULL);
+	if (fileHandle == INVALID_HANDLE_VALUE)
+    {
+        return false;
+    }
+
+	FILETIME fileTimeAccess;
+	FILETIME fileTimeWrite;
+	if (GetFileTime(fileHandle, NULL, &fileTimeAccess, &fileTimeWrite) == FALSE)
+	{
+		return false;
+	}
+
+	FILETIME fileTimeAccessLocal;
+	if (FileTimeToLocalFileTime(&fileTimeAccess, &fileTimeAccessLocal) == FALSE)
+	{
+		return false;
+	}
+
+	SYSTEMTIME systemTimeAccessLocal;
+	if (FileTimeToSystemTime(&fileTimeAccessLocal, &systemTimeAccessLocal) == FALSE)
+	{
+		return false;
+	}
+
+	fileInfoDetail.path = path;
+	fileInfoDetail.accessTime.month = systemTimeAccessLocal.wMonth;
+	fileInfoDetail.accessTime.day = systemTimeAccessLocal.wDay;
+	fileInfoDetail.accessTime.year = systemTimeAccessLocal.wYear;
+	fileInfoDetail.accessTime.hour = systemTimeAccessLocal.wHour;
+	fileInfoDetail.accessTime.minute = systemTimeAccessLocal.wMinute;
+	fileInfoDetail.accessTime.second = systemTimeAccessLocal.wSecond;
+	fileInfoDetail.accessTime.milliseconds = systemTimeAccessLocal.wMilliseconds;
+
+	FILETIME fileTimeWriteLocal;
+	if (FileTimeToLocalFileTime(&fileTimeWrite, &fileTimeWriteLocal) == FALSE)
+	{
+		return false;
+	}
+
+	SYSTEMTIME systemTimeWriteLocal;
+	if (FileTimeToSystemTime(&fileTimeWriteLocal, &systemTimeWriteLocal) == FALSE)
+	{
+		return false;
+	}
+
+	fileInfoDetail.writeTime.month = systemTimeWriteLocal.wMonth;
+	fileInfoDetail.writeTime.day = systemTimeWriteLocal.wDay;
+	fileInfoDetail.writeTime.year = systemTimeWriteLocal.wYear;
+	fileInfoDetail.writeTime.hour = systemTimeWriteLocal.wHour;
+	fileInfoDetail.writeTime.minute = systemTimeWriteLocal.wMinute;
+	fileInfoDetail.writeTime.second = systemTimeAccessLocal.wSecond;
+	fileInfoDetail.writeTime.milliseconds = systemTimeAccessLocal.wMilliseconds;
+
+	DWORD fileSize = GetFileSize(fileHandle, NULL);
+	fileInfoDetail.size = fileSize;
+		
+	CloseHandle(fileHandle);
+	return true;
+
+#elif defined NEXGEN_MAC || defined NEXGEN_LINUX
+
+	return false;
+
+#else
+
+	return false;
+
 #endif
+}
 
 bool FileSystem::FileGetFileInfoDetails(std::wstring const path, std::vector<FileInfoDetail>& fileInfoDetails)
 {
 	std::wstring searchPath = StringUtility::RightTrim(path, GetPathSeparator());
 
 #if defined NEXGEN_OG || defined NEXGEN_360
-	HANDLE handle;
-	WIN32_FIND_DATAA findData;
 
-	handle = FindFirstFileA(StringUtility::ToString(CombinePath(path, L"*")).c_str(), &findData);
-	if (handle == INVALID_HANDLE_VALUE) 
+	WIN32_FIND_DATAA findData;
+	HANDLE findHandle = FindFirstFileA(StringUtility::ToString(CombinePath(path, L"*")).c_str(), &findData);
+	if (findHandle == INVALID_HANDLE_VALUE) 
 	{     
 		return false;
 	} 
 	do 
 	{ 
 		FileInfoDetail fileInfoDetail;
-		fileInfoDetail.isDirectory = (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
-		fileInfoDetail.isNormal = (findData.dwFileAttributes & FILE_ATTRIBUTE_NORMAL) != 0;
-		fileInfoDetail.name = StringUtility::ToWideString(findData.cFileName);
-		fileInfoDetail.path = searchPath;
-		fileInfoDetail.size = findData.nFileSizeLow;
-		time_t lastAccessTime = FileTimeToTime(findData.ftLastAccessTime);
-		memcpy(&fileInfoDetail.lastAccessTime, &lastAccessTime, sizeof(fileInfoDetail.lastAccessTime));		
-		time_t lastWriteTime = FileTimeToTime(findData.ftLastWriteTime);
-		memcpy(&fileInfoDetail.lastWriteTime, &lastWriteTime, sizeof(fileInfoDetail.lastWriteTime));
+		std::wstring currentPath = CombinePath(path, StringUtility::ToWideString(findData.cFileName));
+		if (FileGetFileInfoDetail(currentPath, fileInfoDetail) == false)
+		{
+			FindClose(findHandle);
+			return false;
+		}
 		fileInfoDetails.push_back(fileInfoDetail);			
 	} 
-	while(FindNextFile(handle, &findData)); 
-	FindClose(handle);
+	while (FindNextFile(findHandle, &findData)); 
+	FindClose(findHandle);
 	return true;
+
 #elif defined NEXGEN_WIN
-	HANDLE handle;
+
 	WIN32_FIND_DATAW findData;
-	handle = FindFirstFileW(CombinePath(path, L"*").c_str(), &findData);
-	if (handle == INVALID_HANDLE_VALUE) 
+	HANDLE findHandle = FindFirstFileW(CombinePath(path, L"*").c_str(), &findData);
+	if (findHandle == INVALID_HANDLE_VALUE) 
 	{     
 		return false;
 	} 
 	do 
 	{ 
 		FileInfoDetail fileInfoDetail;
-		fileInfoDetail.isDirectory = (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
-		fileInfoDetail.isNormal = (findData.dwFileAttributes & FILE_ATTRIBUTE_NORMAL) != 0;
-		fileInfoDetail.name = findData.cFileName;
-		fileInfoDetail.path = searchPath;
-		fileInfoDetail.size = findData.nFileSizeLow;
-		time_t lastAccessTime = FileTimeToTime(findData.ftLastAccessTime);
-		memcpy(&fileInfoDetail.lastAccessTime, &lastAccessTime, sizeof(fileInfoDetail.lastAccessTime));		
-		time_t lastWriteTime = FileTimeToTime(findData.ftLastWriteTime);
-		memcpy(&fileInfoDetail.lastWriteTime, &lastWriteTime, sizeof(fileInfoDetail.lastWriteTime));
+		std::wstring currentPath = CombinePath(path, findData.cFileName);
+		if (FileGetFileInfoDetail(currentPath, fileInfoDetail) == false)
+		{
+			FindClose(findHandle);
+			return false;
+		}
 		fileInfoDetails.push_back(fileInfoDetail);			
 	} 
-	while(FindNextFileW(handle, &findData)); 
-	FindClose(handle);
+	while (FindNextFile(findHandle, &findData)); 
+	FindClose(findHandle);
 	return true;
+
 #elif defined NEXGEN_MAC || defined NEXGEN_LINUX
 	struct stat statBuffer;
 	DIR* dir = opendir(StringUtility::ToString(searchPath).c_str());
@@ -248,7 +421,7 @@ bool FileSystem::DirectoryDelete(std::wstring const path, bool const recursive)
 		FileInfoDetail fileInfoDetail = fileInfoDetails.at(i);
 		if (fileInfoDetail.isDirectory) 
 		{
-			std::wstring directoryToDelete = FileSystem::CombinePath(path, fileInfoDetail.name);
+			std::wstring directoryToDelete = fileInfoDetail.path;
 			if (recursive && !DirectoryDelete(directoryToDelete, true)) 
 			{
 				return false;
@@ -256,7 +429,7 @@ bool FileSystem::DirectoryDelete(std::wstring const path, bool const recursive)
 		}
 		else
 		{
-			std::wstring fileToDelete = FileSystem::CombinePath(path, fileInfoDetail.name);
+			std::wstring fileToDelete = fileInfoDetail.path;
 			if (!FileDelete(fileToDelete))
 			{
 				return false;
@@ -337,12 +510,12 @@ bool FileSystem::DirectoryCopy(std::wstring const sourcePath, std::wstring const
 			FileInfoDetail fileInfoDetail = fileInfoDetails.at(i);
 			if (fileInfoDetail.isDirectory) 
 			{
-				std::wstring directoryToAdd = FileSystem::CombinePath(directoryToCopy, fileInfoDetail.name);
+				std::wstring directoryToAdd = fileInfoDetail.path;
 				directoriesToCopy.push_back(directoryToAdd);
 			}
 			else
 			{
-				std::wstring fileToCopy = FileSystem::CombinePath(directoryToCopy, fileInfoDetail.name);
+				std::wstring fileToCopy = FileSystem::GetFileName(fileInfoDetail.path);
 				std::wstring sourceFile = FileSystem::CombinePath(baseSourcePath, fileToCopy);
 				std::wstring destFile = FileSystem::CombinePath(destPath, fileToCopy);
 				if (!FileSystem::FileCopy(sourceFile, destFile))
@@ -435,96 +608,6 @@ bool FileSystem::DirectoryExists(std::wstring const path, bool& exists)
 #endif
 }
 
-bool FileSystem::GetMountedDrives(std::vector<std::wstring>& drives)
-{
-	drives.clear();
-
-#if defined NEXGEN_OG || defined NEXGEN_360
-
-	return false;
-	
-#elif defined NEXGEN_WIN
-
-	char buffer[2];
-	buffer[1] = 0;
-	
-	DWORD driveFlags = GetLogicalDrives();
-	for (char i = 0; i < 26; i++)
-	{
-		const char letterA = 65;
-		char driveLetter = letterA + i;
-		DWORD testFlag = 1 << i;
-		if ((driveFlags & testFlag) > 0)
-		{
-			buffer[0] = driveLetter;
-			drives.push_back(StringUtility::ToWideString(std::string(buffer)));
-		}
-	}
-	return true;
-
-#elif defined NEXGEN_MAC
-
-	std::vector<FileInfoDetail> fileInfoDetails;
-	if (!FileGetFileInfoDetails(L"/Volumes", fileInfoDetails))
-	{
-		return false;
-	}
-	for (uint32_t i = 0; i < fileInfoDetails.size(); i++)
-	{
-		if (fileInfoDetails.at(i).name == L"." || fileInfoDetails.at(i).name == L"..") 
-		{
-			continue;
-		}
-		drives.push_back(CombinePath(L"/Volumes", fileInfoDetails.at(i).name));
-	}
-	return true;
-
-#elif defined NEXGEN_LINUX
-
-  	FILE *file = setmntent("/etc/mtab", "r");
-    if (file == NULL) 
-	{
-        return false;
-    }
-
-	const std::string filters[] = { "/dev/sd", "/dev/hd", "/dev/fd", "/dev/sr", "/dev/scd", "/dev/mmcblk"};
-
-	struct mntent *entry = getmntent(file);
-    while (entry != NULL) 
-	{
-		std::string name = std::string(entry->mnt_fsname);
-		for (uint32_t i = 0; i < 6; i++) 
-		{
-			if (name.find(filters[i]) == 0)
-			{
-				drives.push_back(StringUtility::ToWideString(entry->mnt_dir));
-				break;
-			}
-		}
-		entry = getmntent(file);
-    }
-    endmntent(file);
-    return false;
-#else
-    return false;
-#endif
-}
-
-// std::wstring FileSystem::MapSystemPath(std::wstring const path)
-// {
-// 	std::vector<std::wstring> systemPaths = DriveManager::GetAllSystemPaths();
-// 	for (size_t i = 0; i < systemPaths.size(); i++) {
-// 		std::wstring systemPath = systemPaths.at(i);
-// 		if (StringUtility::StartsWith(path, systemPath + L"\\", true)) {
-// 			std::wstring mountPoint = DriveManager::GetMountPoint(systemPath);
-// 			std::wstring temp = path.substr(systemPath.length());
-// 			std::wstring result = mountPoint + L":" + temp;
-// 			return result;
-// 		}
-// 	}
-// 	return path;
-// }
-
 std::wstring FileSystem::GetFileName(std::wstring const path)
 {
 	const std::size_t found = path.find_last_of(GetPathSeparator());
@@ -543,7 +626,7 @@ bool FileSystem::GetAppDirectory(std::wstring& appDirectory)
 	char buffer[260];
 	STRING *temp = (STRING*)XeImageFileName;
 	sprintf(buffer, temp->Buffer);
-	appDirectory = GetDirectory(StringUtility::ToWideString(std::string(&buffer[0], temp->Length)));	
+	appDirectory = MapSystemPath(GetDirectory(StringUtility::ToWideString(std::string(&buffer[0], temp->Length))));	
 	return true;
 #elif defined NEXGEN_360
 	appDirectory = L"Game:";

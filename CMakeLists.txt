@@ -10,6 +10,8 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     add_compile_definitions(NEXGEN_WIN)
     add_compile_definitions(AS_MAX_PORTABILITY)
     add_compile_definitions(UNICODE)
+    add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
+    add_compile_definitions(AS_NO_MEMORY_H)
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     SET(OperatingSystem "Mac")
     SET(CMAKE_OSX_DEPLOYMENT_TARGE "10.10")
@@ -37,7 +39,7 @@ set(INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/NexgenRedux-PC")
 list(APPEND INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/Libraries/GLAD/Includes/")
 list(APPEND INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/Libraries/GLFW/Includes/")
 list(APPEND INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/Libraries/AngelScript/")
-list(APPEND INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/Libraries/Gensys/")
+list(APPEND INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/Libraries/")
 include_directories(${INCLUDE_DIRS})
 
 # Define source code files
@@ -56,6 +58,7 @@ list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/Libraries/Gensys/StringUtility.cpp
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/Libraries/Gensys/TreeNode.cpp")
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/Libraries/Gensys/UniqueIdGenerator.cpp")
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/Libraries/Gensys/VirtualFileSystem.cpp")
+list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/Libraries/Gensys/Test.cpp")
 # Angel Script
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/Libraries/AngelScript/as_atomic.cpp")
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/Libraries/AngelScript/as_builder.cpp")
@@ -136,26 +139,34 @@ elseif (${OperatingSystem} MATCHES "Linux")
 endif()
 target_link_libraries(${LIBRARIES}) 
 
+set_target_properties(NexgenRedux
+    PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
 # Copy dependancies to app folder
 if (${OperatingSystem} MATCHES "Win")
     add_custom_command(
         TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libEGL.dll" "${PROJECT_BINARY_DIR}"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libGLESv2.dll" "${PROJECT_BINARY_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libEGL.dll" "${CMAKE_BINARY_DIR}/bin/$<CONFIG>"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libGLESv2.dll" "${CMAKE_BINARY_DIR}/bin/$<CONFIG>"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/Media" "${CMAKE_BINARY_DIR}/bin/$<CONFIG>/Media/"
         COMMAND_EXPAND_LISTS
     )
 elseif (${OperatingSystem} MATCHES "Mac")
     add_custom_command(
         TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libEGL.dylib" "${PROJECT_BINARY_DIR}"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libGLESv2.dylib" "${PROJECT_BINARY_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libEGL.dylib" "${CMAKE_BINARY_DIR}/bin/$<CONFIG>"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libGLESv2.dylib" "${CMAKE_BINARY_DIR}/bin/$<CONFIG>"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/Media" "${CMAKE_BINARY_DIR}/bin/$<CONFIG>/Media/"
         COMMAND_EXPAND_LISTS
     )
 elseif (${OperatingSystem} MATCHES "Linux")
     add_custom_command(
         TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libEGL.so" "${PROJECT_BINARY_DIR}"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libGLESv2.so" "${PROJECT_BINARY_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libEGL.so" "${CMAKE_BINARY_DIR}/bin/$<CONFIG>"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libGLESv2.so" "${CMAKE_BINARY_DIR}/bin/$<CONFIG>"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/Media" "${CMAKE_BINARY_DIR}/bin/$<CONFIG>/Media/"
         COMMAND_EXPAND_LISTS
     )
 endif()

@@ -26,16 +26,26 @@ namespace Gensys
 		{
 			void* file;
 		} FileInfo;
+
+		typedef struct FileTime
+		{
+			uint16_t month;
+			uint16_t day;
+			uint16_t year;
+			uint16_t hour;
+			uint16_t minute;
+			uint16_t second;
+			uint16_t milliseconds;
+		} FileTime;
         
 		typedef struct FileInfoDetail
         {
 			bool isDirectory;
 			bool isNormal;
-			std::wstring name;	
 			std::wstring path;
 			uint32_t size;
-			tm lastAccessTime;
-			tm lastWriteTime;			
+			FileTime accessTime;
+			FileTime writeTime;			
         } FileInfoDetail;
 
 		typedef enum FileMode
@@ -55,6 +65,7 @@ namespace Gensys
 			FileSeekModeCurrent = 2
 		} FileSeekMode;
 		
+		static bool FileGetFileInfoDetail(std::wstring const path, FileInfoDetail& fileInfoDetail);
 		static bool FileGetFileInfoDetails(std::wstring const path, std::vector<FileInfoDetail>& fileInfoDetails);
 		static bool FileOpen(std::wstring const path, FileMode const fileMode, FileInfo& fileInfo);
 		static bool FileRead(FileInfo const fileInfo, char* readBuffer, uint32_t const bytesToRead, uint32_t& bytesRead);
@@ -72,9 +83,7 @@ namespace Gensys
 		static bool FileSize(FileInfo const fileInfo, uint32_t& size);
 		static bool FileExists(std::wstring const path, bool& exists);
 		static bool DirectoryExists(std::wstring const path, bool& exists);
-		static bool GetMountedDrives(std::vector<std::wstring>& drives);
 
-		//static std::wstring MapSystemPath(std::wstring const path);
 		static std::wstring GetFileName(std::wstring const path);
 		static std::wstring GetDirectory(std::wstring const path);
 		static bool GetAppDirectory(std::wstring& appDirectory);

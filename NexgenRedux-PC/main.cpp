@@ -10,9 +10,10 @@
 #include <vector>
 #include <cstring>
 
-#include "DebugUtility.h"
-#include "StringUtility.h"
-#include "FileSystem.h"
+#include <Gensys/DebugUtility.h>
+#include <Gensys/StringUtility.h>
+#include <Gensys/FileSystem.h>
+#include <Gensys/Test.h>
 
 
 //using namespace NexgenRedux;
@@ -196,11 +197,7 @@ void drop_callback(GLFWwindow* window, int count, const char** paths)
 
 int main(int argc, const char* argv[])
 {
-	std::wstring appdir;
-	bool x = FileSystem::GetAppDirectory(appdir);
-
-    std::vector<std::wstring> drives;
-    bool y = FileSystem::GetMountedDrives(drives);
+	Gensys::Test::RunTests();
 
     glfwInitHint(GLFW_ANGLE_PLATFORM_TYPE, GLFW_ANGLE_PLATFORM_TYPE_VULKAN);
     if (!glfwInit())

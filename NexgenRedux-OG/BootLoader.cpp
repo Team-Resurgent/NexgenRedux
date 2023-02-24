@@ -1,5 +1,5 @@
 #include "BootLoader.h"
-#include "DriveManager.h"
+#include <Gensys/DriveManager.h>
 #include "ConfigLoader.h"
 
 using namespace Gensys;
@@ -7,8 +7,6 @@ using namespace NexgenRedux;
 
 void BootLoader::Run()
 {
-	DriveManager::Init();
-
 	ConfigData configData;
 	memset(&configData, 0, sizeof(configData));
 

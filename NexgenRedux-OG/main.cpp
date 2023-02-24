@@ -1,11 +1,14 @@
 #include "BootLoader.h"
-#include "angelscript.h"
 
-#include "addons/autowrapper/aswrappedcall.h"
-#include "addons/scriptstdstring/scriptstdstring.h"
-#include "DebugUtility.h"
-#include "StringUtility.h"
-#include "FileSystem.h"
+#include <AngelScript/angelscript.h>
+#include <AngelScript/addons/autowrapper/aswrappedcall.h>
+#include <AngelScript/addons/scriptstdstring/scriptstdstring.h>
+
+#include <Gensys/DebugUtility.h>
+#include <Gensys/StringUtility.h>
+#include <Gensys/FileSystem.h>
+#include <Gensys/Test.h>
+
 #include <xtl.h>
 
 
@@ -152,6 +155,8 @@ int CompileScript(asIScriptEngine *engine)
 
 void __cdecl main(int, char **)
 {
+	Test::RunTests();
+
 
 	BootLoader::Run();
 

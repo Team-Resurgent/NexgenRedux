@@ -1,3 +1,5 @@
+#pragma once
+
 #ifdef NEXGEN_OG
 
 #define INT8_MIN         (-127i8 - 1)

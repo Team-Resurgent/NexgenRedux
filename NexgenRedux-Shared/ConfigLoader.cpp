@@ -1,7 +1,7 @@
 #include "ConfigLoader.h"
-#include "Int.h"
-#include "StringUtility.h"
-#include "FileSystem.h"
+#include <Gensys/Int.h>
+#include <Gensys/StringUtility.h>
+#include <Gensys/FileSystem.h>
 #include <string>
 #include <vector>
 

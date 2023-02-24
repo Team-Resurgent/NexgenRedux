@@ -22,7 +22,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				OptimizeForProcessor="2"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)\NexgenRedux-Shared&quot;;&quot;$(SolutionDir)\Libraries\AngelScript&quot;;&quot;$(SolutionDir)\Libraries\Gensys&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)\NexgenRedux-Shared&quot;;&quot;$(SolutionDir)\Libraries\AngelScript&quot;;&quot;$(SolutionDir)\Libraries&quot;"
 				PreprocessorDefinitions="UNICODE;_USE_XGMATH;_XBOX;XBOX_SAMPLE;_DEBUG;NEXGEN_OG;AS_XBOX;AS_NO_THREADS;AS_USE_NAMESPACE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -83,7 +83,7 @@
 				Name="VCCLCompilerTool"
 				InlineFunctionExpansion="1"
 				OptimizeForProcessor="2"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)\NexgenRedux-Shared&quot;;&quot;$(SolutionDir)\Libraries\AngelScript&quot;;&quot;$(SolutionDir)\Libraries\Gensys&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)\NexgenRedux-Shared&quot;;&quot;$(SolutionDir)\Libraries\AngelScript&quot;;&quot;$(SolutionDir)\Libraries&quot;"
 				PreprocessorDefinitions="_USE_XGMATH;_XBOX;XBOX_SAMPLE;NDEBUG;NEXGEN_OG;AS_XBOX;AS_NO_THREADS;AS_USE_NAMESPACE"
 				StringPooling="TRUE"
 				RuntimeLibrary="0"
@@ -216,6 +216,12 @@
 			</File>
 			<File
 				RelativePath="..\Libraries\Gensys\StringUtility.h">
+			</File>
+			<File
+				RelativePath="..\Libraries\Gensys\Test.cpp">
+			</File>
+			<File
+				RelativePath="..\Libraries\Gensys\Test.h">
 			</File>
 			<File
 				RelativePath="..\Libraries\Gensys\TimeUtility.cpp">

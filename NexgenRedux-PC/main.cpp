@@ -247,10 +247,8 @@ int main(int argc, const char* argv[])
     printf("GL_RENDERER: %s\n", glGetString(GL_RENDERER));
     printf("GL_VERSION: %s\n", glGetString(GL_VERSION));
 
-    int totalFrames = 0;
     int frames = 0;
     double start = now();
-    int lastWidth = 0, lastHeight = 0;
 
     while (!glfwWindowShouldClose(window))
     {

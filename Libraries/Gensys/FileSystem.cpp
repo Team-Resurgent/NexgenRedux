@@ -20,20 +20,24 @@ using namespace Gensys;
 
 namespace {
 
- std::wstring MapSystemPath(std::wstring const path)
- {
- 	std::vector<std::wstring> systemPaths = DriveManager::GetAllSystemPaths();
- 	for (size_t i = 0; i < systemPaths.size(); i++) {
- 		std::wstring systemPath = systemPaths.at(i);
- 		if (StringUtility::StartsWith(path, systemPath + L"\\", true)) {
- 			std::wstring mountPoint = DriveManager::GetMountPoint(systemPath);
- 			std::wstring temp = path.substr(systemPath.length());
- 			std::wstring result = mountPoint + L":" + temp;
- 			return result;
- 		}
- 	}
- 	return path;
- }
+#if defined NEXGEN_OG 
+
+	std::wstring MapSystemPath(std::wstring const path)
+	{
+		std::vector<std::wstring> systemPaths = DriveManager::GetAllSystemPaths();
+		for (size_t i = 0; i < systemPaths.size(); i++) {
+			std::wstring systemPath = systemPaths.at(i);
+			if (StringUtility::StartsWith(path, systemPath + L"\\", true)) {
+				std::wstring mountPoint = DriveManager::GetMountPoint(systemPath);
+				std::wstring temp = path.substr(systemPath.length());
+				std::wstring result = mountPoint + L":" + temp;
+				return result;
+			}
+		}
+		return path;
+	}
+
+#endif
 
 }
 
@@ -384,7 +388,7 @@ bool FileSystem::FileSeek(FileInfo const fileInfo, FileSeekMode const fileSeekMo
 		seek = SEEK_END;
 	}
 	FILE *file = (FILE*)fileInfo.file;
-	fseek(file, 0, fileSeekMode);
+	fseek(file, 0, seek);
 	return true;
 }
 

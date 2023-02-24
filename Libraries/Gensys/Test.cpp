@@ -74,7 +74,7 @@ static bool FileSystem_FileGetFileInfoDetail(void)
 }
 
 
-static bool DriveManager_GetMountedDrives(void)
+static bool FileSystem_FileGetFileInfoDetails(void)
 {
 	std::vector<FileSystem::FileInfoDetail> fileInfoDetails;
 
@@ -92,7 +92,7 @@ static bool DriveManager_GetMountedDrives(void)
 	return true;
 }
 
-static bool FileSystem_FileGetFileInfoDetails(void)
+static bool DriveManager_GetMountedDrives(void)
 {
 	std::vector<std::wstring> drives;
 

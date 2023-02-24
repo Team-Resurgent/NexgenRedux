@@ -255,10 +255,6 @@ bool DriveManager::GetMountedDrives(std::vector<std::wstring>& drives)
 	}
 	for (uint32_t i = 0; i < fileInfoDetails.size(); i++)
 	{
-		if (StringUtility::EndsWith(fileInfoDetails.at(i).path, L"/.", false) || StringUtility::EndsWith(fileInfoDetails.at(i).path, L"/..", false))
-		{
-			continue;
-		}
 		drives.push_back(fileInfoDetails.at(i).path);
 	}
 	return true;

@@ -319,6 +319,7 @@ bool FileSystem::FileGetFileInfoDetails(std::wstring const path, std::vector<Fil
 	return true;
 
 #elif defined NEXGEN_MAC || defined NEXGEN_LINUX
+
 	struct stat statBuffer;
 	DIR* dir = opendir(StringUtility::ToString(searchPath).c_str());
 	if (dir == NULL) 
@@ -332,6 +333,11 @@ bool FileSystem::FileGetFileInfoDetails(std::wstring const path, std::vector<Fil
 	}
 	while (entry != NULL)
 	{
+		if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+		{
+			entry = readdir(dir);
+			continue;
+		}
 		FileInfoDetail fileInfoDetail;
 		std::wstring currentPath = CombinePath(path, StringUtility::ToWideString(entry->d_name));
 		if (FileGetFileInfoDetail(currentPath, fileInfoDetail) == false)
@@ -344,8 +350,11 @@ bool FileSystem::FileGetFileInfoDetails(std::wstring const path, std::vector<Fil
 	}
 	closedir(dir);
 	return true;
+
 #else
+
 	return false;
+
 #endif
 }
 

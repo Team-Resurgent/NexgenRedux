@@ -204,7 +204,7 @@ int main(int argc, const char* argv[])
 	BootLoader::Run();
 
 	AngelScriptRunner runner = AngelScriptRunner();
-	runner.Run();
+    runner.Run();
 
     glfwInitHint(GLFW_ANGLE_PLATFORM_TYPE, GLFW_ANGLE_PLATFORM_TYPE_VULKAN);
     if (!glfwInit())

@@ -28,7 +28,7 @@ void MessageCallback(asSMessageInfo* msg, void* param)
 	DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, StringUtility::ToWideString(msg->message));
 }
 
-void LineCallback(asIScriptContext* ctx, unsigned long* timeOut)
+void LineCallback(asIScriptContext* ctx, uint32_t* timeOut)
 {
 	//if (*timeOut < timeGetTime()) 
 	//{
@@ -108,7 +108,7 @@ bool AngelScriptRunner::Run(void)
 		return false;
 	}
 
-	DWORD timeOut;
+	uint32_t timeOut;
 	r = ctx->SetLineCallback(asFUNCTION(LineCallback), &timeOut, asCALL_CDECL);
 	if (r < 0)
 	{

@@ -1,6 +1,7 @@
 #include "BootLoader.h"
 #include <Gensys/DriveManager.h>
 #include "ConfigLoader.h"
+#include <cstring>
 
 using namespace Gensys;
 using namespace NexgenRedux;

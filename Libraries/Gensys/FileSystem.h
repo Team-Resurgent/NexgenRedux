@@ -16,6 +16,24 @@
 #include <vector>
 #include <time.h>
 
+
+typedef enum FileMode
+{
+	FileModeRead = 0,
+	FileModeWrite = 1,
+	FileModeAppend = 2,
+	FileModeReadUpdate = 3,
+	FileModeWriteUpdate = 4,
+	FileModeAppendUpdate = 5
+} FileMode;
+
+typedef enum FileSeekMode
+{
+	FileSeekModeStart = 0,
+	FileSeekModeEnd = 1,
+	FileSeekModeCurrent = 2
+} FileSeekMode;
+
 namespace Gensys
 {
 	class FileSystem
@@ -46,23 +64,6 @@ namespace Gensys
 			FileTime accessTime;
 			FileTime writeTime;			
         } FileInfoDetail;
-
-		typedef enum FileMode
-		{
-			FileModeRead = 0,
-			FileModeWrite = 1,
-			FileModeAppend = 2,
-			FileModeReadUpdate = 3,
-			FileModeWriteUpdate = 4,
-			FileModeAppendUpdate = 5
-		} FileMode;
-
-		typedef enum FileSeekMode
-		{
-			FileSeekModeStart = 0,
-			FileSeekModeEnd = 1,
-			FileSeekModeCurrent = 2
-		} FileSeekMode;
 		
 		static bool FileGetFileInfoDetail(std::wstring const path, FileInfoDetail& fileInfoDetail);
 		static bool FileGetFileInfoDetails(std::wstring const path, std::vector<FileInfoDetail>& fileInfoDetails);

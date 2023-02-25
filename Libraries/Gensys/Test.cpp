@@ -117,7 +117,7 @@ static bool FileSystem_FileReadOperations(void)
 	}
 
 	FileSystem::FileInfo fileInfo;
-	if (FileSystem::FileOpen(configFile, FileSystem::FileMode::FileModeRead, fileInfo) == false)
+	if (FileSystem::FileOpen(configFile, FileModeRead, fileInfo) == false)
 	{
 		return false;
 	}
@@ -134,7 +134,7 @@ static bool FileSystem_FileReadOperations(void)
 		return false;
 	}
 
-	if (FileSystem::FileSeek(fileInfo, FileSystem::FileSeekMode::FileSeekModeStart, 10) == false)
+	if (FileSystem::FileSeek(fileInfo, FileSeekModeStart, 10) == false)
 	{
 		return false;
 	}
@@ -187,7 +187,7 @@ static bool FileSystem_FileWriteOperations(void)
 	std::wstring deletemeFile = FileSystem::CombinePath(m_mediaDirectory, L"deletme.txt");
 	
 	FileSystem::FileInfo fileInfo;
-	if (FileSystem::FileOpen(deletemeFile, FileSystem::FileMode::FileModeWrite, fileInfo) == false)
+	if (FileSystem::FileOpen(deletemeFile, FileModeWrite, fileInfo) == false)
 	{
 		return false;
 	}
@@ -319,7 +319,7 @@ static bool DriveManager_GetMountedDrivesAndDetails(void)
 		return false;
 	}
 
-	for (uint32_t i = 0; i < (uint32_t)min(drives.size(), 3); i ++)
+	for (uint32_t i = 0; i < (uint32_t)fmin(drives.size(), 3); i ++)
 	{
 		uint64_t totalSize = 0;
 		if (DriveManager::GetTotalNumberOfBytes(drives.at(i), totalSize) == false)

@@ -3,7 +3,7 @@
 #include <string>
 #include "XboxInternals.h"
 
-#if defined NEXGEN_LINUX
+#if defined NEXGEN_MAC || defined NEXGEN_LINUX
 #include <sys/statvfs.h>
 #endif
 
@@ -122,9 +122,7 @@ uint64_t Drive::GetTotalNumberOfBytes()
 	}
 	return (uint64_t)totalNumberOfBytes.QuadPart;
 
-#elif defined NEXGEN_MAC
-
-#elif defined NEXGEN_LINUX
+#elif defined NEXGEN_MAC || defined NEXGEN_LINUX
 
 	struct statvfs statvfsBuffer;
 	if (statvfs(StringUtility::ToString(m_systemPath).c_str(), &statvfsBuffer) < 0) 
@@ -132,7 +130,7 @@ uint64_t Drive::GetTotalNumberOfBytes()
 		return 0;
 	}
 
-	return (uint64_t)(statvfsBuffer.f_frsize * statvfsBuffer.f_blocks);
+	return (uint64_t)(statvfsBuffer.f_frsize * statvfsBuffer.f_bavail);
 
 #else
 
@@ -147,7 +145,7 @@ uint64_t Drive::GetTotalFreeNumberOfBytes()
 
 	std::wstring rootPath = m_mountPoint + L":\\";
 	ULARGE_INTEGER totalNumberOfFreeBytes;
-	if (GetDiskFreeSpaceExA(StringUtility::ToString(rootPath).c_str(), NULL, NULL, &totalNumberOfFreeBytes) == 0) 
+	if (GetDiskFreeSpaceExA(StringUtility::ToString(rootPath).c_str(), &totalNumberOfFreeBytes, NULL, NULL) == 0) 
 	{
 		return 0;
 	}
@@ -157,15 +155,13 @@ uint64_t Drive::GetTotalFreeNumberOfBytes()
 
 	std::wstring rootPath = m_systemPath;
 	ULARGE_INTEGER totalNumberOfFreeBytes;
-	if (GetDiskFreeSpaceExA(StringUtility::ToString(rootPath).c_str(), NULL, NULL, &totalNumberOfFreeBytes) == 0) 
+	if (GetDiskFreeSpaceExA(StringUtility::ToString(rootPath).c_str(), &totalNumberOfFreeBytes, NULL, NULL) == 0) 
 	{
 		return 0;
 	}
 	return (uint64_t)totalNumberOfFreeBytes.QuadPart;
 
-#elif defined NEXGEN_MAC
-
-#elif defined NEXGEN_LINUX
+#elif defined NEXGEN_MAC || defined NEXGEN_LINUX
 
 	struct statvfs statvfsBuffer;
 	if (statvfs(StringUtility::ToString(m_systemPath).c_str(), &statvfsBuffer) < 0) 
@@ -173,7 +169,7 @@ uint64_t Drive::GetTotalFreeNumberOfBytes()
 		return 0;
 	}
 
-	return (uint64_t)(statvfsBuffer.f_bsize * statvfsBuffer.f_bfree);
+	return (uint64_t)(statvfsBuffer.f_frsize * statvfsBuffer.f_bfree);
 
 
 #else

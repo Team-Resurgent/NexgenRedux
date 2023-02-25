@@ -185,13 +185,12 @@ void DriveManager::InitOrRefresh()
 	std::vector<FileSystem::FileInfoDetail> fileInfoDetails;
 	if (!FileSystem::FileGetFileInfoDetails(L"/Volumes", fileInfoDetails))
 	{
-		return false;
+		return;
 	}
 	for (uint32_t i = 0; i < fileInfoDetails.size(); i++)
 	{
-		m_drives.push_back(Drive(FileSystem::GetDurectory(fileInfoDetails.at(i).path), fileInfoDetails.at(i).path));
+		m_drives.push_back(Drive(FileSystem::GetFileName(fileInfoDetails.at(i).path), fileInfoDetails.at(i).path));
 	}
-	return true;
 
 #elif defined NEXGEN_LINUX
 

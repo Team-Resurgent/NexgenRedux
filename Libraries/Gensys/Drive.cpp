@@ -45,7 +45,9 @@ bool Drive::Mount()
 	return result == 0;
 
 #else
+
 	return true;
+
 #endif
 }
 
@@ -73,14 +75,15 @@ bool Drive::Unmount()
 	return result == 0;
 
 #else
+
 	return true;
+
 #endif
 }
 
 bool Drive::IsMounted()
 {	
-	RefreshDetails();
-	return m_volumeSerialNumber != 0 || m_totalNumberOfBytes > 0;
+	return GetVolumeSerialNumber() != 0 || GetTotalNumberOfBytes() != 0;
 }
 
 std::wstring Drive::GetMountPoint()
@@ -93,48 +96,59 @@ std::wstring Drive::GetSystemPath()
 	return m_systemPath;
 }
 
-void Drive::RefreshDetails()
-{
-#ifdef NEXGEN_OG
+uint64_t Drive::GetTotalNumberOfBytes()
+{	
+#if defined NEXGEN_OG || defined NEXGEN_360 || defined NEXGEN_WIN
+
 	std::wstring rootPath = m_mountPoint + L":\\";
-
-	ULARGE_INTEGER freeBytesAvailable;
 	ULARGE_INTEGER totalNumberOfBytes;
-	ULARGE_INTEGER totalNumberOfFreeBytes;
-	if (GetDiskFreeSpaceExA(StringUtility::ToString(rootPath).c_str(), &freeBytesAvailable, &totalNumberOfBytes, &totalNumberOfFreeBytes)) {
-		m_totalNumberOfBytes = (long)totalNumberOfBytes.QuadPart;
-		m_freeNumberOfBytes = (long)totalNumberOfFreeBytes.QuadPart;
-	} else {
-		m_totalNumberOfBytes = 0;
-		m_freeNumberOfBytes = 0;
+	if (GetDiskFreeSpaceExA(StringUtility::ToString(rootPath).c_str(), NULL, &totalNumberOfBytes, NULL) == 0) 
+	{
+		return 0;
 	}
+	return (uint64_t)totalNumberOfBytes.QuadPart;
 
-	DWORD volumeSerialNumber;
-	DWORD maximumComponentLength;
-	DWORD fileSystemFlags;
-	if (GetVolumeInformationA(StringUtility::ToString(rootPath).c_str(), NULL, 0, &volumeSerialNumber, &maximumComponentLength, &fileSystemFlags, NULL, 0) == 1) {
-		m_volumeSerialNumber = volumeSerialNumber;
-	} else {
-		m_volumeSerialNumber = 0;
-	}
+#else
+
+	return 0;
+
 #endif
 }
 
-long Drive::GetTotalNumberOfBytes()
+uint64_t Drive::GetTotalFreeNumberOfBytes()
 {	
-	RefreshDetails();
-	return m_totalNumberOfBytes; 
+#if defined NEXGEN_OG || defined NEXGEN_360 || defined NEXGEN_WIN
+
+	std::wstring rootPath = m_mountPoint + L":\\";
+	ULARGE_INTEGER totalNumberOfFreeBytes;
+	if (GetDiskFreeSpaceExA(StringUtility::ToString(rootPath).c_str(), NULL, NULL, &totalNumberOfFreeBytes) == 0) 
+	{
+		return 0;
+	}
+	return (uint64_t)totalNumberOfFreeBytes.QuadPart;
+
+#else
+
+	return 0;
+
+#endif
 }
 
-long Drive::GetFreeNumberOfBytes()
+uint32_t Drive::GetVolumeSerialNumber()
 {	
-	RefreshDetails();
-	return m_freeNumberOfBytes; 
-}
+#if defined NEXGEN_OG || defined NEXGEN_360 || defined NEXGEN_WIN
 
-long Drive::GetVolumeSerialNumber()
-{	
-	RefreshDetails();
-	return m_volumeSerialNumber; 
+	std::wstring rootPath = m_mountPoint + L":\\";
+	DWORD volumeSerialNumber;
+	if (GetVolumeInformationA(StringUtility::ToString(rootPath).c_str(), NULL, 0, &volumeSerialNumber, NULL, NULL, NULL, 0) == 0) 
+	{
+		return 0;
+	}
+	return (uint32_t)volumeSerialNumber;
+
+#else
+
+	return 0;
+
+#endif
 }
-	

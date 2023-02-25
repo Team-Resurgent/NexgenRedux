@@ -19,17 +19,13 @@ namespace Gensys
 		bool Mount();  		
 		bool Unmount();
 		bool IsMounted();
-		void RefreshDetails();
 		std::wstring GetMountPoint();
 		std::wstring GetSystemPath();
-		long GetTotalNumberOfBytes();
-		long GetFreeNumberOfBytes();
-		long GetVolumeSerialNumber();
+		uint64_t GetTotalNumberOfBytes();
+		uint64_t GetTotalFreeNumberOfBytes();
+		uint32_t GetVolumeSerialNumber();
 	protected:
 		std::wstring m_mountPoint;
 		std::wstring m_systemPath;
-		long m_totalNumberOfBytes;
-		long m_freeNumberOfBytes;
-		long m_volumeSerialNumber;
 	};
 }

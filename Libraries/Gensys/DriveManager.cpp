@@ -11,19 +11,95 @@ using namespace Gensys;
 
 namespace
 {
+#if defined NEXGEN_OG || defined NEXGEN_360
 	bool m_initialized;
+#endif
 	std::vector<Drive> m_drives;
 }
 
-void DriveManager::Init()
+bool DriveManager::GetTotalNumberOfBytes(std::wstring mountPoint, uint64_t& totalSize)
 {
-	if (m_initialized == true) 
-	{
-		return;
+	InitOrRefresh();
+
+	for (size_t i = 0; i < m_drives.size(); i++) {
+		Drive* currentDrive = &m_drives.at(i);
+		if (currentDrive->GetMountPoint() == mountPoint) {
+			totalSize = (uint64_t)currentDrive->GetTotalNumberOfBytes();
+			return true;
+		}
 	}
-	m_initialized = true;
+	return false;
+}
+
+bool DriveManager::GetTotalFreeNumberOfBytes(std::wstring mountPoint, uint64_t& totalFree)
+{
+	InitOrRefresh();
+
+	for (size_t i = 0; i < m_drives.size(); i++) {
+		Drive* currentDrive = &m_drives.at(i);
+		if (currentDrive->GetMountPoint() == mountPoint) {
+			totalFree = (uint64_t)currentDrive->GetTotalFreeNumberOfBytes();
+			return true;
+		}
+	}
+	return false;
+}
+
+bool DriveManager::GetVolumeSerialNumber(std::wstring mountPoint, uint32_t& serial)
+{
+	InitOrRefresh();
+
+	for (size_t i = 0; i < m_drives.size(); i++) {
+		Drive* currentDrive = &m_drives.at(i);
+		if (currentDrive->GetMountPoint() == mountPoint) {
+			serial = (uint32_t)currentDrive->GetVolumeSerialNumber();
+			return true;
+		}
+	}
+	return false;
+}
+
+bool DriveManager::GetMountedDrives(std::vector<std::wstring>& drives)
+{
+	InitOrRefresh();
+
+	drives.clear();
+	for (uint32_t i = 0; i < m_drives.size(); i++)
+	{
+		Drive* currentDrive = &m_drives.at(i);
+		drives.push_back(currentDrive->GetMountPoint());
+	}
+	return true;
+}
+
+std::wstring DriveManager::MapSystemPath(std::wstring const path)
+{
+	for (size_t i = 0; i < m_drives.size(); i++) {
+		Drive* currentDrive = &m_drives.at(i);
+		std::wstring systemPath = currentDrive->GetSystemPath();
+		if (StringUtility::StartsWith(path, systemPath + L"\\", true)) {
+			std::wstring mountPoint = currentDrive->GetMountPoint();
+			std::wstring temp = path.substr(systemPath.length());
+			std::wstring result = mountPoint + L":" + temp;
+			return result;
+		}
+	}
+	return path;
+}
+
+void DriveManager::InitOrRefresh()
+{
 
 #if defined NEXGEN_OG
+
+	for (size_t i = 0; i < m_drives.size(); i++)
+	{
+		Drive* currentDrive = &m_drives.at(i);
+		if (!currentDrive->IsMounted()) {
+			currentDrive->Mount();
+		}
+	}
+	m_initialized = true;
 
 	m_drives.push_back(Drive(L"C", L"\\Device\\Harddisk0\\Partition2"));
 	m_drives.push_back(Drive(L"D", L"\\Device\\Cdrom0"));
@@ -57,6 +133,15 @@ void DriveManager::Init()
 
 #elif defined NEXGEN_360
 
+	for (size_t i = 0; i < m_drives.size(); i++)
+	{
+		Drive* currentDrive = &m_drives.at(i);
+		if (!currentDrive->IsMounted()) {
+			currentDrive->Mount();
+		}
+	}
+	m_initialized = true;
+
 	m_drives.push_back(Drive(L"Game", L"\\Device\\Game"));
 	m_drives.push_back(Drive(L"Flash", L"\\Device\\Flash"));
 	m_drives.push_back(Drive(L"Memunit0", L"\\Device\\Mu0"));
@@ -85,149 +170,10 @@ void DriveManager::Init()
     {
 		m_drives.at(i)->Mount();
     }
-//#else
-//
-//	std::vector<std::wstring> driveLetters;
-//	GetMountedDrives(driveLetters);
-//    for (int i = 0; i < driveLetters.size(); i++)
-//	{
-//        std::wstring driveLetter = driveLetters[i];
-//		m_drives.push_back(new Drive(driveLetter, driveLetter));
-//	}
-	
-#endif
-}
 
-void DriveManager::Refresh()
-{
-	Init();
-
-	for (size_t i = 0; i < m_drives.size(); i++)
-    {
-		Drive* currentDrive = &m_drives.at(i);
-		if (!currentDrive->IsMounted()) {
-			currentDrive->Mount();
-		}
-    }
-}
-
-std::vector<std::wstring> DriveManager::GetAllMountPoints()
-{
-	Init();
-
-	std::vector<std::wstring> mountPoints;
-	for (size_t i = 0; i < m_drives.size(); i++) {
-		Drive* currentDrive = &m_drives.at(i);
-		mountPoints.push_back(currentDrive->GetMountPoint());		
-    }
-	return mountPoints;
-}
-
-std::vector<std::wstring> DriveManager::GetAllSystemPaths()
-{
-	Init();
-
-	std::vector<std::wstring> systemPaths;
-	for (size_t i = 0; i < m_drives.size(); i++) {
-		Drive* currentDrive = &m_drives.at(i);
-		systemPaths.push_back(currentDrive->GetSystemPath());		
-    }
-	return systemPaths;
-}
-
-std::wstring DriveManager::GetSystemPath(std::wstring mountPoint)
-{
-	Init();
-
-	for (size_t i = 0; i < m_drives.size(); i++) {
-		Drive* currentDrive = &m_drives.at(i);
-		if (currentDrive->GetMountPoint() == mountPoint) {
-			return currentDrive->GetSystemPath();
-		}
-	}
-	return L"";
-}
-
-std::wstring DriveManager::GetMountPoint(std::wstring systemPath)
-{
-	Init();
-
-	for (size_t i = 0; i < m_drives.size(); i++) {
-		Drive* currentDrive = &m_drives.at(i);
-		if (currentDrive->GetSystemPath() == systemPath) {
-			return currentDrive->GetMountPoint();
-		}
-	}
-	return L"";
-}
-
-bool DriveManager::IsMounted(std::wstring mountPoint)
-{
-	Init();
-
-#if defined UWP_ANGLE || defined NEXGEN_WIN
-	return true;
-#else	
-	for (size_t i = 0; i < m_drives.size(); i++) {
-		Drive* currentDrive = &m_drives.at(i);
-		if (currentDrive->GetMountPoint() == mountPoint) {
-			return currentDrive->IsMounted();
-		}
-	}
-	return false;
-#endif
-}
-
-long DriveManager::GetTotalNumberOfBytes(std::wstring mountPoint)
-{
-	Init();
-
-	for (size_t i = 0; i < m_drives.size(); i++) {
-		Drive* currentDrive = &m_drives.at(i);
-		if (currentDrive->GetMountPoint() == mountPoint) {
-			return (long)currentDrive->GetTotalNumberOfBytes();
-		}
-	}
-	return 0;
-}
-
-long DriveManager::GetFreeNumberOfBytes(std::wstring mountPoint)
-{
-	Init();
-
-	for (size_t i = 0; i < m_drives.size(); i++) {
-		Drive* currentDrive = &m_drives.at(i);
-		if (currentDrive->GetMountPoint() == mountPoint) {
-			return (long)currentDrive->GetFreeNumberOfBytes();
-		}
-	}
-	return 0;
-}
-
-long DriveManager::GetVolumeSerialNumber(std::wstring mountPoint)
-{
-	Init();
-
-	for (size_t i = 0; i < m_drives.size(); i++) {
-		Drive* currentDrive = &m_drives.at(i);
-		if (currentDrive->GetMountPoint() == mountPoint) {
-			return currentDrive->GetVolumeSerialNumber();
-		}
-	}
-	return 0;
-}
-
-bool DriveManager::GetMountedDrives(std::vector<std::wstring>& drives)
-{
-	Init();
-
-	drives.clear();
-
-#if defined NEXGEN_OG || defined NEXGEN_360
-
-	return true;
-	
 #elif defined NEXGEN_WIN
+
+	m_drives.clear();
 
 	char buffer[2];
 	buffer[1] = 0;
@@ -241,12 +187,14 @@ bool DriveManager::GetMountedDrives(std::vector<std::wstring>& drives)
 		if ((driveFlags & testFlag) > 0)
 		{
 			buffer[0] = driveLetter;
-			drives.push_back(StringUtility::ToWideString(std::string(buffer)));
+			std::wstring driveLetter = StringUtility::ToWideString(std::string(buffer));
+			m_drives.push_back(Drive(driveLetter, driveLetter + L":\\"));
 		}
 	}
-	return true;
 
 #elif defined NEXGEN_MAC
+
+	m_drives.clear();
 
 	std::vector<FileSystem::FileInfoDetail> fileInfoDetails;
 	if (!FileSystem::FileGetFileInfoDetails(L"/Volumes", fileInfoDetails))
@@ -255,7 +203,7 @@ bool DriveManager::GetMountedDrives(std::vector<std::wstring>& drives)
 	}
 	for (uint32_t i = 0; i < fileInfoDetails.size(); i++)
 	{
-		drives.push_back(fileInfoDetails.at(i).path);
+		m_drives.push_back(Drive(FileSystem::GetDurectory(fileInfoDetails.at(i).path), fileInfoDetails.at(i).path));
 	}
 	return true;
 
@@ -277,7 +225,20 @@ bool DriveManager::GetMountedDrives(std::vector<std::wstring>& drives)
 		{
 			if (name.find(filters[i]) == 0)
 			{
-				drives.push_back(StringUtility::ToWideString(entry->mnt_dir));
+				std::wstring nameToAdd = FileSystem::GetFileName(StringUtility::ToWideString(name));
+				bool found = false;
+				for (uint32_t i = 0; i < (uint32_t)drives.size(); i++)
+				{
+					if (drives.at(i) == nameToAdd) 
+					{
+						found = true;
+						break;
+					}
+				}
+				if (found == false) 
+				{				
+					m_drives.push_back(Drive(FileSystem::GetFileName(nameToAdd), StringUtility::ToWideString(xx)));
+				}
 				break;
 			}
 		}
@@ -288,7 +249,7 @@ bool DriveManager::GetMountedDrives(std::vector<std::wstring>& drives)
 
 #else
 
-    return false;
+return false;
 
 #endif
 }

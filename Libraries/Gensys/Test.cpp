@@ -92,7 +92,7 @@ static bool FileSystem_FileGetFileInfoDetails(void)
 	return true;
 }
 
-static bool DriveManager_GetMountedDrives(void)
+static bool DriveManager_GetMountedDrivesAndDetails(void)
 {
 	std::vector<std::wstring> drives;
 
@@ -106,7 +106,37 @@ static bool DriveManager_GetMountedDrives(void)
 	{
 		return false;
 	}
-	
+
+	for (uint32_t i = 0; i < (uint32_t)drives.size(); i ++)
+	{
+		uint64_t totalSize = 0;
+		if (DriveManager::GetTotalNumberOfBytes(drives.at(i), totalSize) == false)
+		{
+			return false;
+		}
+		if (totalSize == 0)
+		{
+			return false;
+		}
+		uint64_t totalFree = 0;
+		if (DriveManager::GetTotalFreeNumberOfBytes(drives.at(i), totalFree) == false)
+		{
+			return false;
+		}
+		if (totalFree == 0)
+		{
+			return false;
+		}
+		uint32_t serial = 0;
+		if (DriveManager::GetVolumeSerialNumber(drives.at(i), serial) == false)
+		{
+			return false;
+		}
+		if (serial == 0)
+		{
+			return false;
+		}
+	}
 	return true;
 }
 
@@ -125,5 +155,5 @@ void Test::RunTests(void)
 	assert(FileSystem_FileGetFileInfoDetails());
 
 	DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, L"Testing DriveManager_GetMountedDrives");
-	assert(DriveManager_GetMountedDrives());
+	assert(DriveManager_GetMountedDrivesAndDetails());
 }

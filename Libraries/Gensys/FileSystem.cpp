@@ -18,29 +18,6 @@
 
 using namespace Gensys;
 
-namespace {
-
-#if defined NEXGEN_OG || defined NEXGEN_360
-
-	std::wstring MapSystemPath(std::wstring const path)
-	{
-		std::vector<std::wstring> systemPaths = DriveManager::GetAllSystemPaths();
-		for (size_t i = 0; i < systemPaths.size(); i++) {
-			std::wstring systemPath = systemPaths.at(i);
-			if (StringUtility::StartsWith(path, systemPath + L"\\", true)) {
-				std::wstring mountPoint = DriveManager::GetMountPoint(systemPath);
-				std::wstring temp = path.substr(systemPath.length());
-				std::wstring result = mountPoint + L":" + temp;
-				return result;
-			}
-		}
-		return path;
-	}
-
-#endif
-
-}
-
 bool FileSystem::FileGetFileInfoDetail(std::wstring const path, FileInfoDetail& fileInfoDetail)
 {
 #if defined NEXGEN_OG || defined NEXGEN_360
@@ -301,7 +278,7 @@ bool FileSystem::FileGetFileInfoDetails(std::wstring const path, std::vector<Fil
 	} 
 	do 
 	{ 
-		if (findData.cFileName == "." || findData.cFileName == "..")
+		if (std::wstring(findData.cFileName) == L"." || std::wstring(findData.cFileName) == L"..")
 		{
 			continue;
 		}
@@ -683,7 +660,7 @@ bool FileSystem::GetAppDirectory(std::wstring& appDirectory)
 	char buffer[260];
 	STRING *temp = (STRING*)XeImageFileName;
 	sprintf(buffer, temp->Buffer);
-	appDirectory = MapSystemPath(GetDirectory(StringUtility::ToWideString(std::string(&buffer[0], temp->Length))));	
+	appDirectory = DriveManager::MapSystemPath(GetDirectory(StringUtility::ToWideString(std::string(&buffer[0], temp->Length))));	
 	return true;
 #elif defined NEXGEN_360
 	appDirectory = L"Game:";

@@ -3,6 +3,10 @@
 #include <string>
 #include "XboxInternals.h"
 
+#if defined NEXGEN_LINUX
+#include <sys/statvfs.h>
+#endif
+
 using namespace Gensys;
 
 Drive::Drive(std::wstring mountPoint, std::wstring systemPath)
@@ -83,7 +87,7 @@ bool Drive::Unmount()
 
 bool Drive::IsMounted()
 {	
-	return GetVolumeSerialNumber() != 0 || GetTotalNumberOfBytes() != 0;
+	return GetTotalNumberOfBytes() != 0;
 }
 
 std::wstring Drive::GetMountPoint()
@@ -98,7 +102,7 @@ std::wstring Drive::GetSystemPath()
 
 uint64_t Drive::GetTotalNumberOfBytes()
 {	
-#if defined NEXGEN_OG || defined NEXGEN_360 || defined NEXGEN_WIN
+#if defined NEXGEN_OG || defined NEXGEN_360 
 
 	std::wstring rootPath = m_mountPoint + L":\\";
 	ULARGE_INTEGER totalNumberOfBytes;
@@ -107,6 +111,28 @@ uint64_t Drive::GetTotalNumberOfBytes()
 		return 0;
 	}
 	return (uint64_t)totalNumberOfBytes.QuadPart;
+
+#elif defined NEXGEN_WIN
+
+	std::wstring rootPath = m_systemPath;
+	ULARGE_INTEGER totalNumberOfBytes;
+	if (GetDiskFreeSpaceExA(StringUtility::ToString(rootPath).c_str(), NULL, &totalNumberOfBytes, NULL) == 0) 
+	{
+		return 0;
+	}
+	return (uint64_t)totalNumberOfBytes.QuadPart;
+
+#elif defined NEXGEN_MAC
+
+#elif defined NEXGEN_LINUX
+
+	struct statvfs statvfsBuffer;
+	if (statvfs(StringUtility::ToString(m_systemPath).c_str(), &statvfsBuffer) < 0) 
+	{
+		return 0;
+	}
+
+	return (uint64_t)(statvfsBuffer.f_frsize * statvfsBuffer.f_blocks);
 
 #else
 
@@ -117,7 +143,7 @@ uint64_t Drive::GetTotalNumberOfBytes()
 
 uint64_t Drive::GetTotalFreeNumberOfBytes()
 {	
-#if defined NEXGEN_OG || defined NEXGEN_360 || defined NEXGEN_WIN
+#if defined NEXGEN_OG || defined NEXGEN_360
 
 	std::wstring rootPath = m_mountPoint + L":\\";
 	ULARGE_INTEGER totalNumberOfFreeBytes;
@@ -127,24 +153,28 @@ uint64_t Drive::GetTotalFreeNumberOfBytes()
 	}
 	return (uint64_t)totalNumberOfFreeBytes.QuadPart;
 
-#else
+#elif defined NEXGEN_WIN
 
-	return 0;
-
-#endif
-}
-
-uint32_t Drive::GetVolumeSerialNumber()
-{	
-#if defined NEXGEN_OG || defined NEXGEN_360 || defined NEXGEN_WIN
-
-	std::wstring rootPath = m_mountPoint + L":\\";
-	DWORD volumeSerialNumber;
-	if (GetVolumeInformationA(StringUtility::ToString(rootPath).c_str(), NULL, 0, &volumeSerialNumber, NULL, NULL, NULL, 0) == 0) 
+	std::wstring rootPath = m_systemPath;
+	ULARGE_INTEGER totalNumberOfFreeBytes;
+	if (GetDiskFreeSpaceExA(StringUtility::ToString(rootPath).c_str(), NULL, NULL, &totalNumberOfFreeBytes) == 0) 
 	{
 		return 0;
 	}
-	return (uint32_t)volumeSerialNumber;
+	return (uint64_t)totalNumberOfFreeBytes.QuadPart;
+
+#elif defined NEXGEN_MAC
+
+#elif defined NEXGEN_LINUX
+
+	struct statvfs statvfsBuffer;
+	if (statvfs(StringUtility::ToString(m_systemPath).c_str(), &statvfsBuffer) < 0) 
+	{
+		return 0;
+	}
+
+	return (uint64_t)(statvfsBuffer.f_bsize * statvfsBuffer.f_bfree);
+
 
 #else
 
@@ -152,3 +182,4 @@ uint32_t Drive::GetVolumeSerialNumber()
 
 #endif
 }
+

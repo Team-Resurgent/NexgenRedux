@@ -45,20 +45,6 @@ bool DriveManager::GetTotalFreeNumberOfBytes(std::wstring mountPoint, uint64_t& 
 	return false;
 }
 
-bool DriveManager::GetVolumeSerialNumber(std::wstring mountPoint, uint32_t& serial)
-{
-	InitOrRefresh();
-
-	for (size_t i = 0; i < m_drives.size(); i++) {
-		Drive* currentDrive = &m_drives.at(i);
-		if (currentDrive->GetMountPoint() == mountPoint) {
-			serial = (uint32_t)currentDrive->GetVolumeSerialNumber();
-			return true;
-		}
-	}
-	return false;
-}
-
 bool DriveManager::GetMountedDrives(std::vector<std::wstring>& drives)
 {
 	InitOrRefresh();
@@ -212,7 +198,7 @@ void DriveManager::InitOrRefresh()
   	FILE *file = setmntent("/etc/mtab", "r");
     if (file == NULL) 
 	{
-        return false;
+        return;
     }
 
 	const std::string filters[] = { "/dev/sd", "/dev/hd", "/dev/fd", "/dev/sr", "/dev/scd", "/dev/mmcblk"};
@@ -227,9 +213,9 @@ void DriveManager::InitOrRefresh()
 			{
 				std::wstring nameToAdd = FileSystem::GetFileName(StringUtility::ToWideString(name));
 				bool found = false;
-				for (uint32_t i = 0; i < (uint32_t)drives.size(); i++)
+				for (uint32_t i = 0; i < (uint32_t)m_drives.size(); i++)
 				{
-					if (drives.at(i) == nameToAdd) 
+					if (m_drives.at(i).GetMountPoint() == nameToAdd) 
 					{
 						found = true;
 						break;
@@ -237,7 +223,7 @@ void DriveManager::InitOrRefresh()
 				}
 				if (found == false) 
 				{				
-					m_drives.push_back(Drive(FileSystem::GetFileName(nameToAdd), StringUtility::ToWideString(xx)));
+					m_drives.push_back(Drive(FileSystem::GetFileName(nameToAdd), StringUtility::ToWideString(entry->mnt_dir)));
 				}
 				break;
 			}
@@ -245,11 +231,6 @@ void DriveManager::InitOrRefresh()
 		entry = getmntent(file);
     }
     endmntent(file);
-    return true;
-
-#else
-
-return false;
 
 #endif
 }

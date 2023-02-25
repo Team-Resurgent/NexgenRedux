@@ -66,6 +66,7 @@ namespace Gensys
 		
 		static bool FileGetFileInfoDetail(std::wstring const path, FileInfoDetail& fileInfoDetail);
 		static bool FileGetFileInfoDetails(std::wstring const path, std::vector<FileInfoDetail>& fileInfoDetails);
+		
 		static bool FileOpen(std::wstring const path, FileMode const fileMode, FileInfo& fileInfo);
 		static bool FileRead(FileInfo const fileInfo, char* readBuffer, uint32_t const bytesToRead, uint32_t& bytesRead);
 		static bool FileReadAllAsString(std::wstring const path, std::string* buffer);
@@ -84,13 +85,11 @@ namespace Gensys
 		static bool DirectoryExists(std::wstring const path, bool& exists);
 
 		static std::wstring GetFileName(std::wstring const path);
+		static std::wstring GetExtension(std::wstring const path);
 		static std::wstring GetDirectory(std::wstring const path);
 		static bool GetAppDirectory(std::wstring& appDirectory);
 		static bool GetMediaDirectory(std::wstring& mediaDirectory);
 		static wchar_t GetPathSeparator();
 		static std::wstring CombinePath(std::wstring const first, std::wstring const second);
-		static std::wstring GetExtension(std::wstring const path);
-		//static std::wstring GetDriveLetter(std::wstring const path);
-		//static std::wstring ReplaceDriveLetter(std::wstring const path, std::wstring const driveLetter);
 	};
 }

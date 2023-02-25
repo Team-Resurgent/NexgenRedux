@@ -23,7 +23,6 @@ namespace Gensys
 		std::wstring GetSystemPath();
 		uint64_t GetTotalNumberOfBytes();
 		uint64_t GetTotalFreeNumberOfBytes();
-		uint32_t GetVolumeSerialNumber();
 	protected:
 		std::wstring m_mountPoint;
 		std::wstring m_systemPath;

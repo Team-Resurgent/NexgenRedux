@@ -418,7 +418,7 @@ bool FileSystem::FileSeek(FileInfo const fileInfo, FileSeekMode const fileSeekMo
 		seek = SEEK_END;
 	}
 	FILE *file = (FILE*)fileInfo.file;
-	fseek(file, 0, seek);
+	fseek(file, offset, seek);
 	return true;
 }
 
@@ -431,12 +431,21 @@ bool FileSystem::FilePosition(FileInfo const fileInfo, uint32_t& position)
 
 bool FileSystem::DirectoryCreate(const std::wstring path)
 {	
+	bool exists;
+	if (DirectoryExists(path, exists) == false) 
+	{
+		return false;
+	}
+	if (exists) 
+	{
+		return true;
+	}
 #if defined NEXGEN_OG || defined NEXGEN_360
     return CreateDirectoryA(StringUtility::ToString(path).c_str(), NULL) == TRUE;
 #elif defined NEXGEN_WIN
 	return CreateDirectoryW(path.c_str(), NULL) == TRUE;
 #elif defined NEXGEN_MAC || defined NEXGEN_LINUX
-	return mkdir(StringUtility::ToString(path).c_str(), 0777) == 0;
+	return mkdir(StringUtility::ToString(path).c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == 0;
 #else
 	return false;
 #endif
@@ -456,7 +465,7 @@ bool FileSystem::DirectoryDelete(std::wstring const path, bool const recursive)
 		if (fileInfoDetail.isDirectory) 
 		{
 			std::wstring directoryToDelete = fileInfoDetail.path;
-			if (recursive && !DirectoryDelete(directoryToDelete, true)) 
+			if (recursive && DirectoryDelete(directoryToDelete, true) == false) 
 			{
 				return false;
 			}
@@ -464,19 +473,22 @@ bool FileSystem::DirectoryDelete(std::wstring const path, bool const recursive)
 		else
 		{
 			std::wstring fileToDelete = fileInfoDetail.path;
-			if (!FileDelete(fileToDelete))
+			if (FileDelete(fileToDelete) == false)
 			{
 				return false;
 			}
 		}
 	}
 
-	if (recursive && !DirectoryDelete(path, false))
-	{
-		return false;
-	}
-
-	return true;
+#if defined NEXGEN_OG || defined NEXGEN_360
+    return RemoveDirectoryA(StringUtility::ToString(path).c_str(), NULL) == TRUE;
+#elif defined NEXGEN_WIN
+	return RemoveDirectoryW(path.c_str(), NULL) == TRUE;
+#elif defined NEXGEN_MAC || defined NEXGEN_LINUX
+	return rmdir(StringUtility::ToString(path).c_str()) == 0;
+#else
+	return false;
+#endif
 }
 
 bool FileSystem::FileDelete(std::wstring const path)
@@ -515,26 +527,28 @@ bool FileSystem::FileMove(std::wstring const sourcePath, std::wstring const dest
 
 bool FileSystem::DirectoryCopy(std::wstring const sourcePath, std::wstring const destPath)
 {
-	std::wstring directory = GetFileName(sourcePath);
-	std::wstring baseSourcePath = GetDirectory(sourcePath);
-		
+	if (FileSystem::DirectoryCreate(destPath) == false)
+	{
+		return false;
+	}
+	
 	std::vector<std::wstring> directoriesToCopy;
-	directoriesToCopy.push_back(directory);
+	directoriesToCopy.push_back(sourcePath);
 	while (directoriesToCopy.size() > 0)
 	{
 		std::wstring directoryToCopy;
 		directoryToCopy = directoriesToCopy.front();
 		directoriesToCopy.erase(directoriesToCopy.begin());
 
-		std::wstring tempSourcePath = FileSystem::CombinePath(baseSourcePath, directoryToCopy);
-		std::wstring tempDestPath = FileSystem::CombinePath(destPath, directoryToCopy);
-		if (!FileSystem::DirectoryCreate(tempDestPath))
+		std::wstring directoryToCreate = directoryToCopy.substr(sourcePath.length());
+		std::wstring tempDestPath = FileSystem::CombinePath(destPath, directoryToCreate);
+		if (FileSystem::DirectoryCreate(tempDestPath) == false)
 		{
 			return false;
 		}
 
 		std::vector<FileInfoDetail> fileInfoDetails;
-		if (!FileSystem::FileGetFileInfoDetails(tempSourcePath, fileInfoDetails))
+		if (!FileSystem::FileGetFileInfoDetails(directoryToCopy, fileInfoDetails))
 		{
 			return false;
 		}
@@ -547,12 +561,11 @@ bool FileSystem::DirectoryCopy(std::wstring const sourcePath, std::wstring const
 				std::wstring directoryToAdd = fileInfoDetail.path;
 				directoriesToCopy.push_back(directoryToAdd);
 			}
-			else
+			else if (fileInfoDetail.isNormal) 
 			{
 				std::wstring fileToCopy = FileSystem::GetFileName(fileInfoDetail.path);
-				std::wstring sourceFile = FileSystem::CombinePath(baseSourcePath, fileToCopy);
-				std::wstring destFile = FileSystem::CombinePath(destPath, fileToCopy);
-				if (!FileSystem::FileCopy(sourceFile, destFile))
+				std::wstring destFile = FileSystem::CombinePath(tempDestPath, fileToCopy);
+				if (!FileSystem::FileCopy(fileInfoDetail.path, destFile))
 				{
 					return false;
 				}
@@ -574,78 +587,39 @@ bool FileSystem::FileSize(FileInfo const fileInfo, uint32_t& size)
 
 bool FileSystem::FileExists(std::wstring const path, bool& exists)
 {
-#if defined NEXGEN_OG || defined NEXGEN_360
-	WIN32_FIND_DATAA findData;
-	HANDLE handle = FindFirstFileA(StringUtility::ToString(path).c_str(), &findData);
-	if (handle == INVALID_HANDLE_VALUE) 
-	{     
-		return false;
-	} 
-    exists = (findData.dwFileAttributes & FILE_ATTRIBUTE_NORMAL) != 0;
-	FindClose(handle);
-	return true;
-#elif defined NEXGEN_WIN
-	WIN32_FIND_DATAW findData;
-	HANDLE handle = FindFirstFileW(path.c_str(), &findData);
-	if (handle == INVALID_HANDLE_VALUE) 
-	{     
-		return false;
-	} 
-    exists = (findData.dwFileAttributes & FILE_ATTRIBUTE_NORMAL) != 0;
-	FindClose(handle);
-	return true;
-#elif defined NEXGEN_MAC || NEXGEN_LINUX
-	struct stat statBuffer;
-	if (stat(StringUtility::ToString(path).c_str(), &statBuffer) != 0)
+	FileSystem::FileInfoDetail fileInfoDetail;
+	if (FileSystem::FileGetFileInfoDetail(path, fileInfoDetail) == false) 
 	{
-		return false;
+		exists = false;
+		return true;
 	}
-    exists = (statBuffer.st_mode & S_IFMT) == S_IFREG;
+	exists = fileInfoDetail.isNormal;
 	return true;
-#else
-	return false;
-#endif
 }
 
 bool FileSystem::DirectoryExists(std::wstring const path, bool& exists)
 {
-#if defined NEXGEN_OG || defined NEXGEN_360
-	WIN32_FIND_DATAA findData;
-	HANDLE handle = FindFirstFileA(StringUtility::ToString(path).c_str(), &findData);
-	if (handle == INVALID_HANDLE_VALUE) 
-	{     
-		return false;
-	} 
-    exists = (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
-	FindClose(handle);
-	return true;
-#elif defined NEXGEN_WIN
-	WIN32_FIND_DATAW findData;
-	HANDLE handle = FindFirstFileW(path.c_str(), &findData);
-	if (handle == INVALID_HANDLE_VALUE) 
-	{     
-		return false;
-	} 
-    exists = (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
-	FindClose(handle);
-	return true;
-#elif defined NEXGEN_MAC || NEXGEN_LINUX
-	struct stat statBuffer;
-	if (stat(StringUtility::ToString(path).c_str(), &statBuffer) != 0)
+	FileSystem::FileInfoDetail fileInfoDetail;
+	if (FileSystem::FileGetFileInfoDetail(path, fileInfoDetail) == false) 
 	{
-		return false;
+		exists = false;
+		return true;
 	}
-    exists = (statBuffer.st_mode & S_IFMT) == S_IFDIR;
+	exists = fileInfoDetail.isDirectory;
 	return true;
-#else
-	return false;
-#endif
 }
 
 std::wstring FileSystem::GetFileName(std::wstring const path)
 {
 	const std::size_t found = path.find_last_of(GetPathSeparator());
 	return found == std::wstring::npos ? L"" : path.substr(found + 1);
+}
+
+std::wstring FileSystem::GetExtension(std::wstring const path)
+{
+	std::wstring fileName = GetFileName(path);
+	const std::size_t found = fileName.find_last_of(L'.');
+	return found == std::wstring::npos ? L"" : fileName.substr(found);
 }
 
 std::wstring FileSystem::GetDirectory(std::wstring const path)
@@ -716,28 +690,9 @@ wchar_t FileSystem::GetPathSeparator()
 
 std::wstring FileSystem::CombinePath(std::wstring const first, std::wstring const second)
 {
+	if (second.length() == 0)
+	{
+		return first;
+	}
 	return StringUtility::RightTrim(first, GetPathSeparator()) + GetPathSeparator() + StringUtility::LeftTrim(second, GetPathSeparator());
 }
-
-std::wstring FileSystem::GetExtension(std::wstring const path)
-{
-	const std::size_t found = path.find_last_of(L'.');
-	return found == std::wstring::npos ? L"" : path.substr(found + 1);
-}
-
-// std::wstring FileSystem::GetDriveLetter(std::wstring const path)
-// {
-// 	if (path.length() > 1 && path.at(1) == L':') {
-// 		return path.substr(0, 1);
-// 	}
-// 	return L"";
-// }
-
-// std::wstring FileSystem::ReplaceDriveLetter(std::wstring const path, std::wstring const driveLetter)
-// {
-// 	if (path.length() > 1 && path.at(1) == L':') {
-// 		return driveLetter + path.substr(1);
-// 	}
-// 	return L"";
-// }
-

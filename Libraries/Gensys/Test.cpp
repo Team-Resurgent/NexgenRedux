@@ -319,7 +319,7 @@ static bool DriveManager_GetMountedDrivesAndDetails(void)
 		return false;
 	}
 
-	for (uint32_t i = 0; i < (uint32_t)drives.size(); i ++)
+	for (uint32_t i = 0; i < (uint32_t)min(drives.size(), 3); i ++)
 	{
 		uint64_t totalSize = 0;
 		if (DriveManager::GetTotalNumberOfBytes(drives.at(i), totalSize) == false)

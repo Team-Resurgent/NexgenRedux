@@ -32,7 +32,7 @@ bool FileSystem::FileGetFileInfoDetail(std::wstring const path, FileInfoDetail& 
 
 	fileInfoDetail.path = path;
 	fileInfoDetail.isDirectory = (attributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
-	fileInfoDetail.isNormal = (attributes & FILE_ATTRIBUTE_NORMAL) != 0;
+	fileInfoDetail.isFile = (attributes & FILE_ATTRIBUTE_DIRECTORY) == 0;
 
 	HANDLE fileHandle = CreateFileA(StringUtility::ToString(path).c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, fileInfoDetail.isDirectory ? FILE_FLAG_BACKUP_SEMANTICS : 0, NULL);
 	if (fileHandle == INVALID_HANDLE_VALUE)
@@ -103,7 +103,7 @@ bool FileSystem::FileGetFileInfoDetail(std::wstring const path, FileInfoDetail& 
 
 	fileInfoDetail.path = path;
 	fileInfoDetail.isDirectory = (attributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
-	fileInfoDetail.isNormal = (attributes & FILE_ATTRIBUTE_NORMAL) != 0;
+	fileInfoDetail.isFile = (attributes & FILE_ATTRIBUTE_DIRECTORY) == 0;
 
 	HANDLE fileHandle = CreateFileW(path.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, fileInfoDetail.isDirectory ? FILE_FLAG_BACKUP_SEMANTICS : 0, NULL);
 	if (fileHandle == INVALID_HANDLE_VALUE)
@@ -172,7 +172,7 @@ bool FileSystem::FileGetFileInfoDetail(std::wstring const path, FileInfoDetail& 
 
 	fileInfoDetail.path = path;
 	fileInfoDetail.isDirectory = S_ISDIR(statBuffer.st_mode);
-	fileInfoDetail.isNormal = S_ISREG(statBuffer.st_mode);
+	fileInfoDetail.isFile = !S_ISDIR(statBuffer.st_mode);
 
 	struct tm *accessTime = localtime(&statBuffer.st_atimespec.tv_sec);
 
@@ -206,7 +206,7 @@ bool FileSystem::FileGetFileInfoDetail(std::wstring const path, FileInfoDetail& 
 
 	fileInfoDetail.path = path;
 	fileInfoDetail.isDirectory = S_ISDIR(statBuffer.st_mode);
-	fileInfoDetail.isNormal = S_ISREG(statBuffer.st_mode);
+	fileInfoDetail.isFile = !S_ISDIR(statBuffer.st_mode);
 
 	struct tm *accessTime = localtime(&statBuffer.st_atim.tv_sec);
 
@@ -481,9 +481,9 @@ bool FileSystem::DirectoryDelete(std::wstring const path, bool const recursive)
 	}
 
 #if defined NEXGEN_OG || defined NEXGEN_360
-    return RemoveDirectoryA(StringUtility::ToString(path).c_str(), NULL) == TRUE;
+    return RemoveDirectoryA(StringUtility::ToString(path).c_str(),) == TRUE;
 #elif defined NEXGEN_WIN
-	return RemoveDirectoryW(path.c_str(), NULL) == TRUE;
+	return RemoveDirectoryW(path.c_str()) == TRUE;
 #elif defined NEXGEN_MAC || defined NEXGEN_LINUX
 	return rmdir(StringUtility::ToString(path).c_str()) == 0;
 #else
@@ -561,7 +561,7 @@ bool FileSystem::DirectoryCopy(std::wstring const sourcePath, std::wstring const
 				std::wstring directoryToAdd = fileInfoDetail.path;
 				directoriesToCopy.push_back(directoryToAdd);
 			}
-			else if (fileInfoDetail.isNormal) 
+			else if (fileInfoDetail.isFile) 
 			{
 				std::wstring fileToCopy = FileSystem::GetFileName(fileInfoDetail.path);
 				std::wstring destFile = FileSystem::CombinePath(tempDestPath, fileToCopy);
@@ -593,7 +593,7 @@ bool FileSystem::FileExists(std::wstring const path, bool& exists)
 		exists = false;
 		return true;
 	}
-	exists = fileInfoDetail.isNormal;
+	exists = fileInfoDetail.isFile;
 	return true;
 }
 

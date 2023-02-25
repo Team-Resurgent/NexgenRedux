@@ -40,7 +40,7 @@ namespace Gensys
 		typedef struct FileInfoDetail
         {
 			bool isDirectory;
-			bool isNormal;
+			bool isFile;
 			std::wstring path;
 			uint32_t size;
 			FileTime accessTime;

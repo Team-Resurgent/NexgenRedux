@@ -10,10 +10,9 @@ void BootLoader::Run()
 	ConfigData configData;
 	memset(&configData, 0, sizeof(configData));
 
-	ConfigLoader *configLoader = new ConfigLoader();
-	if (configLoader->LoadConfig(&configData) == true) 
+	ConfigLoader configLoader = ConfigLoader();
+	if (configLoader.LoadConfig(&configData) == true) 
 	{
 		// do something
 	}
-	delete configLoader;
 }

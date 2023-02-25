@@ -142,10 +142,16 @@
 			Name="NexgenRedux-Shared"
 			Filter="">
 			<File
-				RelativePath=".\BootLoader.cpp">
+				RelativePath="..\NexgenRedux-Shared\AngelScriptRunner.cpp">
 			</File>
 			<File
-				RelativePath=".\BootLoader.h">
+				RelativePath="..\NexgenRedux-Shared\AngelScriptRunner.h">
+			</File>
+			<File
+				RelativePath="..\NexgenRedux-Shared\BootLoader.cpp">
+			</File>
+			<File
+				RelativePath="..\NexgenRedux-Shared\BootLoader.h">
 			</File>
 			<File
 				RelativePath="..\NexgenRedux-Shared\ConfigLoader.cpp">

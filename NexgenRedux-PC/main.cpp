@@ -15,10 +15,12 @@
 #include <Gensys/FileSystem.h>
 #include <Gensys/Test.h>
 
+#include "BootLoader.h"
+#include "AngelScriptRunner.h"
 
-//using namespace NexgenRedux;
+using namespace NexgenRedux;
 using namespace Gensys;
-//using namespace AngelScript;
+using namespace AngelScript;
 
 const char *vs = 
 "(#version 310 es" 
@@ -198,6 +200,11 @@ void drop_callback(GLFWwindow* window, int count, const char** paths)
 int main(int argc, const char* argv[])
 {
 	Gensys::Test::RunTests();
+
+	BootLoader::Run();
+
+	AngelScriptRunner runner = AngelScriptRunner();
+	runner.Run();
 
     glfwInitHint(GLFW_ANGLE_PLATFORM_TYPE, GLFW_ANGLE_PLATFORM_TYPE_VULKAN);
     if (!glfwInit())

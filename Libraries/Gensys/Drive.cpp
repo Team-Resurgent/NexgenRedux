@@ -2,6 +2,7 @@
 #include "StringUtility.h"
 #include <string>
 #include "XboxInternals.h"
+#include "Int.h"
 
 #if defined NEXGEN_MAC || defined NEXGEN_LINUX
 #include <sys/statvfs.h>

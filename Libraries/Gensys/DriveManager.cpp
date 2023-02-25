@@ -53,13 +53,18 @@ bool DriveManager::GetMountedDrives(std::vector<std::wstring>& drives)
 	for (uint32_t i = 0; i < m_drives.size(); i++)
 	{
 		Drive* currentDrive = &m_drives.at(i);
-		drives.push_back(currentDrive->GetMountPoint());
+		if (currentDrive->IsMounted()) 
+		{
+			drives.push_back(currentDrive->GetMountPoint());
+		}
 	}
 	return true;
 }
 
 std::wstring DriveManager::MapSystemPath(std::wstring const path)
 {
+	InitOrRefresh();
+
 	for (size_t i = 0; i < m_drives.size(); i++) {
 		Drive* currentDrive = &m_drives.at(i);
 		std::wstring systemPath = currentDrive->GetSystemPath();

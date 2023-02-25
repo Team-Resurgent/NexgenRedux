@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Int.h"
 #include <string>
 
 #if defined UWP_ANGLE || defined NEXGEN_WIN

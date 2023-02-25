@@ -481,7 +481,7 @@ bool FileSystem::DirectoryDelete(std::wstring const path, bool const recursive)
 	}
 
 #if defined NEXGEN_OG || defined NEXGEN_360
-    return RemoveDirectoryA(StringUtility::ToString(path).c_str(),) == TRUE;
+    return RemoveDirectoryA(StringUtility::ToString(path).c_str()) == TRUE;
 #elif defined NEXGEN_WIN
 	return RemoveDirectoryW(path.c_str()) == TRUE;
 #elif defined NEXGEN_MAC || defined NEXGEN_LINUX

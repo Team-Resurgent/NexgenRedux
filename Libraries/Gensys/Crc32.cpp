@@ -22,14 +22,14 @@ unsigned long Crc32::CalcCrc(char *buffer, long size)
 	return crc;
 }
 
-unsigned long Crc32::CalcCrc(FileSystem::FileInfo fileInfo)
+unsigned long Crc32::CalcCrc(uint32_t fileHandle)
 {   
 	unsigned long crc = 0xffffffff;
 	char *buffer = new char[65535];
 	uint32_t bytesRead = 0;
 	while (true)
 	{
-		if (FileSystem::FileRead(fileInfo, buffer, 65535, bytesRead)) {
+		if (FileSystem::FileRead(fileHandle, buffer, 65535, bytesRead)) {
 			return 0;
 		}
 		if (bytesRead == 0) {

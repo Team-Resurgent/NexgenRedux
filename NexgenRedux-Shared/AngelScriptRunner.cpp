@@ -11,46 +11,43 @@ using namespace Gensys;
 using namespace NexgenRedux;
 using namespace AngelScript;
 
+namespace {
+
+	asIScriptEngine* m_engine;
+
+}
+
+void DebugPrint(asIScriptGeneric* generic)
+{
+	DebugUtility::LogLevel logLevel = (DebugUtility::LogLevel)generic->GetArgDWord(0);
+	std::string *message = (std::string*)generic->GetArgAddress(1);
+	DebugUtility::LogMessage(logLevel, *message);
+}
+
 void MessageCallback(asSMessageInfo* msg, void* param)
 {
-	const char *type = "ERR";
+	DebugUtility::LogLevel logLevel = DebugUtility::LOGLEVEL_ERROR;
 	if (msg->type == asMSGTYPE_WARNING)
 	{
-		type = "WARN";
+		logLevel = DebugUtility::LOGLEVEL_WARNING;
 	}
 	else if (msg->type == asMSGTYPE_INFORMATION)
 	{ 
-		type = "INFO";
+		logLevel = DebugUtility::LOGLEVEL_INFO;
 	}
-
-	DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, StringUtility::ToWideString(type));
-	DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, StringUtility::ToWideString(msg->section));
-	DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, StringUtility::ToWideString(msg->message));
+	if (strlen(msg->section) > 0)
+	{
+		DebugUtility::LogMessage(logLevel, "%s (%d, %d) : %s", msg->section, msg->row, msg->col, msg->message);
+	} 
+	else 
+	{
+		DebugUtility::LogMessage(logLevel, "(%d, %d) : %s", msg->row, msg->col, msg->message);
+	}
 }
 
-void LineCallback(asIScriptContext* ctx, uint32_t* timeOut)
+bool CompileScript(asIScriptEngine* engine)
 {
-	//if (*timeOut < timeGetTime()) 
-	//{
-	//	ctx->Abort();
-	//}
-}
-
-void PrintString(asIScriptGeneric* gen)
-{
-	std::string *str = (std::string*)gen->GetArgAddress(0);
-	DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, StringUtility::ToWideString(*str));
-}
-
-void AngelScriptRunner::ConfigureEngine(asIScriptEngine* engine)
-{
-	RegisterStdString(engine);
-	int r = engine->RegisterGlobalFunction("void Print(string &in)", asFUNCTION(PrintString), asCALL_GENERIC);
-}
-
-bool AngelScriptRunner::CompileScript(asIScriptEngine* engine)
-{
-	int r;
+	int result;
 
 	std::wstring mediaDirectory;
 	if (FileSystem::GetMediaDirectory(mediaDirectory) == false)
@@ -66,14 +63,14 @@ bool AngelScriptRunner::CompileScript(asIScriptEngine* engine)
 	}
 
 	asIScriptModule *mod = engine->GetModule(0, asGM_ALWAYS_CREATE);
-	r = mod->AddScriptSection("script", &script[0], script.length());
-	if (r < 0) 
+	result = mod->AddScriptSection("script", &script[0], script.length());
+	if (result < 0) 
 	{
 		return false;
 	}
 	
-	r = mod->Build();
-	if (r < 0)
+	result = mod->Build();
+	if (result < 0)
 	{
 		return false;
 	}
@@ -81,85 +78,101 @@ bool AngelScriptRunner::CompileScript(asIScriptEngine* engine)
 	return true;
 }
 
-
-bool AngelScriptRunner::Run(void)
+bool AngelScriptRunner::Init(void)
 {
-	asIScriptEngine *engine = asCreateScriptEngine();
-	if( engine == 0 )
+	int result;
+
+	m_engine = asCreateScriptEngine();
+	if (m_engine == NULL)
 	{
 		return false;
 	}
 
-	engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
+	m_engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
 
-	ConfigureEngine(engine);
+	RegisterStdString(m_engine);
 
-	int r = CompileScript(engine);
-	if (r < 0)
+	result = m_engine->RegisterGlobalFunction("void DebugPrint(int logLevel, string &in)", asFUNCTION(DebugPrint), asCALL_GENERIC) < 0;
+	if (result < 0)
 	{
-		engine->Release();
 		return false;
 	}
 
-	asIScriptContext *ctx = engine->CreateContext();
-	if( ctx == 0 ) 
+	result = CompileScript(m_engine);
+	if (result < 0)
 	{
-		engine->Release();
+		m_engine->Release();
 		return false;
 	}
 
-	uint32_t timeOut;
-	r = ctx->SetLineCallback(asFUNCTION(LineCallback), &timeOut, asCALL_CDECL);
-	if (r < 0)
-	{
-		ctx->Release();
-		engine->Release();
-		return false;
-	}
-
-	asIScriptFunction *func = engine->GetModule(0)->GetFunctionByDecl("float calc(float, float)");
-	if (func == 0)
-	{
-		ctx->Release();
-		engine->Release();
-		return false;
-	}
-
-	r = ctx->Prepare(func);
-	if (r < 0) 
-	{
-		ctx->Release();
-		engine->Release();
-		return false;
-	}
-
-	ctx->SetArgFloat(0, 3.14159265359f);
-	ctx->SetArgFloat(1, 2.71828182846f);
-
-	//timeOut = timeGetTime() + 1000;
-	r = ctx->Execute();
-	if (r != asEXECUTION_FINISHED)
-	{
-		if (r == asEXECUTION_ABORTED) 
-		{
-			int x = 1;
-		}
-		else if( r == asEXECUTION_EXCEPTION )
-		{
-			asIScriptFunction *func = ctx->GetExceptionFunction();
-		}
-		else 
-		{
-			int x = 1;
-		}
-	}
-	else
-	{
-		float returnValue = ctx->GetReturnFloat();
-		int x = 1;
-	}
-
-	ctx->Release();
-	engine->ShutDownAndRelease();
 	return true;
+}
+
+bool AngelScriptRunner::ExecuteCalc(void)
+{
+	int result;
+
+	asIScriptContext *context = m_engine->CreateContext();
+	if (context == 0) 
+	{
+		m_engine->Release();
+		return false;
+	}
+
+	asIScriptFunction *calcFunction = m_engine->GetModule(0)->GetFunctionByDecl("float calc(float, float)");
+	if (calcFunction == 0)
+	{
+		context->Release();
+		m_engine->Release();
+		return false;
+	}
+
+	result = context->Prepare(calcFunction);
+	if (result < 0) 
+	{
+		context->Release();
+		m_engine->Release();
+		return false;
+	}
+
+	context->SetArgFloat(0, 3.14159265359f);
+	context->SetArgFloat(1, 2.71828182846f);
+
+	bool success = false;
+
+	result = context->Execute();
+	if (result == asEXECUTION_FINISHED)
+	{
+		float returnValue = context->GetReturnFloat();
+		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, "Calc Result = %f.", returnValue);
+		success = true;
+	}
+	else if (result == asCONTEXT_NOT_PREPARED)
+	{
+		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "AngelScript - Context not prepared.");
+		success = false;
+	}
+	else if (result == asEXECUTION_ABORTED) 
+	{
+		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_WARNING, "AngelScript - Execution aborted.");
+		success = false;
+	}
+	else if (result == asEXECUTION_SUSPENDED) 
+	{
+		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_WARNING, "AngelScript - Execution suspended.");
+		success = false;
+	}
+	else if (result == asEXECUTION_EXCEPTION)
+	{
+		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_WARNING, "AngelScript - Exception occured '%s'.", context->GetExceptionString());
+		success = false;
+	}
+
+	context->Release();
+	return success;
+}
+
+void AngelScriptRunner::Close(void)
+{
+	m_engine->ShutDownAndRelease();
 }

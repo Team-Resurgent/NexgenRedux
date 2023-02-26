@@ -17,6 +17,6 @@ namespace Gensys
 
 		static void DeleteLogFile();
 		static void SetLogFile(std::wstring const logFile);
-		static void LogMessage(LogLevel const logLevel, std::wstring const format, ...);
+		static void LogMessage(LogLevel const logLevel, std::string const format, ...);
 	};
 }

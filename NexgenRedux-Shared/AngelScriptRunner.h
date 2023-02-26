@@ -11,12 +11,8 @@ namespace NexgenRedux
 	class AngelScriptRunner
 	{
 	public:
-		bool Run(void);
-	private:
-		//void MessageCallback(asSMessageInfo* msg, void* param);
-		//void LineCallback(asIScriptContext* ctx, unsigned long* timeOut);
-		//void PrintString(asIScriptGeneric* gen);
-		void ConfigureEngine(asIScriptEngine* engine);
-		bool CompileScript(asIScriptEngine* engine);
+		static bool Init(void);
+		static bool ExecuteCalc(void);
+		static void Close(void);
 	};
 }

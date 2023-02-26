@@ -34,12 +34,12 @@ void DebugUtility::DeleteLogFile()
     FileSystem::FileDelete(m_LogFile);
 }
 
-void DebugUtility::LogMessage(LogLevel const logLevel, std::wstring const format, ...)
+void DebugUtility::LogMessage(LogLevel const logLevel, std::string const format, ...)
 {
 	va_list args;
 	va_start(args, format);	
 	char buffer[1024];
-	vsprintf(buffer, StringUtility::ToString(format).c_str(), args);	
+	vsprintf(buffer, format.c_str(), args);	
 	va_end(args);
 
 	std::string message = std::string(buffer);

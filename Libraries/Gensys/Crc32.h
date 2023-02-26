@@ -9,7 +9,7 @@ namespace Gensys
 	public:
 		Crc32();
 		unsigned long CalcCrc(char *buffer, long size);
-		unsigned long CalcCrc(FileSystem::FileInfo fileInfo);  			
+		unsigned long CalcCrc(uint32_t fileHandle);  			
 	protected:
 		unsigned long Reflect(long ref, char ch);
 		unsigned long Table[256];

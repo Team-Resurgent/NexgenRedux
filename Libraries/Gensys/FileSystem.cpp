@@ -3,6 +3,7 @@
 #include "XboxInternals.h"
 #include "DriveManager.h"
 #include <cstring>
+#include <map>
 
 #if defined NEXGEN_WIN
 #include <windows.h>
@@ -17,6 +18,29 @@
 #endif
 
 using namespace Gensys;
+
+namespace {
+
+	uint32_t m_maxFileInfoID = 0;
+	std::map<uint32_t, FileSystem::FileInfo> m_fileInfoMap;
+
+	uint32_t AddFileInfo(FileSystem::FileInfo fileInfo)
+	{
+		uint32_t result = m_maxFileInfoID;
+		m_fileInfoMap.insert(std::pair<uint32_t, FileSystem::FileInfo>(result, fileInfo));
+		m_maxFileInfoID++;
+		return result;
+	}
+
+	FileSystem::FileInfo* GetFileInfo(uint32_t fileHandle)
+	{
+		std::map<uint32_t, FileSystem::FileInfo>::iterator it = m_fileInfoMap.find(fileHandle);
+		if (it == m_fileInfoMap.end()) {
+			return NULL;
+		}
+		return (FileSystem::FileInfo*)&it->second;
+	}
+}
 
 bool FileSystem::FileGetFileInfoDetail(std::wstring const path, FileInfoDetail& fileInfoDetail)
 {
@@ -335,7 +359,7 @@ bool FileSystem::FileGetFileInfoDetails(std::wstring const path, std::vector<Fil
 #endif
 }
 
-bool FileSystem::FileOpen(std::wstring const path, FileMode const fileMode, FileInfo& fileInfo)
+bool FileSystem::FileOpen(std::wstring const path, FileMode const fileMode, uint32_t& fileHandle)
 {
 	std::wstring access = L"";
 	if (fileMode == FileModeRead) {
@@ -357,17 +381,27 @@ bool FileSystem::FileOpen(std::wstring const path, FileMode const fileMode, File
 		access = L"a+";
 	}
 	access = access + L"b";
+	FileInfo fileInfo;
 #if defined NEXGEN_OG || defined NEXGEN_360 || defined NEXGEN_MAC || defined NEXGEN_LINUX
 	fileInfo.file = fopen(StringUtility::ToString(path).c_str(), StringUtility::ToString(access).c_str());
 #elif defined NEXGEN_WIN 
 	fopen_s((FILE **)&fileInfo.file, StringUtility::ToString(path).c_str(), StringUtility::ToString(access).c_str());
 #endif
-    return fileInfo.file != NULL;
+	if (fileInfo.file == NULL)
+	{
+		return false;
+	}
+	fileHandle = AddFileInfo(fileInfo);
+    return true;
 }
 
-bool FileSystem::FileRead(FileInfo const fileInfo, char* readBuffer, uint32_t const bytesToRead, uint32_t& bytesRead)
+bool FileSystem::FileRead(uint32_t fileHandle, char* readBuffer, uint32_t const bytesToRead, uint32_t& bytesRead)
 {
-	bytesRead = (uint32_t)fread(readBuffer, bytesToRead, 1, (FILE*)fileInfo.file);
+	FileInfo* fileInfo = GetFileInfo(fileHandle);
+	if (fileInfo == NULL) {
+		return false;
+	}
+	bytesRead = (uint32_t)fread(readBuffer, bytesToRead, 1, (FILE*)fileInfo->file);
 	return true;
 }
 
@@ -395,18 +429,26 @@ bool FileSystem::FileReadAllAsString(std::wstring const path, std::string* buffe
 	return bytesRead == fileLength;
 }
 
-bool FileSystem::FileWrite(FileInfo const fileInfo, char* writeBuffer, uint32_t bytesToWrite, uint32_t& bytesWritten)
+bool FileSystem::FileWrite(uint32_t fileHandle, char* writeBuffer, uint32_t bytesToWrite, uint32_t& bytesWritten)
 {
-	bytesWritten = (uint32_t)fwrite(writeBuffer, 1, bytesToWrite, (FILE*)fileInfo.file);
+	FileInfo* fileInfo = GetFileInfo(fileHandle);
+	if (fileInfo == NULL) {
+		return false;
+	}
+	bytesWritten = (uint32_t)fwrite(writeBuffer, 1, bytesToWrite, (FILE*)fileInfo->file);
 	return bytesWritten == bytesToWrite;
 }
 
-bool FileSystem::FileClose(FileInfo const fileInfo)
+bool FileSystem::FileClose(uint32_t fileHandle)
 {
-	return fclose((FILE*)fileInfo.file) == 0;
+	FileInfo* fileInfo = GetFileInfo(fileHandle);
+	if (fileInfo == NULL) {
+		return false;
+	}
+	return fclose((FILE*)fileInfo->file) == 0;
 }
 
-bool FileSystem::FileSeek(FileInfo const fileInfo, FileSeekMode const fileSeekMode, uint32_t const offset)
+bool FileSystem::FileSeek(uint32_t fileHandle, FileSeekMode const fileSeekMode, uint32_t const offset)
 {
 	int seek = SEEK_CUR;
 	if (fileSeekMode == FileSeekModeStart)
@@ -417,14 +459,22 @@ bool FileSystem::FileSeek(FileInfo const fileInfo, FileSeekMode const fileSeekMo
 	{
 		seek = SEEK_END;
 	}
-	FILE *file = (FILE*)fileInfo.file;
+	FileInfo* fileInfo = GetFileInfo(fileHandle);
+	if (fileInfo == NULL) {
+		return false;
+	}
+	FILE *file = (FILE*)fileInfo->file;
 	fseek(file, offset, seek);
 	return true;
 }
 
-bool FileSystem::FilePosition(FileInfo const fileInfo, uint32_t& position)
+bool FileSystem::FilePosition(uint32_t fileHandle, uint32_t& position)
 {
-	FILE *file = (FILE*)fileInfo.file;
+	FileInfo* fileInfo = GetFileInfo(fileHandle);
+	if (fileInfo == NULL) {
+		return false;
+	}
+	FILE *file = (FILE*)fileInfo->file;
 	position = ftell(file);
 	return true;
 }
@@ -498,23 +548,43 @@ bool FileSystem::FileDelete(std::wstring const path)
 
 bool FileSystem::FileCopy(std::wstring const sourcePath, std::wstring const destPath)
 {
-	FileInfo sourceFileInfo;
-	FileOpen(sourcePath, FileModeRead, sourceFileInfo);
+	uint32_t sourceFileHandle;
+	FileOpen(sourcePath, FileModeRead, sourceFileHandle);
 	
-	FileInfo destFileInfo;
-	FileOpen(destPath, FileModeWrite, destFileInfo);
+	uint32_t destFileHandle;
+	FileOpen(destPath, FileModeWrite, destFileHandle);
 	
 	char *buffer = (char*)malloc(32758);
-	uint32_t bytesRead = (uint32_t)fread(buffer, 1, 32768, (FILE*)sourceFileInfo.file);
+
+	uint32_t bytesRead;
+	if (FileRead(sourceFileHandle, buffer, 32768, bytesRead) == false)
+	{
+		FileClose(sourceFileHandle);
+		FileClose(destFileHandle);
+		return false;
+	}
+	
 	while (bytesRead > 0)
 	{
-		fwrite(buffer, 1, bytesRead, (FILE*)destFileInfo.file);
-		bytesRead = (uint32_t)fread(buffer, 1, 32768, (FILE*)sourceFileInfo.file);
+		uint32_t bytesWritten;
+		if (FileWrite(destFileHandle, buffer, bytesRead, bytesWritten) == false || bytesWritten != bytesRead)
+		{
+			FileClose(sourceFileHandle);
+			FileClose(destFileHandle);
+			return false;
+		}
+		if (FileRead(sourceFileHandle, buffer, 32768, bytesRead) == false)
+		{
+			FileClose(sourceFileHandle);
+			FileClose(destFileHandle);
+			return false;
+		}
 	}
+	
 	free(buffer);
 	
-	FileClose(sourceFileInfo);
-	FileClose(destFileInfo);
+	FileClose(sourceFileHandle);
+	FileClose(destFileHandle);
 	return true;
 }
 
@@ -575,9 +645,13 @@ bool FileSystem::DirectoryCopy(std::wstring const sourcePath, std::wstring const
 	return true;
 }
 
-bool FileSystem::FileSize(FileInfo const fileInfo, uint32_t& size)
+bool FileSystem::FileSize(uint32_t fileHandle, uint32_t& size)
 {
-	FILE* file = (FILE*)fileInfo.file;
+	FileInfo* fileInfo = GetFileInfo(fileHandle);
+	if (fileInfo == NULL) {
+		return false;
+	}
+	FILE* file = (FILE*)fileInfo->file;
 	uint32_t filePosition = ftell(file);
 	fseek(file, 0, SEEK_END);
 	size = ftell(file);

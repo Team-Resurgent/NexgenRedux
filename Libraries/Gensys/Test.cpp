@@ -116,8 +116,8 @@ static bool FileSystem_FileReadOperations(void)
 		return false;
 	}
 
-	FileSystem::FileInfo fileInfo;
-	if (FileSystem::FileOpen(configFile, FileModeRead, fileInfo) == false)
+	uint32_t fileHandle;
+	if (FileSystem::FileOpen(configFile, FileSystem::FileModeRead, fileHandle) == false)
 	{
 		return false;
 	}
@@ -125,7 +125,7 @@ static bool FileSystem_FileReadOperations(void)
 	char buffer;
 	uint32_t bytesRead;
 
-	if (FileSystem::FileRead(fileInfo, &buffer, 1, bytesRead) == false)
+	if (FileSystem::FileRead(fileHandle, &buffer, 1, bytesRead) == false)
 	{
 		return false;
 	}
@@ -134,13 +134,13 @@ static bool FileSystem_FileReadOperations(void)
 		return false;
 	}
 
-	if (FileSystem::FileSeek(fileInfo, FileSeekModeStart, 10) == false)
+	if (FileSystem::FileSeek(fileHandle, FileSystem::FileSeekModeStart, 10) == false)
 	{
 		return false;
 	}
 
 	uint32_t position;
-	if (FileSystem::FilePosition(fileInfo, position) == false)
+	if (FileSystem::FilePosition(fileHandle, position) == false)
 	{
 		return false;
 	}
@@ -149,7 +149,7 @@ static bool FileSystem_FileReadOperations(void)
 		return false;
 	}
 
-	if (FileSystem::FileRead(fileInfo, &buffer, 1, bytesRead) == false)
+	if (FileSystem::FileRead(fileHandle, &buffer, 1, bytesRead) == false)
 	{
 		return false;
 	}
@@ -159,7 +159,7 @@ static bool FileSystem_FileReadOperations(void)
 	}
 
 	uint32_t size;
-	if (FileSystem::FileSize(fileInfo, size) == false)
+	if (FileSystem::FileSize(fileHandle, size) == false)
 	{
 		return false;
 	}
@@ -168,7 +168,7 @@ static bool FileSystem_FileReadOperations(void)
 		return false;
 	}
 
-	if (FileSystem::FileClose(fileInfo) == false)
+	if (FileSystem::FileClose(fileHandle) == false)
 	{
 		return false;
 	}
@@ -186,8 +186,8 @@ static bool FileSystem_FileWriteOperations(void)
 {
 	std::wstring deletemeFile = FileSystem::CombinePath(m_mediaDirectory, L"deletme.txt");
 	
-	FileSystem::FileInfo fileInfo;
-	if (FileSystem::FileOpen(deletemeFile, FileModeWrite, fileInfo) == false)
+	uint32_t fileHandle;
+	if (FileSystem::FileOpen(deletemeFile, FileSystem::FileModeWrite, fileHandle) == false)
 	{
 		return false;
 	}
@@ -195,7 +195,7 @@ static bool FileSystem_FileWriteOperations(void)
 	char hello[] = "Hello";
 	uint32_t bytesWritten;
 
-	if (FileSystem::FileWrite(fileInfo, &hello[0], 5, bytesWritten) == false)
+	if (FileSystem::FileWrite(fileHandle, &hello[0], 5, bytesWritten) == false)
 	{
 		return false;
 	}
@@ -204,7 +204,7 @@ static bool FileSystem_FileWriteOperations(void)
 		return false;
 	}
 
-	if (FileSystem::FileClose(fileInfo) == false)
+	if (FileSystem::FileClose(fileHandle) == false)
 	{
 		return false;
 	}
@@ -345,30 +345,30 @@ static bool DriveManager_GetMountedDrivesAndDetails(void)
 
 void Test::RunTests(void)
 {
-	DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, L"Testing FileSystem_GetAppDirectory");
+	DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, "Testing FileSystem_GetAppDirectory");
 	assert(FileSystem_GetAppDirectory());
 
-	DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, L"Testing FileSystem_GetMediaDirectory");
+	DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, "Testing FileSystem_GetMediaDirectory");
 	assert(FileSystem_GetMediaDirectory());
 
-	DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, L"Testing FileSystem_FileGetFileInfoDetail");
+	DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, "Testing FileSystem_FileGetFileInfoDetail");
 	assert(FileSystem_FileGetFileInfoDetail());
 
-	DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, L"Testing FileSystem_FileGetFileInfoDetails");
+	DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, "Testing FileSystem_FileGetFileInfoDetails");
 	assert(FileSystem_FileGetFileInfoDetails());
 
-	DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, L"Testing FileSystem_FileOperations");
+	DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, "Testing FileSystem_FileOperations");
 	assert(FileSystem_FileReadOperations());
 
-	DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, L"Testing FileSystem_FileOperations");
+	DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, "Testing FileSystem_FileOperations");
 	assert(FileSystem_FileWriteOperations());
 
-	DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, L"Testing FileSystem_DirectoryReadOperations");
+	DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, "Testing FileSystem_DirectoryReadOperations");
 	assert(FileSystem_DirectoryReadOperations());
 
-	DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, L"Testing FileSystem_DirectoryWriteOperations");
+	DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, "Testing FileSystem_DirectoryWriteOperations");
 	assert(FileSystem_DirectoryWriteOperations());
 
-	DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, L"Testing DriveManager_GetMountedDrivesAndDetails");
+	DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, "Testing DriveManager_GetMountedDrivesAndDetails");
 	assert(DriveManager_GetMountedDrivesAndDetails());
 }

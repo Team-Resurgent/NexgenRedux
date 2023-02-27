@@ -2,43 +2,65 @@
 #include "StringUtility.h"
 #include "XboxInternals.h"
 #include "DriveManager.h"
+
 #include <cstring>
+#include <vector>
 #include <map>
 
 #if defined NEXGEN_WIN
 #include <windows.h>
-#endif
-#if defined NEXGEN_MAC || defined NEXGEN_LINUX
+#elif defined NEXGEN_MAC
 #include <sys/stat.h>
 #include <dirent.h>
 #include <unistd.h>
-#endif
-#if defined NEXGEN_LINUX
+#elif defined NEXGEN_LINUX
+#include <sys/stat.h>
+#include <dirent.h>
+#include <unistd.h>
 #include <mntent.h>
 #endif
 
 using namespace Gensys;
 
-namespace {
-
-	uint32_t m_maxFileInfoID = 0;
-	std::map<uint32_t, FileSystem::FileInfo> m_fileInfoMap;
-
-	uint32_t AddFileInfo(FileSystem::FileInfo fileInfo)
+namespace 
+{
+	typedef struct FileContainer
 	{
-		uint32_t result = m_maxFileInfoID;
-		m_fileInfoMap.insert(std::pair<uint32_t, FileSystem::FileInfo>(result, fileInfo));
-		m_maxFileInfoID++;
+		void* file;
+	} FileContainer;
+
+	uint32_t m_maxFileContainerID = 0;
+	std::map<uint32_t, FileContainer> m_fileContainerMap;
+
+	uint32_t AddFileContainer(FileContainer fileContainer)
+	{
+		uint32_t result = m_maxFileContainerID;
+		m_fileContainerMap.insert(std::pair<uint32_t, FileContainer>(result, fileContainer));
+		m_maxFileContainerID++;
 		return result;
 	}
 
-	FileSystem::FileInfo* GetFileInfo(uint32_t fileHandle)
+	FileContainer* GetFileContainer(uint32_t fileHandle)
 	{
-		std::map<uint32_t, FileSystem::FileInfo>::iterator it = m_fileInfoMap.find(fileHandle);
-		if (it == m_fileInfoMap.end()) {
+		std::map<uint32_t, FileContainer>::iterator it = m_fileContainerMap.find(fileHandle);
+		if (it == m_fileContainerMap.end()) {
 			return NULL;
 		}
-		return (FileSystem::FileInfo*)&it->second;
+		return (FileContainer*)&it->second;
+	}
+
+	void DeleteFileContainer(uint32_t fileHandle)
+	{
+		m_fileContainerMap.erase(fileHandle);
+	}
+}
+
+void FileSystem::Dispose(void) 
+{
+	while (m_fileContainerMap.size() > 0)
+	{
+		std::map<uint32_t, FileContainer>::iterator it = m_fileContainerMap.begin();
+		FileSystem::FileClose(it->first);
 	}
 }
 
@@ -381,27 +403,27 @@ bool FileSystem::FileOpen(std::wstring const path, FileMode const fileMode, uint
 		access = L"a+";
 	}
 	access = access + L"b";
-	FileInfo fileInfo;
+	FileContainer fileContainer;
 #if defined NEXGEN_OG || defined NEXGEN_360 || defined NEXGEN_MAC || defined NEXGEN_LINUX
-	fileInfo.file = fopen(StringUtility::ToString(path).c_str(), StringUtility::ToString(access).c_str());
+	fileContainer.file = fopen(StringUtility::ToString(path).c_str(), StringUtility::ToString(access).c_str());
 #elif defined NEXGEN_WIN 
-	fopen_s((FILE **)&fileInfo.file, StringUtility::ToString(path).c_str(), StringUtility::ToString(access).c_str());
+	fopen_s((FILE **)&fileContainer.file, StringUtility::ToString(path).c_str(), StringUtility::ToString(access).c_str());
 #endif
-	if (fileInfo.file == NULL)
+	if (fileContainer.file == NULL)
 	{
 		return false;
 	}
-	fileHandle = AddFileInfo(fileInfo);
+	fileHandle = AddFileContainer(fileContainer);
     return true;
 }
 
 bool FileSystem::FileRead(uint32_t fileHandle, char* readBuffer, uint32_t const bytesToRead, uint32_t& bytesRead)
 {
-	FileInfo* fileInfo = GetFileInfo(fileHandle);
-	if (fileInfo == NULL) {
+	FileContainer* fileContainer = GetFileContainer(fileHandle);
+	if (fileContainer == NULL) {
 		return false;
 	}
-	bytesRead = (uint32_t)fread(readBuffer, bytesToRead, 1, (FILE*)fileInfo->file);
+	bytesRead = (uint32_t)fread(readBuffer, bytesToRead, 1, (FILE*)fileContainer->file);
 	return true;
 }
 
@@ -431,21 +453,23 @@ bool FileSystem::FileReadAllAsString(std::wstring const path, std::string* buffe
 
 bool FileSystem::FileWrite(uint32_t fileHandle, char* writeBuffer, uint32_t bytesToWrite, uint32_t& bytesWritten)
 {
-	FileInfo* fileInfo = GetFileInfo(fileHandle);
-	if (fileInfo == NULL) {
+	FileContainer* fileContainer = GetFileContainer(fileHandle);
+	if (fileContainer == NULL) {
 		return false;
 	}
-	bytesWritten = (uint32_t)fwrite(writeBuffer, 1, bytesToWrite, (FILE*)fileInfo->file);
+	bytesWritten = (uint32_t)fwrite(writeBuffer, 1, bytesToWrite, (FILE*)fileContainer->file);
 	return bytesWritten == bytesToWrite;
 }
 
 bool FileSystem::FileClose(uint32_t fileHandle)
 {
-	FileInfo* fileInfo = GetFileInfo(fileHandle);
-	if (fileInfo == NULL) {
+	FileContainer* fileContainer = GetFileContainer(fileHandle);
+	if (fileContainer == NULL) {
 		return false;
 	}
-	return fclose((FILE*)fileInfo->file) == 0;
+	bool result = fclose((FILE*)fileContainer->file) == 0;
+	DeleteFileContainer(fileHandle);
+	return result;
 }
 
 bool FileSystem::FileSeek(uint32_t fileHandle, FileSeekMode const fileSeekMode, uint32_t const offset)
@@ -459,22 +483,22 @@ bool FileSystem::FileSeek(uint32_t fileHandle, FileSeekMode const fileSeekMode, 
 	{
 		seek = SEEK_END;
 	}
-	FileInfo* fileInfo = GetFileInfo(fileHandle);
-	if (fileInfo == NULL) {
+	FileContainer* fileContainer = GetFileContainer(fileHandle);
+	if (fileContainer == NULL) {
 		return false;
 	}
-	FILE *file = (FILE*)fileInfo->file;
+	FILE *file = (FILE*)fileContainer->file;
 	fseek(file, offset, seek);
 	return true;
 }
 
 bool FileSystem::FilePosition(uint32_t fileHandle, uint32_t& position)
 {
-	FileInfo* fileInfo = GetFileInfo(fileHandle);
-	if (fileInfo == NULL) {
+	FileContainer* fileContainer = GetFileContainer(fileHandle);
+	if (fileContainer == NULL) {
 		return false;
 	}
-	FILE *file = (FILE*)fileInfo->file;
+	FILE *file = (FILE*)fileContainer->file;
 	position = ftell(file);
 	return true;
 }
@@ -647,11 +671,11 @@ bool FileSystem::DirectoryCopy(std::wstring const sourcePath, std::wstring const
 
 bool FileSystem::FileSize(uint32_t fileHandle, uint32_t& size)
 {
-	FileInfo* fileInfo = GetFileInfo(fileHandle);
-	if (fileInfo == NULL) {
+	FileContainer* fileContainer = GetFileContainer(fileHandle);
+	if (fileContainer == NULL) {
 		return false;
 	}
-	FILE* file = (FILE*)fileInfo->file;
+	FILE* file = (FILE*)fileContainer->file;
 	uint32_t filePosition = ftell(file);
 	fseek(file, 0, SEEK_END);
 	size = ftell(file);

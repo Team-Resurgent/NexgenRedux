@@ -92,8 +92,6 @@ bool SocketUtility::SetSocketOptions(uint64_t socket)
 		success = false;
 	}
 
-#else
-	success = false;
 #endif
 
 	return success;

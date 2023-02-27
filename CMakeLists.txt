@@ -53,6 +53,7 @@ include_directories(${INCLUDE_DIRS})
 set(APP_SOURCE ${PROJECT_NAME})
 # Shared
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/BootLoader.cpp")
+list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/WindowManager.cpp")
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/AngelScriptRunner.cpp")
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/ConfigLoader.cpp")
 # Gensys
@@ -184,7 +185,7 @@ endif()
 
 # Force POST_BUILD always
 add_custom_target(ALWAYS_DO_POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E touch ${PROJECT_SOURCE_DIR}/NexgenRedux-PC/Icon.h
+  COMMAND ${CMAKE_COMMAND} -E touch ${PROJECT_SOURCE_DIR}/NexgenRedux-PC/main.cpp
 )
 
 # Create install package

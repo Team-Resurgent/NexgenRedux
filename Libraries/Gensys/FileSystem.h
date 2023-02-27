@@ -1,20 +1,9 @@
 #pragma once
 
-#if defined UWP_ANGLE || defined NEXGEN_WIN
-#include <WinSock2.h>
-#include <Windows.h>
-#elif defined NEXGEN_360 || defined NEXGEN_OG
-#include <xtl.h>
-#include <winsockx.h>
-#elif defined MAC_ANGLE
-#include <dirent.h>
-#include <sys/stat.h>
-#endif
-
 #include "Int.h"
-#include <string>
+
 #include <vector>
-#include <time.h>
+#include <string>
 
 namespace Gensys
 {
@@ -38,11 +27,6 @@ namespace Gensys
 			FileSeekModeEnd = 1,
 			FileSeekModeCurrent = 2
 		} FileSeekMode;
-		
-		typedef struct FileInfo
-		{
-			void* file;
-		} FileInfo;
 
 		typedef struct FileTime
 		{
@@ -64,6 +48,7 @@ namespace Gensys
 			FileTime writeTime;			
         } FileInfoDetail;
 		
+		static void Dispose(void);
 		static bool FileGetFileInfoDetail(std::wstring const path, FileInfoDetail& fileInfoDetail);
 		static bool FileGetFileInfoDetails(std::wstring const path, std::vector<FileInfoDetail>& fileInfoDetails);
 		

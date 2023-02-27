@@ -25,7 +25,7 @@ unsigned long Crc32::CalcCrc(char *buffer, long size)
 unsigned long Crc32::CalcCrc(uint32_t fileHandle)
 {   
 	unsigned long crc = 0xffffffff;
-	char *buffer = new char[65535];
+    char *buffer = (char*)malloc(65535);
 	uint32_t bytesRead = 0;
 	while (true)
 	{
@@ -37,7 +37,7 @@ unsigned long Crc32::CalcCrc(uint32_t fileHandle)
 		}
 		Calculate(buffer, bytesRead, crc);
 	}
-    delete[]buffer;
+    free(buffer);
     return crc ^ 0xffffffff;
 }
     

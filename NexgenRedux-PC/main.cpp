@@ -17,6 +17,7 @@
 
 #include "BootLoader.h"
 #include "AngelScriptRunner.h"
+#include "WindowManager.h"
 
 using namespace NexgenRedux;
 using namespace Gensys;
@@ -107,19 +108,10 @@ static bool link_program(GLuint program)
     return true;
 }
 
-static int W = 640;
-static int H = 480;
-
 static float lerp(float a, float b, float t) { return a + (b - a) * t; }
 static float frand() { return (float)rand() / RAND_MAX; }
 static float frand(float lo, float hi) { return lerp(lo, hi, frand()); }
 
-double now()
-{
-    auto now = std::chrono::high_resolution_clock::now();
-    return std::chrono::time_point_cast<std::chrono::nanoseconds>(now).time_since_epoch().count() *
-           1e-9;
-}
 
 void window_iconify(GLFWwindow* window, int iconified)
 {
@@ -178,6 +170,13 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
     printf("mouse scroll %f,%f\n", xoffset, yoffset);
 }
 
+void drop_callback(GLFWwindow* window, int count, const char** paths)
+{
+    for (int i = 0; i < count; i++) {
+        printf("drop %i,%s\n", count, paths[i]);
+    }
+}
+
 void joystick_callback(int jid, int event)
 {
     if (event == GLFW_CONNECTED)
@@ -190,16 +189,9 @@ void joystick_callback(int jid, int event)
     }
 }
 
-void drop_callback(GLFWwindow* window, int count, const char** paths)
-{
-    for (int i = 0; i < count; i++) {
-        printf("drop %i,%s\n", count, paths[i]);
-    }
-}
-
 int main(int argc, const char* argv[])
 {
-	Gensys::Test::RunTests();
+	//Gensys::Test::RunTests();
 
 	BootLoader::Run();
 
@@ -207,118 +199,50 @@ int main(int argc, const char* argv[])
     AngelScriptRunner::ExecuteCalc();
     AngelScriptRunner::Close();
 
-    glfwInitHint(GLFW_ANGLE_PLATFORM_TYPE, GLFW_ANGLE_PLATFORM_TYPE_VULKAN);
-    if (!glfwInit())
+    uint32_t monitorCount;
+    if (WindowManager::GetAvailableMonitorCount(monitorCount) == false)
     {
-        fprintf(stderr, "Failed to initialize glfw.\n");
-        return 1;
+        return 0;
     }
 
-    glfwWindowHint(GLFW_SAMPLES, 0);
-    
-    GLFWwindow* window = glfwCreateWindow(W, H, "Nexgen Redux", nullptr, nullptr);
-    if (window == nullptr)
+    std::vector<WindowManager::MonitorVideoMode> videoModes;
+    if (WindowManager::GetMonitorVideoModes(0, videoModes) == false)
     {
-        glfwTerminate();
-        fprintf(stderr, "Failed to create window.\n");
-        return -1;
+        return 0;
     }
 
-    GLFWimage iconImages[1]; 
-    iconImages[0].pixels = iconData;
-    iconImages[0].width = iconWidth;
-    iconImages[0].height = iconHeight;
-    glfwSetWindowIcon(window, 1, iconImages); 
-
-    glfwMakeContextCurrent(window);
-    glfwSetWindowIconifyCallback(window, window_iconify);
-    glfwSetWindowMaximizeCallback(window, window_maximize);
-    glfwSetWindowSizeCallback(window, window_size);
-    glfwSetWindowFocusCallback(window, window_focus);
-    glfwSetKeyCallback(window, key_callback);
-    glfwSetCharCallback(window, character_callback);
-    glfwSetCursorPosCallback(window, cursor_position_callback);
-    glfwSetCursorEnterCallback(window, cursor_enter_callback);
-    glfwSetMouseButtonCallback(window, mouse_button_callback);
-    glfwSetScrollCallback(window, scroll_callback);
-    glfwSetJoystickCallback(joystick_callback);
-    glfwSetDropCallback(window, drop_callback);
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
-
-    if (!gladLoadGLES2Loader((GLADloadproc)glfwGetProcAddress))
+    WindowManager::MonitorVideoMode videoMode;
+    if (WindowManager::GetMonitorVideoMode(0, videoMode) == false)
     {
-        fprintf(stderr, "Failed to initialize glad.\n");
-        return -1;
+        return 0;
     }
 
-    printf("GL_VENDOR: %s\n", glGetString(GL_VENDOR));
-    printf("GL_RENDERER: %s\n", glGetString(GL_RENDERER));
-    printf("GL_VERSION: %s\n", glGetString(GL_VERSION));
-
-    int frames = 0;
-    double start = now();
-
-    while (!glfwWindowShouldClose(window))
+    uint32_t windowHandle1;
+    if (WindowManager::WindowCreate(640, 480, "EqUiNoX was here...", windowHandle1) == false)
     {
-        glClearColor(1.0f, .1f, .1f, .1f);
-        glClear(GL_COLOR_BUFFER_BIT);
-        // int width, height;
-        // glfwGetFramebufferSize(window, &width, &height);
-        // if (lastWidth != width || lastHeight != height)
-        // {
-        //     printf("rendering %i bubbles at %i x %i\n", n, width, height);
-        //     glViewport(0, 0, width, height);
-        //     glUniform2f(uniformWindow, static_cast<float>(width), static_cast<float>(height));
-
-        //     glDeleteTextures(1, &tex);
-        //     glGenTextures(1, &tex);
-        //     glBindTexture(GL_TEXTURE_2D, tex);
-        //     glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, width, height);
-
-        //     glBindFramebuffer(GL_FRAMEBUFFER, blitFBO);
-        //     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex, 0);
-
-        //     glBindFramebuffer(GL_FRAMEBUFFER, renderFBO);
-        //     glDrawBuffers(0, nullptr);
-        //     glFramebufferParameteri(GL_DRAW_FRAMEBUFFER, GL_FRAMEBUFFER_DEFAULT_WIDTH, width);
-        //     glFramebufferParameteri(GL_DRAW_FRAMEBUFFER, GL_FRAMEBUFFER_DEFAULT_HEIGHT, height);
-        //     glBindImageTexture(0, tex, 0, 0, 0, GL_WRITE_ONLY, GL_R32UI);
-
-        //     lastWidth = width;
-        //     lastHeight = height;
-        // }
-
-        // glBindFramebuffer(GL_FRAMEBUFFER, renderFBO);
-        // glUniform1f(uniformT, static_cast<float>(totalFrames++));
-        // glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, n);
-
-        // glBindFramebuffer(GL_READ_FRAMEBUFFER, blitFBO);
-        // glBlitFramebuffer(0,
-        //                   0,
-        //                   width,
-        //                   height,
-        //                   0,
-        //                   0,
-        //                   width,
-        //                   height,
-        //                   GL_COLOR_BUFFER_BIT,
-        //                   GL_NEAREST);
-
-        glfwSwapBuffers(window);
-
-        ++frames;
-        double end = now();
-        double seconds = end - start;
-        if (seconds >= 2)
-        {
-            printf("%f fps\n", frames / seconds);
-            fflush(stdout);
-            frames = 0;
-            start = end;
-        }
-
-        glfwPollEvents();
+        return 0;
     }
 
-    glfwTerminate();
+    // uint32_t windowHandle2;
+    // if (WindowManager::WindowCreate(videoMode, "EqUiNoX was here again...", windowHandle2) == false)
+    // {
+    //     return 0;
+    // }
+
+    if (WindowManager::RenderLoop() == false)
+    {
+        return 0;
+    }
+
+    if (WindowManager::WindowClose(windowHandle1) == false)
+    {
+        return 0;
+    }
+
+    // if (WindowManager::WindowClose(windowHandle2) == false)
+    // {
+    //     return 0;
+    // }
+
+    return 0;
 }

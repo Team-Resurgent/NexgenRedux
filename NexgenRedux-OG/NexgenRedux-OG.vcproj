@@ -159,6 +159,15 @@
 			<File
 				RelativePath="..\NexgenRedux-Shared\ConfigLoader.h">
 			</File>
+			<File
+				RelativePath="..\NexgenRedux-Shared\Icon.h">
+			</File>
+			<File
+				RelativePath="..\NexgenRedux-Shared\WindowManager.cpp">
+			</File>
+			<File
+				RelativePath="..\NexgenRedux-Shared\WindowManager.h">
+			</File>
 		</Filter>
 		<Filter
 			Name="Gensys"

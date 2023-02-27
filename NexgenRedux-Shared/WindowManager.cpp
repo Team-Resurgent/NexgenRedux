@@ -10,7 +10,6 @@
 
 #include <map>
 #include <vector>
-#include <chrono>
 
 using namespace NexgenRedux;
 
@@ -50,6 +49,8 @@ namespace
 
 bool Init(void) 
 {
+#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
+
     if (m_initialized == false)
     {
         m_initialized = true;
@@ -59,7 +60,16 @@ bool Init(void)
             return false;
         }
     }
-    return true;
+
+#elif defined NEXGEN_OG || defined NEXGEN_360
+
+	return true;
+
+#else
+
+	return false;
+
+#endif
 }
 
 void WindowManager::Dispose(void) 
@@ -78,10 +88,23 @@ bool WindowManager::GetAvailableMonitorCount(uint32_t& monitorCount)
         return false;
     }
 
+#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
+
     int count;
     glfwGetMonitors(&count);
     monitorCount = count;
-    return true;
+	return true;
+
+#elif defined NEXGEN_OG || defined NEXGEN_360
+
+	monitorCount = 1;
+	return true;
+
+#else
+
+	return false;
+
+#endif
 }
 
 bool WindowManager::GetMonitorVideoMode(uint32_t monitorIndex, MonitorVideoMode& monitorVideoMode)
@@ -90,6 +113,8 @@ bool WindowManager::GetMonitorVideoMode(uint32_t monitorIndex, MonitorVideoMode&
     {
         return false;
     }
+
+#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
 
     int monitorCount;
     GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
@@ -107,6 +132,16 @@ bool WindowManager::GetMonitorVideoMode(uint32_t monitorIndex, MonitorVideoMode&
     monitorVideoMode.blueBits = mode->blueBits;
     monitorVideoMode.refreshRate = mode->refreshRate;
     return true;
+
+#elif defined NEXGEN_OG || defined NEXGEN_360
+
+	return true;
+
+#else
+
+	return false;
+
+#endif
 }
 
 bool WindowManager::GetMonitorVideoModes(uint32_t monitorIndex, std::vector<MonitorVideoMode>& monitorVideoModes)
@@ -115,6 +150,8 @@ bool WindowManager::GetMonitorVideoModes(uint32_t monitorIndex, std::vector<Moni
     {
         return false;
     }
+
+#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
 
     int monitorCount;
     GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
@@ -141,6 +178,16 @@ bool WindowManager::GetMonitorVideoModes(uint32_t monitorIndex, std::vector<Moni
     }
 
     return true;
+
+#elif defined NEXGEN_OG || defined NEXGEN_360
+
+	return true;
+
+#else
+
+	return false;
+
+#endif
 }
 
 bool WindowManager::WindowCreate(MonitorVideoMode monitorVideoMode, std::string title, uint32_t& windowHandle)
@@ -150,6 +197,8 @@ bool WindowManager::WindowCreate(MonitorVideoMode monitorVideoMode, std::string 
         return false;
     }
     
+#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
+
     int monitorCount;
     GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
     if (monitorVideoMode.monitorIndex >= monitorCount)
@@ -181,6 +230,16 @@ bool WindowManager::WindowCreate(MonitorVideoMode monitorVideoMode, std::string 
     windowHandle = AddWindowContainer(windowContainer);
 
     return true;
+
+#elif defined NEXGEN_OG || defined NEXGEN_360
+
+	return true;
+
+#else
+
+	return false;
+
+#endif
 }
 
 bool WindowManager::WindowCreate(int width, int height, std::string title, uint32_t& windowHandle)
@@ -189,6 +248,8 @@ bool WindowManager::WindowCreate(int width, int height, std::string title, uint3
     {
         return false;
     }
+
+#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
 
     glfwWindowHint(GLFW_SAMPLES, 0);
     
@@ -216,6 +277,16 @@ bool WindowManager::WindowCreate(int width, int height, std::string title, uint3
     windowHandle = AddWindowContainer(windowContainer);
 
     return true;
+
+#elif defined NEXGEN_OG || defined NEXGEN_360
+
+	return true;
+
+#else
+
+	return false;
+
+#endif
 }
 
 bool WindowManager::WindowClose(uint32_t windowHandle)
@@ -224,9 +295,24 @@ bool WindowManager::WindowClose(uint32_t windowHandle)
 	if (windowContainer == NULL) {
 		return false;
 	}
+
+#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
+
     glfwDestroyWindow((GLFWwindow*)windowContainer->window);
     DeleteWindowContainer(windowHandle);
     return true;
+
+
+#elif defined NEXGEN_OG || defined NEXGEN_360
+
+	DeleteWindowContainer(windowHandle);
+	return true;
+
+#else
+
+	return false;
+
+#endif
 }
 
 
@@ -247,24 +333,12 @@ bool WindowManager::WindowClose(uint32_t windowHandle)
 //     glfwSetDropCallback(window, drop_callback);
 //     glfwSetJoystickCallback(joystick_callback);
 //     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
-    
-// }
-
-double now()
-{
-    auto now = std::chrono::high_resolution_clock::now();
-    return std::chrono::time_point_cast<std::chrono::nanoseconds>(now).time_since_epoch().count() *
-           1e-9;
-}
 
 bool WindowManager::RenderLoop()
 {
 
-    int frames = 0;
-    double start = now();
+#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
 
-    bool initialized = false;
-    
     bool exitRequested = false;
     while (exitRequested == false)
     {
@@ -272,30 +346,18 @@ bool WindowManager::RenderLoop()
         {
             WindowContainer* windowContainer = (WindowContainer*)&it->second;
             GLFWwindow* window = (GLFWwindow*)windowContainer->window;
-
-            glfwMakeContextCurrent(window);
-
-            int closeFlag = glfwWindowShouldClose(window);
+			int closeFlag = glfwWindowShouldClose(window);
             if (closeFlag != 0)
             {
                 exitRequested = true;
                 break;
             }
 
+            glfwMakeContextCurrent(window);
+
             glClearColor(1.0f, .1f, .1f, .1f);
             glClear(GL_COLOR_BUFFER_BIT);
             glfwSwapBuffers(window);
-
-            ++frames;
-            double end = now();
-            double seconds = end - start;
-            if (seconds >= 2)
-            {
-                printf("%f fps\n", frames / seconds);
-                fflush(stdout);
-                frames = 0;
-                start = end;
-            }
 
         }
         glfwPollEvents();
@@ -303,4 +365,14 @@ bool WindowManager::RenderLoop()
 
     glfwTerminate();
     return true;
+
+#elif defined NEXGEN_OG || defined NEXGEN_360
+
+	return true;
+
+#else
+
+	return false;
+
+#endif
 }

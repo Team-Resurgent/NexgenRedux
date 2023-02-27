@@ -1,5 +1,6 @@
 #include "BootLoader.h"
 #include "AngelScriptRunner.h"
+#include "WindowManager.h"
 
 #include <Gensys/DebugUtility.h>
 #include <Gensys/StringUtility.h>
@@ -17,10 +18,51 @@ void PrintString(std::string &str);
 
 void __cdecl main(int, char **)
 {
-	Test::RunTests();
+	//Gensys::Test::RunTests();
 
 	BootLoader::Run();
 
-	AngelScriptRunner runner = AngelScriptRunner();
-	runner.Run();
+    AngelScriptRunner::Init();
+    AngelScriptRunner::ExecuteCalc();
+    AngelScriptRunner::Close();
+
+    uint32_t monitorCount;
+    if (WindowManager::GetAvailableMonitorCount(monitorCount) == false)
+    {
+        return;
+    }
+
+    std::vector<WindowManager::MonitorVideoMode> videoModes;
+    if (WindowManager::GetMonitorVideoModes(0, videoModes) == false)
+    {
+        return;
+    }
+
+    WindowManager::MonitorVideoMode videoMode;
+    if (WindowManager::GetMonitorVideoMode(0, videoMode) == false)
+    {
+        return;
+    }
+
+    uint32_t windowHandle1;
+    if (WindowManager::WindowCreate(640, 480, "EqUiNoX was here...", windowHandle1) == false)
+    {
+        return;
+    }
+
+    // uint32_t windowHandle2;
+    // if (WindowManager::WindowCreate(videoMode, "EqUiNoX was here again...", windowHandle2) == false)
+    // {
+    //     return 0;
+    // }
+
+    if (WindowManager::RenderLoop() == false)
+    {
+        return;
+    }
+
+    if (WindowManager::WindowClose(windowHandle1) == false)
+    {
+        return;
+    }
 }

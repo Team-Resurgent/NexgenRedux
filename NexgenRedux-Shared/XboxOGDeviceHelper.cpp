@@ -129,8 +129,13 @@ bool XboxOGDeviceHelper::GetMonitorVideoModes(uint32_t monitorIndex, std::vector
 	return true;
 }
 
-bool XboxOGDeviceHelper::WindowCreate(WindowManager::MonitorVideoMode monitorVideoMode, IDirect3DDevice8** d3dDevice)
+bool XboxOGDeviceHelper::WindowCreate(WindowManager::MonitorVideoMode monitorVideoMode, uint32_t& windowHandle)
 {
+	if (WindowManager::GetWindowCount() > 0)
+	{
+		return false;
+	}
+
 	int32_t selectedPriority = -1;
 	uint32_t selectedVideoMode = 0;
 
@@ -209,11 +214,24 @@ bool XboxOGDeviceHelper::WindowCreate(WindowManager::MonitorVideoMode monitorVid
 	d3dPresentParameters.FullScreen_PresentationInterval = D3DPRESENT_INTERVAL_ONE;
 
 	HRESULT hr = IDirect3D8::CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, NULL, D3DCREATE_HARDWARE_VERTEXPROCESSING, &d3dPresentParameters, d3dDevice);
-	return SUCCEEDED(hr);
+	if (FAILED(hr))
+	{
+		return false;
+	}
+
+    WindowManager::WindowContainer windowContainer;
+    windowContainer.window = d3dDevice;
+    windowHandle = WindowManager::AddWindowContainer(windowContainer);
+	return true;
 }
 
-bool XboxOGDeviceHelper::WindowCreate(int width, int height, IDirect3DDevice8** d3dDevice)
+bool XboxOGDeviceHelper::WindowCreate(int width, int height, uint32_t& windowHandle)
 {
+	if (WindowManager::GetWindowCount() > 0)
+	{
+		return false;
+	}
+
 	int32_t selectedPriority = -1;
 	uint32_t selectedVideoMode = 0;
 
@@ -272,13 +290,52 @@ bool XboxOGDeviceHelper::WindowCreate(int width, int height, IDirect3DDevice8** 
 	d3dPresentParameters.FullScreen_PresentationInterval = D3DPRESENT_INTERVAL_ONE;
 
 	HRESULT hr = IDirect3D8::CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, NULL, D3DCREATE_HARDWARE_VERTEXPROCESSING, &d3dPresentParameters, d3dDevice);
-	return SUCCEEDED(hr);
+	if (FAILED(hr))
+	{
+		return false;
+	}
+
+    WindowManager::WindowContainer windowContainer;
+    windowContainer.window = d3dDevice;
+    windowHandle = WindowManager::AddWindowContainer(windowContainer);
+	return true;
 }
 
-void XboxOGDeviceHelper::WindowDispose(void* window)
+bool XboxOGDeviceHelper::WindowRender(uint32_t& windowHandle, bool& exitRequested)
 {
-	IDirect3DDevice8* d3dDevice = (IDirect3DDevice8*)window;
+	HRESULT hr;
+
+	WindowManager::WindowContainer* windowContainer = WindowManager::GetWindowContainer(windowHandles.at(i));
+	IDirect3DDevice8* d3dDevice = (IDirect3DDevice8*)windowContainer->window;
+
+	D3DCOLOR color = D3DCOLOR_RGBA(255, 0, 0, 255);
+
+	hr = d3dDevice->Clear(0, NULL, D3DCLEAR_TARGET, color, 0, 0);
+	if (FAILED(hr))
+	{
+		return false;
+	}
+
+	hr = d3dDevice->Present(NULL, NULL, NULL, NULL);
+	if (FAILED(hr))
+	{
+		return false;
+	}
+
+	return true;
+}
+
+bool XboxOGDeviceHelper::WindowClose(uint32_t windowHandle)
+{
+	WindowManager::WindowContainer* windowContainer = WindowManager::GetWindowContainer(windowHandle);
+	if (windowContainer == NULL) {
+		return false;
+	}
+
+	IDirect3DDevice8* d3dDevice = (IDirect3DDevice8*)windowContainer->window;
 	d3dDevice->Release();
+	WindowManager::DeleteWindowContainer(windowHandle);
+	return true;
 }
 
 #endif

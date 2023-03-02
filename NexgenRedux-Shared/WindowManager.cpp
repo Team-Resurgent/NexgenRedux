@@ -16,30 +16,8 @@ using namespace NexgenRedux;
 
 namespace 
 {
-    typedef struct WindowContainer
-	{
-		void* window;
-	} WindowContainer;
-
 	uint32_t m_maxWindowContainerID = 0;
-	std::map<uint32_t, WindowContainer> m_windowContainerMap;
-
-	uint32_t AddWindowContainer(WindowContainer windowContainer)
-	{
-		uint32_t result = m_maxWindowContainerID;
-		m_windowContainerMap.insert(std::pair<uint32_t, WindowContainer>(result, windowContainer));
-		m_maxWindowContainerID++;
-		return result;
-	}
-
-	WindowContainer* GetWindowContainer(uint32_t windowHandle)
-	{
-		std::map<uint32_t, WindowContainer>::iterator it = m_windowContainerMap.find(windowHandle);
-		if (it == m_windowContainerMap.end()) {
-			return NULL;
-		}
-		return (WindowContainer*)&it->second;
-	}
+	std::map<uint32_t, WindowManager::WindowContainer> m_windowContainerMap;
 }
 
 void WindowManager::Dispose(void) 
@@ -54,197 +32,85 @@ void WindowManager::Dispose(void)
 bool WindowManager::GetAvailableMonitorCount(uint32_t& monitorCount)
 {
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-
 	return OpenGLDeviceHelper::GetAvailableMonitorCount(monitorCount);
-
 #elif defined NEXGEN_OG || defined NEXGEN_360
-
 	return XboxOGDeviceHelper::GetAvailableMonitorCount(monitorCount);
-
+#elif defined NEXGEN_360
+	return true;
 #else
-
 	return false;
-
 #endif
 }
 
 bool WindowManager::GetMonitorVideoMode(uint32_t monitorIndex, MonitorVideoMode& monitorVideoMode)
 {
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-
     return OpenGLDeviceHelper::GetMonitorVideoMode(monitorIndex, monitorVideoMode);
-
 #elif defined NEXGEN_OG
-
 	return XboxOGDeviceHelper::GetMonitorVideoMode(monitorIndex, monitorVideoMode);
-
 #elif defined NEXGEN_360
-
 	return true;
-
 #else
-
 	return false;
-
 #endif
 }
 
 bool WindowManager::GetMonitorVideoModes(uint32_t monitorIndex, std::vector<MonitorVideoMode>& monitorVideoModes)
 {
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-
    return OpenGLDeviceHelper::GetMonitorVideoModes(monitorIndex, monitorVideoModes);
-
 #elif defined NEXGEN_OG
-
 	return XboxOGDeviceHelper::GetMonitorVideoModes(monitorIndex, monitorVideoModes);
-
 #elif defined NEXGEN_360
-
 	return true;
-
 #else
-
 	return false;
-
 #endif
 }
 
 bool WindowManager::WindowCreate(MonitorVideoMode monitorVideoMode, std::string title, uint32_t& windowHandle)
 {
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-
-    GLFWwindow* window;
-	if (OpenGLDeviceHelper::WindowCreate(monitorVideoMode, title, &window) == false)
-	{
-		return false;
-	}
-
-    WindowContainer windowContainer;
-    windowContainer.window = window;
-    windowHandle = AddWindowContainer(windowContainer);
-
-    return true;
-
+    return OpenGLDeviceHelper::WindowCreate(monitorVideoMode, title, windowHandle);
 #elif defined NEXGEN_OG
-
-	if (m_windowContainerMap.size() > 0)
-	{
-		return false;
-	}
-
-	IDirect3DDevice8 *d3dDevice;
-	if (XboxOGDeviceHelper::WindowCreate(monitorVideoMode, &d3dDevice) == false)
-	{
-		return false;
-	}
-
-	WindowContainer windowContainer;
-    windowContainer.window = d3dDevice;
-    windowHandle = AddWindowContainer(windowContainer);
-
-	while (true) {
-		D3DCOLOR color = D3DCOLOR_RGBA(255, 0, 0, 255);
-		HRESULT hr = d3dDevice->Clear(0, NULL, D3DCLEAR_TARGET, color, 0, 0);
-		hr = d3dDevice->Present(NULL, NULL, NULL, NULL);
-	}
-
-	return true;
-
+	return XboxOGDeviceHelper::WindowCreate(monitorVideoMode, windowHandle);
 #elif defined NEXGEN_360
-
 	return true;
-
 #else
-
 	return false;
-
 #endif
 }
 
 bool WindowManager::WindowCreate(int width, int height, std::string title, uint32_t& windowHandle)
 {
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-
-    GLFWwindow* window;
-	if (OpenGLDeviceHelper::WindowCreate(width, height, title, &window) == false)
-	{
-		return false;
-	}
-
-    WindowContainer windowContainer;
-    windowContainer.window = window;
-    windowHandle = AddWindowContainer(windowContainer);
-
-    return true;
-
+	return OpenGLDeviceHelper::WindowCreate(width, height, title, windowHandle);
 #elif defined NEXGEN_OG
-
-	if (m_windowContainerMap.size() > 0)
-	{
-		return false;
-	}
-
-	IDirect3DDevice8 *d3dDevice;
-	if (XboxOGDeviceHelper::WindowCreate(width, height, &d3dDevice) == false)
-	{
-		return false;
-	}
-
-	WindowContainer windowContainer;
-    windowContainer.window = d3dDevice;
-    windowHandle = AddWindowContainer(windowContainer);
-
-	while (true) {
-		D3DCOLOR color = D3DCOLOR_RGBA(255, 0, 0, 255);
-		HRESULT hr = d3dDevice->Clear(0, NULL, D3DCLEAR_TARGET, color, 0, 0);
-		hr = d3dDevice->Present(NULL, NULL, NULL, NULL);
-	}
-
-	return true;
-
+	return XboxOGDeviceHelper::WindowCreate(width, height, windowHandle);
 #elif defined NEXGEN_360
-
 	return true;
-
 #else
-
 	return false;
-
 #endif
 }
 
 bool WindowManager::WindowClose(uint32_t windowHandle)
 {
-	WindowContainer* windowContainer = GetWindowContainer(windowHandle);
-	if (windowContainer == NULL) {
-		return false;
-	}
-
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-
-	OpenGLDeviceHelper::WindowDispose(windowContainer->window);
-	m_windowContainerMap.erase(windowHandle);
-    return true;
-
+	return OpenGLDeviceHelper::WindowClose(windowHandle);
 #elif defined NEXGEN_OG
-
-	XboxOGDeviceHelper::WindowDispose(windowContainer->window);
-	m_windowContainerMap.erase(windowHandle);
-	return true;
-
+	return XboxOGDeviceHelper::WindowDispose(windowHandlew);
 #elif defined NEXGEN_360
-
-	m_windowContainerMap.erase(windowHandle);
 	return true;
-
 #else
-
 	return false;
-
 #endif
 }
 
+void WindowManager::DeleteWindowContainer(uint32_t windowHandle)
+{
+	m_windowContainerMap.erase(windowHandle);
+}
 
 
 // void Render()
@@ -264,31 +130,18 @@ bool WindowManager::WindowClose(uint32_t windowHandle)
 //     glfwSetJoystickCallback(joystick_callback);
 //     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 
-bool WindowManager::RenderLoop()
+bool WindowManager::RenderLoop(void)
 {
-
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
 
     bool exitRequested = false;
     while (exitRequested == false)
     {
-        for (std::map<uint32_t, WindowContainer>::iterator it = m_windowContainerMap.begin(); it != m_windowContainerMap.end(); ++it)
+		std::vector<uint32_t> windowHandles = GetWindowHandles();
+
+        for (uint32_t i = 0; i < windowHandles.size(); i++)
         {
-            WindowContainer* windowContainer = (WindowContainer*)&it->second;
-            GLFWwindow* window = (GLFWwindow*)windowContainer->window;
-			int closeFlag = glfwWindowShouldClose(window);
-            if (closeFlag != 0)
-            {
-                exitRequested = true;
-                break;
-            }
-
-            glfwMakeContextCurrent(window);
-
-            glClearColor(1.0f, .1f, .1f, .1f);
-            glClear(GL_COLOR_BUFFER_BIT);
-            glfwSwapBuffers(window);
-
+			OpenGLDeviceHelper::WindowRender(windowHandles.at(i), exitRequested);
         }
         glfwPollEvents();
     }
@@ -298,15 +151,56 @@ bool WindowManager::RenderLoop()
 
 #elif defined NEXGEN_OG
 
-	return true;
+    bool exitRequested = false;
+    while (exitRequested == false)
+    {
+		std::vector<uint32_t> windowHandles = GetWindowHandles();
 
+		for (uint32_t i = 0; i < windowHandles.size(); i++)
+        {
+			XboxOGDeviceHelper::WindowRender(windowHandles.at(i), exitRequested);
+		}
+	}
+
+	return true;
+	
 #elif defined NEXGEN_360
-
 	return true;
-
 #else
-
 	return false;
-
 #endif
+}
+
+// Privates
+
+uint32_t WindowManager::GetWindowCount(void)
+{
+	return m_windowContainerMap.size();
+}
+
+std::vector<uint32_t> WindowManager::GetWindowHandles(void)
+{
+	std::vector<uint32_t> windowHandles;
+	for (std::map<uint32_t, WindowContainer>::iterator it = m_windowContainerMap.begin(); it != m_windowContainerMap.end(); ++it)
+	{
+		 windowHandles.push_back(it->first);
+	}
+	return windowHandles;
+}
+
+uint32_t WindowManager::AddWindowContainer(WindowManager::WindowContainer windowContainer)
+{
+	uint32_t result = m_maxWindowContainerID;
+	m_windowContainerMap.insert(std::pair<uint32_t, WindowContainer>(result, windowContainer));
+	m_maxWindowContainerID++;
+	return result;
+}
+
+WindowManager::WindowContainer* WindowManager::GetWindowContainer(uint32_t windowHandle)
+{
+	std::map<uint32_t, WindowContainer>::iterator it = m_windowContainerMap.find(windowHandle);
+	if (it == m_windowContainerMap.end()) {
+		return NULL;
+	}
+	return (WindowContainer*)&it->second;
 }

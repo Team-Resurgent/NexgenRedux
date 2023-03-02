@@ -100,7 +100,7 @@ bool OpenGLDeviceHelper::GetMonitorVideoModes(uint32_t monitorIndex, std::vector
     return true;
 }
 
-bool OpenGLDeviceHelper::WindowCreate(WindowManager::MonitorVideoMode monitorVideoMode, std::string title, GLFWwindow** window)
+bool OpenGLDeviceHelper::WindowCreate(WindowManager::MonitorVideoMode monitorVideoMode, std::string title, uint32_t& windowHandle)
 {
 	if (Init() == false)
     {
@@ -120,14 +120,14 @@ bool OpenGLDeviceHelper::WindowCreate(WindowManager::MonitorVideoMode monitorVid
     glfwWindowHint(GLFW_BLUE_BITS, monitorVideoMode.blueBits);
     glfwWindowHint(GLFW_REFRESH_RATE, monitorVideoMode.refreshRate);
     
-    GLFWwindow* createdWindow = glfwCreateWindow(monitorVideoMode.width, monitorVideoMode.height, title.c_str(), monitors[monitorVideoMode.monitorIndex], nullptr);
-    if (createdWindow == nullptr)
+    GLFWwindow* window = glfwCreateWindow(monitorVideoMode.width, monitorVideoMode.height, title.c_str(), monitors[monitorVideoMode.monitorIndex], nullptr);
+    if (window == nullptr)
     {
         glfwTerminate();
         return false;
     }
 
-	glfwMakeContextCurrent(createdWindow);
+	glfwMakeContextCurrent(window);
     if (gladLoadGLES2Loader((GLADloadproc)glfwGetProcAddress) == false)
     {
         return false;
@@ -140,15 +140,16 @@ bool OpenGLDeviceHelper::WindowCreate(WindowManager::MonitorVideoMode monitorVid
     iconImages[0].pixels = buffer;
     iconImages[0].width = Icon::Width();
     iconImages[0].height = Icon::Height();
-    glfwSetWindowIcon(createdWindow, 1, iconImages);
+    glfwSetWindowIcon(window, 1, iconImages);
 	free(buffer); 
 
-	*window = createdWindow;
-
+    WindowManager::WindowContainer windowContainer;
+    windowContainer.window = window;
+    windowHandle = WindowManager::AddWindowContainer(windowContainer);
 	return true;
 }
 
-bool OpenGLDeviceHelper::WindowCreate(int width, int height, std::string title, GLFWwindow** window)
+bool OpenGLDeviceHelper::WindowCreate(int width, int height, std::string title, uint32_t& windowHandle)
 {
 	if (Init() == false)
     {
@@ -157,14 +158,14 @@ bool OpenGLDeviceHelper::WindowCreate(int width, int height, std::string title, 
 
 	glfwWindowHint(GLFW_SAMPLES, 0);
     
-    GLFWwindow* createdWindow = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
-    if (createdWindow == nullptr)
+    GLFWwindow* window = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
+    if (window == nullptr)
     {
         glfwTerminate();
         return false;
     }
 
-    glfwMakeContextCurrent(createdWindow);
+    glfwMakeContextCurrent(window);
     if (gladLoadGLES2Loader((GLADloadproc)glfwGetProcAddress) == false)
     {
         return false;
@@ -176,17 +177,46 @@ bool OpenGLDeviceHelper::WindowCreate(int width, int height, std::string title, 
     iconImages[0].pixels = buffer;
     iconImages[0].width = Icon::Width();
     iconImages[0].height = Icon::Height();
-    glfwSetWindowIcon(createdWindow, 1, iconImages); 
+    glfwSetWindowIcon(window, 1, iconImages); 
 	free(buffer); 
 
-	*window = createdWindow;
-
+    WindowManager::WindowContainer windowContainer;
+    windowContainer.window = window;
+    windowHandle = WindowManager::AddWindowContainer(windowContainer);
 	return true;
 }
 
-void OpenGLDeviceHelper::WindowDispose(void* window)
+bool OpenGLDeviceHelper::WindowRender(uint32_t& windowHandle, bool& exitRequested)
 {
-	glfwDestroyWindow((GLFWwindow*)window);
+ 	WindowManager::WindowContainer* windowContainer = WindowManager::GetWindowContainer(windowHandle);
+	GLFWwindow* window = (GLFWwindow*)windowContainer->window;
+
+	int closeFlag = glfwWindowShouldClose(window);
+	if (closeFlag != 0)
+	{
+		exitRequested = true;
+		return true;
+	}
+
+	glfwMakeContextCurrent(window);
+
+	glClearColor(1.0f, .1f, .1f, .1f);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	glfwSwapBuffers(window);
+	return true;
+}
+
+bool OpenGLDeviceHelper::WindowClose(uint32_t windowHandle)
+{
+	WindowManager::WindowContainer* windowContainer = WindowManager::GetWindowContainer(windowHandle);
+	if (windowContainer == NULL) {
+		return false;
+	}
+
+	glfwDestroyWindow((GLFWwindow*)windowContainer->window);
+	WindowManager::DeleteWindowContainer(windowHandle);
+	return true;
 }
 
 #endif

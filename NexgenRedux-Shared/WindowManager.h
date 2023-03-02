@@ -15,7 +15,7 @@ namespace NexgenRedux
 		{
 			uint32_t monitorIndex;
 			uint32_t width;
-			uint32_t height;
+			uint32_t height; 
 			uint32_t redBits;
 			uint32_t greenBits;
 			uint32_t blueBits;

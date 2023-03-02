@@ -1,16 +1,17 @@
 #include "WindowManager.h"
-#include "Icon.h"
-
-#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-#include "GLAD/glad.h"
-#include "GLFW/glfw3.h"
-#endif
+#include "XboxOGDeviceHelper.h"
+#include "OpenGLDeviceHelper.h"
 
 #include <Gensys/Int.h>
+#include <Gensys/DebugUtility.h>
+
+#include <GLAD/glad.h>
+#include <GLFW/glfw3.h>
 
 #include <map>
 #include <vector>
 
+using namespace Gensys;
 using namespace NexgenRedux;
 
 namespace 
@@ -20,7 +21,6 @@ namespace
 		void* window;
 	} WindowContainer;
 
-    bool m_initialized = false;
 	uint32_t m_maxWindowContainerID = 0;
 	std::map<uint32_t, WindowContainer> m_windowContainerMap;
 
@@ -40,36 +40,6 @@ namespace
 		}
 		return (WindowContainer*)&it->second;
 	}
-
-	void DeleteWindowContainer(uint32_t windowHandle)
-	{
-		m_windowContainerMap.erase(windowHandle);
-	}
-}
-
-bool Init(void) 
-{
-#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-
-    if (m_initialized == false)
-    {
-        m_initialized = true;
-        glfwInitHint(GLFW_ANGLE_PLATFORM_TYPE, GLFW_ANGLE_PLATFORM_TYPE_VULKAN);
-        if (glfwInit() == false)
-        {
-            return false;
-        }
-    }
-
-#elif defined NEXGEN_OG || defined NEXGEN_360
-
-	return true;
-
-#else
-
-	return false;
-
-#endif
 }
 
 void WindowManager::Dispose(void) 
@@ -83,22 +53,13 @@ void WindowManager::Dispose(void)
 
 bool WindowManager::GetAvailableMonitorCount(uint32_t& monitorCount)
 {
-    if (Init() == false)
-    {
-        return false;
-    }
-
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
 
-    int count;
-    glfwGetMonitors(&count);
-    monitorCount = count;
-	return true;
+	return OpenGLDeviceHelper::GetAvailableMonitorCount(monitorCount);
 
 #elif defined NEXGEN_OG || defined NEXGEN_360
 
-	monitorCount = 1;
-	return true;
+	return XboxOGDeviceHelper::GetAvailableMonitorCount(monitorCount);
 
 #else
 
@@ -109,31 +70,15 @@ bool WindowManager::GetAvailableMonitorCount(uint32_t& monitorCount)
 
 bool WindowManager::GetMonitorVideoMode(uint32_t monitorIndex, MonitorVideoMode& monitorVideoMode)
 {
-    if (Init() == false)
-    {
-        return false;
-    }
-
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
 
-    int monitorCount;
-    GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
-    if (monitorIndex >= monitorCount)
-    {
-        return false;
-    }
+    return OpenGLDeviceHelper::GetMonitorVideoMode(monitorIndex, monitorVideoMode);
 
-    const GLFWvidmode* mode = glfwGetVideoMode(monitors[monitorIndex]);
-    monitorVideoMode.monitorIndex = monitorIndex;
-    monitorVideoMode.width = mode->width;
-    monitorVideoMode.height = mode->height;
-    monitorVideoMode.redBits = mode->redBits;
-    monitorVideoMode.greenBits = mode->greenBits;
-    monitorVideoMode.blueBits = mode->blueBits;
-    monitorVideoMode.refreshRate = mode->refreshRate;
-    return true;
+#elif defined NEXGEN_OG
 
-#elif defined NEXGEN_OG || defined NEXGEN_360
+	return XboxOGDeviceHelper::GetMonitorVideoMode(monitorIndex, monitorVideoMode);
+
+#elif defined NEXGEN_360
 
 	return true;
 
@@ -146,40 +91,15 @@ bool WindowManager::GetMonitorVideoMode(uint32_t monitorIndex, MonitorVideoMode&
 
 bool WindowManager::GetMonitorVideoModes(uint32_t monitorIndex, std::vector<MonitorVideoMode>& monitorVideoModes)
 {
-    if (Init() == false)
-    {
-        return false;
-    }
-
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
 
-    int monitorCount;
-    GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
-    if (monitorIndex >= monitorCount)
-    {
-        return false;
-    }
+   return OpenGLDeviceHelper::GetMonitorVideoModes(monitorIndex, monitorVideoModes);
 
-    monitorVideoModes.clear();
+#elif defined NEXGEN_OG
 
-    int videoModesCount;
-    const GLFWvidmode* modes = glfwGetVideoModes(monitors[monitorIndex], &videoModesCount);
-    for (uint32_t i = 0; i < videoModesCount; i++)
-    {
-        MonitorVideoMode monitorVideoMode;
-        monitorVideoMode.monitorIndex = monitorIndex;
-        monitorVideoMode.width = modes[i].width;
-        monitorVideoMode.height = modes[i].height;
-        monitorVideoMode.redBits = modes[i].redBits;
-        monitorVideoMode.greenBits = modes[i].greenBits;
-        monitorVideoMode.blueBits = modes[i].blueBits;
-        monitorVideoMode.refreshRate = modes[i].refreshRate;
-        monitorVideoModes.push_back(monitorVideoMode);
-    }
+	return XboxOGDeviceHelper::GetMonitorVideoModes(monitorIndex, monitorVideoModes);
 
-    return true;
-
-#elif defined NEXGEN_OG || defined NEXGEN_360
+#elif defined NEXGEN_360
 
 	return true;
 
@@ -192,38 +112,13 @@ bool WindowManager::GetMonitorVideoModes(uint32_t monitorIndex, std::vector<Moni
 
 bool WindowManager::WindowCreate(MonitorVideoMode monitorVideoMode, std::string title, uint32_t& windowHandle)
 {
-    if (Init() == false)
-    {
-        return false;
-    }
-    
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
 
-    int monitorCount;
-    GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
-    if (monitorVideoMode.monitorIndex >= monitorCount)
-    {
-        return false;
-    }
-
-    glfwWindowHint(GLFW_SAMPLES, 0);
-    glfwWindowHint(GLFW_RED_BITS, monitorVideoMode.redBits);
-    glfwWindowHint(GLFW_GREEN_BITS, monitorVideoMode.greenBits);
-    glfwWindowHint(GLFW_BLUE_BITS, monitorVideoMode.blueBits);
-    glfwWindowHint(GLFW_REFRESH_RATE, monitorVideoMode.refreshRate);
-    
-    GLFWwindow* window = glfwCreateWindow(monitorVideoMode.width, monitorVideoMode.height, title.c_str(), monitors[monitorVideoMode.monitorIndex], nullptr);
-    if (window == nullptr)
-    {
-        glfwTerminate();
-        return false;
-    }
-
-    GLFWimage iconImages[1]; 
-    iconImages[0].pixels = iconData;
-    iconImages[0].width = iconWidth;
-    iconImages[0].height = iconHeight;
-    glfwSetWindowIcon(window, 1, iconImages); 
+    GLFWwindow* window;
+	if (OpenGLDeviceHelper::WindowCreate(monitorVideoMode, title, &window) == false)
+	{
+		return false;
+	}
 
     WindowContainer windowContainer;
     windowContainer.window = window;
@@ -231,7 +126,32 @@ bool WindowManager::WindowCreate(MonitorVideoMode monitorVideoMode, std::string 
 
     return true;
 
-#elif defined NEXGEN_OG || defined NEXGEN_360
+#elif defined NEXGEN_OG
+
+	if (m_windowContainerMap.size() > 0)
+	{
+		return false;
+	}
+
+	IDirect3DDevice8 *d3dDevice;
+	if (XboxOGDeviceHelper::WindowCreate(monitorVideoMode, &d3dDevice) == false)
+	{
+		return false;
+	}
+
+	WindowContainer windowContainer;
+    windowContainer.window = d3dDevice;
+    windowHandle = AddWindowContainer(windowContainer);
+
+	while (true) {
+		D3DCOLOR color = D3DCOLOR_RGBA(255, 0, 0, 255);
+		HRESULT hr = d3dDevice->Clear(0, NULL, D3DCLEAR_TARGET, color, 0, 0);
+		hr = d3dDevice->Present(NULL, NULL, NULL, NULL);
+	}
+
+	return true;
+
+#elif defined NEXGEN_360
 
 	return true;
 
@@ -244,33 +164,13 @@ bool WindowManager::WindowCreate(MonitorVideoMode monitorVideoMode, std::string 
 
 bool WindowManager::WindowCreate(int width, int height, std::string title, uint32_t& windowHandle)
 {
-    if (Init() == false)
-    {
-        return false;
-    }
-
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
 
-    glfwWindowHint(GLFW_SAMPLES, 0);
-    
-    GLFWwindow* window = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
-    if (window == nullptr)
-    {
-        glfwTerminate();
-        return false;
-    }
-
-    glfwMakeContextCurrent(window);
-    if (gladLoadGLES2Loader((GLADloadproc)glfwGetProcAddress) == false)
-    {
-        return false;
-    }
-
-    GLFWimage iconImages[1]; 
-    iconImages[0].pixels = iconData;
-    iconImages[0].width = iconWidth;
-    iconImages[0].height = iconHeight;
-    glfwSetWindowIcon(window, 1, iconImages); 
+    GLFWwindow* window;
+	if (OpenGLDeviceHelper::WindowCreate(width, height, title, &window) == false)
+	{
+		return false;
+	}
 
     WindowContainer windowContainer;
     windowContainer.window = window;
@@ -278,7 +178,32 @@ bool WindowManager::WindowCreate(int width, int height, std::string title, uint3
 
     return true;
 
-#elif defined NEXGEN_OG || defined NEXGEN_360
+#elif defined NEXGEN_OG
+
+	if (m_windowContainerMap.size() > 0)
+	{
+		return false;
+	}
+
+	IDirect3DDevice8 *d3dDevice;
+	if (XboxOGDeviceHelper::WindowCreate(width, height, &d3dDevice) == false)
+	{
+		return false;
+	}
+
+	WindowContainer windowContainer;
+    windowContainer.window = d3dDevice;
+    windowHandle = AddWindowContainer(windowContainer);
+
+	while (true) {
+		D3DCOLOR color = D3DCOLOR_RGBA(255, 0, 0, 255);
+		HRESULT hr = d3dDevice->Clear(0, NULL, D3DCLEAR_TARGET, color, 0, 0);
+		hr = d3dDevice->Present(NULL, NULL, NULL, NULL);
+	}
+
+	return true;
+
+#elif defined NEXGEN_360
 
 	return true;
 
@@ -298,14 +223,19 @@ bool WindowManager::WindowClose(uint32_t windowHandle)
 
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
 
-    glfwDestroyWindow((GLFWwindow*)windowContainer->window);
-    DeleteWindowContainer(windowHandle);
+	OpenGLDeviceHelper::WindowDispose(windowContainer->window);
+	m_windowContainerMap.erase(windowHandle);
     return true;
 
+#elif defined NEXGEN_OG
 
-#elif defined NEXGEN_OG || defined NEXGEN_360
+	XboxOGDeviceHelper::WindowDispose(windowContainer->window);
+	m_windowContainerMap.erase(windowHandle);
+	return true;
 
-	DeleteWindowContainer(windowHandle);
+#elif defined NEXGEN_360
+
+	m_windowContainerMap.erase(windowHandle);
 	return true;
 
 #else
@@ -366,7 +296,11 @@ bool WindowManager::RenderLoop()
     glfwTerminate();
     return true;
 
-#elif defined NEXGEN_OG || defined NEXGEN_360
+#elif defined NEXGEN_OG
+
+	return true;
+
+#elif defined NEXGEN_360
 
 	return true;
 

@@ -20,11 +20,11 @@ void __cdecl main(int, char **)
 {
 	//Gensys::Test::RunTests();
 
-	BootLoader::Run();
+	//BootLoader::Run();
 
-    AngelScriptRunner::Init();
-    AngelScriptRunner::ExecuteCalc();
-    AngelScriptRunner::Close();
+    //AngelScriptRunner::Init();
+    //AngelScriptRunner::ExecuteCalc();
+    //AngelScriptRunner::Close();
 
     uint32_t monitorCount;
     if (WindowManager::GetAvailableMonitorCount(monitorCount) == false)
@@ -50,11 +50,11 @@ void __cdecl main(int, char **)
         return;
     }
 
-    // uint32_t windowHandle2;
-    // if (WindowManager::WindowCreate(videoMode, "EqUiNoX was here again...", windowHandle2) == false)
-    // {
-    //     return 0;
-    // }
+    //uint32_t windowHandle2;
+    //if (WindowManager::WindowCreate(videoMode, "EqUiNoX was here again...", windowHandle2) == false)
+    //{
+    //     return;
+    //}
 
     if (WindowManager::RenderLoop() == false)
     {
@@ -65,4 +65,6 @@ void __cdecl main(int, char **)
     {
         return;
     }
+
+	return;
 }

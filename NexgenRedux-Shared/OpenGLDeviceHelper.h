@@ -1,0 +1,26 @@
+#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
+
+#pragma once
+
+#include "WindowManager.h"
+
+#include <Gensys/Int.h>
+#include <GLAD/glad.h>
+#include <GLFW/glfw3.h>
+#include <vector>
+
+namespace NexgenRedux
+{
+	class OpenGLDeviceHelper
+	{		
+	public:
+		static bool GetAvailableMonitorCount(uint32_t& monitorCount);
+		static bool GetMonitorVideoMode(uint32_t monitorIndex, WindowManager::MonitorVideoMode& monitorVideoMode);
+		static bool GetMonitorVideoModes(uint32_t monitorIndex, std::vector<WindowManager::MonitorVideoMode>& monitorVideoModes);
+		static bool WindowCreate(WindowManager::MonitorVideoMode monitorVideoMode, std::string title, GLFWwindow** window);
+		static bool WindowCreate(int width, int height, std::string title, GLFWwindow** window);
+		static void WindowDispose(void* window);
+	};
+}
+
+#endif

@@ -163,10 +163,22 @@
 				RelativePath="..\NexgenRedux-Shared\Icon.h">
 			</File>
 			<File
+				RelativePath="..\NexgenRedux-Shared\OpenGLDeviceHelper.cpp">
+			</File>
+			<File
+				RelativePath="..\NexgenRedux-Shared\OpenGLDeviceHelper.h">
+			</File>
+			<File
 				RelativePath="..\NexgenRedux-Shared\WindowManager.cpp">
 			</File>
 			<File
 				RelativePath="..\NexgenRedux-Shared\WindowManager.h">
+			</File>
+			<File
+				RelativePath="..\NexgenRedux-Shared\XboxOGDeviceHelper.cpp">
+			</File>
+			<File
+				RelativePath="..\NexgenRedux-Shared\XboxOGDeviceHelper.h">
 			</File>
 		</Filter>
 		<Filter

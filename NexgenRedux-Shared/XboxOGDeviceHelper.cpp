@@ -213,7 +213,8 @@ bool XboxOGDeviceHelper::WindowCreate(WindowManager::MonitorVideoMode monitorVid
 	d3dPresentParameters.AutoDepthStencilFormat = D3DFMT_D24S8;	
 	d3dPresentParameters.FullScreen_PresentationInterval = D3DPRESENT_INTERVAL_ONE;
 
-	HRESULT hr = IDirect3D8::CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, NULL, D3DCREATE_HARDWARE_VERTEXPROCESSING, &d3dPresentParameters, d3dDevice);
+	IDirect3DDevice8* d3dDevice;
+	HRESULT hr = IDirect3D8::CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, NULL, D3DCREATE_HARDWARE_VERTEXPROCESSING, &d3dPresentParameters, &d3dDevice);
 	if (FAILED(hr))
 	{
 		return false;
@@ -289,7 +290,8 @@ bool XboxOGDeviceHelper::WindowCreate(int width, int height, uint32_t& windowHan
 	d3dPresentParameters.AutoDepthStencilFormat = D3DFMT_D24S8;	
 	d3dPresentParameters.FullScreen_PresentationInterval = D3DPRESENT_INTERVAL_ONE;
 
-	HRESULT hr = IDirect3D8::CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, NULL, D3DCREATE_HARDWARE_VERTEXPROCESSING, &d3dPresentParameters, d3dDevice);
+	IDirect3DDevice8* d3dDevice;
+	HRESULT hr = IDirect3D8::CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, NULL, D3DCREATE_HARDWARE_VERTEXPROCESSING, &d3dPresentParameters, &d3dDevice);
 	if (FAILED(hr))
 	{
 		return false;
@@ -305,7 +307,7 @@ bool XboxOGDeviceHelper::WindowRender(uint32_t& windowHandle, bool& exitRequeste
 {
 	HRESULT hr;
 
-	WindowManager::WindowContainer* windowContainer = WindowManager::GetWindowContainer(windowHandles.at(i));
+	WindowManager::WindowContainer* windowContainer = WindowManager::GetWindowContainer(windowHandle);
 	IDirect3DDevice8* d3dDevice = (IDirect3DDevice8*)windowContainer->window;
 
 	D3DCOLOR color = D3DCOLOR_RGBA(255, 0, 0, 255);

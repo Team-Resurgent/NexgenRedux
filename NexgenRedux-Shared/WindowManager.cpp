@@ -5,8 +5,10 @@
 #include <Gensys/Int.h>
 #include <Gensys/DebugUtility.h>
 
+#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
 #include <GLAD/glad.h>
 #include <GLFW/glfw3.h>
+#endif
 
 #include <map>
 #include <vector>
@@ -99,7 +101,7 @@ bool WindowManager::WindowClose(uint32_t windowHandle)
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
 	return OpenGLDeviceHelper::WindowClose(windowHandle);
 #elif defined NEXGEN_OG
-	return XboxOGDeviceHelper::WindowDispose(windowHandlew);
+	return XboxOGDeviceHelper::WindowClose(windowHandle);
 #elif defined NEXGEN_360
 	return true;
 #else

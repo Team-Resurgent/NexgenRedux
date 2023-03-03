@@ -226,7 +226,7 @@ bool XboxOGDeviceHelper::WindowCreate(WindowManager::MonitorVideoMode monitorVid
 	return true;
 }
 
-bool XboxOGDeviceHelper::WindowCreate(int width, int height, uint32_t& windowHandle)
+bool XboxOGDeviceHelper::WindowCreate(uint32_t width, uint32_t height, uint32_t& windowHandle)
 {
 	if (WindowManager::GetWindowCount() > 0)
 	{

@@ -149,7 +149,7 @@ bool OpenGLDeviceHelper::WindowCreate(WindowManager::MonitorVideoMode monitorVid
 	return true;
 }
 
-bool OpenGLDeviceHelper::WindowCreate(int width, int height, std::string title, uint32_t& windowHandle)
+bool OpenGLDeviceHelper::WindowCreate(uint32_t width, uint32_t height, std::string title, uint32_t& windowHandle)
 {
 	if (Init() == false)
     {

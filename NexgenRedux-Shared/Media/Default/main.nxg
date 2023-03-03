@@ -1,11 +1,15 @@
-float calc(float a, float b)
+void Init()
 {
-    // Print the value that we received
-    DebugPrint(1, "Received: " + a + ", " + b + "\n");
-    
-    // Print the current system time
-    //Print("System has been running for " + GetSystemTime()/1000.0 + " seconds\n");
-    
-    // Do the calculation and return the value to the application
-    return a * b;
+    DebugPrint(1, "Initializing...");
+
+    // create window otherwise program will just exit
+    uint windowID = WindowCreate(640, 480, "my window title");
+
+    DebugPrint(1, "Window id = " + windowID);
+    // SetWindowBackground(windowID, 0xff00ff);
+}
+
+void Render(uint windowID, float dt)
+{
+    DebugPrint(1, "Frame Render on window " + windowID + " dt = " + dt);
 }

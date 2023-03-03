@@ -180,6 +180,17 @@
 			<File
 				RelativePath="..\NexgenRedux-Shared\XboxOGDeviceHelper.h">
 			</File>
+			<Filter
+				Name="Media"
+				Filter="">
+				<Filter
+					Name="Default"
+					Filter="">
+					<File
+						RelativePath="..\NexgenRedux-Shared\Media\Default\main.nxg">
+					</File>
+				</Filter>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Gensys"

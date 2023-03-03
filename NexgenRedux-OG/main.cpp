@@ -20,51 +20,21 @@ void __cdecl main(int, char **)
 {
 	//Gensys::Test::RunTests();
 
-	//BootLoader::Run();
+	BootLoader::Run();
 
-    //AngelScriptRunner::Init();
-    //AngelScriptRunner::ExecuteCalc();
-    //AngelScriptRunner::Close();
-
-    uint32_t monitorCount;
-    if (WindowManager::GetAvailableMonitorCount(monitorCount) == false)
+    AngelScriptRunner::Init();
+    if (AngelScriptRunner::ExecuteInit() == false)
     {
         return;
     }
-
-    std::vector<WindowManager::MonitorVideoMode> videoModes;
-    if (WindowManager::GetMonitorVideoModes(0, videoModes) == false)
-    {
-        return;
-    }
-
-    WindowManager::MonitorVideoMode videoMode;
-    if (WindowManager::GetMonitorVideoMode(0, videoMode) == false)
-    {
-        return;
-    }
-
-    uint32_t windowHandle1;
-    if (WindowManager::WindowCreate(640, 480, "EqUiNoX was here...", windowHandle1) == false)
-    {
-        return;
-    }
-
-    //uint32_t windowHandle2;
-    //if (WindowManager::WindowCreate(videoMode, "EqUiNoX was here again...", windowHandle2) == false)
-    //{
-    //     return;
-    //}
 
     if (WindowManager::RenderLoop() == false)
     {
         return;
     }
 
-    if (WindowManager::WindowClose(windowHandle1) == false)
-    {
-        return;
-    }
+    WindowManager::Close();
+    AngelScriptRunner::Close();
 
 	return;
 }

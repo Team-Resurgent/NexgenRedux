@@ -1,4 +1,5 @@
 #include "WindowManager.h"
+#include "AngelScriptRunner.h"
 #include "XboxOGDeviceHelper.h"
 #include "OpenGLDeviceHelper.h"
 
@@ -22,7 +23,7 @@ namespace
 	std::map<uint32_t, WindowManager::WindowContainer> m_windowContainerMap;
 }
 
-void WindowManager::Dispose(void) 
+void WindowManager::Close(void) 
 {
 	while (m_windowContainerMap.size() > 0)
 	{
@@ -83,7 +84,7 @@ bool WindowManager::WindowCreate(MonitorVideoMode monitorVideoMode, std::string 
 #endif
 }
 
-bool WindowManager::WindowCreate(int width, int height, std::string title, uint32_t& windowHandle)
+bool WindowManager::WindowCreate(uint32_t width, uint32_t height, std::string title, uint32_t& windowHandle)
 {
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
 	return OpenGLDeviceHelper::WindowCreate(width, height, title, windowHandle);
@@ -136,31 +137,39 @@ bool WindowManager::RenderLoop(void)
 {
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
 
-    bool exitRequested = false;
-    while (exitRequested == false)
-    {
-		std::vector<uint32_t> windowHandles = GetWindowHandles();
+	if (GetWindowCount() > 0) {
+		bool exitRequested = false;
+		while (exitRequested == false)
+		{
+			std::vector<uint32_t> windowHandles = GetWindowHandles();
 
-        for (uint32_t i = 0; i < windowHandles.size(); i++)
-        {
-			OpenGLDeviceHelper::WindowRender(windowHandles.at(i), exitRequested);
-        }
-        glfwPollEvents();
-    }
+			for (uint32_t i = 0; i < windowHandles.size(); i++)
+			{
+				uint32_t windowHandle = windowHandles.at(i);
+				AngelScriptRunner::ExecuteRender(windowHandle, 0.123f);
+				OpenGLDeviceHelper::WindowRender(windowHandle, exitRequested);
+			}
+			glfwPollEvents();
+		}
+	}
 
     glfwTerminate();
     return true;
 
 #elif defined NEXGEN_OG
 
-    bool exitRequested = false;
-    while (exitRequested == false)
-    {
-		std::vector<uint32_t> windowHandles = GetWindowHandles();
+	if (GetWindowCount() > 0) {
+		bool exitRequested = false;
+		while (exitRequested == false)
+		{
+			std::vector<uint32_t> windowHandles = GetWindowHandles();
 
-		for (uint32_t i = 0; i < windowHandles.size(); i++)
-        {
-			XboxOGDeviceHelper::WindowRender(windowHandles.at(i), exitRequested);
+			for (uint32_t i = 0; i < windowHandles.size(); i++)
+			{
+				uint32_t windowHandle = windowHandles.at(i);
+				AngelScriptRunner::ExecuteRender(windowHandle, 0.123f);
+				XboxOGDeviceHelper::WindowRender(windowHandles.at(i), exitRequested);
+			}
 		}
 	}
 

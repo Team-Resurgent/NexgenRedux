@@ -1,12 +1,15 @@
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
 
 #include "OpenGLDeviceHelper.h"
+#include "AngelScriptRunner.h"
 #include "WindowManager.h"
 #include "Icon.h"
 
+#include <Gensys/DebugUtility.h>
 #include <GLAD/glad.h>
 #include <GLFW/glfw3.h>
 
+using namespace Gensys;
 using namespace NexgenRedux;
 
 namespace 
@@ -26,6 +29,109 @@ namespace
 		}
 		return true;
 	}
+
+    void WindowIconify(GLFWwindow* window, int iconified)
+    {
+        //printf("window iconify: %i\n", iconified);
+    }
+
+    void WindowMaximize(GLFWwindow* window, int maximized)
+    {
+        //printf("window maximize: %i\n", maximized);
+    }
+
+    void WindowSize(GLFWwindow* window, int width, int height)
+    {
+        //printf("window size: %i,%i\n", width, height);
+    }
+
+    void WindowFocus(GLFWwindow* window, int focused)
+    {
+        //printf("window focus: %i\n", focused);
+    }
+
+    void WindowKeyboardKey(GLFWwindow* window, int key, int scancode, int action, int mods)
+    {
+        //printf("keyboard state: %i,%i,%i,%i\n", key, scancode, action, mods);
+    }
+
+    void WindowKeyboardCharacter(GLFWwindow* window, unsigned int codepoint)
+    {
+        //printf("keyboard key: %i\n", codepoint);
+    }
+
+    void WindowMouseCursorPosition(GLFWwindow* window, double xpos, double ypos)
+    {
+        //printf("mouse moved: %f,%f\n", xpos, ypos);
+    }
+
+    void WindowMouseCursorEnter(GLFWwindow* window, int entered)
+    {
+    //     if (entered)
+    //     {
+    //         printf("mouse entered\n");
+    //     }
+    //     else
+    //     {
+    //         printf("mouse left\n");
+    //     }
+    }
+
+    void WindowMouseButton(GLFWwindow* window, int button, int action, int modifier)
+    {
+        WindowManager::WindowContainer windowContainer;
+        windowContainer.window = window;
+
+        uint32_t windowHandle;
+        if (WindowManager::GetWindowHandle(windowContainer, windowHandle) == false) 
+        {
+            DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "GetWindowHandle failed.");
+        }
+        else if (AngelScriptRunner::ExecuteWindowMouseButtonCallback(0, (uint32_t)button, (uint32_t)action, (uint32_t)modifier) == false)
+        {
+            DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteWindowMouseButtonCallback failed.");
+        }
+    }
+
+    void WindowMouseScroll(GLFWwindow* window, double xoffset, double yoffset)
+    {
+        //printf("mouse scroll %f,%f\n", xoffset, yoffset);
+    }
+
+    void WindowDrop(GLFWwindow* window, int count, const char** paths)
+    {
+        // for (int i = 0; i < count; i++) {
+        //     printf("drop %i,%s\n", count, paths[i]);
+        // }
+    }
+
+    void WindowJoystick(int jid, int event)
+    {
+        // if (event == GLFW_CONNECTED)
+        // {
+        //     printf("joystick connected %i,%i\n", jid, event);
+        // }
+        // else if (event == GLFW_DISCONNECTED)
+        // {
+        //     printf("joystick disconnected %i,%i\n", jid, event);
+        // }
+    }
+
+    void SetCallbacks(GLFWwindow* window)
+    {
+        glfwSetWindowIconifyCallback(window, WindowIconify);
+        glfwSetWindowMaximizeCallback(window, WindowMaximize);
+        glfwSetWindowSizeCallback(window, WindowSize);
+        glfwSetWindowFocusCallback(window, WindowFocus);
+        glfwSetKeyCallback(window, WindowKeyboardKey);
+        glfwSetCharCallback(window, WindowKeyboardCharacter);
+        glfwSetCursorPosCallback(window, WindowMouseCursorPosition);
+        glfwSetCursorEnterCallback(window, WindowMouseCursorEnter);
+        glfwSetMouseButtonCallback(window, WindowMouseButton);
+        glfwSetScrollCallback(window, WindowMouseScroll);
+        glfwSetDropCallback(window, WindowDrop);
+        glfwSetJoystickCallback(WindowJoystick);
+    }
 }
 
 bool OpenGLDeviceHelper::GetAvailableMonitorCount(uint32_t& monitorCount)
@@ -127,6 +233,11 @@ bool OpenGLDeviceHelper::WindowCreateWithVideoMode(WindowManager::MonitorVideoMo
         return false;
     }
 
+    SetCallbacks(window);
+
+    //glfwSetJoystickCallback(joystick_callback);
+    //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+
 	glfwMakeContextCurrent(window);
     if (gladLoadGLES2Loader((GLADloadproc)glfwGetProcAddress) == false)
     {
@@ -164,6 +275,11 @@ bool OpenGLDeviceHelper::WindowCreateWithSize(uint32_t width, uint32_t height, s
         glfwTerminate();
         return false;
     }
+
+    SetCallbacks(window);
+
+    //glfwSetJoystickCallback(joystick_callback);
+    //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 
     glfwMakeContextCurrent(window);
     if (gladLoadGLES2Loader((GLADloadproc)glfwGetProcAddress) == false)

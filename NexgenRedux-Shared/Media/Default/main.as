@@ -1,3 +1,8 @@
+void OnWindowMouseButton(uint windowHandle, uint button, uint action, uint modifier)
+{
+    DebugPrint(0, "OnWindowMouseButton windowHandle = " + windowHandle + ", button = " + button + ", action = " + action + ", modifier = " + modifier);
+}
+
 void Init()
 {
     DebugPrint(0, "Initializing...");
@@ -44,6 +49,8 @@ void Init()
     //         }
     //     }
     // }
+
+    SetWindowMouseButtonCallback(OnWindowMouseButton);
 
     DebugPrint(1, "Window id = " + windowID);
     // SetWindowBackground(windowID, 0xff00ff);

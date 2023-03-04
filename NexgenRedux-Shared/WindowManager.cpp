@@ -110,11 +110,18 @@ bool WindowManager::WindowClose(uint32_t windowHandle)
 #endif
 }
 
-void WindowManager::DeleteWindowContainer(uint32_t windowHandle)
+bool WindowManager::GetWindowHandle(WindowContainer windowContainer, uint32_t& windowHandle)
 {
-	m_windowContainerMap.erase(windowHandle);
+	for (std::map<uint32_t, WindowContainer>::iterator it = m_windowContainerMap.begin(); it != m_windowContainerMap.end(); ++it)
+	{
+		if (it->second.window == windowContainer.window)
+		{
+			windowHandle = it->first;
+			return true;
+		} 
+	}
+	return false;
 }
-
 
 // void Render()
 // {
@@ -214,4 +221,9 @@ WindowManager::WindowContainer* WindowManager::GetWindowContainer(uint32_t windo
 		return NULL;
 	}
 	return (WindowContainer*)&it->second;
+}
+
+void WindowManager::DeleteWindowContainer(uint32_t windowHandle)
+{
+	m_windowContainerMap.erase(windowHandle);
 }

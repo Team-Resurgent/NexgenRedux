@@ -18,8 +18,8 @@ using namespace AngelScript;
 
 namespace {
 
-	asIScriptEngine* m_engine;
-
+	asIScriptEngine* m_engine = NULL;
+	asIScriptFunction *m_windowMouseButtonCallback = NULL;
 }
 
 void MessageCallback(asSMessageInfo* msg, void* param)
@@ -107,7 +107,40 @@ bool AngelScriptRunner::Init(void)
 	if (m_engine->RegisterGlobalFunction("array<MonitorVideoMode> @GetMonitorVideoModes(uint monitorIndex)", asFUNCTION(AngelScriptMethods::GetMonitorVideoModes), asCALL_GENERIC) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("uint WindowCreateWithVideoMode(MonitorVideoMode monitorVideoMode, string &in)", asFUNCTION(AngelScriptMethods::WindowCreateWithVideoMode), asCALL_GENERIC) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("uint WindowCreateWithSize(uint width, uint height, string &in)", asFUNCTION(AngelScriptMethods::WindowCreateWithSize), asCALL_GENERIC) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("void WindowClose(uint windowHandle)", asFUNCTION(AngelScriptMethods::WindowClose), asCALL_GENERIC) < 0) { return false; }
 
+	//if (m_engine->RegisterFuncdef("void WindowIconifyCallback()") < 0) { return false; }
+	//if (m_engine->RegisterGlobalFunction("void SetWindowIconifyCallback(WindowIconifyCallback @cb)", asFUNCTION(SetWindowIconifyCallback), asCALL_CDECL) < 0) { return false; }
+
+
+	if (m_engine->RegisterFuncdef("void WindowMouseButtonCallback(uint windowHandle, uint button, uint action, uint modifier)") < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("void SetWindowMouseButtonCallback(WindowMouseButtonCallback @windowMouseButtonCallback)", asFUNCTION(AngelScriptRunner::SetWindowMouseButtonCallback), asCALL_GENERIC) < 0) { return false; }
+
+    // void WindowIconify(GLFWwindow* window, int iconified)
+    // void WindowMaximize(GLFWwindow* window, int maximized)
+    // void WindowSize(GLFWwindow* window, int width, int height)
+    // void WindowFocus(GLFWwindow* window, int focused)
+    // void WindowKeyboardKey(GLFWwindow* window, int key, int scancode, int action, int mods)
+    // void WindowKeyboardCharacter(GLFWwindow* window, unsigned int codepoint)
+    // void WindowMouseCursorPosition(GLFWwindow* window, double xpos, double ypos)
+    // void WindowMouseCursorEnter(GLFWwindow* window, int entered)
+    // void WindowMouseButton(GLFWwindow* window, int button, int action, int mods)
+    // void WindowMouseScroll(GLFWwindow* window, double xoffset, double yoffset)
+    // void WindowDrop(GLFWwindow* window, int count, const char** paths)
+    // void WindowJoystick(int jid, int event)
+
+        // glfwSetWindowIconifyCallback(window, WindowIconify);
+        // glfwSetWindowMaximizeCallback(window, WindowMaximize);
+        // glfwSetWindowSizeCallback(window, WindowSize);
+        // glfwSetWindowFocusCallback(window, WindowFocus);
+        // glfwSetKeyCallback(window, WindowKeyboardKey);
+        // glfwSetCharCallback(window, WindowKeyboardCharacter);
+        // glfwSetCursorPosCallback(window, WindowMouseCursorPosition);
+        // glfwSetCursorEnterCallback(window, WindowMouseCursorEnter);
+        // glfwSetMouseButtonCallback(window, WindowMouseButton);
+        // glfwSetScrollCallback(window, WindowMouseScroll);
+        // glfwSetDropCallback(window, WindowDrop);
+        // glfwSetJoystickCallback(WindowJoystick);
 
 	//if (m_engine->RegisterGlobalFunction("array<uint> @Test1(void)", asFUNCTION(AngelScriptMethods::Test1), asCALL_GENERIC) < 0) { return false; }
 	//if (m_engine->RegisterGlobalFunction("Vec2 Test2(void)", asFUNCTION(AngelScriptMethods::Test2), asCALL_GENERIC) < 0) { return false; }
@@ -179,11 +212,49 @@ bool AngelScriptRunner::ExecuteRender(uint32_t windowHandle, float dt)
 	return ProcessExecuteResult(context, result);
 }
 
-void AngelScriptRunner::Close(void)
+bool AngelScriptRunner::ExecuteWindowMouseButtonCallback(uint32_t windowHandle, uint32_t button, uint32_t action, uint32_t modifier)
 {
-	m_engine->ShutDownAndRelease();
+	asIScriptContext *context = m_engine->CreateContext();
+	if (context == NULL) 
+	{
+		return false;
+	}
+
+	if (m_windowMouseButtonCallback == NULL)
+	{
+		context->Release();
+		return false;
+	}
+
+	if (context->Prepare(m_windowMouseButtonCallback) < 0) 
+	{
+		context->Release();
+		return false;
+	}
+
+	context->SetArgDWord(0, windowHandle);
+	context->SetArgDWord(1, button);
+	context->SetArgDWord(2, action);
+	context->SetArgDWord(3, modifier);
+	uint32_t result = context->Execute();
+	context->Release();
+
+	return ProcessExecuteResult(context, result);
 }
 
+void AngelScriptRunner::Close(void)
+{
+	if (m_engine != NULL) 
+	{
+		m_engine->ShutDownAndRelease();
+	}
+	if (m_windowMouseButtonCallback != NULL) 
+	{
+		m_windowMouseButtonCallback->Release();
+	}
+}
+
+// Privates
 
 bool AngelScriptRunner::ProcessExecuteResult(asIScriptContext *context, uint32_t result)
 {
@@ -214,4 +285,14 @@ bool AngelScriptRunner::ProcessExecuteResult(asIScriptContext *context, uint32_t
 	
 	DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "AngelScript - Unknown error occured '%i'.", result);
 	return false;
+}
+
+void AngelScriptRunner::SetWindowMouseButtonCallback(asIScriptGeneric* generic)
+{
+	asIScriptFunction* callbackFunction = (asIScriptFunction*)generic->GetArgObject(0);
+	if (m_windowMouseButtonCallback != NULL) 
+	{
+		m_windowMouseButtonCallback->Release();
+	}
+   	m_windowMouseButtonCallback = callbackFunction;
 }

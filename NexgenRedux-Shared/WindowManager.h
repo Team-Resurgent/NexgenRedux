@@ -35,6 +35,7 @@ namespace NexgenRedux
 		static bool WindowCreateWithSize(uint32_t width, uint32_t height, std::string title, uint32_t& windowHandle);
         static bool RenderLoop(void);
         static bool WindowClose(uint32_t windowHandle);
+		static bool GetWindowHandle(WindowContainer windowContainer, uint32_t& windowHandle);
 
 		friend class OpenGLDeviceHelper;
 		friend class XboxOGDeviceHelper;

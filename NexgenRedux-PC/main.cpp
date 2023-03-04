@@ -189,6 +189,20 @@ void joystick_callback(int jid, int event)
     }
 }
 
+//     glfwSetWindowIconifyCallback(window, window_iconify);
+//     glfwSetWindowMaximizeCallback(window, window_maximize);
+//     glfwSetWindowSizeCallback(window, window_size);
+//     glfwSetWindowFocusCallback(window, window_focus);
+//     glfwSetKeyCallback(window, key_callback);
+//     glfwSetCharCallback(window, character_callback);
+//     glfwSetCursorPosCallback(window, cursor_position_callback);
+//     glfwSetCursorEnterCallback(window, cursor_enter_callback);
+//     glfwSetMouseButtonCallback(window, mouse_button_callback);
+//     glfwSetScrollCallback(window, scroll_callback);
+//     glfwSetDropCallback(window, drop_callback);
+//     glfwSetJoystickCallback(joystick_callback);
+//     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+
 int main(int argc, const char* argv[])
 {
 	//Gensys::Test::RunTests();

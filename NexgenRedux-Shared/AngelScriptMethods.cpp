@@ -89,7 +89,7 @@ void AngelScriptMethods::WindowCreateWithSize(asIScriptGeneric* generic)
 		asIScriptContext *context = asGetActiveContext();
 		if (context) 
 		{
-			context->SetException("WindowCreate failed.");
+			context->SetException("WindowCreateWithSize failed.");
 			return;
 		}
 	}
@@ -106,12 +106,28 @@ void AngelScriptMethods::WindowCreateWithVideoMode(asIScriptGeneric* generic)
 		asIScriptContext *context = asGetActiveContext();
 		if (context) 
 		{
-			context->SetException("WindowCreate failed.");
+			context->SetException("WindowCreateWithVideoMode failed.");
 			return;
 		}
 	}
 	*(uint32_t*)generic->GetAddressOfReturnLocation() = windowHandle;
 }
+
+void AngelScriptMethods::WindowClose(asIScriptGeneric* generic)
+{
+	uint32_t windowHandle = generic->GetArgDWord(0);
+	if (WindowManager::WindowClose(windowHandle) == false) 
+	{
+		asIScriptContext *context = asGetActiveContext();
+		if (context) 
+		{
+			context->SetException("WindowClose failed.");
+			return;
+		}
+	}
+}
+
+// some reference tests
 
 void AngelScriptMethods::Test1(asIScriptGeneric* generic)
 {

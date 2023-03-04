@@ -31,8 +31,8 @@ namespace NexgenRedux
 		static bool GetAvailableMonitorCount(uint32_t& monitorCount);
 		static bool GetMonitorVideoMode(uint32_t monitorIndex, MonitorVideoMode& monitorVideoMode);
 		static bool GetMonitorVideoModes(uint32_t monitorIndex, std::vector<MonitorVideoMode>& monitorVideoModes);
-		static bool WindowCreate(MonitorVideoMode monitorVideoMode, std::string title, uint32_t& windowHandle);
-		static bool WindowCreate(uint32_t width, uint32_t height, std::string title, uint32_t& windowHandle);
+		static bool WindowCreateWithVideoMode(MonitorVideoMode monitorVideoMode, std::string title, uint32_t& windowHandle);
+		static bool WindowCreateWithSize(uint32_t width, uint32_t height, std::string title, uint32_t& windowHandle);
         static bool RenderLoop(void);
         static bool WindowClose(uint32_t windowHandle);
 

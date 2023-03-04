@@ -37,7 +37,7 @@ bool OpenGLDeviceHelper::GetAvailableMonitorCount(uint32_t& monitorCount)
 
     int count;
     glfwGetMonitors(&count);
-    monitorCount = count;
+    monitorCount = (uint32_t)count;
 	return true;
 }
 
@@ -100,7 +100,7 @@ bool OpenGLDeviceHelper::GetMonitorVideoModes(uint32_t monitorIndex, std::vector
     return true;
 }
 
-bool OpenGLDeviceHelper::WindowCreate(WindowManager::MonitorVideoMode monitorVideoMode, std::string title, uint32_t& windowHandle)
+bool OpenGLDeviceHelper::WindowCreateWithVideoMode(WindowManager::MonitorVideoMode monitorVideoMode, std::string title, uint32_t& windowHandle)
 {
 	if (Init() == false)
     {
@@ -149,7 +149,7 @@ bool OpenGLDeviceHelper::WindowCreate(WindowManager::MonitorVideoMode monitorVid
 	return true;
 }
 
-bool OpenGLDeviceHelper::WindowCreate(uint32_t width, uint32_t height, std::string title, uint32_t& windowHandle)
+bool OpenGLDeviceHelper::WindowCreateWithSize(uint32_t width, uint32_t height, std::string title, uint32_t& windowHandle)
 {
 	if (Init() == false)
     {

@@ -71,12 +71,12 @@ bool WindowManager::GetMonitorVideoModes(uint32_t monitorIndex, std::vector<Moni
 #endif
 }
 
-bool WindowManager::WindowCreate(MonitorVideoMode monitorVideoMode, std::string title, uint32_t& windowHandle)
+bool WindowManager::WindowCreateWithVideoMode(MonitorVideoMode monitorVideoMode, std::string title, uint32_t& windowHandle)
 {
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-    return OpenGLDeviceHelper::WindowCreate(monitorVideoMode, title, windowHandle);
+    return OpenGLDeviceHelper::WindowCreateWithVideoMode(monitorVideoMode, title, windowHandle);
 #elif defined NEXGEN_OG
-	return XboxOGDeviceHelper::WindowCreate(monitorVideoMode, windowHandle);
+	return XboxOGDeviceHelper::WindowCreateWithVideoMode(monitorVideoMode, windowHandle);
 #elif defined NEXGEN_360
 	return true;
 #else
@@ -84,12 +84,12 @@ bool WindowManager::WindowCreate(MonitorVideoMode monitorVideoMode, std::string 
 #endif
 }
 
-bool WindowManager::WindowCreate(uint32_t width, uint32_t height, std::string title, uint32_t& windowHandle)
+bool WindowManager::WindowCreateWithSize(uint32_t width, uint32_t height, std::string title, uint32_t& windowHandle)
 {
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	return OpenGLDeviceHelper::WindowCreate(width, height, title, windowHandle);
+	return OpenGLDeviceHelper::WindowCreateWithSize(width, height, title, windowHandle);
 #elif defined NEXGEN_OG
-	return XboxOGDeviceHelper::WindowCreate(width, height, windowHandle);
+	return XboxOGDeviceHelper::WindowCreateWithSize(width, height, windowHandle);
 #elif defined NEXGEN_360
 	return true;
 #else

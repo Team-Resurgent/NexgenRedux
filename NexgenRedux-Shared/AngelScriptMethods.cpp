@@ -1,10 +1,15 @@
 #include "AngelScriptMethods.h"
+#include "AngelScriptRunner.h"
 #include "WindowManager.h"
 
 #include <Gensys/DebugUtility.h>
+
 #include <AngelScript/angelscript.h>
 #include <AngelScript/addons/autowrapper/aswrappedcall.h>
 #include <AngelScript/addons/scriptstdstring/scriptstdstring.h>
+#include <AngelScript/addons/scriptmath/scriptmath.h>
+#include <AngelScript/addons/scriptarray/scriptarray.h>
+#include <AngelScript/addons/scriptdictionary/scriptdictionary.h>
 
 using namespace Gensys;
 using namespace NexgenRedux;
@@ -17,20 +22,133 @@ void AngelScriptMethods::DebugPrint(asIScriptGeneric* generic)
 	DebugUtility::LogMessage(logLevel, *message);
 }
 
-void AngelScriptMethods::WindowCreate(asIScriptGeneric* generic)
+void AngelScriptMethods::GetAvailableMonitorCount(asIScriptGeneric* generic)
+{
+	uint32_t monitorCount;
+	if (WindowManager::GetAvailableMonitorCount(monitorCount) == false)
+	{
+		asIScriptContext *context = asGetActiveContext();
+		if (context) 
+		{
+			context->SetException("GetAvailableMonitorCount failed.");
+			return;
+		}
+	}
+	*(uint32_t*)generic->GetAddressOfReturnLocation() = monitorCount;
+}
+
+void AngelScriptMethods::GetMonitorVideoMode(asIScriptGeneric* generic)
+{
+	uint32_t monitorIndex = generic->GetArgDWord(0);
+	WindowManager::MonitorVideoMode monitorVideoMode;
+	if (WindowManager::GetMonitorVideoMode(monitorIndex, monitorVideoMode) == false)
+	{
+		asIScriptContext *context = asGetActiveContext();
+		if (context) 
+		{
+			context->SetException("GetMonitorVideoMode failed.");
+			return;
+		}
+	}
+	generic->SetReturnObject(&monitorVideoMode);
+}
+
+void AngelScriptMethods::GetMonitorVideoModes(asIScriptGeneric* generic)
+{
+	uint32_t monitorIndex = generic->GetArgDWord(0);
+	std::vector<WindowManager::MonitorVideoMode> monitorVideoModes;
+	if (WindowManager::GetMonitorVideoModes(monitorIndex, monitorVideoModes) == false)
+	{
+		asIScriptContext *context = asGetActiveContext();
+		if (context) 
+		{
+			context->SetException("GetMonitorVideoMode failed.");
+			return;
+		}
+	}
+	asIScriptContext *context = asGetActiveContext();
+	asIScriptEngine *engine = context->GetEngine();
+	asITypeInfo *arrayType = engine->GetTypeInfoByDecl("array<MonitorVideoMode>");
+	CScriptArray *array = CScriptArray::Create(arrayType, monitorVideoModes.size());
+	for (uint32_t i = 0; i < monitorVideoModes.size(); i++)
+	{
+		(*(WindowManager::MonitorVideoMode*)array->At(i)) = monitorVideoModes.at(i);
+	}
+	generic->SetReturnObject(array);
+	array->Release();
+}
+
+void AngelScriptMethods::WindowCreateWithSize(asIScriptGeneric* generic)
 {
 	uint32_t width = generic->GetArgDWord(0);
 	uint32_t height = generic->GetArgDWord(1);
 	std::string* title = (std::string*)generic->GetArgAddress(2);
 	uint32_t windowHandle;
-	if (WindowManager::WindowCreate(width, height, *title, windowHandle) == false) 
+	if (WindowManager::WindowCreateWithSize(width, height, *title, windowHandle) == false) 
 	{
-		asIScriptContext *ctx = asGetActiveContext();
-		if (ctx) 
+		asIScriptContext *context = asGetActiveContext();
+		if (context) 
 		{
-			ctx->SetException("WindowCreate failed.");
+			context->SetException("WindowCreate failed.");
 			return;
 		}
 	}
 	*(uint32_t*)generic->GetAddressOfReturnLocation() = windowHandle;
+}
+
+void AngelScriptMethods::WindowCreateWithVideoMode(asIScriptGeneric* generic)
+{
+	WindowManager::MonitorVideoMode* monitorVideoMode = (WindowManager::MonitorVideoMode*)generic->GetArgObject(0);
+	std::string* title = (std::string*)generic->GetArgAddress(1);
+	uint32_t windowHandle;
+	if (WindowManager::WindowCreateWithVideoMode(*monitorVideoMode, *title, windowHandle) == false) 
+	{
+		asIScriptContext *context = asGetActiveContext();
+		if (context) 
+		{
+			context->SetException("WindowCreate failed.");
+			return;
+		}
+	}
+	*(uint32_t*)generic->GetAddressOfReturnLocation() = windowHandle;
+}
+
+void AngelScriptMethods::Test1(asIScriptGeneric* generic)
+{
+	asIScriptContext *context = asGetActiveContext();
+	asIScriptEngine *engine = context->GetEngine();
+	asITypeInfo *arrayType = engine->GetTypeInfoByDecl("array<uint>");
+	CScriptArray *array = CScriptArray::Create(arrayType, 3);
+	(*(int*)array->At(0)) = 123;
+	(*(int*)array->At(1)) = 234;
+	(*(int*)array->At(2)) = 345;
+	generic->SetReturnObject(array);
+	array->Release();
+}
+
+void AngelScriptMethods::Test2(asIScriptGeneric* generic)
+{
+	AngelScriptRunner::Vec2 vec2;
+	vec2.x = 1.123f;
+	vec2.y = 2.234f;
+	generic->SetReturnObject(&vec2);
+}
+
+void AngelScriptMethods::Test3(asIScriptGeneric* generic)
+{
+	asIScriptContext *context = asGetActiveContext();
+	asIScriptEngine *engine = context->GetEngine();
+	asITypeInfo *arrayType = engine->GetTypeInfoByDecl("array<Vec2>");
+	CScriptArray *array = CScriptArray::Create(arrayType, 3);
+
+	for (uint32_t i = 0; i < 3; i++)
+	{
+		AngelScriptRunner::Vec2 vec2;
+		vec2.x = 1.123f + i;
+		vec2.y = 2.234f + i;
+		(*(AngelScriptRunner::Vec2*)array->At(i)) = vec2;
+	}
+
+	generic->SetReturnObject(array);
+	array->Release();
 }

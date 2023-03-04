@@ -1,8 +1,6 @@
 #pragma once
 
 #include <AngelScript/angelscript.h>
-#include <AngelScript/addons/autowrapper/aswrappedcall.h>
-#include <AngelScript/addons/scriptstdstring/scriptstdstring.h>
 
 using namespace AngelScript;
 
@@ -12,6 +10,14 @@ namespace NexgenRedux
 	{
 	public:
 		static void DebugPrint(asIScriptGeneric* generic);
-		static void WindowCreate(asIScriptGeneric* generic);
+		static void GetAvailableMonitorCount(asIScriptGeneric* generic);
+		static void GetMonitorVideoMode(asIScriptGeneric* generic);
+		static void GetMonitorVideoModes(asIScriptGeneric* generic);
+		static void WindowCreateWithVideoMode(asIScriptGeneric* generic);
+		static void WindowCreateWithSize(asIScriptGeneric* generic);
+
+		static void Test1(asIScriptGeneric* generic);
+		static void Test2(asIScriptGeneric* generic);
+		static void Test3(asIScriptGeneric* generic);
 	};
 }

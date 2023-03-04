@@ -129,7 +129,7 @@ bool XboxOGDeviceHelper::GetMonitorVideoModes(uint32_t monitorIndex, std::vector
 	return true;
 }
 
-bool XboxOGDeviceHelper::WindowCreate(WindowManager::MonitorVideoMode monitorVideoMode, uint32_t& windowHandle)
+bool XboxOGDeviceHelper::WindowCreateWithVideoMode(WindowManager::MonitorVideoMode monitorVideoMode, uint32_t& windowHandle)
 {
 	if (WindowManager::GetWindowCount() > 0)
 	{
@@ -226,7 +226,7 @@ bool XboxOGDeviceHelper::WindowCreate(WindowManager::MonitorVideoMode monitorVid
 	return true;
 }
 
-bool XboxOGDeviceHelper::WindowCreate(uint32_t width, uint32_t height, uint32_t& windowHandle)
+bool XboxOGDeviceHelper::WindowCreateWithSize(uint32_t width, uint32_t height, uint32_t& windowHandle)
 {
 	if (WindowManager::GetWindowCount() > 0)
 	{

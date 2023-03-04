@@ -1,10 +1,8 @@
 #pragma once
 
-#include <GenSys/Int.h>
+#include <Gensys/Int.h>
 
 #include <AngelScript/angelscript.h>
-#include <AngelScript/addons/autowrapper/aswrappedcall.h>
-#include <AngelScript/addons/scriptstdstring/scriptstdstring.h>
 
 using namespace AngelScript;
 
@@ -13,6 +11,13 @@ namespace NexgenRedux
 	class AngelScriptRunner
 	{
 	public:
+
+		typedef struct Vec2
+		{
+			float x;
+			float y;
+		} Vec2;
+
 		static bool Init(void);
 		static bool ExecuteInit(void);
 		static bool ExecuteRender(uint32_t windowHandle, float dt);

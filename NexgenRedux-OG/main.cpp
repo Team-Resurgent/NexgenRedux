@@ -22,7 +22,10 @@ void __cdecl main(int, char **)
 
 	BootLoader::Run();
 
-    AngelScriptRunner::Init();
+    if (AngelScriptRunner::Init() == false)
+    {
+        return 0;
+    }
     if (AngelScriptRunner::ExecuteInit() == false)
     {
         return;

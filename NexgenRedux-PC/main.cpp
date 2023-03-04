@@ -195,7 +195,10 @@ int main(int argc, const char* argv[])
 
 	BootLoader::Run();
 
-    AngelScriptRunner::Init();
+    if (AngelScriptRunner::Init() == false)
+    {
+        return 0;
+    }
     if (AngelScriptRunner::ExecuteInit() == false)
     {
         return 0;

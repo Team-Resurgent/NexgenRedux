@@ -84,22 +84,35 @@ bool AngelScriptRunner::Init(void)
 		return false;
 	}
 
-	m_engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
-
 	RegisterStdString(m_engine);
 	RegisterScriptMath(m_engine);
 	RegisterScriptArray(m_engine, true);
 	RegisterScriptDictionary(m_engine);
 
-	if (m_engine->RegisterGlobalFunction("void DebugPrint(int logLevel, string &in)", asFUNCTION(AngelScriptMethods::DebugPrint), asCALL_GENERIC) < 0)
-	{
-		return false;
-	}
+	if (m_engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL) < 0) { return false; }
 
-	if (m_engine->RegisterGlobalFunction("uint WindowCreate(uint width, uint height, string &in)", asFUNCTION(AngelScriptMethods::WindowCreate), asCALL_GENERIC) < 0)
-	{
-		return false;
-	}
+	if (m_engine->RegisterObjectType("MonitorVideoMode", sizeof(WindowManager::MonitorVideoMode), asOBJ_VALUE | asOBJ_POD) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("MonitorVideoMode", "uint monitorIndex", asOFFSET(WindowManager::MonitorVideoMode, monitorIndex)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("MonitorVideoMode", "uint width", asOFFSET(WindowManager::MonitorVideoMode, width)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("MonitorVideoMode", "uint height", asOFFSET(WindowManager::MonitorVideoMode, height)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("MonitorVideoMode", "uint redBits", asOFFSET(WindowManager::MonitorVideoMode, redBits)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("MonitorVideoMode", "uint greenBits", asOFFSET(WindowManager::MonitorVideoMode, greenBits)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("MonitorVideoMode", "uint blueBits", asOFFSET(WindowManager::MonitorVideoMode, blueBits)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("MonitorVideoMode", "uint refreshRate", asOFFSET(WindowManager::MonitorVideoMode, refreshRate)) < 0) { return false; }
+
+	if (m_engine->RegisterGlobalFunction("void DebugPrint(int logLevel, string &in)", asFUNCTION(AngelScriptMethods::DebugPrint), asCALL_GENERIC) < 0) { return false; }
+
+	if (m_engine->RegisterGlobalFunction("uint GetAvailableMonitorCount(void)", asFUNCTION(AngelScriptMethods::GetAvailableMonitorCount), asCALL_GENERIC) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("MonitorVideoMode GetMonitorVideoMode(uint monitorIndex)", asFUNCTION(AngelScriptMethods::GetMonitorVideoMode), asCALL_GENERIC) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("array<MonitorVideoMode> @GetMonitorVideoModes(uint monitorIndex)", asFUNCTION(AngelScriptMethods::GetMonitorVideoModes), asCALL_GENERIC) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("uint WindowCreateWithVideoMode(MonitorVideoMode monitorVideoMode, string &in)", asFUNCTION(AngelScriptMethods::WindowCreateWithVideoMode), asCALL_GENERIC) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("uint WindowCreateWithSize(uint width, uint height, string &in)", asFUNCTION(AngelScriptMethods::WindowCreateWithSize), asCALL_GENERIC) < 0) { return false; }
+
+
+	//if (m_engine->RegisterGlobalFunction("array<uint> @Test1(void)", asFUNCTION(AngelScriptMethods::Test1), asCALL_GENERIC) < 0) { return false; }
+	//if (m_engine->RegisterGlobalFunction("Vec2 Test2(void)", asFUNCTION(AngelScriptMethods::Test2), asCALL_GENERIC) < 0) { return false; }
+	//if (m_engine->RegisterGlobalFunction("array<Vec2> @Test3(void)", asFUNCTION(AngelScriptMethods::Test3), asCALL_GENERIC) < 0) { return false; }
+
 
 	if (CompileScript(m_engine) == false)
 	{

@@ -1,4 +1,5 @@
 #include "AngelScriptRunner.h"
+#include "AngelScriptMethods.h"
 #include "WindowManager.h"
 
 #include <Gensys/DebugUtility.h>
@@ -7,6 +8,9 @@
 #include <AngelScript/angelscript.h>
 #include <AngelScript/addons/autowrapper/aswrappedcall.h>
 #include <AngelScript/addons/scriptstdstring/scriptstdstring.h>
+#include <AngelScript/addons/scriptmath/scriptmath.h>
+#include <AngelScript/addons/scriptarray/scriptarray.h>
+#include <AngelScript/addons/scriptdictionary/scriptdictionary.h>
 
 using namespace Gensys;
 using namespace NexgenRedux;
@@ -16,31 +20,6 @@ namespace {
 
 	asIScriptEngine* m_engine;
 
-}
-
-void DebugPrint(asIScriptGeneric* generic)
-{
-	DebugUtility::LogLevel logLevel = (DebugUtility::LogLevel)generic->GetArgDWord(0);
-	std::string *message = (std::string*)generic->GetArgAddress(1);
-	DebugUtility::LogMessage(logLevel, *message);
-}
-
-void WindowCreate(asIScriptGeneric* generic)
-{
-	uint32_t width = generic->GetArgDWord(0);
-	uint32_t height = generic->GetArgDWord(1);
-	std::string* title = (std::string*)generic->GetArgAddress(2);
-	uint32_t windowHandle;
-	if (WindowManager::WindowCreate(width, height, *title, windowHandle) == false) 
-	{
-		asIScriptContext *ctx = asGetActiveContext();
-		if (ctx) 
-		{
-			ctx->SetException("WindowCreate failed.");
-			return;
-		}
-	}
-	*(uint32_t*)generic->GetAddressOfReturnLocation() = windowHandle;
 }
 
 void MessageCallback(asSMessageInfo* msg, void* param)
@@ -75,7 +54,7 @@ bool CompileScript(asIScriptEngine* engine)
 	}
 
 	std::string script;
-	std::wstring scriptFile = FileSystem::CombinePath(FileSystem::CombinePath(mediaDirectory, L"Default"), L"main.nxg");
+	std::wstring scriptFile = FileSystem::CombinePath(FileSystem::CombinePath(mediaDirectory, L"Default"), L"main.as");
 	if (FileSystem::FileReadAllAsString(scriptFile, &script) == false)
 	{
 		return false;
@@ -99,8 +78,6 @@ bool CompileScript(asIScriptEngine* engine)
 
 bool AngelScriptRunner::Init(void)
 {
-	int result;
-
 	m_engine = asCreateScriptEngine();
 	if (m_engine == NULL)
 	{
@@ -110,21 +87,21 @@ bool AngelScriptRunner::Init(void)
 	m_engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
 
 	RegisterStdString(m_engine);
+	RegisterScriptMath(m_engine);
+	RegisterScriptArray(m_engine, true);
+	RegisterScriptDictionary(m_engine);
 
-	result = m_engine->RegisterGlobalFunction("void DebugPrint(int logLevel, string &in)", asFUNCTION(DebugPrint), asCALL_GENERIC) < 0;
-	if (result < 0)
+	if (m_engine->RegisterGlobalFunction("void DebugPrint(int logLevel, string &in)", asFUNCTION(AngelScriptMethods::DebugPrint), asCALL_GENERIC) < 0)
 	{
 		return false;
 	}
 
-	result = m_engine->RegisterGlobalFunction("uint WindowCreate(uint width, uint height, string &in)", asFUNCTION(WindowCreate), asCALL_GENERIC) < 0;
-	if (result < 0)
+	if (m_engine->RegisterGlobalFunction("uint WindowCreate(uint width, uint height, string &in)", asFUNCTION(AngelScriptMethods::WindowCreate), asCALL_GENERIC) < 0)
 	{
 		return false;
 	}
 
-	result = CompileScript(m_engine);
-	if (result < 0)
+	if (CompileScript(m_engine) == false)
 	{
 		m_engine->Release();
 		return false;
@@ -132,8 +109,6 @@ bool AngelScriptRunner::Init(void)
 
 	return true;
 }
-
-
 
 bool AngelScriptRunner::ExecuteInit(void)
 {
@@ -185,35 +160,6 @@ bool AngelScriptRunner::ExecuteRender(uint32_t windowHandle, float dt)
 
 	context->SetArgDWord(0, windowHandle);
 	context->SetArgFloat(1, dt);
-	uint32_t result = context->Execute();
-	context->Release();
-
-	return ProcessExecuteResult(context, result);
-}
-
-bool AngelScriptRunner::ExecuteCalc(void)
-{
-	asIScriptContext *context = m_engine->CreateContext();
-	if (context == NULL) 
-	{
-		return false;
-	}
-
-	asIScriptFunction *calcFunction = m_engine->GetModule(0)->GetFunctionByDecl("float calc(float, float)");
-	if (calcFunction == NULL)
-	{
-		context->Release();
-		return false;
-	}
-
-	if (context->Prepare(calcFunction) < 0) 
-	{
-		context->Release();
-		return false;
-	}
-
-	context->SetArgFloat(0, 3.14159265359f);
-	context->SetArgFloat(1, 2.71828182846f);
 	uint32_t result = context->Execute();
 	context->Release();
 

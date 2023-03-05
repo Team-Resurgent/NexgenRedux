@@ -1,28 +1,52 @@
 #include "TimeUtility.h"
-#include <cstring>
-#include <chrono>
+#include <ctime>
+#include <time.h>
+
+#if defined NEXGEN_WIN
+#include <Windows.h>
+#endif
+
+#include <Gensys/Int.h>
+
 
 using namespace Gensys;
 
-tm TimeUtility::GetTimeInfo(time_t time)
-{
-	tm* timeInfo = gmtime(&time);
-	tm timeInfoCopy;
-	memcpy(&timeInfoCopy, timeInfo, sizeof(timeInfoCopy));
-	return timeInfoCopy;
-}
-
-tm TimeUtility::GetNow()
+TimeUtility::Time TimeUtility::GetTimeNow()
 {
 	time_t now;
 	time(&now);
-	struct tm* timeInfo = gmtime(&now);
-	tm timeInfoCopy;
-	memcpy(&timeInfoCopy, timeInfo, sizeof(timeInfoCopy));
-	return timeInfoCopy;
+	struct tm* localTime = localtime(&now);
+	Time time;
+	time.month = localTime->tm_mon;
+	time.day = localTime->tm_mday;
+	time.year = localTime->tm_year + 1900;
+	time.hour = localTime->tm_hour;
+	time.minute = localTime->tm_min;
+	time.second = localTime->tm_sec;
+	return time;
 }
 
-void TimeUtility::Test()
+uint64_t TimeUtility::GetMillisecondsNow()
 {
-	std::chrono::steady_clock::time_point timePoint = std::chrono::steady_clock::now();
+	Sleep(100);
+	double clockRsolution = (CLOCKS_PER_SEC / (double)1000);
+	uint64_t nowMilliseconds = (uint64_t)(clock() / clockRsolution);
+	return nowMilliseconds;
+}
+
+double TimeUtility::GetDurationSeconds(uint64_t start, uint64_t end)
+{
+	return (end - start) / (double)1000;
+}
+
+double TimeUtility::CalculateFramesPerSecond(uint32_t frameCount, uint64_t start, uint64_t end)
+{
+	return frameCount / ((end - start) / (double)1000);
+}
+
+void TimeUtility::SleepMilliseconds(uint32_t milliseconds)
+{
+#if defined NEXGEN_WIN
+	Sleep(milliseconds);
+#endif
 }

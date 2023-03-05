@@ -7,6 +7,7 @@
 #include <Gensys/DebugUtility.h>
 #include <Gensys/FileSystem.h>
 #include <Gensys/StringUtility.h>
+#include <Gensys/TimeUtility.h>
 #include <AngelScript/angelscript.h>
 #include <AngelScript/addons/autowrapper/aswrappedcall.h>
 #include <AngelScript/addons/scriptstdstring/scriptstdstring.h>
@@ -140,6 +141,14 @@ bool AngelScriptRunner::Init(void)
 	if (m_engine->RegisterObjectProperty("JoystickAxisStates", "float axisLeftTrigger", asOFFSET(JoystickManager::JoystickAxisStates, axisLeftTrigger)) < 0) { return false; }
 	if (m_engine->RegisterObjectProperty("JoystickAxisStates", "float axisRightTrigger", asOFFSET(JoystickManager::JoystickAxisStates, axisRightTrigger)) < 0) { return false; }
 
+	if (m_engine->RegisterObjectType("Time", sizeof(TimeUtility::Time), asOBJ_VALUE | asOBJ_POD) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("Time", "uint16 month", asOFFSET(TimeUtility::Time, month)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("Time", "uint16 day", asOFFSET(TimeUtility::Time, day)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("Time", "uint16 year", asOFFSET(TimeUtility::Time, year)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("Time", "uint16 hour", asOFFSET(TimeUtility::Time, hour)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("Time", "uint16 minute", asOFFSET(TimeUtility::Time, minute)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("Time", "uint16 second", asOFFSET(TimeUtility::Time, second)) < 0) { return false; }
+
 	if (m_engine->RegisterObjectType("Vec2D", sizeof(MathUtility::Vec2D), asOBJ_VALUE | asOBJ_POD) < 0) { return false; }
     if (m_engine->RegisterObjectProperty("Vec2D", "double x", asOFFSET(MathUtility::Vec2D, x)) < 0) { return false; }
     if (m_engine->RegisterObjectProperty("Vec2D", "double y", asOFFSET(MathUtility::Vec2D, y)) < 0) { return false; }
@@ -164,6 +173,12 @@ bool AngelScriptRunner::Init(void)
 	if (m_engine->RegisterGlobalFunction("void SetMouseCursorPosition(uint windowHandle, double xPos, double yPos)", asFUNCTION(AngelScriptMethods::SetMouseCursorPosition), asCALL_GENERIC) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("string GetClipboardString(void)", asFUNCTION(AngelScriptMethods::GetClipboardString), asCALL_GENERIC) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void SetClipboardString(string)", asFUNCTION(AngelScriptMethods::SetClipboardString), asCALL_GENERIC) < 0) { return false; }
+
+	if (m_engine->RegisterGlobalFunction("Time GetTimeNow()", asFUNCTION(AngelScriptMethods::GetTimeNow), asCALL_GENERIC) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("uint64 GetMillisecondsNow()", asFUNCTION(AngelScriptMethods::GetMillisecondsNow), asCALL_GENERIC) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("double GetDurationSeconds(uint64 start, uint64 end)", asFUNCTION(AngelScriptMethods::GetDurationSeconds), asCALL_GENERIC) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("double CalculateFramesPerSecond(uint frameCount, uint64 start, uint64 end)", asFUNCTION(AngelScriptMethods::CalculateFramesPerSecond), asCALL_GENERIC) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("void SleepMilliseconds(uint milliseconds)", asFUNCTION(AngelScriptMethods::SleepMilliseconds), asCALL_GENERIC) < 0) { return false; }
 
 	if (m_engine->RegisterGlobalFunction("bool JoystickIsPresent(uint joystickID)", asFUNCTION(AngelScriptMethods::JoystickIsPresent), asCALL_GENERIC) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("bool JoystickIsGamepad(uint joystickID)", asFUNCTION(AngelScriptMethods::JoystickIsGamepad), asCALL_GENERIC) < 0) { return false; }

@@ -166,7 +166,22 @@
 				RelativePath="..\NexgenRedux-Shared\ConfigLoader.h">
 			</File>
 			<File
+				RelativePath="..\NexgenRedux-Shared\Icon.cpp">
+			</File>
+			<File
 				RelativePath="..\NexgenRedux-Shared\Icon.h">
+			</File>
+			<File
+				RelativePath="..\NexgenRedux-Shared\JoystickManager.cpp">
+			</File>
+			<File
+				RelativePath="..\NexgenRedux-Shared\JoystickManager.h">
+			</File>
+			<File
+				RelativePath="..\NexgenRedux-Shared\MathUtility.cpp">
+			</File>
+			<File
+				RelativePath="..\NexgenRedux-Shared\MathUtility.h">
 			</File>
 			<File
 				RelativePath="..\NexgenRedux-Shared\OpenGLDeviceHelper.cpp">

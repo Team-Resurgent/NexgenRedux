@@ -24,7 +24,7 @@ void __cdecl main(int, char **)
 
     if (AngelScriptRunner::Init() == false)
     {
-        return 0;
+        return;
     }
     if (AngelScriptRunner::ExecuteInit() == false)
     {

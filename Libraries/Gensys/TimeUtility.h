@@ -1,22 +1,27 @@
 #pragma once
 
-#if defined UWP_ANGLE || defined NEXGEN_WIN
-#include <WinSock2.h>
-#include <Windows.h>
-#elif defined NEXGEN_360 || defined NEXGEN_OG
-#include <xtl.h>
-#include <winsockx.h>
-#endif	
-#include <ctime>
+#include <Gensys/Int.h>
 
 namespace Gensys
 {
 	class TimeUtility
 	{
 	public:
+
+		typedef struct Time
+		{
+			uint16_t month;
+			uint16_t day;
+			uint16_t year;
+			uint16_t hour;
+			uint16_t minute;
+			uint16_t second;
+		} Time;
 		
-		static tm GetTimeInfo(time_t time);
-		static tm GetNow();
-		static void Test();
+		static Time GetTimeNow();
+		static uint64_t GetMillisecondsNow();
+		static double GetDurationSeconds(uint64_t start, uint64_t end);
+		static double CalculateFramesPerSecond(uint32_t frameCount, uint64_t start, uint64_t end);
+		static void SleepMilliseconds(uint32_t milliseconds);
 	};
 }

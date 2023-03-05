@@ -144,6 +144,23 @@ void Init()
     Size windowSize = GetWindowSize(windowID);
     DebugPrint(1, "windowSizeHeight = " + windowSize.width + ", windowSizeHeight = " + windowSize.height);
 
+    Time timeNow = GetTimeNow();
+    DebugPrint(1, "month = " + timeNow.month);
+    DebugPrint(1, "day = " + timeNow.day);
+    DebugPrint(1, "year = " + timeNow.year);
+    DebugPrint(1, "hour = " + timeNow.hour);
+    DebugPrint(1, "minute = " + timeNow.minute);
+    DebugPrint(1, "second = " + timeNow.second);
+
+    uint64 millisecondsNowStart = GetMillisecondsNow();
+    SleepMilliseconds(1000);
+    uint64 millisecondsNowEnd = GetMillisecondsNow();
+    double durarionSeconds = GetDurationSeconds(millisecondsNowStart, millisecondsNowEnd);
+    DebugPrint(1, "durarionSeconds = " + durarionSeconds);
+
+    // Demo of fps calculation
+    double fps = CalculateFramesPerSecond(30, millisecondsNowStart, millisecondsNowEnd);
+    DebugPrint(1, "fps = " + fps);
     //NOTE: since we created a window the program will wait for window to be closed
 }
 

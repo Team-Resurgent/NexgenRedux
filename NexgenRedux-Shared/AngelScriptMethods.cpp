@@ -5,6 +5,7 @@
 #include "MathUtility.h"
 
 #include <Gensys/DebugUtility.h>
+#include <Gensys/TimeUtility.h>
 
 #include <AngelScript/angelscript.h>
 #include <AngelScript/addons/autowrapper/aswrappedcall.h>
@@ -268,6 +269,41 @@ void AngelScriptMethods::SetClipboardString(asIScriptGeneric* generic)
 			return;
 		}
 	}
+}
+
+void AngelScriptMethods::GetTimeNow(asIScriptGeneric* generic)
+{
+	TimeUtility::Time time = TimeUtility::GetTimeNow();
+	generic->SetReturnObject(&time);
+}
+
+void AngelScriptMethods::GetMillisecondsNow(asIScriptGeneric* generic)
+{
+	uint64_t millisecondsNow = TimeUtility::GetMillisecondsNow();
+	*(uint64_t*)generic->GetAddressOfReturnLocation() = millisecondsNow;
+}
+
+void AngelScriptMethods::GetDurationSeconds(asIScriptGeneric* generic)
+{
+	uint64_t start = generic->GetArgQWord(0);
+	uint64_t end = generic->GetArgQWord(1);
+	double durationSeconds = TimeUtility::GetDurationSeconds(start, end);
+	*(double*)generic->GetAddressOfReturnLocation() = durationSeconds;
+}
+
+void AngelScriptMethods::CalculateFramesPerSecond(asIScriptGeneric* generic)
+{
+	uint32_t frameCount = generic->GetArgDWord(0);
+	uint64_t start = generic->GetArgQWord(1);
+	uint64_t end = generic->GetArgQWord(2);
+	double fps = TimeUtility::CalculateFramesPerSecond(frameCount, start, end);
+	*(double*)generic->GetAddressOfReturnLocation() = fps;
+}
+
+void AngelScriptMethods::SleepMilliseconds(asIScriptGeneric* generic)
+{
+	uint32_t milliseconds = generic->GetArgDWord(0);
+	TimeUtility::SleepMilliseconds(milliseconds);
 }
 
 void AngelScriptMethods::JoystickIsPresent(asIScriptGeneric* generic)

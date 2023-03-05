@@ -25,6 +25,12 @@ namespace NexgenRedux
 		static void GetClipboardString(asIScriptGeneric* generic);
 		static void SetClipboardString(asIScriptGeneric* generic);
 
+		static void GetTimeNow(asIScriptGeneric* generic);
+		static void GetMillisecondsNow(asIScriptGeneric* generic);
+		static void GetDurationSeconds(asIScriptGeneric* generic);
+		static void CalculateFramesPerSecond(asIScriptGeneric* generic);
+		static void SleepMilliseconds(asIScriptGeneric* generic);
+
 		static void JoystickIsPresent(asIScriptGeneric* generic);
 		static void JoystickIsGamepad(asIScriptGeneric* generic);
 		static void GetJoystickButtonStates(asIScriptGeneric* generic);

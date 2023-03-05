@@ -172,6 +172,32 @@ bool WindowManager::RenderLoop(void)
 #endif
 }
 
+bool WindowManager::GetClipboardString(std::string& value)
+{
+#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
+	return OpenGLDeviceHelper::GetClipboardString(value);
+#elif defined NEXGEN_OG
+	return XboxOGDeviceHelper::GetClipboardString(value);
+#elif defined NEXGEN_360
+	return true;
+#else
+	return false;
+#endif
+}
+
+bool WindowManager::SetClipboardString(std::string value)
+{
+#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
+	return OpenGLDeviceHelper::SetClipboardString(value);
+#elif defined NEXGEN_OG
+	return XboxOGDeviceHelper::SetClipboardString(value);
+#elif defined NEXGEN_360
+	return true;
+#else
+	return false;
+#endif
+}
+
 // Privates
 
 uint32_t WindowManager::GetWindowCount(void)

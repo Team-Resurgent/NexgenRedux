@@ -34,8 +34,10 @@ namespace NexgenRedux
 		static bool WindowCreateWithVideoMode(MonitorVideoMode monitorVideoMode, std::string title, uint32_t& windowHandle);
 		static bool WindowCreateWithSize(uint32_t width, uint32_t height, std::string title, uint32_t& windowHandle);
 		static bool SetCursorMode(uint32_t windowHandle, uint32_t mode);
-        static bool RenderLoop(void);
         static bool WindowClose(uint32_t windowHandle);
+		static bool RenderLoop(void);
+		static bool GetClipboardString(std::string& value);
+		static bool SetClipboardString(std::string value);
 
 		friend class OpenGLDeviceHelper;
 		friend class XboxOGDeviceHelper;

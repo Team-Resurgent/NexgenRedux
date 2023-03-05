@@ -134,6 +134,10 @@ void Init()
     bool joystickIsGamepad = JoystickIsGamepad(0);
     DebugPrint(1, "JoystickIsGamepad = " + joystickIsGamepad);
 
+    SetClipboardString("hello world");
+    string clipoard = GetClipboardString();
+    DebugPrint(1, "clipoard = " + clipoard);
+
     DebugPrint(1, "Window id = " + windowID);
     // SetWindowBackground(windowID, 0xff00ff);
 

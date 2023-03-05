@@ -7,6 +7,11 @@
 
 using namespace NexgenRedux;
 
+namespace 
+{
+	std::string m_clipboardValue = "";
+}
+
 bool XboxOGDeviceHelper::GetAvailableMonitorCount(uint32_t& monitorCount)
 {
 	monitorCount = 1;
@@ -342,6 +347,18 @@ bool XboxOGDeviceHelper::WindowClose(uint32_t windowHandle)
 	IDirect3DDevice8* d3dDevice = (IDirect3DDevice8*)windowContainer->window;
 	d3dDevice->Release();
 	WindowManager::DeleteWindowContainer(windowHandle);
+	return true;
+}
+
+bool XboxOGDeviceHelper::GetClipboardString(std::string& value)
+{
+	value = m_clipboardValue;
+	return true;
+}
+
+bool XboxOGDeviceHelper::SetClipboardString(std::string value)
+{
+	m_clipboardValue = value;
 	return true;
 }
 

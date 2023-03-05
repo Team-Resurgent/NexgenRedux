@@ -23,6 +23,8 @@ namespace NexgenRedux
 		static bool SetCursorMode(uint32_t windowHandle, uint32_t mode);
 		static bool WindowRender(uint32_t& windowHandle, bool& exitRequested);
 		static bool WindowClose(uint32_t windowHandle);
+		static bool GetClipboardString(std::string& value);
+		static bool SetClipboardString(std::string value);
 
 		static bool JoystickIsPresent(uint32_t joystickID, uint32_t& state);
 		static bool JoystickIsGamepad(uint32_t joystickID, uint32_t& state);

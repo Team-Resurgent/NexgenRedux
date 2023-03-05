@@ -248,6 +248,29 @@ bool OpenGLDeviceHelper::WindowClose(uint32_t windowHandle)
 	return true;
 }
 
+bool OpenGLDeviceHelper::GetClipboardString(std::string& value)
+{
+    if (Init() == false)
+    {
+        return false;
+    }
+
+    const char* clipboard = glfwGetClipboardString(NULL);
+	value = clipboard == NULL ? "" : std::string(clipboard);
+	return true;
+}
+
+bool OpenGLDeviceHelper::SetClipboardString(std::string value)
+{
+    if (Init() == false)
+    {
+        return false;
+    }
+
+    glfwSetClipboardString(NULL, value.c_str());
+	return true;
+}
+
 bool OpenGLDeviceHelper::JoystickIsPresent(uint32_t joystickID, uint32_t& state)
 {
     if (Init() == false)

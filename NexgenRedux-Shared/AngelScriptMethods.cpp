@@ -143,6 +143,35 @@ void AngelScriptMethods::WindowClose(asIScriptGeneric* generic)
 	}
 }
 
+void AngelScriptMethods::GetClipboardString(asIScriptGeneric* generic)
+{
+	std::string value;
+	if (WindowManager::GetClipboardString(value) == false) 
+	{
+		asIScriptContext *context = asGetActiveContext();
+		if (context) 
+		{
+			context->SetException("GetClipboardString failed.");
+			return;
+		}
+	}
+	*(std::string*)generic->GetAddressOfReturnLocation() = value;
+}
+
+void AngelScriptMethods::SetClipboardString(asIScriptGeneric* generic)
+{
+	std::string* value = (std::string*)generic->GetArgObject(0);
+	if (WindowManager::SetClipboardString(*value) == false) 
+	{
+		asIScriptContext *context = asGetActiveContext();
+		if (context) 
+		{
+			context->SetException("SetClipboardString failed.");
+			return;
+		}
+	}
+}
+
 void AngelScriptMethods::JoystickIsPresent(asIScriptGeneric* generic)
 {
 	uint32_t joystickID = generic->GetArgDWord(0);

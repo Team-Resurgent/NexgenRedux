@@ -226,6 +226,8 @@ bool XboxOGDeviceHelper::WindowCreateWithVideoMode(WindowManager::MonitorVideoMo
 	}
 
     WindowManager::WindowContainer windowContainer;
+	windowContainer.width = selectedDisplayMode.Width;
+    windowContainer.height = selectedDisplayMode.Height;
     windowContainer.window = d3dDevice;
     windowHandle = WindowManager::AddWindowContainer(windowContainer);
 	return true;
@@ -303,12 +305,27 @@ bool XboxOGDeviceHelper::WindowCreateWithSize(uint32_t width, uint32_t height, u
 	}
 
     WindowManager::WindowContainer windowContainer;
+	windowContainer.width = selectedDisplayMode.Width;
+    windowContainer.height = selectedDisplayMode.Height;
     windowContainer.window = d3dDevice;
     windowHandle = WindowManager::AddWindowContainer(windowContainer);
 	return true;
 }
 
-bool SetCursorMode(uint32_t windowHandle, uint32_t mode)
+bool XboxOGDeviceHelper::GetWindowSize(uint32_t windowHandle, uint32_t& width, uint32_t& height)
+{
+	WindowManager::WindowContainer* windowContainer = WindowManager::GetWindowContainer(windowHandle);
+	if (windowContainer == NULL)
+	{
+		return false;
+	}
+
+	width = windowContainer->width;
+	height = windowContainer->height;
+	return true;
+}
+
+bool XboxOGDeviceHelper::SetCursorMode(uint32_t windowHandle, uint32_t mode)
 {
 	return true;
 }
@@ -318,6 +335,11 @@ bool XboxOGDeviceHelper::WindowRender(uint32_t& windowHandle, bool& exitRequeste
 	HRESULT hr;
 
 	WindowManager::WindowContainer* windowContainer = WindowManager::GetWindowContainer(windowHandle);
+	if (windowContainer == NULL)
+	{
+		return false;
+	}
+
 	IDirect3DDevice8* d3dDevice = (IDirect3DDevice8*)windowContainer->window;
 
 	D3DCOLOR color = D3DCOLOR_RGBA(255, 0, 0, 255);
@@ -340,7 +362,8 @@ bool XboxOGDeviceHelper::WindowRender(uint32_t& windowHandle, bool& exitRequeste
 bool XboxOGDeviceHelper::WindowClose(uint32_t windowHandle)
 {
 	WindowManager::WindowContainer* windowContainer = WindowManager::GetWindowContainer(windowHandle);
-	if (windowContainer == NULL) {
+	if (windowContainer == NULL) 
+	{
 		return false;
 	}
 

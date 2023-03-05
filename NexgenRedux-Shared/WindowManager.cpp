@@ -97,6 +97,19 @@ bool WindowManager::WindowCreateWithSize(uint32_t width, uint32_t height, std::s
 #endif
 }
 
+bool WindowManager::GetWindowSize(uint32_t windowHandle, uint32_t& width, uint32_t& height)
+{
+#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
+	return OpenGLDeviceHelper::GetWindowSize(windowHandle, width, height);
+#elif defined NEXGEN_OG
+	return XboxOGDeviceHelper::GetWindowSize(windowHandle, width, height);
+#elif defined NEXGEN_360
+	return true;
+#else
+	return false;
+#endif
+}
+
 bool WindowManager::SetCursorMode(uint32_t windowHandle, uint32_t mode)
 {
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
@@ -257,11 +270,11 @@ uint32_t WindowManager::GetWindowCount(void)
 	return m_windowContainerMap.size();
 }
 
-bool WindowManager::GetWindowHandle(WindowContainer windowContainer, uint32_t& windowHandle)
+bool WindowManager::GetWindowHandle(void* window, uint32_t& windowHandle)
 {
 	for (std::map<uint32_t, WindowContainer>::iterator it = m_windowContainerMap.begin(); it != m_windowContainerMap.end(); ++it)
 	{
-		if (it->second.window == windowContainer.window)
+		if (it->second.window == window)
 		{
 			windowHandle = it->first;
 			return true;
@@ -291,7 +304,8 @@ uint32_t WindowManager::AddWindowContainer(WindowManager::WindowContainer window
 WindowManager::WindowContainer* WindowManager::GetWindowContainer(uint32_t windowHandle)
 {
 	std::map<uint32_t, WindowContainer>::iterator it = m_windowContainerMap.find(windowHandle);
-	if (it == m_windowContainerMap.end()) {
+	if (it == m_windowContainerMap.end()) 
+	{
 		return NULL;
 	}
 	return (WindowContainer*)&it->second;

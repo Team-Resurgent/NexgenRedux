@@ -98,6 +98,27 @@ void AngelScriptMethods::WindowCreateWithSize(asIScriptGeneric* generic)
 	*(uint32_t*)generic->GetAddressOfReturnLocation() = windowHandle;
 }
 
+void AngelScriptMethods::GetWindowSize(asIScriptGeneric* generic)
+{
+	uint32_t windowHandle = generic->GetArgDWord(0);
+	
+	uint32_t width;
+	uint32_t height;
+	if (WindowManager::GetWindowSize(windowHandle, width, height) == false) 
+	{
+		asIScriptContext *context = asGetActiveContext();
+		if (context) 
+		{
+			context->SetException("GetWindowSize failed.");
+			return;
+		}
+	}
+	MathHelper::Size size;
+	size.width = width;
+	size.height = height;
+	generic->SetReturnObject(&size);
+}
+
 void AngelScriptMethods::WindowCreateWithVideoMode(asIScriptGeneric* generic)
 {
 	WindowManager::MonitorVideoMode* monitorVideoMode = (WindowManager::MonitorVideoMode*)generic->GetArgObject(0);

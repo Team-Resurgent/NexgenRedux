@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Gensys/Int.h>
+
 namespace NexgenRedux
 {
 	class MathHelper
@@ -11,6 +13,12 @@ namespace NexgenRedux
 			double x;
 			double y;
 		} Vec2D;
+
+		typedef struct Size
+		{
+			uint32_t width;
+			uint32_t height;
+		} Size;
 
 	};
 }

@@ -141,6 +141,9 @@ void Init()
     DebugPrint(1, "Window id = " + windowID);
     // SetWindowBackground(windowID, 0xff00ff);
 
+    Size windowSize = GetWindowSize(windowID);
+    DebugPrint(1, "windowSizeHeight = " + windowSize.width + ", windowSizeHeight = " + windowSize.height);
+
     //NOTE: since we created a window the program will wait for window to be closed
 }
 

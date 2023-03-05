@@ -137,6 +137,8 @@ bool OpenGLDeviceHelper::WindowCreateWithVideoMode(WindowManager::MonitorVideoMo
 	free(buffer); 
 
     WindowManager::WindowContainer windowContainer;
+    windowContainer.width = monitorVideoMode.width;
+    windowContainer.height = monitorVideoMode.height;
     windowContainer.window = window;
     windowHandle = WindowManager::AddWindowContainer(windowContainer);
 	return true;
@@ -176,8 +178,23 @@ bool OpenGLDeviceHelper::WindowCreateWithSize(uint32_t width, uint32_t height, s
 	free(buffer); 
 
     WindowManager::WindowContainer windowContainer;
+    windowContainer.width = width;
+    windowContainer.height = height;
     windowContainer.window = window;
     windowHandle = WindowManager::AddWindowContainer(windowContainer);
+	return true;
+}
+
+bool OpenGLDeviceHelper::GetWindowSize(uint32_t windowHandle, uint32_t& width, uint32_t& height)
+{
+	WindowManager::WindowContainer* windowContainer = WindowManager::GetWindowContainer(windowHandle);
+	if (windowContainer == NULL)
+	{
+		return false;
+	}
+
+	width = windowContainer->width;
+	height = windowContainer->height;
 	return true;
 }
 
@@ -189,6 +206,11 @@ bool OpenGLDeviceHelper::SetCursorMode(uint32_t windowHandle, uint32_t mode)
     }
 
     WindowManager::WindowContainer* windowContainer = WindowManager::GetWindowContainer(windowHandle);
+    if (windowContainer == NULL)
+	{
+		return false;
+	}
+
 	GLFWwindow* window = (GLFWwindow*)windowContainer->window;
 
     if (mode == 0)
@@ -218,6 +240,11 @@ bool OpenGLDeviceHelper::SetCursorMode(uint32_t windowHandle, uint32_t mode)
 bool OpenGLDeviceHelper::WindowRender(uint32_t& windowHandle, bool& exitRequested)
 {
  	WindowManager::WindowContainer* windowContainer = WindowManager::GetWindowContainer(windowHandle);
+    if (windowContainer == NULL)
+	{
+		return false;
+	}
+
 	GLFWwindow* window = (GLFWwindow*)windowContainer->window;
 
 	int closeFlag = glfwWindowShouldClose(window);
@@ -239,7 +266,8 @@ bool OpenGLDeviceHelper::WindowRender(uint32_t& windowHandle, bool& exitRequeste
 bool OpenGLDeviceHelper::WindowClose(uint32_t windowHandle)
 {
 	WindowManager::WindowContainer* windowContainer = WindowManager::GetWindowContainer(windowHandle);
-	if (windowContainer == NULL) {
+	if (windowContainer == NULL) 
+    {
 		return false;
 	}
 
@@ -256,6 +284,11 @@ bool OpenGLDeviceHelper::GetKeyPressed(uint32_t windowHandle, uint32_t key, uint
     }
 
     WindowManager::WindowContainer* windowContainer = WindowManager::GetWindowContainer(windowHandle);
+    if (windowContainer == NULL)
+	{
+		return false;
+	}
+
 	GLFWwindow* window = (GLFWwindow*)windowContainer->window;
 
     pressed = (uint32_t)glfwGetKey(window, key);
@@ -271,6 +304,11 @@ bool OpenGLDeviceHelper::GetMouseButtonPressed(uint32_t windowHandle, uint32_t b
     }
 
     WindowManager::WindowContainer* windowContainer = WindowManager::GetWindowContainer(windowHandle);
+    if (windowContainer == NULL)
+	{
+		return false;
+	}
+
 	GLFWwindow* window = (GLFWwindow*)windowContainer->window;
 
     pressed = (uint32_t)glfwGetMouseButton(window, button);
@@ -287,6 +325,11 @@ bool OpenGLDeviceHelper::GetMouseCursorPosition(uint32_t windowHandle, double& x
     }
 
     WindowManager::WindowContainer* windowContainer = WindowManager::GetWindowContainer(windowHandle);
+    if (windowContainer == NULL)
+	{
+		return false;
+	}
+
 	GLFWwindow* window = (GLFWwindow*)windowContainer->window;
 
     glfwGetCursorPos(window, &xPos, &yPos);
@@ -301,6 +344,11 @@ bool OpenGLDeviceHelper::SetMouseCursorPosition(uint32_t windowHandle, double xP
     }
 
     WindowManager::WindowContainer* windowContainer = WindowManager::GetWindowContainer(windowHandle);
+    if (windowContainer == NULL)
+	{
+		return false;
+	}
+
 	GLFWwindow* window = (GLFWwindow*)windowContainer->window;
 
     glfwSetCursorPos(window, xPos, yPos);
@@ -439,11 +487,8 @@ void OpenGLDeviceHelper::SetCallbacks(GLFWwindow* window)
 
 void OpenGLDeviceHelper::WindowIconify(GLFWwindow* window, int iconified)
 {
-    WindowManager::WindowContainer windowContainer;
-    windowContainer.window = window;
-
     uint32_t windowHandle;
-    if (WindowManager::GetWindowHandle(windowContainer, windowHandle) == false) 
+    if (WindowManager::GetWindowHandle(window, windowHandle) == false) 
     {
         DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "GetWindowHandle failed.");
     }
@@ -455,11 +500,8 @@ void OpenGLDeviceHelper::WindowIconify(GLFWwindow* window, int iconified)
 
 void OpenGLDeviceHelper::WindowMaximize(GLFWwindow* window, int maximized)
 {
-    WindowManager::WindowContainer windowContainer;
-    windowContainer.window = window;
-
     uint32_t windowHandle;
-    if (WindowManager::GetWindowHandle(windowContainer, windowHandle) == false) 
+    if (WindowManager::GetWindowHandle(window, windowHandle) == false) 
     {
         DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "GetWindowHandle failed.");
     }
@@ -471,11 +513,8 @@ void OpenGLDeviceHelper::WindowMaximize(GLFWwindow* window, int maximized)
 
 void OpenGLDeviceHelper::WindowSize(GLFWwindow* window, int width, int height)
 {
-    WindowManager::WindowContainer windowContainer;
-    windowContainer.window = window;
-
     uint32_t windowHandle;
-    if (WindowManager::GetWindowHandle(windowContainer, windowHandle) == false) 
+    if (WindowManager::GetWindowHandle(window, windowHandle) == false) 
     {
         DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "GetWindowHandle failed.");
     }
@@ -487,11 +526,8 @@ void OpenGLDeviceHelper::WindowSize(GLFWwindow* window, int width, int height)
 
 void OpenGLDeviceHelper::WindowFocus(GLFWwindow* window, int focused)
 {
-    WindowManager::WindowContainer windowContainer;
-    windowContainer.window = window;
-
     uint32_t windowHandle;
-    if (WindowManager::GetWindowHandle(windowContainer, windowHandle) == false) 
+    if (WindowManager::GetWindowHandle(window, windowHandle) == false) 
     {
         DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "GetWindowHandle failed.");
     }
@@ -503,11 +539,8 @@ void OpenGLDeviceHelper::WindowFocus(GLFWwindow* window, int focused)
 
 void OpenGLDeviceHelper::WindowKeyboardKey(GLFWwindow* window, int key, int scancode, int action, int modifier)
 {
-    WindowManager::WindowContainer windowContainer;
-    windowContainer.window = window;
-
     uint32_t windowHandle;
-    if (WindowManager::GetWindowHandle(windowContainer, windowHandle) == false) 
+    if (WindowManager::GetWindowHandle(window, windowHandle) == false) 
     {
         DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "GetWindowHandle failed.");
     }
@@ -519,11 +552,8 @@ void OpenGLDeviceHelper::WindowKeyboardKey(GLFWwindow* window, int key, int scan
 
 void OpenGLDeviceHelper::WindowKeyboardCharacter(GLFWwindow* window, unsigned int codepoint)
 {
-    WindowManager::WindowContainer windowContainer;
-    windowContainer.window = window;
-
     uint32_t windowHandle;
-    if (WindowManager::GetWindowHandle(windowContainer, windowHandle) == false) 
+    if (WindowManager::GetWindowHandle(window, windowHandle) == false) 
     {
         DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "GetWindowHandle failed.");
     }
@@ -535,11 +565,8 @@ void OpenGLDeviceHelper::WindowKeyboardCharacter(GLFWwindow* window, unsigned in
 
 void OpenGLDeviceHelper::WindowMouseCursorPosition(GLFWwindow* window, double xPos, double yPos)
 {
-    WindowManager::WindowContainer windowContainer;
-    windowContainer.window = window;
-
     uint32_t windowHandle;
-    if (WindowManager::GetWindowHandle(windowContainer, windowHandle) == false) 
+    if (WindowManager::GetWindowHandle(window, windowHandle) == false) 
     {
         DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "GetWindowHandle failed.");
     }
@@ -551,11 +578,8 @@ void OpenGLDeviceHelper::WindowMouseCursorPosition(GLFWwindow* window, double xP
 
 void OpenGLDeviceHelper::WindowMouseCursorEnter(GLFWwindow* window, int entered)
 {
-    WindowManager::WindowContainer windowContainer;
-    windowContainer.window = window;
-
     uint32_t windowHandle;
-    if (WindowManager::GetWindowHandle(windowContainer, windowHandle) == false) 
+    if (WindowManager::GetWindowHandle(window, windowHandle) == false) 
     {
         DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "GetWindowHandle failed.");
     }
@@ -567,11 +591,8 @@ void OpenGLDeviceHelper::WindowMouseCursorEnter(GLFWwindow* window, int entered)
 
 void OpenGLDeviceHelper::WindowMouseButton(GLFWwindow* window, int button, int action, int modifier)
 {
-    WindowManager::WindowContainer windowContainer;
-    windowContainer.window = window;
-
     uint32_t windowHandle;
-    if (WindowManager::GetWindowHandle(windowContainer, windowHandle) == false) 
+    if (WindowManager::GetWindowHandle(window, windowHandle) == false) 
     {
         DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "GetWindowHandle failed.");
     }
@@ -583,11 +604,8 @@ void OpenGLDeviceHelper::WindowMouseButton(GLFWwindow* window, int button, int a
 
 void OpenGLDeviceHelper::WindowMouseScroll(GLFWwindow* window, double xOffset, double yOffset)
 {
-    WindowManager::WindowContainer windowContainer;
-    windowContainer.window = window;
-
     uint32_t windowHandle;
-    if (WindowManager::GetWindowHandle(windowContainer, windowHandle) == false) 
+    if (WindowManager::GetWindowHandle(window, windowHandle) == false) 
     {
         DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "GetWindowHandle failed.");
     }
@@ -606,11 +624,8 @@ void OpenGLDeviceHelper::WindowDrop(GLFWwindow* window, int count, const char** 
         pathArray.push_back(path);
     }
 
-    WindowManager::WindowContainer windowContainer;
-    windowContainer.window = window;
-
     uint32_t windowHandle;
-    if (WindowManager::GetWindowHandle(windowContainer, windowHandle) == false) 
+    if (WindowManager::GetWindowHandle(window, windowHandle) == false) 
     {
         DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "GetWindowHandle failed.");
     }

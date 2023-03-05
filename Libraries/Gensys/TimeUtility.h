@@ -17,5 +17,6 @@ namespace Gensys
 		
 		static tm GetTimeInfo(time_t time);
 		static tm GetNow();
+		static void Test();
 	};
 }

@@ -1,5 +1,6 @@
 #include "TimeUtility.h"
 #include <cstring>
+#include <chrono>
 
 using namespace Gensys;
 
@@ -19,4 +20,9 @@ tm TimeUtility::GetNow()
 	tm timeInfoCopy;
 	memcpy(&timeInfoCopy, timeInfo, sizeof(timeInfoCopy));
 	return timeInfoCopy;
+}
+
+void TimeUtility::Test()
+{
+	std::chrono::steady_clock::time_point timePoint = std::chrono::steady_clock::now();
 }

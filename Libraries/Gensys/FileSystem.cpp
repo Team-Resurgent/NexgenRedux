@@ -222,7 +222,7 @@ bool FileSystem::FileGetFileInfoDetail(std::wstring const path, FileInfoDetail& 
 
 	struct tm *accessTime = localtime(&statBuffer.st_atimespec.tv_sec);
 
-	fileInfoDetail.accessTime.month = accessTime->tm_mon;
+	fileInfoDetail.accessTime.month = accessTime->tm_mon + 1;
 	fileInfoDetail.accessTime.day = accessTime->tm_mday;
 	fileInfoDetail.accessTime.year = accessTime->tm_year + 1900;
 	fileInfoDetail.accessTime.hour = accessTime->tm_hour;
@@ -231,7 +231,7 @@ bool FileSystem::FileGetFileInfoDetail(std::wstring const path, FileInfoDetail& 
 
 	struct tm *writeTime = localtime(&statBuffer.st_mtimespec.tv_sec);
 
-	fileInfoDetail.writeTime.month = writeTime->tm_mon;
+	fileInfoDetail.writeTime.month = writeTime->tm_mon + 1;
 	fileInfoDetail.writeTime.day = writeTime->tm_mday;
 	fileInfoDetail.writeTime.year = writeTime->tm_year + 1900;
 	fileInfoDetail.writeTime.hour = writeTime->tm_hour;
@@ -256,7 +256,7 @@ bool FileSystem::FileGetFileInfoDetail(std::wstring const path, FileInfoDetail& 
 
 	struct tm *accessTime = localtime(&statBuffer.st_atim.tv_sec);
 
-	fileInfoDetail.accessTime.month = accessTime->tm_mon;
+	fileInfoDetail.accessTime.month = accessTime->tm_mon + 1;
 	fileInfoDetail.accessTime.day = accessTime->tm_mday;
 	fileInfoDetail.accessTime.year = accessTime->tm_year + 1900;
 	fileInfoDetail.accessTime.hour = accessTime->tm_hour;
@@ -265,7 +265,7 @@ bool FileSystem::FileGetFileInfoDetail(std::wstring const path, FileInfoDetail& 
 
 	struct tm *writeTime = localtime(&statBuffer.st_mtim.tv_sec);
 
-	fileInfoDetail.writeTime.month = writeTime->tm_mon;
+	fileInfoDetail.writeTime.month = writeTime->tm_mon + 1;
 	fileInfoDetail.writeTime.day = writeTime->tm_mday;
 	fileInfoDetail.writeTime.year = writeTime->tm_year + 1900;
 	fileInfoDetail.writeTime.hour = writeTime->tm_hour;

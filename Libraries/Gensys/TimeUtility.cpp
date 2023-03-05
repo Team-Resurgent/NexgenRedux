@@ -19,7 +19,7 @@ TimeUtility::Time TimeUtility::GetTimeNow()
 	time(&now);
 	struct tm* localTime = localtime(&now);
 	Time time;
-	time.month = localTime->tm_mon;
+	time.month = localTime->tm_mon + 1;
 	time.day = localTime->tm_mday;
 	time.year = localTime->tm_year + 1900;
 	time.hour = localTime->tm_hour;

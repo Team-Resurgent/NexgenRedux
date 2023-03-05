@@ -2,7 +2,7 @@
 #include "AngelScriptMethods.h"
 #include "WindowManager.h"
 #include "JoystickManager.h"
-#include "MathHelper.h"
+#include "MathUtility.h"
 
 #include <Gensys/DebugUtility.h>
 #include <Gensys/FileSystem.h>
@@ -140,13 +140,13 @@ bool AngelScriptRunner::Init(void)
 	if (m_engine->RegisterObjectProperty("JoystickAxisStates", "float axisLeftTrigger", asOFFSET(JoystickManager::JoystickAxisStates, axisLeftTrigger)) < 0) { return false; }
 	if (m_engine->RegisterObjectProperty("JoystickAxisStates", "float axisRightTrigger", asOFFSET(JoystickManager::JoystickAxisStates, axisRightTrigger)) < 0) { return false; }
 
-	if (m_engine->RegisterObjectType("Vec2D", sizeof(MathHelper::Vec2D), asOBJ_VALUE | asOBJ_POD) < 0) { return false; }
-    if (m_engine->RegisterObjectProperty("Vec2D", "double x", asOFFSET(MathHelper::Vec2D, x)) < 0) { return false; }
-    if (m_engine->RegisterObjectProperty("Vec2D", "double y", asOFFSET(MathHelper::Vec2D, y)) < 0) { return false; }
+	if (m_engine->RegisterObjectType("Vec2D", sizeof(MathUtility::Vec2D), asOBJ_VALUE | asOBJ_POD) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("Vec2D", "double x", asOFFSET(MathUtility::Vec2D, x)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("Vec2D", "double y", asOFFSET(MathUtility::Vec2D, y)) < 0) { return false; }
 
-	if (m_engine->RegisterObjectType("Size", sizeof(MathHelper::Size), asOBJ_VALUE | asOBJ_POD) < 0) { return false; }
-    if (m_engine->RegisterObjectProperty("Size", "uint width", asOFFSET(MathHelper::Size, width)) < 0) { return false; }
-    if (m_engine->RegisterObjectProperty("Size", "uint height", asOFFSET(MathHelper::Size, height)) < 0) { return false; }
+	if (m_engine->RegisterObjectType("Size", sizeof(MathUtility::Size), asOBJ_VALUE | asOBJ_POD) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("Size", "uint width", asOFFSET(MathUtility::Size, width)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("Size", "uint height", asOFFSET(MathUtility::Size, height)) < 0) { return false; }
 
 	if (m_engine->RegisterGlobalFunction("void DebugPrint(int logLevel, string &in message)", asFUNCTION(AngelScriptMethods::DebugPrint), asCALL_GENERIC) < 0) { return false; }
 

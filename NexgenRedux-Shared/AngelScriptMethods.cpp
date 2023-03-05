@@ -2,7 +2,7 @@
 #include "AngelScriptRunner.h"
 #include "WindowManager.h"
 #include "JoystickManager.h"
-#include "MathHelper.h"
+#include "MathUtility.h"
 
 #include <Gensys/DebugUtility.h>
 
@@ -113,7 +113,7 @@ void AngelScriptMethods::GetWindowSize(asIScriptGeneric* generic)
 			return;
 		}
 	}
-	MathHelper::Size size;
+	MathUtility::Size size;
 	size.width = width;
 	size.height = height;
 	generic->SetReturnObject(&size);
@@ -232,7 +232,7 @@ void AngelScriptMethods::GetMouseCursorPosition(asIScriptGeneric* generic)
 		}
 	}
 
-	MathHelper::Vec2D vec2D;
+	MathUtility::Vec2D vec2D;
 	vec2D.x = xPos;
 	vec2D.y = yPos;
 	generic->SetReturnObject(&vec2D);

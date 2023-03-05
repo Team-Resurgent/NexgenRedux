@@ -4,7 +4,7 @@
 
 namespace NexgenRedux
 {
-	class MathHelper
+	class MathUtility
 	{		
 	public:
 

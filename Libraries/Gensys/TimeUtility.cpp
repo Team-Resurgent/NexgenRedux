@@ -2,12 +2,14 @@
 #include <ctime>
 #include <time.h>
 
-#if defined NEXGEN_WIN
+#if defined NEXGEN_WIN 
 #include <Windows.h>
+#elif defined NEXGEN_OG
+#include <Xtl.h>
+#elif defined NEXGEN_MAC || defined NEXGEN_LINUX 
 #endif
 
 #include <Gensys/Int.h>
-
 
 using namespace Gensys;
 
@@ -28,7 +30,6 @@ TimeUtility::Time TimeUtility::GetTimeNow()
 
 uint64_t TimeUtility::GetMillisecondsNow()
 {
-	Sleep(100);
 	double clockRsolution = (CLOCKS_PER_SEC / (double)1000);
 	uint64_t nowMilliseconds = (uint64_t)(clock() / clockRsolution);
 	return nowMilliseconds;
@@ -46,7 +47,7 @@ double TimeUtility::CalculateFramesPerSecond(uint32_t frameCount, uint64_t start
 
 void TimeUtility::SleepMilliseconds(uint32_t milliseconds)
 {
-#if defined NEXGEN_WIN
+#if defined NEXGEN_WIN || defined NEXGEN_OG || defined NEXGEN_360
 	Sleep(milliseconds);
 #endif
 }

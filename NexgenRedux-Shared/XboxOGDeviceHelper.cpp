@@ -411,26 +411,26 @@ bool XboxOGDeviceHelper::SetClipboardString(std::string value)
 
 bool XboxOGDeviceHelper::JoystickIsPresent(uint32_t joystickID, uint32_t& present)
 {
-	//TODO: add code
-	return false;
+	present = 1;
+	return true;
 }
 
 bool XboxOGDeviceHelper::JoystickIsGamepad(uint32_t joystickID, uint32_t& gamepad)
 {
-	//TODO: add code
-	return false;
+	gamepad = 1;
+	return true;
 }
 
 bool XboxOGDeviceHelper::GetJoystickButtonStates(uint32_t joystickID, JoystickManager::JoystickButtonStates& joystickButtonStates)
 {
 	//TODO: add code
-	return false;
+	return true;
 }
 
 bool XboxOGDeviceHelper::GetJoystickAxisStates(uint32_t joystickID, JoystickManager::JoystickAxisStates& joystickAxisStates)
 {
 	//TODO: add code
-	return false;
+	return true;
 }
 
 #endif

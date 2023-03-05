@@ -212,11 +212,6 @@ bool AngelScriptRunner::Init(void)
 	if (m_engine->RegisterFuncdef("void JoystickConnectCallback(uint joystickID, uint event)") < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void SetJoystickConnectCallback(JoystickConnectCallback @joystickConnectCallback)", asFUNCTION(AngelScriptRunner::SetJoystickConnectCallback), asCALL_GENERIC) < 0) { return false; }
 
-	//if (m_engine->RegisterGlobalFunction("array<uint> @Test1(void)", asFUNCTION(AngelScriptMethods::Test1), asCALL_GENERIC) < 0) { return false; }
-	//if (m_engine->RegisterGlobalFunction("Vec2 Test2(void)", asFUNCTION(AngelScriptMethods::Test2), asCALL_GENERIC) < 0) { return false; }
-	//if (m_engine->RegisterGlobalFunction("array<Vec2> @Test3(void)", asFUNCTION(AngelScriptMethods::Test3), asCALL_GENERIC) < 0) { return false; }
-
-
 	if (CompileScript(m_engine) == false)
 	{
 		m_engine->Release();
@@ -247,10 +242,9 @@ bool AngelScriptRunner::ExecuteInit(void)
 		return false;
 	}
 
-	uint32_t result = context->Execute();
+	bool success = Execute(context);
 	context->Release();
-
-	return ProcessExecuteResult(context, result);
+	return success;
 }
 
 bool AngelScriptRunner::ExecuteRender(uint32_t windowHandle, float dt)
@@ -276,10 +270,10 @@ bool AngelScriptRunner::ExecuteRender(uint32_t windowHandle, float dt)
 
 	context->SetArgDWord(0, windowHandle);
 	context->SetArgFloat(1, dt);
-	uint32_t result = context->Execute();
-	context->Release();
 
-	return ProcessExecuteResult(context, result);
+	bool success = Execute(context);
+	context->Release();
+	return success;
 }
 
 bool AngelScriptRunner::ExecuteWindowIconifyCallback(uint32_t windowHandle, uint32_t iconified)
@@ -304,10 +298,10 @@ bool AngelScriptRunner::ExecuteWindowIconifyCallback(uint32_t windowHandle, uint
 
 	context->SetArgDWord(0, windowHandle);
 	context->SetArgDWord(1, iconified);
-	uint32_t result = context->Execute();
-	context->Release();
 
-	return ProcessExecuteResult(context, result);
+	bool success = Execute(context);
+	context->Release();
+	return success;
 }
 
 bool AngelScriptRunner::ExecuteWindowMaximizeCallback(uint32_t windowHandle, uint32_t maximized)
@@ -332,10 +326,10 @@ bool AngelScriptRunner::ExecuteWindowMaximizeCallback(uint32_t windowHandle, uin
 
 	context->SetArgDWord(0, windowHandle);
 	context->SetArgDWord(1, maximized);
-	uint32_t result = context->Execute();
-	context->Release();
 
-	return ProcessExecuteResult(context, result);
+	bool success = Execute(context);
+	context->Release();
+	return success;
 }
 
 bool AngelScriptRunner::ExecuteWindowSizeCallback(uint32_t windowHandle, uint32_t width, uint32_t height)
@@ -361,10 +355,10 @@ bool AngelScriptRunner::ExecuteWindowSizeCallback(uint32_t windowHandle, uint32_
 	context->SetArgDWord(0, windowHandle);
 	context->SetArgDWord(1, width);
 	context->SetArgDWord(2, height);
-	uint32_t result = context->Execute();
-	context->Release();
 
-	return ProcessExecuteResult(context, result);
+	bool success = Execute(context);
+	context->Release();
+	return success;
 }
 
 bool AngelScriptRunner::ExecuteWindowFocusCallback(uint32_t windowHandle, uint32_t focused)
@@ -389,10 +383,10 @@ bool AngelScriptRunner::ExecuteWindowFocusCallback(uint32_t windowHandle, uint32
 
 	context->SetArgDWord(0, windowHandle);
 	context->SetArgDWord(1, focused);
-	uint32_t result = context->Execute();
-	context->Release();
 
-	return ProcessExecuteResult(context, result);
+	bool success = Execute(context);
+	context->Release();
+	return success;
 }
 
 bool AngelScriptRunner::ExecuteWindowKeyboardKeyCallback(uint32_t windowHandle, uint32_t key, uint32_t scancode, uint32_t action, uint32_t modifier)
@@ -420,10 +414,10 @@ bool AngelScriptRunner::ExecuteWindowKeyboardKeyCallback(uint32_t windowHandle, 
 	context->SetArgDWord(2, scancode);
 	context->SetArgDWord(3, action);
 	context->SetArgDWord(4, modifier);
-	uint32_t result = context->Execute();
-	context->Release();
 
-	return ProcessExecuteResult(context, result);
+	bool success = Execute(context);
+	context->Release();
+	return success;
 }
 
 bool AngelScriptRunner::ExecuteWindowKeyboardCharacterCallback(uint32_t windowHandle, uint32_t codepoint)
@@ -448,10 +442,10 @@ bool AngelScriptRunner::ExecuteWindowKeyboardCharacterCallback(uint32_t windowHa
 
 	context->SetArgDWord(0, windowHandle);
 	context->SetArgDWord(1, codepoint);
-	uint32_t result = context->Execute();
-	context->Release();
 
-	return ProcessExecuteResult(context, result);
+	bool success = Execute(context);
+	context->Release();
+	return success;
 }
 
 bool AngelScriptRunner::ExecuteWindowMouseCursorPositionCallback(uint32_t windowHandle, double xPos, double yPos)
@@ -477,10 +471,10 @@ bool AngelScriptRunner::ExecuteWindowMouseCursorPositionCallback(uint32_t window
 	context->SetArgDWord(0, windowHandle);
 	context->SetArgDouble(1, xPos);
 	context->SetArgDouble(2, yPos);
-	uint32_t result = context->Execute();
-	context->Release();
 
-	return ProcessExecuteResult(context, result);
+	bool success = Execute(context);
+	context->Release();
+	return success;
 }
 
 bool AngelScriptRunner::ExecuteWindowMouseCursorEnterCallback(uint32_t windowHandle, uint32_t entered)
@@ -505,10 +499,10 @@ bool AngelScriptRunner::ExecuteWindowMouseCursorEnterCallback(uint32_t windowHan
 
 	context->SetArgDWord(0, windowHandle);
 	context->SetArgDWord(1, entered);
-	uint32_t result = context->Execute();
-	context->Release();
 
-	return ProcessExecuteResult(context, result);
+	bool success = Execute(context);
+	context->Release();
+	return success;
 }
 
 bool AngelScriptRunner::ExecuteWindowMouseButtonCallback(uint32_t windowHandle, uint32_t button, uint32_t action, uint32_t modifier)
@@ -535,10 +529,10 @@ bool AngelScriptRunner::ExecuteWindowMouseButtonCallback(uint32_t windowHandle, 
 	context->SetArgDWord(1, button);
 	context->SetArgDWord(2, action);
 	context->SetArgDWord(3, modifier);
-	uint32_t result = context->Execute();
-	context->Release();
 
-	return ProcessExecuteResult(context, result);
+	bool success = Execute(context);
+	context->Release();
+	return success;
 }
 
 bool AngelScriptRunner::ExecuteWindowMouseScrollCallback(uint32_t windowHandle, double xOffset, double yOffset)
@@ -564,10 +558,10 @@ bool AngelScriptRunner::ExecuteWindowMouseScrollCallback(uint32_t windowHandle, 
 	context->SetArgDWord(0, windowHandle);
 	context->SetArgDouble(1, xOffset);
 	context->SetArgDouble(2, yOffset);
-	uint32_t result = context->Execute();
-	context->Release();
 
-	return ProcessExecuteResult(context, result);
+	bool success = Execute(context);
+	context->Release();
+	return success;
 }
 
 bool AngelScriptRunner::ExecuteWindowDropCallback(uint32_t windowHandle, std::vector<std::string> paths)
@@ -601,11 +595,10 @@ bool AngelScriptRunner::ExecuteWindowDropCallback(uint32_t windowHandle, std::ve
 
 	context->SetArgObject(1, array);
 
-	uint32_t result = context->Execute();
+	bool success = Execute(context);
 	context->Release();
 	array->Release();
-
-	return ProcessExecuteResult(context, result);
+	return success;
 }
 
 bool AngelScriptRunner::ExecuteJoystickConnectCallback(uint32_t joystickID, uint32_t connected)
@@ -630,10 +623,10 @@ bool AngelScriptRunner::ExecuteJoystickConnectCallback(uint32_t joystickID, uint
 
 	context->SetArgDWord(0, joystickID);
 	context->SetArgDWord(1, connected);
-	uint32_t result = context->Execute();
-	context->Release();
 
-	return ProcessExecuteResult(context, result);
+	bool success = Execute(context);
+	context->Release();
+	return success;
 }
 
 void AngelScriptRunner::Close(void)
@@ -694,8 +687,9 @@ void AngelScriptRunner::Close(void)
 
 // Privates
 
-bool AngelScriptRunner::ProcessExecuteResult(asIScriptContext *context, uint32_t result)
+bool AngelScriptRunner::Execute(asIScriptContext *context)
 {
+	uint32_t result = context->Execute();
 	if (result == asEXECUTION_FINISHED)
 	{
 		return true;

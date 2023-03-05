@@ -155,8 +155,8 @@ void Init()
     uint64 millisecondsNowStart = GetMillisecondsNow();
     SleepMilliseconds(1000);
     uint64 millisecondsNowEnd = GetMillisecondsNow();
-    double durarionSeconds = GetDurationSeconds(millisecondsNowStart, millisecondsNowEnd);
-    DebugPrint(1, "durarionSeconds = " + durarionSeconds);
+    double durationSeconds = GetDurationSeconds(millisecondsNowStart, millisecondsNowEnd);
+    DebugPrint(1, "durationSeconds = " + durationSeconds);
 
     // Demo of fps calculation
     double fps = CalculateFramesPerSecond(30, millisecondsNowStart, millisecondsNowEnd);

@@ -17,6 +17,10 @@ namespace NexgenRedux
 		static void WindowCreateWithSize(asIScriptGeneric* generic);
 		static void SetCursorMode(asIScriptGeneric* generic);
 		static void WindowClose(asIScriptGeneric* generic);
+		static void GetKeyPressed(asIScriptGeneric* generic);
+		static void GetMouseButtonPressed(asIScriptGeneric* generic);
+		static void GetMouseCursorPosition(asIScriptGeneric* generic);
+		static void SetMouseCursorPosition(asIScriptGeneric* generic);
 		static void GetClipboardString(asIScriptGeneric* generic);
 		static void SetClipboardString(asIScriptGeneric* generic);
 

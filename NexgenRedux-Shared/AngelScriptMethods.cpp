@@ -2,6 +2,7 @@
 #include "AngelScriptRunner.h"
 #include "WindowManager.h"
 #include "JoystickManager.h"
+#include "MathHelper.h"
 
 #include <Gensys/DebugUtility.h>
 
@@ -158,6 +159,82 @@ void AngelScriptMethods::GetClipboardString(asIScriptGeneric* generic)
 	*(std::string*)generic->GetAddressOfReturnLocation() = value;
 }
 
+void AngelScriptMethods::GetKeyPressed(asIScriptGeneric* generic)
+{
+	uint32_t windowHandle = generic->GetArgDWord(0);
+	uint32_t key = generic->GetArgDWord(1);
+
+	uint32_t pressed;
+	if (WindowManager::GetKeyPressed(windowHandle, key, pressed) == false) 
+	{
+		asIScriptContext *context = asGetActiveContext();
+		if (context) 
+		{
+			context->SetException("GetKeyPressed failed.");
+			return;
+		}
+	}
+	*(uint32_t*)generic->GetAddressOfReturnLocation() = pressed;
+}
+
+void AngelScriptMethods::GetMouseButtonPressed(asIScriptGeneric* generic)
+{
+	uint32_t windowHandle = generic->GetArgDWord(0);
+	uint32_t button = generic->GetArgDWord(1);
+
+	uint32_t pressed;
+	if (WindowManager::GetMouseButtonPressed(windowHandle, button, pressed) == false) 
+	{
+		asIScriptContext *context = asGetActiveContext();
+		if (context) 
+		{
+			context->SetException("GetMouseButtonPressed failed.");
+			return;
+		}
+	}
+	*(uint32_t*)generic->GetAddressOfReturnLocation() = pressed;
+}
+
+void AngelScriptMethods::GetMouseCursorPosition(asIScriptGeneric* generic)
+{
+	uint32_t windowHandle = generic->GetArgDWord(0);
+
+	double xPos;
+	double yPos;
+	if (WindowManager::GetMouseCursorPosition(windowHandle, xPos, yPos) == false) 
+	{
+		asIScriptContext *context = asGetActiveContext();
+		if (context) 
+		{
+			context->SetException("GetMouseCursorPosition failed.");
+			return;
+		}
+	}
+
+	MathHelper::Vec2D vec2D;
+	vec2D.x = xPos;
+	vec2D.y = yPos;
+	generic->SetReturnObject(&vec2D);
+}
+
+void AngelScriptMethods::SetMouseCursorPosition(asIScriptGeneric* generic)
+{
+	uint32_t windowHandle = generic->GetArgDWord(0);
+	double xPos = generic->GetArgDouble(1);
+	double yPos = generic->GetArgDouble(2);
+
+	std::string value;
+	if (WindowManager::SetMouseCursorPosition(windowHandle, xPos, yPos) == false) 
+	{
+		asIScriptContext *context = asGetActiveContext();
+		if (context) 
+		{
+			context->SetException("SetMouseCursorPosition failed.");
+			return;
+		}
+	}
+}
+
 void AngelScriptMethods::SetClipboardString(asIScriptGeneric* generic)
 {
 	std::string* value = (std::string*)generic->GetArgObject(0);
@@ -176,8 +253,8 @@ void AngelScriptMethods::JoystickIsPresent(asIScriptGeneric* generic)
 {
 	uint32_t joystickID = generic->GetArgDWord(0);
 
-	uint32_t state;
-	if (JoystickManager::JoystickIsPresent(joystickID, state) == false) 
+	uint32_t present;
+	if (JoystickManager::JoystickIsPresent(joystickID, present) == false) 
 	{
 		asIScriptContext *context = asGetActiveContext();
 		if (context) 
@@ -186,15 +263,15 @@ void AngelScriptMethods::JoystickIsPresent(asIScriptGeneric* generic)
 			return;
 		}
 	}
-	*(uint32_t*)generic->GetAddressOfReturnLocation() = state;
+	*(uint32_t*)generic->GetAddressOfReturnLocation() = present;
 }
 
 void AngelScriptMethods::JoystickIsGamepad(asIScriptGeneric* generic)
 {
 	uint32_t joystickID = generic->GetArgDWord(0);
 
-	uint32_t state;
-	if (JoystickManager::JoystickIsGamepad(joystickID, state) == false) 
+	uint32_t gamepad;
+	if (JoystickManager::JoystickIsGamepad(joystickID, gamepad) == false) 
 	{
 		asIScriptContext *context = asGetActiveContext();
 		if (context) 
@@ -203,7 +280,7 @@ void AngelScriptMethods::JoystickIsGamepad(asIScriptGeneric* generic)
 			return;
 		}
 	}
-	*(uint32_t*)generic->GetAddressOfReturnLocation() = state;
+	*(uint32_t*)generic->GetAddressOfReturnLocation() = gamepad;
 }
 
 void AngelScriptMethods::GetJoystickButtonStates(asIScriptGeneric* generic)

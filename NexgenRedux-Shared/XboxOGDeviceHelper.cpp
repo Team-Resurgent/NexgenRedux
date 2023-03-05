@@ -350,6 +350,30 @@ bool XboxOGDeviceHelper::WindowClose(uint32_t windowHandle)
 	return true;
 }
 
+bool XboxOGDeviceHelper::GetKeyPressed(uint32_t windowHandle, uint32_t key, uint32_t& pressed)
+{
+	pressed = 0;
+	return true;
+}
+
+bool XboxOGDeviceHelper::GetMouseButtonPressed(uint32_t windowHandle, uint32_t button, uint32_t& pressed)
+{
+	pressed = 0;
+    return true;
+}
+
+bool XboxOGDeviceHelper::GetMouseCursorPosition(uint32_t windowHandle, double& xPos, double& yPos)
+{
+	xPos = 0;
+	yPos = 0;
+    return true;
+}
+
+bool XboxOGDeviceHelper::SetMouseCursorPosition(uint32_t windowHandle, double xPos, double yPos)
+{
+    return true;
+}
+
 bool XboxOGDeviceHelper::GetClipboardString(std::string& value)
 {
 	value = m_clipboardValue;
@@ -362,23 +386,27 @@ bool XboxOGDeviceHelper::SetClipboardString(std::string value)
 	return true;
 }
 
-bool XboxOGDeviceHelper::JoystickIsPresent(uint32_t joystickID, uint32_t& state)
+bool XboxOGDeviceHelper::JoystickIsPresent(uint32_t joystickID, uint32_t& present)
 {
+	//TODO: add code
 	return false;
 }
 
-bool XboxOGDeviceHelper::JoystickIsGamepad(uint32_t joystickID, uint32_t& state)
+bool XboxOGDeviceHelper::JoystickIsGamepad(uint32_t joystickID, uint32_t& gamepad)
 {
+	//TODO: add code
 	return false;
 }
 
 bool XboxOGDeviceHelper::GetJoystickButtonStates(uint32_t joystickID, JoystickManager::JoystickButtonStates& joystickButtonStates)
 {
+	//TODO: add code
 	return false;
 }
 
 bool XboxOGDeviceHelper::GetJoystickAxisStates(uint32_t joystickID, JoystickManager::JoystickAxisStates& joystickAxisStates)
 {
+	//TODO: add code
 	return false;
 }
 

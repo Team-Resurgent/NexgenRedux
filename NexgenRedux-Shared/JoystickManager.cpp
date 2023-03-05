@@ -6,12 +6,12 @@
 
 using namespace NexgenRedux;
 
-bool JoystickManager::JoystickIsPresent(uint32_t joystickID, uint32_t& state)
+bool JoystickManager::JoystickIsPresent(uint32_t joystickID, uint32_t& present)
 {
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	return OpenGLDeviceHelper::JoystickIsPresent(joystickID, state);
+	return OpenGLDeviceHelper::JoystickIsPresent(joystickID, present);
 #elif defined NEXGEN_OG
-	return XboxOGDeviceHelper::JoystickIsPresent(joystickID, state);
+	return XboxOGDeviceHelper::JoystickIsPresent(joystickID, present);
 #elif defined NEXGEN_360
 	return true;
 #else
@@ -19,12 +19,12 @@ bool JoystickManager::JoystickIsPresent(uint32_t joystickID, uint32_t& state)
 #endif
 }
 
-bool JoystickManager::JoystickIsGamepad(uint32_t joystickID, uint32_t& state)
+bool JoystickManager::JoystickIsGamepad(uint32_t joystickID, uint32_t& gamepad)
 {
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	return OpenGLDeviceHelper::JoystickIsGamepad(joystickID, state);
+	return OpenGLDeviceHelper::JoystickIsGamepad(joystickID, gamepad);
 #elif defined NEXGEN_OG
-	return XboxOGDeviceHelper::JoystickIsGamepad(joystickID, state);
+	return XboxOGDeviceHelper::JoystickIsGamepad(joystickID, gamepad);
 #elif defined NEXGEN_360
 	return true;
 #else

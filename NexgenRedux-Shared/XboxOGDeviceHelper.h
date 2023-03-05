@@ -23,11 +23,15 @@ namespace NexgenRedux
 		static bool SetCursorMode(uint32_t windowHandle, uint32_t mode);
 		static bool WindowRender(uint32_t& windowHandle, bool& exitRequested);
 		static bool WindowClose(uint32_t windowHandle);
+		static bool GetKeyPressed(uint32_t windowHandle, uint32_t key, uint32_t& pressed);
+		static bool GetMouseButtonPressed(uint32_t windowHandle, uint32_t button, uint32_t& pressed);
+		static bool GetMouseCursorPosition(uint32_t windowHandle, double& xPos, double& yPos);
+		static bool SetMouseCursorPosition(uint32_t windowHandle, double xPos, double yPos);
 		static bool GetClipboardString(std::string& value);
 		static bool SetClipboardString(std::string value);
 
-		static bool JoystickIsPresent(uint32_t joystickID, uint32_t& state);
-		static bool JoystickIsGamepad(uint32_t joystickID, uint32_t& state);
+		static bool JoystickIsPresent(uint32_t joystickID, uint32_t& present);
+		static bool JoystickIsGamepad(uint32_t joystickID, uint32_t& gamepad);
 		static bool GetJoystickButtonStates(uint32_t joystickID, JoystickManager::JoystickButtonStates& joystickButtonStates);
 		static bool GetJoystickAxisStates(uint32_t joystickID, JoystickManager::JoystickAxisStates& joystickAxisStates);
 	};

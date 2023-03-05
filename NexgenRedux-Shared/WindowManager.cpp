@@ -172,6 +172,58 @@ bool WindowManager::RenderLoop(void)
 #endif
 }
 
+bool WindowManager::GetKeyPressed(uint32_t windowHandle, uint32_t key, uint32_t& pressed)
+{
+#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
+	return OpenGLDeviceHelper::GetKeyPressed(windowHandle, key, pressed);
+#elif defined NEXGEN_OG
+	return XboxOGDeviceHelper::GetKeyPressed(windowHandle, key, pressed);
+#elif defined NEXGEN_360
+	return true;
+#else
+	return false;
+#endif
+}
+
+bool WindowManager::GetMouseButtonPressed(uint32_t windowHandle, uint32_t button, uint32_t& pressed)
+{
+    #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
+	return OpenGLDeviceHelper::GetMouseButtonPressed(windowHandle, button, pressed);
+#elif defined NEXGEN_OG
+	return XboxOGDeviceHelper::GetMouseButtonPressed(windowHandle, button, pressed);
+#elif defined NEXGEN_360
+	return true;
+#else
+	return false;
+#endif
+}
+
+bool WindowManager::GetMouseCursorPosition(uint32_t windowHandle, double& xPos, double& yPos)
+{
+#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
+	return OpenGLDeviceHelper::GetMouseCursorPosition(windowHandle, xPos, yPos);
+#elif defined NEXGEN_OG
+	return XboxOGDeviceHelper::GetMouseCursorPosition(windowHandle, xPos, yPos);
+#elif defined NEXGEN_360
+	return true;
+#else
+	return false;
+#endif
+}
+
+bool WindowManager::SetMouseCursorPosition(uint32_t windowHandle, double xPos, double yPos)
+{
+#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
+	return OpenGLDeviceHelper::SetMouseCursorPosition(windowHandle, xPos, yPos);
+#elif defined NEXGEN_OG
+	return XboxOGDeviceHelper::SetMouseCursorPosition(windowHandle, xPos, yPos);
+#elif defined NEXGEN_360
+	return true;
+#else
+	return false;
+#endif
+}
+
 bool WindowManager::GetClipboardString(std::string& value)
 {
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 

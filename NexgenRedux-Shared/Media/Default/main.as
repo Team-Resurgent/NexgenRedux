@@ -62,6 +62,8 @@ void OnJoystickConnect(uint joystickID, uint connected)
     DebugPrint(0, "OnJoystickConnect joystickID = " + joystickID + ", connected = " + connected);
 }
 
+ uint windowID = 0;
+
 void Init()
 {
     DebugPrint(0, "Initializing...");
@@ -80,8 +82,6 @@ void Init()
         DebugPrint(0, "blueBits = " + monitorVideoMode.blueBits);
         DebugPrint(0, "refreshRate = " + monitorVideoMode.refreshRate);
     }
-
-    uint windowID = 0;
 
     // Create window example
     windowID = WindowCreateWithSize(640, 480, "Nexgen Redux Demo");
@@ -172,4 +172,17 @@ void Render(uint windowID, float dt)
     // DebugPrint(1, "axisRightY = " + joystickAxisStates.axisRightY);
     // DebugPrint(1, "axisLeftTrigger = " + joystickAxisStates.axisLeftTrigger);
     // DebugPrint(1, "axisRightTrigger = " + joystickAxisStates.axisRightTrigger);
+
+    // get space key state
+    //uint keyPressed = GetKeyPressed(windowID, 0x20);
+    //DebugPrint(1, "keyPressed = " + keyPressed);
+
+    //uint mouseButtonPressed = GetMouseButtonPressed(windowID, 0);
+    //DebugPrint(1, "mouseButtonPressed = " + mouseButtonPressed);
+
+    //Vec2D mousePosition = GetMouseCursorPosition(windowID);
+    //DebugPrint(1, "mousePositionX = " + mousePosition.x + ", mousePositionY = " + mousePosition.y);
+
+    // set mouse position 10 pixels from top corner
+    //SetMouseCursorPosition(windowID, 10, 10);
 }

@@ -2,6 +2,7 @@
 #include "AngelScriptMethods.h"
 #include "WindowManager.h"
 #include "JoystickManager.h"
+#include "MathHelper.h"
 
 #include <Gensys/DebugUtility.h>
 #include <Gensys/FileSystem.h>
@@ -139,6 +140,10 @@ bool AngelScriptRunner::Init(void)
 	if (m_engine->RegisterObjectProperty("JoystickAxisStates", "float axisLeftTrigger", asOFFSET(JoystickManager::JoystickAxisStates, axisLeftTrigger)) < 0) { return false; }
 	if (m_engine->RegisterObjectProperty("JoystickAxisStates", "float axisRightTrigger", asOFFSET(JoystickManager::JoystickAxisStates, axisRightTrigger)) < 0) { return false; }
 
+	if (m_engine->RegisterObjectType("Vec2D", sizeof(MathHelper::Vec2D), asOBJ_VALUE | asOBJ_POD) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("Vec2D", "double x", asOFFSET(MathHelper::Vec2D, x)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("Vec2D", "double y", asOFFSET(MathHelper::Vec2D, y)) < 0) { return false; }
+
 	if (m_engine->RegisterGlobalFunction("void DebugPrint(int logLevel, string &in message)", asFUNCTION(AngelScriptMethods::DebugPrint), asCALL_GENERIC) < 0) { return false; }
 
 	if (m_engine->RegisterGlobalFunction("uint GetAvailableMonitorCount(void)", asFUNCTION(AngelScriptMethods::GetAvailableMonitorCount), asCALL_GENERIC) < 0) { return false; }
@@ -148,6 +153,10 @@ bool AngelScriptRunner::Init(void)
 	if (m_engine->RegisterGlobalFunction("uint WindowCreateWithSize(uint width, uint height, string &in title)", asFUNCTION(AngelScriptMethods::WindowCreateWithSize), asCALL_GENERIC) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void SetCursorMode(uint windowHandle, uint mode)", asFUNCTION(AngelScriptMethods::SetCursorMode), asCALL_GENERIC) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void WindowClose(uint windowHandle)", asFUNCTION(AngelScriptMethods::WindowClose), asCALL_GENERIC) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("uint GetKeyPressed(uint windowHandle, uint key)", asFUNCTION(AngelScriptMethods::GetKeyPressed), asCALL_GENERIC) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("uint GetMouseButtonPressed(uint windowHandle, uint button)", asFUNCTION(AngelScriptMethods::GetMouseButtonPressed), asCALL_GENERIC) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("Vec2D GetMouseCursorPosition(uint windowHandle)", asFUNCTION(AngelScriptMethods::GetMouseCursorPosition), asCALL_GENERIC) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("void SetMouseCursorPosition(uint windowHandle, double xPos, double yPos)", asFUNCTION(AngelScriptMethods::SetMouseCursorPosition), asCALL_GENERIC) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("string GetClipboardString(void)", asFUNCTION(AngelScriptMethods::GetClipboardString), asCALL_GENERIC) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void SetClipboardString(string)", asFUNCTION(AngelScriptMethods::SetClipboardString), asCALL_GENERIC) < 0) { return false; }
 

@@ -248,6 +248,65 @@ bool OpenGLDeviceHelper::WindowClose(uint32_t windowHandle)
 	return true;
 }
 
+bool OpenGLDeviceHelper::GetKeyPressed(uint32_t windowHandle, uint32_t key, uint32_t& pressed)
+{
+    if (Init() == false)
+    {
+        return false;
+    }
+
+    WindowManager::WindowContainer* windowContainer = WindowManager::GetWindowContainer(windowHandle);
+	GLFWwindow* window = (GLFWwindow*)windowContainer->window;
+
+    pressed = (uint32_t)glfwGetKey(window, key);
+
+    return true;
+}
+
+bool OpenGLDeviceHelper::GetMouseButtonPressed(uint32_t windowHandle, uint32_t button, uint32_t& pressed)
+{
+    if (Init() == false)
+    {
+        return false;
+    }
+
+    WindowManager::WindowContainer* windowContainer = WindowManager::GetWindowContainer(windowHandle);
+	GLFWwindow* window = (GLFWwindow*)windowContainer->window;
+
+    pressed = (uint32_t)glfwGetMouseButton(window, button);
+
+    return true;
+
+}
+
+bool OpenGLDeviceHelper::GetMouseCursorPosition(uint32_t windowHandle, double& xPos, double& yPos)
+{
+    if (Init() == false)
+    {
+        return false;
+    }
+
+    WindowManager::WindowContainer* windowContainer = WindowManager::GetWindowContainer(windowHandle);
+	GLFWwindow* window = (GLFWwindow*)windowContainer->window;
+
+    glfwGetCursorPos(window, &xPos, &yPos);
+    return true;
+}
+
+bool OpenGLDeviceHelper::SetMouseCursorPosition(uint32_t windowHandle, double xPos, double yPos)
+{
+    if (Init() == false)
+    {
+        return false;
+    }
+
+    WindowManager::WindowContainer* windowContainer = WindowManager::GetWindowContainer(windowHandle);
+	GLFWwindow* window = (GLFWwindow*)windowContainer->window;
+
+    glfwSetCursorPos(window, xPos, yPos);
+    return true;
+}
+
 bool OpenGLDeviceHelper::GetClipboardString(std::string& value)
 {
     if (Init() == false)
@@ -271,25 +330,25 @@ bool OpenGLDeviceHelper::SetClipboardString(std::string value)
 	return true;
 }
 
-bool OpenGLDeviceHelper::JoystickIsPresent(uint32_t joystickID, uint32_t& state)
+bool OpenGLDeviceHelper::JoystickIsPresent(uint32_t joystickID, uint32_t& present)
 {
     if (Init() == false)
     {
         return false;
     }
 
-    state = glfwJoystickPresent(joystickID) == true ? 1 : 0;
+    present = glfwJoystickPresent(joystickID) == true ? 1 : 0;
     return true;
 }
 
-bool OpenGLDeviceHelper::JoystickIsGamepad(uint32_t joystickID, uint32_t& state)
+bool OpenGLDeviceHelper::JoystickIsGamepad(uint32_t joystickID, uint32_t& gamepad)
 {
     if (Init() == false)
     {
         return false;
     }
 
-	state = glfwJoystickIsGamepad(joystickID) == true ? 1 : 0;
+	gamepad = glfwJoystickIsGamepad(joystickID) == true ? 1 : 0;
     return true;
 }
 

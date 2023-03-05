@@ -37,8 +37,8 @@ namespace NexgenRedux
 			float axisRightTrigger;
 		} JoystickAxisStates;
 
-		static bool JoystickIsPresent(uint32_t joystickID, uint32_t& state);
-		static bool JoystickIsGamepad(uint32_t joystickID, uint32_t& state);
+		static bool JoystickIsPresent(uint32_t joystickID, uint32_t& present);
+		static bool JoystickIsGamepad(uint32_t joystickID, uint32_t& gamepad);
 		static bool GetJoystickButtonStates(uint32_t joystickID, JoystickButtonStates& joystickButtonStates);
 		static bool GetJoystickAxisStates(uint32_t joystickID, JoystickAxisStates& joystickAxisStates);
 	};

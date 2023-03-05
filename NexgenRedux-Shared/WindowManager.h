@@ -36,6 +36,10 @@ namespace NexgenRedux
 		static bool SetCursorMode(uint32_t windowHandle, uint32_t mode);
         static bool WindowClose(uint32_t windowHandle);
 		static bool RenderLoop(void);
+		static bool GetKeyPressed(uint32_t windowHandle, uint32_t key, uint32_t& pressed);
+		static bool GetMouseButtonPressed(uint32_t windowHandle, uint32_t button, uint32_t& pressed);
+		static bool GetMouseCursorPosition(uint32_t windowHandle, double& xPos, double& yPos);
+		static bool SetMouseCursorPosition(uint32_t windowHandle, double xPos, double yPos);
 		static bool GetClipboardString(std::string& value);
 		static bool SetClipboardString(std::string value);
 

@@ -74,7 +74,9 @@ void DebugUtility::LogMessage(LogLevel const logLevel, std::string const format,
 	OutputDebugStringA(": ");
 	OutputDebugStringA(message.c_str());
 	OutputDebugStringA("\n");
-#else
+#endif 
+
+#if defined NEXGEN_WIN || NEXGEN_MAC || NEXGEN_LINUX
 	printf("%s", level.c_str());
 	printf(": ");
 	printf("%s", message.c_str());

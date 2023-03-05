@@ -32,49 +32,130 @@ namespace
 
     void WindowIconify(GLFWwindow* window, int iconified)
     {
-        //printf("window iconify: %i\n", iconified);
+        WindowManager::WindowContainer windowContainer;
+        windowContainer.window = window;
+
+        uint32_t windowHandle;
+        if (WindowManager::GetWindowHandle(windowContainer, windowHandle) == false) 
+        {
+            DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "GetWindowHandle failed.");
+        }
+        else if (AngelScriptRunner::ExecuteWindowIconifyCallback(windowHandle, (uint32_t)iconified) == false)
+        {
+            DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteWindowIconifyCallback failed.");
+        }
     }
 
     void WindowMaximize(GLFWwindow* window, int maximized)
     {
-        //printf("window maximize: %i\n", maximized);
+        WindowManager::WindowContainer windowContainer;
+        windowContainer.window = window;
+
+        uint32_t windowHandle;
+        if (WindowManager::GetWindowHandle(windowContainer, windowHandle) == false) 
+        {
+            DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "GetWindowHandle failed.");
+        }
+        else if (AngelScriptRunner::ExecuteWindowMaximizeCallback(windowHandle, (uint32_t)maximized) == false)
+        {
+            DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteWindowMaximizeCallback failed.");
+        }
     }
 
     void WindowSize(GLFWwindow* window, int width, int height)
     {
-        //printf("window size: %i,%i\n", width, height);
+        WindowManager::WindowContainer windowContainer;
+        windowContainer.window = window;
+
+        uint32_t windowHandle;
+        if (WindowManager::GetWindowHandle(windowContainer, windowHandle) == false) 
+        {
+            DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "GetWindowHandle failed.");
+        }
+        else if (AngelScriptRunner::ExecuteWindowSizeCallback(windowHandle, (uint32_t)width, (uint32_t)height) == false)
+        {
+            DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteWindowSizeCallback failed.");
+        }
     }
 
     void WindowFocus(GLFWwindow* window, int focused)
     {
-        //printf("window focus: %i\n", focused);
+        WindowManager::WindowContainer windowContainer;
+        windowContainer.window = window;
+
+        uint32_t windowHandle;
+        if (WindowManager::GetWindowHandle(windowContainer, windowHandle) == false) 
+        {
+            DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "GetWindowHandle failed.");
+        }
+        else if (AngelScriptRunner::ExecuteWindowFocusCallback(windowHandle, (uint32_t)focused) == false)
+        {
+            DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteWindowFocusCallback failed.");
+        }
     }
 
-    void WindowKeyboardKey(GLFWwindow* window, int key, int scancode, int action, int mods)
+    void WindowKeyboardKey(GLFWwindow* window, int key, int scancode, int action, int modifier)
     {
-        //printf("keyboard state: %i,%i,%i,%i\n", key, scancode, action, mods);
+        WindowManager::WindowContainer windowContainer;
+        windowContainer.window = window;
+
+        uint32_t windowHandle;
+        if (WindowManager::GetWindowHandle(windowContainer, windowHandle) == false) 
+        {
+            DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "GetWindowHandle failed.");
+        }
+        else if (AngelScriptRunner::ExecuteWindowKeyboardKeyCallback(windowHandle, (uint32_t)key, (uint32_t)scancode, (uint32_t)action, (uint32_t)modifier) == false)
+        {
+            DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteWindowKeyboardKeyCallback failed.");
+        }
     }
 
     void WindowKeyboardCharacter(GLFWwindow* window, unsigned int codepoint)
     {
-        //printf("keyboard key: %i\n", codepoint);
+        WindowManager::WindowContainer windowContainer;
+        windowContainer.window = window;
+
+        uint32_t windowHandle;
+        if (WindowManager::GetWindowHandle(windowContainer, windowHandle) == false) 
+        {
+            DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "GetWindowHandle failed.");
+        }
+        else if (AngelScriptRunner::ExecuteWindowKeyboardCharacterCallback(windowHandle, (uint32_t)codepoint) == false)
+        {
+            DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteWindowKeyboardCharacterCallback failed.");
+        }
     }
 
-    void WindowMouseCursorPosition(GLFWwindow* window, double xpos, double ypos)
+    void WindowMouseCursorPosition(GLFWwindow* window, double xPos, double yPos)
     {
-        //printf("mouse moved: %f,%f\n", xpos, ypos);
+        WindowManager::WindowContainer windowContainer;
+        windowContainer.window = window;
+
+        uint32_t windowHandle;
+        if (WindowManager::GetWindowHandle(windowContainer, windowHandle) == false) 
+        {
+            DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "GetWindowHandle failed.");
+        }
+        else if (AngelScriptRunner::ExecuteWindowMouseCursorPositionCallback(windowHandle, xPos, yPos) == false)
+        {
+            DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteWindowMouseCursorPositionCallback failed.");
+        }
     }
 
     void WindowMouseCursorEnter(GLFWwindow* window, int entered)
     {
-    //     if (entered)
-    //     {
-    //         printf("mouse entered\n");
-    //     }
-    //     else
-    //     {
-    //         printf("mouse left\n");
-    //     }
+        WindowManager::WindowContainer windowContainer;
+        windowContainer.window = window;
+
+        uint32_t windowHandle;
+        if (WindowManager::GetWindowHandle(windowContainer, windowHandle) == false) 
+        {
+            DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "GetWindowHandle failed.");
+        }
+        else if (AngelScriptRunner::ExecuteWindowMouseCursorEnterCallback(windowHandle, (uint32_t)entered) == false)
+        {
+            DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteWindowMouseCursorEnterCallback failed.");
+        }
     }
 
     void WindowMouseButton(GLFWwindow* window, int button, int action, int modifier)
@@ -87,34 +168,63 @@ namespace
         {
             DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "GetWindowHandle failed.");
         }
-        else if (AngelScriptRunner::ExecuteWindowMouseButtonCallback(0, (uint32_t)button, (uint32_t)action, (uint32_t)modifier) == false)
+        else if (AngelScriptRunner::ExecuteWindowMouseButtonCallback(windowHandle, (uint32_t)button, (uint32_t)action, (uint32_t)modifier) == false)
         {
             DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteWindowMouseButtonCallback failed.");
         }
     }
 
-    void WindowMouseScroll(GLFWwindow* window, double xoffset, double yoffset)
+    void WindowMouseScroll(GLFWwindow* window, double xOffset, double yOffset)
     {
-        //printf("mouse scroll %f,%f\n", xoffset, yoffset);
+        WindowManager::WindowContainer windowContainer;
+        windowContainer.window = window;
+
+        uint32_t windowHandle;
+        if (WindowManager::GetWindowHandle(windowContainer, windowHandle) == false) 
+        {
+            DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "GetWindowHandle failed.");
+        }
+        else if (AngelScriptRunner::ExecuteWindowMouseScrollCallback(windowHandle, xOffset, yOffset) == false)
+        {
+            DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteWindowMousScrollCallback failed.");
+        }
     }
 
     void WindowDrop(GLFWwindow* window, int count, const char** paths)
     {
-        // for (int i = 0; i < count; i++) {
-        //     printf("drop %i,%s\n", count, paths[i]);
-        // }
+        std::vector<std::string> pathArray;
+        for (int i = 0; i < count; i++) 
+        {
+            std::string path = std::string(paths[i]);
+            pathArray.push_back(path);
+        }
+
+        WindowManager::WindowContainer windowContainer;
+        windowContainer.window = window;
+
+        uint32_t windowHandle;
+        if (WindowManager::GetWindowHandle(windowContainer, windowHandle) == false) 
+        {
+            DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "GetWindowHandle failed.");
+        }
+        else if (AngelScriptRunner::ExecuteWindowDropCallback(windowHandle, pathArray) == false)
+        {
+            DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteWindowDropCallback failed.");
+        }
     }
 
-    void WindowJoystick(int jid, int event)
+    void WindowJoystick(int joystickID, int event)
     {
-        // if (event == GLFW_CONNECTED)
-        // {
-        //     printf("joystick connected %i,%i\n", jid, event);
-        // }
-        // else if (event == GLFW_DISCONNECTED)
-        // {
-        //     printf("joystick disconnected %i,%i\n", jid, event);
-        // }
+        std::vector<uint32_t> windowHandles = WindowManager::GetWindowHandles();
+        for (int i = 0; i < windowHandles.size(); i++) 
+        {
+            uint32_t windowHandle = windowHandles.at(i);
+            if (AngelScriptRunner::ExecuteWindowJoystickCallback(windowHandle, (uint32_t)joystickID, (uint32_t)event) == false)
+            {
+                DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteWindowJoystickCallback failed.");
+            }
+
+        }
     }
 
     void SetCallbacks(GLFWwindow* window)
@@ -278,7 +388,6 @@ bool OpenGLDeviceHelper::WindowCreateWithSize(uint32_t width, uint32_t height, s
 
     SetCallbacks(window);
 
-    //glfwSetJoystickCallback(joystick_callback);
     //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 
     glfwMakeContextCurrent(window);

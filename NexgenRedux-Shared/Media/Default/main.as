@@ -1,6 +1,65 @@
+void OnWindowIconify(uint windowHandle, uint iconified)
+{
+    DebugPrint(0, "OnWindowIconify windowHandle = " + windowHandle + ", iconified = " + iconified);
+}
+
+void OnWindowMaximize(uint windowHandle, uint maximized)
+{
+    DebugPrint(0, "OnWindowMaximize windowHandle = " + windowHandle + ", maximized = " + maximized);
+}
+
+void OnWindowSize(uint windowHandle, uint width, uint height)
+{
+    DebugPrint(0, "OnWindowSize windowHandle = " + windowHandle + ", width = " + width + ", height = " + height);
+}
+
+void OnWindowFocus(uint windowHandle, uint focused)
+{
+    DebugPrint(0, "OnWindowFocus windowHandle = " + windowHandle + ", focused = " + focused);
+}
+
+void OnWindowKeyboardKey(uint windowHandle, uint key, uint scancode, uint action, uint modifier)
+{
+    DebugPrint(0, "OnWindowKeyboardKey windowHandle = " + windowHandle + ", key = " + key + ", scancode = " + scancode + ", action = " + action + ", modifier = " + modifier);
+}
+
+void OnWindowKeyboardCharacter(uint windowHandle, uint codepoint)
+{
+    DebugPrint(0, "OnWindowKeyboardCharacter windowHandle = " + windowHandle + ", codepoint = " + codepoint);
+}
+
+void OnWindowMouseCursorPosition(uint windowHandle, double xPos, double yPos)
+{
+    // commented out to reduce noisey logging
+    // DebugPrint(0, "OnWindowMouseCursorPosition windowHandle = " + windowHandle + ", xPos = " + xPos + ", yPos = " + yPos);
+}
+
+void OnWindowMouseCursorEnter(uint windowHandle, uint entered)
+{
+    DebugPrint(0, "OnWindowMouseCursorEnter windowHandle = " + windowHandle + ", entered = " + entered);
+}
+
 void OnWindowMouseButton(uint windowHandle, uint button, uint action, uint modifier)
 {
     DebugPrint(0, "OnWindowMouseButton windowHandle = " + windowHandle + ", button = " + button + ", action = " + action + ", modifier = " + modifier);
+}
+
+void OnWindowMouseScroll(uint windowHandle, double xOffset, double yOffset)
+{
+    DebugPrint(0, "OnWindowMouseScroll windowHandle = " + windowHandle + ", xOffset = " + xOffset + ", yOffset = " + yOffset);
+}
+
+void OnWindowDrop(uint windowHandle, array<string> paths)
+{
+    for (uint i = 0; i < paths.length(); i++)
+    {
+        DebugPrint(0, "OnWindowDrop windowHandle = " + windowHandle + ", paths" + i + " = " + paths[i]);
+    }
+}
+
+void OnWindowJoystick(uint windowHandle, uint joystickID, uint event)
+{
+    DebugPrint(0, "OnWindowJoystick windowHandle = " + windowHandle + ", joystickID = " + joystickID + ", event = " + event);
 }
 
 void Init()
@@ -50,7 +109,18 @@ void Init()
     //     }
     // }
 
+    SetWindowIconifyCallback(OnWindowIconify);
+    SetWindowMaximizeCallback(OnWindowMaximize);
+    SetWindowSizeCallback(OnWindowSize);
+    SetWindowFocusCallback(OnWindowFocus);
+    SetWindowKeyboardKeyCallback(OnWindowKeyboardKey);
+    SetWindowKeyboardCharacterCallback(OnWindowKeyboardCharacter);
+    SetWindowMouseCursorPositionCallback(OnWindowMouseCursorPosition);
+    SetWindowMouseCursorEnterCallback(OnWindowMouseCursorEnter);
     SetWindowMouseButtonCallback(OnWindowMouseButton);
+    SetWindowMouseScrollCallback(OnWindowMouseScroll);
+    SetWindowDropCallback(OnWindowDrop);
+    SetWindowJoystickCallback(OnWindowJoystick);
 
     DebugPrint(1, "Window id = " + windowID);
     // SetWindowBackground(windowID, 0xff00ff);

@@ -36,14 +36,14 @@ namespace NexgenRedux
         static bool RenderLoop(void);
         static bool WindowClose(uint32_t windowHandle);
 		static bool GetWindowHandle(WindowContainer windowContainer, uint32_t& windowHandle);
-
+		static std::vector<uint32_t> GetWindowHandles(void);
+		
 		friend class OpenGLDeviceHelper;
 		friend class XboxOGDeviceHelper;
 
 	private:
 
 		static uint32_t GetWindowCount(void);
-		static std::vector<uint32_t> GetWindowHandles(void);
 		static uint32_t AddWindowContainer(WindowContainer windowContainer);
 		static WindowContainer* GetWindowContainer(uint32_t windowHandle);
 		static void DeleteWindowContainer(uint32_t windowHandle);

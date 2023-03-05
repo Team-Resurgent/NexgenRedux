@@ -123,6 +123,16 @@ bool WindowManager::GetWindowHandle(WindowContainer windowContainer, uint32_t& w
 	return false;
 }
 
+std::vector<uint32_t> WindowManager::GetWindowHandles(void)
+{
+	std::vector<uint32_t> windowHandles;
+	for (std::map<uint32_t, WindowContainer>::iterator it = m_windowContainerMap.begin(); it != m_windowContainerMap.end(); ++it)
+	{
+		 windowHandles.push_back(it->first);
+	}
+	return windowHandles;
+}
+
 // void Render()
 // {
 
@@ -194,16 +204,6 @@ bool WindowManager::RenderLoop(void)
 uint32_t WindowManager::GetWindowCount(void)
 {
 	return m_windowContainerMap.size();
-}
-
-std::vector<uint32_t> WindowManager::GetWindowHandles(void)
-{
-	std::vector<uint32_t> windowHandles;
-	for (std::map<uint32_t, WindowContainer>::iterator it = m_windowContainerMap.begin(); it != m_windowContainerMap.end(); ++it)
-	{
-		 windowHandles.push_back(it->first);
-	}
-	return windowHandles;
 }
 
 uint32_t WindowManager::AddWindowContainer(WindowManager::WindowContainer windowContainer)

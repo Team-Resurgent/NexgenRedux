@@ -6,6 +6,8 @@
 #include <cstring>
 #include <vector>
 #include <map>
+#include <ctime>
+
 
 #if defined NEXGEN_WIN
 #include <windows.h>

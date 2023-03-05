@@ -135,8 +135,8 @@ void Init()
     DebugPrint(1, "JoystickIsGamepad = " + joystickIsGamepad);
 
     SetClipboardString("hello world");
-    string clipoard = GetClipboardString();
-    DebugPrint(1, "clipoard = " + clipoard);
+    // string clipoard = GetClipboardString();
+    // DebugPrint(1, "clipoard = " + clipoard);
 
     DebugPrint(1, "Window id = " + windowID);
     // SetWindowBackground(windowID, 0xff00ff);
@@ -161,6 +161,7 @@ void Init()
     // Demo of fps calculation
     double fps = CalculateFramesPerSecond(30, millisecondsNowStart, millisecondsNowEnd);
     DebugPrint(1, "fps = " + fps);
+
     //NOTE: since we created a window the program will wait for window to be closed
 }
 

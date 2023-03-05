@@ -15,6 +15,8 @@
 #include <AngelScript/addons/scriptarray/scriptarray.h>
 #include <AngelScript/addons/scriptdictionary/scriptdictionary.h>
 
+#include <cstring>
+
 using namespace Gensys;
 using namespace NexgenRedux;
 using namespace AngelScript;
@@ -636,13 +638,57 @@ bool AngelScriptRunner::ExecuteJoystickConnectCallback(uint32_t joystickID, uint
 
 void AngelScriptRunner::Close(void)
 {
-	if (m_engine != NULL) 
+	if (m_windowIconifyCallback != NULL) 
 	{
-		m_engine->ShutDownAndRelease();
+		m_windowIconifyCallback->Release();
+	}
+	if (m_windowMaximizeCallback != NULL) 
+	{
+		m_windowMaximizeCallback->Release();
+	}
+	if (m_windowSizeCallback != NULL) 
+	{
+		m_windowSizeCallback->Release();
+	}
+	if (m_windowFocusCallback != NULL) 
+	{
+		m_windowFocusCallback->Release();
+	}
+	if (m_windowKeyboardKeyCallback != NULL) 
+	{
+		m_windowKeyboardKeyCallback->Release();
+	}
+	if (m_windowKeyboardCharacterCallback != NULL) 
+	{
+		m_windowKeyboardCharacterCallback->Release();
+	}
+	if (m_windowMouseCursorPositionCallback != NULL) 
+	{
+		m_windowMouseCursorPositionCallback->Release();
+	}
+	if (m_windowMouseCursorEnterCallback != NULL) 
+	{
+		m_windowMouseCursorEnterCallback->Release();
 	}
 	if (m_windowMouseButtonCallback != NULL) 
 	{
 		m_windowMouseButtonCallback->Release();
+	}
+	if (m_windowMouseScrollCallback != NULL) 
+	{
+		m_windowMouseScrollCallback->Release();
+	}
+	if (m_windowDropCallback != NULL) 
+	{
+		m_windowDropCallback->Release();
+	}
+	if (m_joystickConnectCallback != NULL) 
+	{
+		m_joystickConnectCallback->Release();
+	}
+	if (m_engine != NULL) 
+	{
+		m_engine->ShutDownAndRelease();
 	}
 }
 

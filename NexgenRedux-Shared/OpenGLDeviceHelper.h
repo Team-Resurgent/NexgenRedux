@@ -19,8 +19,24 @@ namespace NexgenRedux
 		static bool GetMonitorVideoModes(uint32_t monitorIndex, std::vector<WindowManager::MonitorVideoMode>& monitorVideoModes);
 		static bool WindowCreateWithVideoMode(WindowManager::MonitorVideoMode monitorVideoMode, std::string title, uint32_t& windowHandle);
 		static bool WindowCreateWithSize(uint32_t width, uint32_t height, std::string title, uint32_t& windowHandle);
+		static bool SetCursorMode(uint32_t windowHandle, uint32_t mode);
 		static bool WindowRender(uint32_t& windowHandle, bool& exitRequested);
 		static bool WindowClose(uint32_t windowHandle);
+	private:
+		static bool Init(void);
+		static void SetCallbacks(GLFWwindow* window);
+		static void WindowIconify(GLFWwindow* window, int iconified);
+		static void WindowMaximize(GLFWwindow* window, int maximized);
+		static void WindowSize(GLFWwindow* window, int width, int height);
+		static void WindowFocus(GLFWwindow* window, int focused);
+		static void WindowKeyboardKey(GLFWwindow* window, int key, int scancode, int action, int modifier);
+		static void WindowKeyboardCharacter(GLFWwindow* window, unsigned int codepoint);
+		static void WindowMouseCursorPosition(GLFWwindow* window, double xPos, double yPos);
+		static void WindowMouseCursorEnter(GLFWwindow* window, int entered);
+		static void WindowMouseButton(GLFWwindow* window, int button, int action, int modifier);
+		static void WindowMouseScroll(GLFWwindow* window, double xOffset, double yOffset);
+		static void WindowDrop(GLFWwindow* window, int count, const char** paths);
+		static void JoystickConnect(int joystickID, int event);
 	};
 }
 

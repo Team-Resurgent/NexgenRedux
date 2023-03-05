@@ -57,9 +57,9 @@ void OnWindowDrop(uint windowHandle, array<string> paths)
     }
 }
 
-void OnWindowJoystick(uint windowHandle, uint joystickID, uint event)
+void OnJoystickConnect(uint joystickID, uint connected)
 {
-    DebugPrint(0, "OnWindowJoystick windowHandle = " + windowHandle + ", joystickID = " + joystickID + ", event = " + event);
+    DebugPrint(0, "OnJoystickConnect joystickID = " + joystickID + ", connected = " + connected);
 }
 
 void Init()
@@ -120,7 +120,14 @@ void Init()
     SetWindowMouseButtonCallback(OnWindowMouseButton);
     SetWindowMouseScrollCallback(OnWindowMouseScroll);
     SetWindowDropCallback(OnWindowDrop);
-    SetWindowJoystickCallback(OnWindowJoystick);
+
+    SetJoystickConnectCallback(OnJoystickConnect);
+
+    const uint CursorModeNormal = 0;
+    const uint CursorModeHidden = 1;
+    const uint CursorModeDisabled = 2;
+    const uint CursorModeCaptured = 3;
+    SetCursorMode(windowID, CursorModeHidden);
 
     DebugPrint(1, "Window id = " + windowID);
     // SetWindowBackground(windowID, 0xff00ff);

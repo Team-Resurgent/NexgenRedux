@@ -19,6 +19,7 @@ using namespace AngelScript;
 namespace {
 
 	asIScriptEngine* m_engine = NULL;
+
 	asIScriptFunction *m_windowIconifyCallback = NULL;
 	asIScriptFunction *m_windowMaximizeCallback = NULL;
 	asIScriptFunction *m_windowSizeCallback = NULL;
@@ -30,7 +31,8 @@ namespace {
 	asIScriptFunction *m_windowMouseButtonCallback = NULL;
 	asIScriptFunction *m_windowMouseScrollCallback = NULL;
 	asIScriptFunction *m_windowDropCallback = NULL;
-	asIScriptFunction *m_windowJoystickCallback = NULL;
+
+	asIScriptFunction *m_joystickConnectCallback = NULL;
 }
 
 void MessageCallback(asSMessageInfo* msg, void* param)
@@ -111,13 +113,14 @@ bool AngelScriptRunner::Init(void)
     if (m_engine->RegisterObjectProperty("MonitorVideoMode", "uint blueBits", asOFFSET(WindowManager::MonitorVideoMode, blueBits)) < 0) { return false; }
     if (m_engine->RegisterObjectProperty("MonitorVideoMode", "uint refreshRate", asOFFSET(WindowManager::MonitorVideoMode, refreshRate)) < 0) { return false; }
 
-	if (m_engine->RegisterGlobalFunction("void DebugPrint(int logLevel, string &in)", asFUNCTION(AngelScriptMethods::DebugPrint), asCALL_GENERIC) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("void DebugPrint(int logLevel, string &in message)", asFUNCTION(AngelScriptMethods::DebugPrint), asCALL_GENERIC) < 0) { return false; }
 
 	if (m_engine->RegisterGlobalFunction("uint GetAvailableMonitorCount(void)", asFUNCTION(AngelScriptMethods::GetAvailableMonitorCount), asCALL_GENERIC) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("MonitorVideoMode GetMonitorVideoMode(uint monitorIndex)", asFUNCTION(AngelScriptMethods::GetMonitorVideoMode), asCALL_GENERIC) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("array<MonitorVideoMode> @GetMonitorVideoModes(uint monitorIndex)", asFUNCTION(AngelScriptMethods::GetMonitorVideoModes), asCALL_GENERIC) < 0) { return false; }
-	if (m_engine->RegisterGlobalFunction("uint WindowCreateWithVideoMode(MonitorVideoMode monitorVideoMode, string &in)", asFUNCTION(AngelScriptMethods::WindowCreateWithVideoMode), asCALL_GENERIC) < 0) { return false; }
-	if (m_engine->RegisterGlobalFunction("uint WindowCreateWithSize(uint width, uint height, string &in)", asFUNCTION(AngelScriptMethods::WindowCreateWithSize), asCALL_GENERIC) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("uint WindowCreateWithVideoMode(MonitorVideoMode monitorVideoMode, string &in title)", asFUNCTION(AngelScriptMethods::WindowCreateWithVideoMode), asCALL_GENERIC) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("uint WindowCreateWithSize(uint width, uint height, string &in title)", asFUNCTION(AngelScriptMethods::WindowCreateWithSize), asCALL_GENERIC) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("void SetCursorMode(uint windowHandle, uint mode)", asFUNCTION(AngelScriptMethods::SetCursorMode), asCALL_GENERIC) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void WindowClose(uint windowHandle)", asFUNCTION(AngelScriptMethods::WindowClose), asCALL_GENERIC) < 0) { return false; }
 
 	if (m_engine->RegisterFuncdef("void WindowIconifyCallback(uint windowHandle, uint iconified)") < 0) { return false; }
@@ -142,8 +145,8 @@ bool AngelScriptRunner::Init(void)
 	if (m_engine->RegisterGlobalFunction("void SetWindowMouseScrollCallback(WindowMouseScrollCallback @windowMouseScrollCallback)", asFUNCTION(AngelScriptRunner::SetWindowMouseScrollCallback), asCALL_GENERIC) < 0) { return false; }
 	if (m_engine->RegisterFuncdef("void WindowDropCallback(uint windowHandle, array<string> paths)") < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void SetWindowDropCallback(WindowDropCallback @windowDropCallback)", asFUNCTION(AngelScriptRunner::SetWindowDropCallback), asCALL_GENERIC) < 0) { return false; }
-	if (m_engine->RegisterFuncdef("void WindowJoystickCallback(uint windowHandle, uint joystickID, uint event)") < 0) { return false; }
-	if (m_engine->RegisterGlobalFunction("void SetWindowJoystickCallback(WindowJoystickCallback @windowJoystickCallback)", asFUNCTION(AngelScriptRunner::SetWindowJoystickCallback), asCALL_GENERIC) < 0) { return false; }
+	if (m_engine->RegisterFuncdef("void JoystickConnectCallback(uint joystickID, uint event)") < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("void SetJoystickConnectCallback(JoystickConnectCallback @joystickConnectCallback)", asFUNCTION(AngelScriptRunner::SetJoystickConnectCallback), asCALL_GENERIC) < 0) { return false; }
 
 	//if (m_engine->RegisterGlobalFunction("array<uint> @Test1(void)", asFUNCTION(AngelScriptMethods::Test1), asCALL_GENERIC) < 0) { return false; }
 	//if (m_engine->RegisterGlobalFunction("Vec2 Test2(void)", asFUNCTION(AngelScriptMethods::Test2), asCALL_GENERIC) < 0) { return false; }
@@ -541,7 +544,7 @@ bool AngelScriptRunner::ExecuteWindowDropCallback(uint32_t windowHandle, std::ve
 	return ProcessExecuteResult(context, result);
 }
 
-bool AngelScriptRunner::ExecuteWindowJoystickCallback(uint32_t windowHandle, uint32_t joystickID, uint32_t event)
+bool AngelScriptRunner::ExecuteJoystickConnectCallback(uint32_t joystickID, uint32_t connected)
 {
 	asIScriptContext *context = m_engine->CreateContext();
 	if (context == NULL) 
@@ -549,21 +552,20 @@ bool AngelScriptRunner::ExecuteWindowJoystickCallback(uint32_t windowHandle, uin
 		return false;
 	}
 
-	if (m_windowJoystickCallback == NULL)
+	if (m_joystickConnectCallback == NULL)
 	{
 		context->Release();
 		return false;
 	}
 
-	if (context->Prepare(m_windowJoystickCallback) < 0) 
+	if (context->Prepare(m_joystickConnectCallback) < 0) 
 	{
 		context->Release();
 		return false;
 	}
 
-	context->SetArgDWord(0, windowHandle);
-	context->SetArgDWord(1, joystickID);
-	context->SetArgDWord(2, event);
+	context->SetArgDWord(0, joystickID);
+	context->SetArgDWord(1, connected);
 	uint32_t result = context->Execute();
 	context->Release();
 
@@ -725,12 +727,12 @@ void AngelScriptRunner::SetWindowDropCallback(asIScriptGeneric* generic)
    	m_windowDropCallback = callbackFunction;
 }
 
-void AngelScriptRunner::SetWindowJoystickCallback(asIScriptGeneric* generic)
+void AngelScriptRunner::SetJoystickConnectCallback(asIScriptGeneric* generic)
 {
 	asIScriptFunction* callbackFunction = (asIScriptFunction*)generic->GetArgObject(0);
-	if (m_windowJoystickCallback != NULL) 
+	if (m_joystickConnectCallback != NULL) 
 	{
-		m_windowJoystickCallback->Release();
+		m_joystickConnectCallback->Release();
 	}
-   	m_windowJoystickCallback = callbackFunction;
+   	m_joystickConnectCallback = callbackFunction;
 }

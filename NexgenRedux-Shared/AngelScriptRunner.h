@@ -35,7 +35,7 @@ namespace NexgenRedux
 		static bool ExecuteWindowMouseButtonCallback(uint32_t windowHandle, uint32_t button, uint32_t action, uint32_t modifier);
 		static bool ExecuteWindowMouseScrollCallback(uint32_t windowHandle, double xOffset, double yOffset);
 		static bool ExecuteWindowDropCallback(uint32_t windowHandle, std::vector<std::string> paths);
-		static bool ExecuteWindowJoystickCallback(uint32_t windowHandle, uint32_t joystickID, uint32_t event);
+		static bool ExecuteJoystickConnectCallback(uint32_t joystickID, uint32_t connected);
 		static void Close(void);
 	private:
 		static bool ProcessExecuteResult(asIScriptContext *context, uint32_t result);	
@@ -50,7 +50,7 @@ namespace NexgenRedux
 		static void SetWindowMouseButtonCallback(asIScriptGeneric* generic);
 		static void SetWindowMouseScrollCallback(asIScriptGeneric* generic);
 		static void SetWindowDropCallback(asIScriptGeneric* generic);
-		static void SetWindowJoystickCallback(asIScriptGeneric* generic);
+		static void SetJoystickConnectCallback(asIScriptGeneric* generic);
 
 	};
 }

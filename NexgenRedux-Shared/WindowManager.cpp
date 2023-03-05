@@ -97,6 +97,19 @@ bool WindowManager::WindowCreateWithSize(uint32_t width, uint32_t height, std::s
 #endif
 }
 
+bool WindowManager::SetCursorMode(uint32_t windowHandle, uint32_t mode)
+{
+#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
+	return OpenGLDeviceHelper::SetCursorMode(windowHandle, mode);
+#elif defined NEXGEN_OG
+	return true;
+#elif defined NEXGEN_360
+	return true;
+#else
+	return false;
+#endif
+}
+
 bool WindowManager::WindowClose(uint32_t windowHandle)
 {
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
@@ -108,29 +121,6 @@ bool WindowManager::WindowClose(uint32_t windowHandle)
 #else
 	return false;
 #endif
-}
-
-bool WindowManager::GetWindowHandle(WindowContainer windowContainer, uint32_t& windowHandle)
-{
-	for (std::map<uint32_t, WindowContainer>::iterator it = m_windowContainerMap.begin(); it != m_windowContainerMap.end(); ++it)
-	{
-		if (it->second.window == windowContainer.window)
-		{
-			windowHandle = it->first;
-			return true;
-		} 
-	}
-	return false;
-}
-
-std::vector<uint32_t> WindowManager::GetWindowHandles(void)
-{
-	std::vector<uint32_t> windowHandles;
-	for (std::map<uint32_t, WindowContainer>::iterator it = m_windowContainerMap.begin(); it != m_windowContainerMap.end(); ++it)
-	{
-		 windowHandles.push_back(it->first);
-	}
-	return windowHandles;
 }
 
 // void Render()
@@ -204,6 +194,29 @@ bool WindowManager::RenderLoop(void)
 uint32_t WindowManager::GetWindowCount(void)
 {
 	return m_windowContainerMap.size();
+}
+
+bool WindowManager::GetWindowHandle(WindowContainer windowContainer, uint32_t& windowHandle)
+{
+	for (std::map<uint32_t, WindowContainer>::iterator it = m_windowContainerMap.begin(); it != m_windowContainerMap.end(); ++it)
+	{
+		if (it->second.window == windowContainer.window)
+		{
+			windowHandle = it->first;
+			return true;
+		} 
+	}
+	return false;
+}
+
+std::vector<uint32_t> WindowManager::GetWindowHandles(void)
+{
+	std::vector<uint32_t> windowHandles;
+	for (std::map<uint32_t, WindowContainer>::iterator it = m_windowContainerMap.begin(); it != m_windowContainerMap.end(); ++it)
+	{
+		 windowHandles.push_back(it->first);
+	}
+	return windowHandles;
 }
 
 uint32_t WindowManager::AddWindowContainer(WindowManager::WindowContainer windowContainer)

@@ -113,6 +113,21 @@ void AngelScriptMethods::WindowCreateWithVideoMode(asIScriptGeneric* generic)
 	*(uint32_t*)generic->GetAddressOfReturnLocation() = windowHandle;
 }
 
+void AngelScriptMethods::SetCursorMode(asIScriptGeneric* generic)
+{
+	uint32_t windowHandle = generic->GetArgDWord(0);
+	uint32_t mode = generic->GetArgDWord(1);
+	if (WindowManager::SetCursorMode(windowHandle, mode) == false) 
+	{
+		asIScriptContext *context = asGetActiveContext();
+		if (context) 
+		{
+			context->SetException("SetCursorMode failed.");
+			return;
+		}
+	}
+}
+
 void AngelScriptMethods::WindowClose(asIScriptGeneric* generic)
 {
 	uint32_t windowHandle = generic->GetArgDWord(0);

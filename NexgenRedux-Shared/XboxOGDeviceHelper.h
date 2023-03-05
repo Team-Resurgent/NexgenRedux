@@ -3,6 +3,7 @@
 #pragma once
 
 #include "WindowManager.h"
+#include "JoystickManager.h"
 
 #include <Gensys/Int.h>
 
@@ -25,6 +26,8 @@ namespace NexgenRedux
 
 		static bool JoystickIsPresent(uint32_t joystickID, uint32_t& state);
 		static bool JoystickIsGamepad(uint32_t joystickID, uint32_t& state);
+		static bool GetJoystickButtonStates(uint32_t joystickID, JoystickManager::JoystickButtonStates& joystickButtonStates);
+		static bool GetJoystickAxisStates(uint32_t joystickID, JoystickManager::JoystickAxisStates& joystickAxisStates);
 	};
 }
 

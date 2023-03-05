@@ -9,6 +9,8 @@
 #include <GLAD/glad.h>
 #include <GLFW/glfw3.h>
 
+#include <cstring>
+
 using namespace Gensys;
 using namespace NexgenRedux;
 
@@ -266,6 +268,59 @@ bool OpenGLDeviceHelper::JoystickIsGamepad(uint32_t joystickID, uint32_t& state)
 
 	state = glfwJoystickIsGamepad(joystickID) == true ? 1 : 0;
     return true;
+}
+
+bool OpenGLDeviceHelper::GetJoystickButtonStates(uint32_t joystickID, JoystickManager::JoystickButtonStates& joystickButtonStates)
+{
+    if (Init() == false)
+    {
+        return false;
+    }
+
+    memset(&joystickButtonStates, 0, sizeof(joystickButtonStates));
+
+    GLFWgamepadstate gamepadState;
+    if (glfwGetGamepadState(joystickID, &gamepadState))
+    {
+        joystickButtonStates.buttonA = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_A];
+        joystickButtonStates.buttonB = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_B];
+        joystickButtonStates.buttonX = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_X];
+        joystickButtonStates.buttonY = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_Y];
+        joystickButtonStates.buttonLeftBumper = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_LEFT_BUMPER];
+        joystickButtonStates.buttonRightBumper = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_RIGHT_BUMPER];
+        joystickButtonStates.buttonBack = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_BACK];
+        joystickButtonStates.buttonStart = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_START];
+        joystickButtonStates.buttonGuide = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_GUIDE];
+        joystickButtonStates.buttonLeftThumb = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_LEFT_THUMB];
+        joystickButtonStates.buttonRightThumb = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_RIGHT_THUMB];
+        joystickButtonStates.buttonDpadUp = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_DPAD_UP];
+        joystickButtonStates.buttonDpadRight = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_DPAD_RIGHT];
+        joystickButtonStates.buttonDpadDown = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_DPAD_DOWN];
+        joystickButtonStates.buttonDpadLeft = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_DPAD_LEFT];
+    }
+	return true;
+}
+
+bool OpenGLDeviceHelper::GetJoystickAxisStates(uint32_t joystickID, JoystickManager::JoystickAxisStates& joystickAxisStates)
+{
+    if (Init() == false)
+    {
+        return false;
+    }
+
+    memset(&joystickAxisStates, 0, sizeof(joystickAxisStates));
+
+    GLFWgamepadstate gamepadState;
+    if (glfwGetGamepadState(joystickID, &gamepadState))
+    {
+        joystickAxisStates.axisLeftX = gamepadState.axes[GLFW_GAMEPAD_AXIS_LEFT_X];
+        joystickAxisStates.axisLeftY = gamepadState.axes[GLFW_GAMEPAD_AXIS_LEFT_Y];
+        joystickAxisStates.axisRightX = gamepadState.axes[GLFW_GAMEPAD_AXIS_RIGHT_X];
+        joystickAxisStates.axisRightY = gamepadState.axes[GLFW_GAMEPAD_AXIS_RIGHT_Y];
+        joystickAxisStates.axisLeftTrigger = gamepadState.axes[GLFW_GAMEPAD_AXIS_LEFT_TRIGGER];
+        joystickAxisStates.axisRightTrigger = gamepadState.axes[GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER];
+    }
+	return true;
 }
 
 // Privates

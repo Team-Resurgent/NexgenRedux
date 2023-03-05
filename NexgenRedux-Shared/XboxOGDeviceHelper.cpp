@@ -355,4 +355,14 @@ bool XboxOGDeviceHelper::JoystickIsGamepad(uint32_t joystickID, uint32_t& state)
 	return false;
 }
 
+bool XboxOGDeviceHelper::GetJoystickButtonStates(uint32_t joystickID, JoystickManager::JoystickButtonStates& joystickButtonStates)
+{
+	return false;
+}
+
+bool XboxOGDeviceHelper::GetJoystickAxisStates(uint32_t joystickID, JoystickManager::JoystickAxisStates& joystickAxisStates)
+{
+	return false;
+}
+
 #endif

@@ -143,4 +143,29 @@ void Init()
 void Render(uint windowID, float dt)
 {
     //DebugPrint(1, "Frame Render on window " + windowID + " dt = " + dt);
+
+    JoystickButtonStates joystickButtonStates = GetJoystickButtonStates(0);
+    // DebugPrint(1, "buttonA = " + joystickButtonStates.buttonA);
+    // DebugPrint(1, "buttonB = " + joystickButtonStates.buttonB);
+    // DebugPrint(1, "buttonX = " + joystickButtonStates.buttonX);
+    // DebugPrint(1, "buttonY = " + joystickButtonStates.buttonY);
+    // DebugPrint(1, "buttonLeftBumper = " + joystickButtonStates.buttonLeftBumper);
+    // DebugPrint(1, "buttonRightBumper = " + joystickButtonStates.buttonRightBumper);
+    // DebugPrint(1, "buttonBack = " + joystickButtonStates.buttonBack);
+    // DebugPrint(1, "buttonStart = " + joystickButtonStates.buttonStart);
+    // DebugPrint(1, "buttonGuide = " + joystickButtonStates.buttonGuide);
+    // DebugPrint(1, "buttonLeftThumb = " + joystickButtonStates.buttonLeftThumb);
+    // DebugPrint(1, "buttonRightThumb = " + joystickButtonStates.buttonRightThumb);
+    // DebugPrint(1, "buttonDpadUp = " + joystickButtonStates.buttonDpadUp);
+    // DebugPrint(1, "buttonDpadRight = " + joystickButtonStates.buttonDpadRight);
+    // DebugPrint(1, "buttonDpadDown = " + joystickButtonStates.buttonDpadDown);
+    // DebugPrint(1, "buttonDpadLeft = " + joystickButtonStates.buttonDpadLeft);
+
+    JoystickAxisStates joystickAxisStates = GetJoystickAxisStates(0);
+    // DebugPrint(1, "axisLeftX = " + joystickAxisStates.axisLeftX);
+    // DebugPrint(1, "axisLeftY = " + joystickAxisStates.axisLeftY);
+    // DebugPrint(1, "axisRightX = " + joystickAxisStates.axisRightX);
+    // DebugPrint(1, "axisRightY = " + joystickAxisStates.axisRightY);
+    // DebugPrint(1, "axisLeftTrigger = " + joystickAxisStates.axisLeftTrigger);
+    // DebugPrint(1, "axisRightTrigger = " + joystickAxisStates.axisRightTrigger);
 }

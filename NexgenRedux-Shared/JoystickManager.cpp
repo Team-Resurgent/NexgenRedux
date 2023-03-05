@@ -31,3 +31,29 @@ bool JoystickManager::JoystickIsGamepad(uint32_t joystickID, uint32_t& state)
 	return false;
 #endif
 }
+
+bool JoystickManager::GetJoystickButtonStates(uint32_t joystickID, JoystickButtonStates& joystickButtonStates)
+{
+#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
+	return OpenGLDeviceHelper::GetJoystickButtonStates(joystickID, joystickButtonStates);
+#elif defined NEXGEN_OG
+	return XboxOGDeviceHelper::GetJoystickButtonStates(joystickID, joystickButtonStates);
+#elif defined NEXGEN_360
+	return true;
+#else
+	return false;
+#endif
+}
+
+bool JoystickManager::GetJoystickAxisStates(uint32_t joystickID, JoystickAxisStates& joystickAxisStates)
+{
+#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
+	return OpenGLDeviceHelper::GetJoystickAxisStates(joystickID, joystickAxisStates);
+#elif defined NEXGEN_OG
+	return XboxOGDeviceHelper::GetJoystickAxisStates(joystickID, joystickAxisStates);
+#elif defined NEXGEN_360
+	return true;
+#else
+	return false;
+#endif
+}

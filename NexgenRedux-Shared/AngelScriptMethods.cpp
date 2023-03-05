@@ -177,6 +177,40 @@ void AngelScriptMethods::JoystickIsGamepad(asIScriptGeneric* generic)
 	*(uint32_t*)generic->GetAddressOfReturnLocation() = state;
 }
 
+void AngelScriptMethods::GetJoystickButtonStates(asIScriptGeneric* generic)
+{
+	uint32_t joystickID = generic->GetArgDWord(0);
+
+	JoystickManager::JoystickButtonStates joystickButtonStates;
+	if (JoystickManager::GetJoystickButtonStates(joystickID, joystickButtonStates) == false)
+	{
+		asIScriptContext *context = asGetActiveContext();
+		if (context) 
+		{
+			context->SetException("GetJoystickButtonStates failed.");
+			return;
+		}
+	}
+	generic->SetReturnObject(&joystickButtonStates);
+}
+
+void AngelScriptMethods::GetJoystickAxisStates(asIScriptGeneric* generic)
+{
+	uint32_t joystickID = generic->GetArgDWord(0);
+
+	JoystickManager::JoystickAxisStates joystickAxisStates;
+	if (JoystickManager::GetJoystickAxisStates(joystickID, joystickAxisStates) == false)
+	{
+		asIScriptContext *context = asGetActiveContext();
+		if (context) 
+		{
+			context->SetException("GetJoystickAxisStates failed.");
+			return;
+		}
+	}
+	generic->SetReturnObject(&joystickAxisStates);
+}
+
 // some reference tests
 
 void AngelScriptMethods::Test1(asIScriptGeneric* generic)

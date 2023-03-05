@@ -1,15 +1,43 @@
 #if defined NEXGEN_OG
 
 #include "XboxOGDeviceHelper.h"
+#include "AngelScriptRunner.h"
 #include "WindowManager.h"
+
+#include <Gensys/DebugUtility.h>
 
 #include <xtl.h>
 
+using namespace Gensys;
 using namespace NexgenRedux;
 
 namespace 
 {
+	bool m_initialized = false;
 	std::string m_clipboardValue = "";
+	HANDLE m_controllerHandles[4] = {0};
+}
+
+void XboxOGDeviceHelper::Close(void) 
+{
+	std::vector<uint32_t> windowHandles = WindowManager::GetWindowHandles();
+	for (uint32_t i = 0; i < windowHandles.size(); i++) 
+	{
+		WindowManager::WindowClose(windowHandles.at(i));
+	}
+
+	for (uint32_t i = 0; i < 4; i++) 
+	{
+		if (m_controllerHandles[i] != NULL) 
+		{
+			XInputClose(m_controllerHandles[i]);
+		}
+	}
+}
+
+void XboxOGDeviceHelper::PollEvents(void)
+{
+	ProcessController();
 }
 
 bool XboxOGDeviceHelper::GetAvailableMonitorCount(uint32_t& monitorCount)
@@ -411,26 +439,122 @@ bool XboxOGDeviceHelper::SetClipboardString(std::string value)
 
 bool XboxOGDeviceHelper::JoystickIsPresent(uint32_t joystickID, uint32_t& present)
 {
+	if (Init() == false)
+    {
+        return false;
+    }
+
 	present = 1;
 	return true;
 }
 
 bool XboxOGDeviceHelper::JoystickIsGamepad(uint32_t joystickID, uint32_t& gamepad)
 {
+    if (Init() == false)
+    {
+        return false;
+    }
+
 	gamepad = 1;
 	return true;
 }
 
 bool XboxOGDeviceHelper::GetJoystickButtonStates(uint32_t joystickID, JoystickManager::JoystickButtonStates& joystickButtonStates)
 {
+    if (Init() == false)
+    {
+        return false;
+    }
+
 	//TODO: add code
 	return true;
 }
 
 bool XboxOGDeviceHelper::GetJoystickAxisStates(uint32_t joystickID, JoystickManager::JoystickAxisStates& joystickAxisStates)
 {
+    if (Init() == false)
+    {
+        return false;
+    }
+
 	//TODO: add code
 	return true;
 }
+
+// Privates
+
+bool XboxOGDeviceHelper::Init(void) 
+{
+    if (m_initialized == false)
+    {
+        m_initialized = true;
+		XInitDevices(0, 0);
+    }
+    return true;
+}
+
+void XboxOGDeviceHelper::ProcessController()
+{
+    DWORD insertions;
+	DWORD removals;
+    XGetDeviceChanges(XDEVICE_TYPE_GAMEPAD, &insertions, &removals);
+	for (uint32_t i = 0; i < 4; i++)
+	{
+		if ((insertions & 1) == 1)
+		{
+			m_controllerHandles[i] = XInputOpen(XDEVICE_TYPE_GAMEPAD, i, XDEVICE_NO_SLOT, NULL);
+
+			if (AngelScriptRunner::ExecuteJoystickConnectCallback(i, 1) == false)
+			{
+				DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteJoystickConnectCallback failed.");
+			}
+		}
+		if ((removals & 1) == 1)
+		{
+			XInputClose(m_controllerHandles[i]);
+			m_controllerHandles[i] = NULL;
+
+			if (AngelScriptRunner::ExecuteJoystickConnectCallback(i, 0) == false)
+			{
+				DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteJoystickConnectCallback failed.");
+			}
+		}
+		insertions = insertions >> 1;
+		removals = removals >> 1;
+	}
+}
+
+
+//if (m_controllerHandles[controllerIndex] != 0)
+//{
+//XINPUT_GAMEPAD gamePad;
+//XINPUT_STATE inputStates;
+//XInputGetState(m_controllerHandles[controllerIndex], &inputStates);
+//memcpy(&gamePad, &inputStates.Gamepad, sizeof(XINPUT_GAMEPAD));
+//
+////ControllerManager::ControllerState *ControllerState = &mControllerState[controllerIndex];
+////ControllerState->DPAD_UP = (gamePad.wButtons & XINPUT_GAMEPAD_DPAD_UP) == XINPUT_GAMEPAD_DPAD_UP ? 1.0f : 0.0f;
+////ControllerState->DPAD_DOWN = (gamePad.wButtons & XINPUT_GAMEPAD_DPAD_DOWN) == XINPUT_GAMEPAD_DPAD_DOWN ? 1.0f : 0.0f;
+////ControllerState->DPAD_LEFT = (gamePad.wButtons & XINPUT_GAMEPAD_DPAD_LEFT) == XINPUT_GAMEPAD_DPAD_LEFT ? 1.0f : 0.0f;
+////ControllerState->DPAD_RIGHT = (gamePad.wButtons & XINPUT_GAMEPAD_DPAD_RIGHT) == XINPUT_GAMEPAD_DPAD_RIGHT ? 1.0f : 0.0f;
+////ControllerState->START = (gamePad.wButtons & XINPUT_GAMEPAD_START) == XINPUT_GAMEPAD_START ? 1.0f : 0.0f;
+////ControllerState->BACK = (gamePad.wButtons & XINPUT_GAMEPAD_BACK) == XINPUT_GAMEPAD_BACK ? 1.0f : 0.0f;
+////ControllerState->L_THUMB = (gamePad.wButtons & XINPUT_GAMEPAD_LEFT_THUMB) == XINPUT_GAMEPAD_LEFT_THUMB ? 1.0f : 0.0f;
+////ControllerState->R_THUMB = (gamePad.wButtons & XINPUT_GAMEPAD_RIGHT_THUMB) == XINPUT_GAMEPAD_RIGHT_THUMB ? 1.0f : 0.0f;
+////ControllerState->L_SHOULDER = 0;
+////ControllerState->R_SHOULDER = 0;
+////ControllerState->A = (gamePad.bAnalogButtons[XINPUT_GAMEPAD_A] > 30) ? 1.0f : 0.0f;
+////ControllerState->B = (gamePad.bAnalogButtons[XINPUT_GAMEPAD_B] > 30) ? 1.0f : 0.0f;
+////ControllerState->X = (gamePad.bAnalogButtons[XINPUT_GAMEPAD_X] > 30) ? 1.0f : 0.0f;
+////ControllerState->Y = (gamePad.bAnalogButtons[XINPUT_GAMEPAD_Y] > 30) ? 1.0f : 0.0f;
+////ControllerState->BLACK = (gamePad.bAnalogButtons[XINPUT_GAMEPAD_BLACK] > 30) ? 1.0f : 0.0f;
+////ControllerState->WHITE = (gamePad.bAnalogButtons[XINPUT_GAMEPAD_WHITE] > 30) ? 1.0f : 0.0f;
+////ControllerState->L_TRIGGER = gamePad.bAnalogButtons[XINPUT_GAMEPAD_LEFT_TRIGGER] / 255.0f;
+////ControllerState->R_TRIGGER = gamePad.bAnalogButtons[XINPUT_GAMEPAD_RIGHT_TRIGGER] / 255.0f;
+////ControllerState->L_STICK_X = gamePad.sThumbLX > 0 ? gamePad.sThumbLX / (float)32768 : gamePad.sThumbLX / (float)32767;
+////ControllerState->L_STICK_Y = gamePad.sThumbLY > 0 ? gamePad.sThumbLY / (float)32768 : gamePad.sThumbLY / (float)32767;
+////ControllerState->R_STICK_X = gamePad.sThumbRX > 0 ? gamePad.sThumbRX / (float)32768 : gamePad.sThumbRX / (float)32767;
+////ControllerState->R_STICK_Y = gamePad.sThumbRY > 0 ? gamePad.sThumbRY / (float)32768 : gamePad.sThumbRY / (float)32767;
+//}
 
 #endif

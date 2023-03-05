@@ -19,6 +19,20 @@ namespace
 	bool m_initialized = false;
 }
 
+void OpenGLDeviceHelper::Close(void) 
+{
+	std::vector<uint32_t> windowHandles = WindowManager::GetWindowHandles();
+	for (uint32_i = 0; i < windowHandles.size(); i++) 
+	{
+		WindowManager::WindowClose(windowHandles.at(i));
+	}
+}
+
+void OpenGLDeviceHelper::PollEvents(void)
+{
+	glfwPollEvents();
+}
+
 bool OpenGLDeviceHelper::GetAvailableMonitorCount(uint32_t& monitorCount)
 {
 	if (Init() == false)

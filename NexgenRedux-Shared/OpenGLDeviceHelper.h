@@ -15,6 +15,9 @@ namespace NexgenRedux
 	class OpenGLDeviceHelper
 	{		
 	public:
+		static void Close(void);
+		static void PollEvents(void);
+
 		static bool GetAvailableMonitorCount(uint32_t& monitorCount);
 		static bool GetMonitorVideoMode(uint32_t monitorIndex, WindowManager::MonitorVideoMode& monitorVideoMode);
 		static bool GetMonitorVideoModes(uint32_t monitorIndex, std::vector<WindowManager::MonitorVideoMode>& monitorVideoModes);

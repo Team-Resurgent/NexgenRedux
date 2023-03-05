@@ -25,11 +25,20 @@ namespace
 
 void WindowManager::Close(void) 
 {
-	while (m_windowContainerMap.size() > 0)
-	{
-		std::map<uint32_t, WindowContainer>::iterator it = m_windowContainerMap.begin();
-		WindowManager::WindowClose(it->first);
-	}
+#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
+	OpenGLDeviceHelper::Close();
+#elif defined NEXGEN_OG || defined NEXGEN_360
+	XboxOGDeviceHelper::Close();
+#endif
+}
+
+void WindowManager::PollEvents(void)
+{
+#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
+	OpenGLDeviceHelper::PollEvents();
+#elif defined NEXGEN_OG || defined NEXGEN_360
+	XboxOGDeviceHelper::PollEvents();
+#endif
 }
 
 bool WindowManager::GetAvailableMonitorCount(uint32_t& monitorCount)
@@ -152,7 +161,7 @@ bool WindowManager::RenderLoop(void)
 				AngelScriptRunner::ExecuteRender(windowHandle, 0.123f);
 				OpenGLDeviceHelper::WindowRender(windowHandle, exitRequested);
 			}
-			glfwPollEvents();
+			PollEvents();
 		}
 	}
 
@@ -173,6 +182,7 @@ bool WindowManager::RenderLoop(void)
 				AngelScriptRunner::ExecuteRender(windowHandle, 0.123f);
 				XboxOGDeviceHelper::WindowRender(windowHandles.at(i), exitRequested);
 			}
+			PollEvents();
 		}
 	}
 

@@ -15,6 +15,9 @@ namespace NexgenRedux
 	class XboxOGDeviceHelper
 	{		
 	public:
+		static void Close(void);
+		static void PollEvents(void);
+
 		static bool GetAvailableMonitorCount(uint32_t& monitorCount);
 		static bool GetMonitorVideoMode(uint32_t monitorIndex, WindowManager::MonitorVideoMode& monitorVideoMode);
 		static bool GetMonitorVideoModes(uint32_t monitorIndex, std::vector<WindowManager::MonitorVideoMode>& monitorVideoModes);
@@ -35,6 +38,10 @@ namespace NexgenRedux
 		static bool JoystickIsGamepad(uint32_t joystickID, uint32_t& gamepad);
 		static bool GetJoystickButtonStates(uint32_t joystickID, JoystickManager::JoystickButtonStates& joystickButtonStates);
 		static bool GetJoystickAxisStates(uint32_t joystickID, JoystickManager::JoystickAxisStates& joystickAxisStates);
+	
+	private:
+		static bool Init(void);
+		static void ProcessController();
 	};
 }
 

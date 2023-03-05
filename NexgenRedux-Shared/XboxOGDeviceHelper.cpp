@@ -303,6 +303,11 @@ bool XboxOGDeviceHelper::WindowCreateWithSize(uint32_t width, uint32_t height, u
 	return true;
 }
 
+bool SetCursorMode(uint32_t windowHandle, uint32_t mode)
+{
+	return true;
+}
+
 bool XboxOGDeviceHelper::WindowRender(uint32_t& windowHandle, bool& exitRequested)
 {
 	HRESULT hr;
@@ -338,6 +343,16 @@ bool XboxOGDeviceHelper::WindowClose(uint32_t windowHandle)
 	d3dDevice->Release();
 	WindowManager::DeleteWindowContainer(windowHandle);
 	return true;
+}
+
+bool XboxOGDeviceHelper::JoystickIsPresent(uint32_t joystickID, uint32_t& state)
+{
+	return false;
+}
+
+bool XboxOGDeviceHelper::JoystickIsGamepad(uint32_t joystickID, uint32_t& state)
+{
+	return false;
 }
 
 #endif

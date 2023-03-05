@@ -19,9 +19,12 @@ namespace NexgenRedux
 		static bool GetMonitorVideoModes(uint32_t monitorIndex, std::vector<WindowManager::MonitorVideoMode>& monitorVideoModes);
 		static bool WindowCreateWithVideoMode(WindowManager::MonitorVideoMode monitorVideoMode, std::string title, uint32_t& windowHandle);
 		static bool WindowCreateWithSize(uint32_t width, uint32_t height, std::string title, uint32_t& windowHandle);
-		static bool SetCursorMode(uint32_t windowHandle, uint32_t mode);
 		static bool WindowRender(uint32_t& windowHandle, bool& exitRequested);
 		static bool WindowClose(uint32_t windowHandle);
+
+		static bool SetCursorMode(uint32_t windowHandle, uint32_t mode);
+		static bool JoystickIsPresent(uint32_t joystickID, uint32_t& state);
+		static bool JoystickIsGamepad(uint32_t joystickID, uint32_t& state);
 	private:
 		static bool Init(void);
 		static void SetCallbacks(GLFWwindow* window);

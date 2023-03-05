@@ -181,6 +181,11 @@ bool OpenGLDeviceHelper::WindowCreateWithSize(uint32_t width, uint32_t height, s
 
 bool OpenGLDeviceHelper::SetCursorMode(uint32_t windowHandle, uint32_t mode)
 {
+    if (Init() == false)
+    {
+        return false;
+    }
+
     WindowManager::WindowContainer* windowContainer = WindowManager::GetWindowContainer(windowHandle);
 	GLFWwindow* window = (GLFWwindow*)windowContainer->window;
 
@@ -239,6 +244,28 @@ bool OpenGLDeviceHelper::WindowClose(uint32_t windowHandle)
 	glfwDestroyWindow((GLFWwindow*)windowContainer->window);
 	WindowManager::DeleteWindowContainer(windowHandle);
 	return true;
+}
+
+bool OpenGLDeviceHelper::JoystickIsPresent(uint32_t joystickID, uint32_t& state)
+{
+    if (Init() == false)
+    {
+        return false;
+    }
+
+    state = glfwJoystickPresent(joystickID) == true ? 1 : 0;
+    return true;
+}
+
+bool OpenGLDeviceHelper::JoystickIsGamepad(uint32_t joystickID, uint32_t& state)
+{
+    if (Init() == false)
+    {
+        return false;
+    }
+
+	state = glfwJoystickIsGamepad(joystickID) == true ? 1 : 0;
+    return true;
 }
 
 // Privates

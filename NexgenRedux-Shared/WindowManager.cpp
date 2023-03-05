@@ -102,7 +102,7 @@ bool WindowManager::SetCursorMode(uint32_t windowHandle, uint32_t mode)
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
 	return OpenGLDeviceHelper::SetCursorMode(windowHandle, mode);
 #elif defined NEXGEN_OG
-	return true;
+	return XboxOGDeviceHelper::SetCursorMode(windowHandle, mode);
 #elif defined NEXGEN_360
 	return true;
 #else
@@ -122,23 +122,6 @@ bool WindowManager::WindowClose(uint32_t windowHandle)
 	return false;
 #endif
 }
-
-// void Render()
-// {
-
-//     glfwSetWindowIconifyCallback(window, window_iconify);
-//     glfwSetWindowMaximizeCallback(window, window_maximize);
-//     glfwSetWindowSizeCallback(window, window_size);
-//     glfwSetWindowFocusCallback(window, window_focus);
-//     glfwSetKeyCallback(window, key_callback);
-//     glfwSetCharCallback(window, character_callback);
-//     glfwSetCursorPosCallback(window, cursor_position_callback);
-//     glfwSetCursorEnterCallback(window, cursor_enter_callback);
-//     glfwSetMouseButtonCallback(window, mouse_button_callback);
-//     glfwSetScrollCallback(window, scroll_callback);
-//     glfwSetDropCallback(window, drop_callback);
-//     glfwSetJoystickCallback(joystick_callback);
-//     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 
 bool WindowManager::RenderLoop(void)
 {

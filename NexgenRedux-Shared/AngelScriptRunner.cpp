@@ -123,6 +123,9 @@ bool AngelScriptRunner::Init(void)
 	if (m_engine->RegisterGlobalFunction("void SetCursorMode(uint windowHandle, uint mode)", asFUNCTION(AngelScriptMethods::SetCursorMode), asCALL_GENERIC) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void WindowClose(uint windowHandle)", asFUNCTION(AngelScriptMethods::WindowClose), asCALL_GENERIC) < 0) { return false; }
 
+	if (m_engine->RegisterGlobalFunction("bool JoystickIsPresent(uint joystickID)", asFUNCTION(AngelScriptMethods::JoystickIsPresent), asCALL_GENERIC) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("bool JoystickIsGamepad(uint joystickID)", asFUNCTION(AngelScriptMethods::JoystickIsGamepad), asCALL_GENERIC) < 0) { return false; }
+
 	if (m_engine->RegisterFuncdef("void WindowIconifyCallback(uint windowHandle, uint iconified)") < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void SetWindowIconifyCallback(WindowIconifyCallback @windowIconifyCallback)", asFUNCTION(AngelScriptRunner::SetWindowIconifyCallback), asCALL_GENERIC) < 0) { return false; }
 	if (m_engine->RegisterFuncdef("void WindowMaximizeCallback(uint windowHandle, uint maximized)") < 0) { return false; }

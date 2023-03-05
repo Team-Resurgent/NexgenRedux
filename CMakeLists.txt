@@ -54,6 +54,7 @@ set(APP_SOURCE ${PROJECT_NAME})
 # Shared
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/BootLoader.cpp")
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/WindowManager.cpp")
+list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/JoystickManager.cpp")
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/AngelScriptRunner.cpp")
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/Icon.cpp")
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/ConfigLoader.cpp")

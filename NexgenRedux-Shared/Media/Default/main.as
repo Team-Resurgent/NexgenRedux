@@ -129,6 +129,11 @@ void Init()
     const uint CursorModeCaptured = 3;
     SetCursorMode(windowID, CursorModeHidden);
 
+    bool joystickIsPresent = JoystickIsPresent(0);
+    DebugPrint(1, "JoystickIsPresent = " + joystickIsPresent);
+    bool joystickIsGamepad = JoystickIsGamepad(0);
+    DebugPrint(1, "JoystickIsGamepad = " + joystickIsGamepad);
+
     DebugPrint(1, "Window id = " + windowID);
     // SetWindowBackground(windowID, 0xff00ff);
 

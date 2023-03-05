@@ -18,6 +18,9 @@ namespace NexgenRedux
 		static void SetCursorMode(asIScriptGeneric* generic);
 		static void WindowClose(asIScriptGeneric* generic);
 
+		static void JoystickIsPresent(asIScriptGeneric* generic);
+		static void JoystickIsGamepad(asIScriptGeneric* generic);
+
 		static void Test1(asIScriptGeneric* generic);
 		static void Test2(asIScriptGeneric* generic);
 		static void Test3(asIScriptGeneric* generic);

@@ -1,6 +1,7 @@
 #include "AngelScriptMethods.h"
 #include "AngelScriptRunner.h"
 #include "WindowManager.h"
+#include "JoystickManager.h"
 
 #include <Gensys/DebugUtility.h>
 
@@ -140,6 +141,40 @@ void AngelScriptMethods::WindowClose(asIScriptGeneric* generic)
 			return;
 		}
 	}
+}
+
+void AngelScriptMethods::JoystickIsPresent(asIScriptGeneric* generic)
+{
+	uint32_t joystickID = generic->GetArgDWord(0);
+
+	uint32_t state;
+	if (JoystickManager::JoystickIsPresent(joystickID, state) == false) 
+	{
+		asIScriptContext *context = asGetActiveContext();
+		if (context) 
+		{
+			context->SetException("JoystickIsPresent failed.");
+			return;
+		}
+	}
+	*(uint32_t*)generic->GetAddressOfReturnLocation() = state;
+}
+
+void AngelScriptMethods::JoystickIsGamepad(asIScriptGeneric* generic)
+{
+	uint32_t joystickID = generic->GetArgDWord(0);
+
+	uint32_t state;
+	if (JoystickManager::JoystickIsGamepad(joystickID, state) == false) 
+	{
+		asIScriptContext *context = asGetActiveContext();
+		if (context) 
+		{
+			context->SetException("JoystickIsPresent failed.");
+			return;
+		}
+	}
+	*(uint32_t*)generic->GetAddressOfReturnLocation() = state;
 }
 
 // some reference tests

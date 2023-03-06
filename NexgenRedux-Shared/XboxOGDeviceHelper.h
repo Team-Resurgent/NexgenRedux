@@ -43,7 +43,10 @@ namespace NexgenRedux
 	
 	private:
 		static bool Init(void);
+		static bool InitController(void);
+		static bool InitKeyboard(void);
 		static void ProcessController();
+		static void ProcessKeyboard();
 	};
 }
 

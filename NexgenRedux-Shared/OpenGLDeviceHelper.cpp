@@ -468,6 +468,39 @@ bool OpenGLDeviceHelper::GetJoystickAxisStates(uint32_t joystickID, JoystickMana
 	return true;
 }
 
+bool OpenGLDeviceHelper::GetJoystickHatCount(uint32_t joystickID, uint32_t& count)
+{
+    if (Init() == false)
+    {
+        return false;
+    }
+
+    int hatCount;
+    glfwGetJoystickHats(joystickID, &hatCount);
+    count = hatCount;
+    return true;
+}
+
+bool OpenGLDeviceHelper::GetJoystickHatDirection(uint32_t joystickID, uint32_t hatIndex, uint32_t& direction)
+{
+    if (Init() == false)
+    {
+        return false;
+    }
+
+    int hatCount;
+    const unsigned char *hatStates = glfwGetJoystickHats(joystickID, &hatCount);
+
+    if (hatStates == NULL || hatIndex >= hatCount)
+	{
+		direction = 0;
+		return true;
+	}
+
+    direction = (uint32_t)hatStates[hatIndex];
+    return true;
+}
+
 // Privates
 
 bool OpenGLDeviceHelper::Init(void) 
@@ -475,7 +508,13 @@ bool OpenGLDeviceHelper::Init(void)
     if (m_initialized == false)
     {
         m_initialized = true;
-        glfwInitHint(GLFW_ANGLE_PLATFORM_TYPE, GLFW_ANGLE_PLATFORM_TYPE_VULKAN);
+
+        // glfwInitHint(GLFW_ANGLE_PLATFORM_TYPE, GLFW_ANGLE_PLATFORM_TYPE_OPENGLES);
+        // const char* description;
+        // int code = glfwGetError(&description);
+
+        glfwInitHint(GLFW_JOYSTICK_HAT_BUTTONS, GLFW_TRUE);
+
         if (glfwInit() == false)
         {
             return false;

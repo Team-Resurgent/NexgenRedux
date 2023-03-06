@@ -523,8 +523,50 @@ bool XboxOGDeviceHelper::GetJoystickAxisStates(uint32_t joystickID, JoystickMana
 	joystickAxisStates.axisLeftY = gamePad.sThumbLY > 0 ? gamePad.sThumbLY / (float)32768 : gamePad.sThumbLY / (float)32767;
 	joystickAxisStates.axisRightX = gamePad.sThumbRX > 0 ? gamePad.sThumbRX / (float)32768 : gamePad.sThumbRX / (float)32767;
 	joystickAxisStates.axisRightY = gamePad.sThumbRY > 0 ? gamePad.sThumbRY / (float)32768 : gamePad.sThumbRY / (float)32767;
-	joystickAxisStates.axisLeftTrigger = gamePad.bAnalogButtons[XINPUT_GAMEPAD_LEFT_TRIGGER] / 255.0f;
-	joystickAxisStates.axisRightTrigger = gamePad.bAnalogButtons[XINPUT_GAMEPAD_RIGHT_TRIGGER] / 255.0f;
+	joystickAxisStates.axisLeftTrigger = ((gamePad.bAnalogButtons[XINPUT_GAMEPAD_LEFT_TRIGGER] / 255.0f) * 2) - 1;
+	joystickAxisStates.axisRightTrigger = ((gamePad.bAnalogButtons[XINPUT_GAMEPAD_RIGHT_TRIGGER] / 255.0f) * 2) - 1;
+	return true;
+}
+
+bool XboxOGDeviceHelper::GetJoystickHatCount(uint32_t joystickID, uint32_t& count)
+{
+    if (Init() == false)
+    {
+        return false;
+    }
+
+	if (joystickID >= 4 || m_controllerHandles[joystickID] == NULL)
+	{
+		count = 0;
+		return true;
+	}
+
+	count = 1;
+	return true;
+}
+
+bool XboxOGDeviceHelper::GetJoystickHatDirection(uint32_t joystickID, uint32_t hatIndex, uint32_t& direction)
+{
+    if (Init() == false)
+    {
+        return false;
+    }
+
+	if (joystickID >= 4 || hatIndex >= 1 || m_controllerHandles[joystickID] == NULL)
+	{
+		direction = 0;
+		return true;
+	}
+
+	XINPUT_GAMEPAD gamePad;
+	XINPUT_STATE inputStates;
+	XInputGetState(m_controllerHandles[joystickID], &inputStates);
+	memcpy(&gamePad, &inputStates.Gamepad, sizeof(XINPUT_GAMEPAD));
+	
+	direction = (gamePad.wButtons & XINPUT_GAMEPAD_DPAD_UP) == XINPUT_GAMEPAD_DPAD_UP ? 1 : 0;
+	direction |= (gamePad.wButtons & XINPUT_GAMEPAD_DPAD_RIGHT) == XINPUT_GAMEPAD_DPAD_RIGHT ? 2 : 0;
+	direction |= (gamePad.wButtons & XINPUT_GAMEPAD_DPAD_DOWN) == XINPUT_GAMEPAD_DPAD_DOWN ? 4 : 0;
+	direction |= (gamePad.wButtons & XINPUT_GAMEPAD_DPAD_LEFT) == XINPUT_GAMEPAD_DPAD_LEFT ? 8 : 0;
 	return true;
 }
 
@@ -570,38 +612,5 @@ void XboxOGDeviceHelper::ProcessController()
 		removals = removals >> 1;
 	}
 }
-
-
-//if (m_controllerHandles[controllerIndex] != 0)
-//{
-//XINPUT_GAMEPAD gamePad;
-//XINPUT_STATE inputStates;
-//XInputGetState(m_controllerHandles[controllerIndex], &inputStates);
-//memcpy(&gamePad, &inputStates.Gamepad, sizeof(XINPUT_GAMEPAD));
-//
-////ControllerManager::ControllerState *ControllerState = &mControllerState[controllerIndex];
-////ControllerState->DPAD_UP = (gamePad.wButtons & XINPUT_GAMEPAD_DPAD_UP) == XINPUT_GAMEPAD_DPAD_UP ? 1.0f : 0.0f;
-////ControllerState->DPAD_DOWN = (gamePad.wButtons & XINPUT_GAMEPAD_DPAD_DOWN) == XINPUT_GAMEPAD_DPAD_DOWN ? 1.0f : 0.0f;
-////ControllerState->DPAD_LEFT = (gamePad.wButtons & XINPUT_GAMEPAD_DPAD_LEFT) == XINPUT_GAMEPAD_DPAD_LEFT ? 1.0f : 0.0f;
-////ControllerState->DPAD_RIGHT = (gamePad.wButtons & XINPUT_GAMEPAD_DPAD_RIGHT) == XINPUT_GAMEPAD_DPAD_RIGHT ? 1.0f : 0.0f;
-////ControllerState->START = (gamePad.wButtons & XINPUT_GAMEPAD_START) == XINPUT_GAMEPAD_START ? 1.0f : 0.0f;
-////ControllerState->BACK = (gamePad.wButtons & XINPUT_GAMEPAD_BACK) == XINPUT_GAMEPAD_BACK ? 1.0f : 0.0f;
-////ControllerState->L_THUMB = (gamePad.wButtons & XINPUT_GAMEPAD_LEFT_THUMB) == XINPUT_GAMEPAD_LEFT_THUMB ? 1.0f : 0.0f;
-////ControllerState->R_THUMB = (gamePad.wButtons & XINPUT_GAMEPAD_RIGHT_THUMB) == XINPUT_GAMEPAD_RIGHT_THUMB ? 1.0f : 0.0f;
-////ControllerState->L_SHOULDER = 0;
-////ControllerState->R_SHOULDER = 0;
-////ControllerState->A = (gamePad.bAnalogButtons[XINPUT_GAMEPAD_A] > 30) ? 1.0f : 0.0f;
-////ControllerState->B = (gamePad.bAnalogButtons[XINPUT_GAMEPAD_B] > 30) ? 1.0f : 0.0f;
-////ControllerState->X = (gamePad.bAnalogButtons[XINPUT_GAMEPAD_X] > 30) ? 1.0f : 0.0f;
-////ControllerState->Y = (gamePad.bAnalogButtons[XINPUT_GAMEPAD_Y] > 30) ? 1.0f : 0.0f;
-////ControllerState->BLACK = (gamePad.bAnalogButtons[XINPUT_GAMEPAD_BLACK] > 30) ? 1.0f : 0.0f;
-////ControllerState->WHITE = (gamePad.bAnalogButtons[XINPUT_GAMEPAD_WHITE] > 30) ? 1.0f : 0.0f;
-////ControllerState->L_TRIGGER = gamePad.bAnalogButtons[XINPUT_GAMEPAD_LEFT_TRIGGER] / 255.0f;
-////ControllerState->R_TRIGGER = gamePad.bAnalogButtons[XINPUT_GAMEPAD_RIGHT_TRIGGER] / 255.0f;
-////ControllerState->L_STICK_X = gamePad.sThumbLX > 0 ? gamePad.sThumbLX / (float)32768 : gamePad.sThumbLX / (float)32767;
-////ControllerState->L_STICK_Y = gamePad.sThumbLY > 0 ? gamePad.sThumbLY / (float)32768 : gamePad.sThumbLY / (float)32767;
-////ControllerState->R_STICK_X = gamePad.sThumbRX > 0 ? gamePad.sThumbRX / (float)32768 : gamePad.sThumbRX / (float)32767;
-////ControllerState->R_STICK_Y = gamePad.sThumbRY > 0 ? gamePad.sThumbRY / (float)32768 : gamePad.sThumbRY / (float)32767;
-//}
 
 #endif

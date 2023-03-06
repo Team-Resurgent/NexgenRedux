@@ -10,6 +10,8 @@ namespace NexgenRedux
 	{
 	public:
 		static void DebugPrint(asIScriptGeneric* generic);
+		static void DebugPrintIf(asIScriptGeneric* generic);
+
 		static void GetAvailableMonitorCount(asIScriptGeneric* generic);
 		static void GetMonitorVideoMode(asIScriptGeneric* generic);
 		static void GetMonitorVideoModes(asIScriptGeneric* generic);
@@ -35,5 +37,7 @@ namespace NexgenRedux
 		static void JoystickIsGamepad(asIScriptGeneric* generic);
 		static void GetJoystickButtonStates(asIScriptGeneric* generic);
 		static void GetJoystickAxisStates(asIScriptGeneric* generic);
+		static void GetJoystickHatCount(asIScriptGeneric* generic);
+		static void GetJoystickHatDirection(asIScriptGeneric* generic);
 	};
 }

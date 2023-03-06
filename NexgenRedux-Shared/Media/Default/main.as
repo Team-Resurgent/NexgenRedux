@@ -133,6 +133,8 @@ void Init()
     DebugPrint(1, "JoystickIsPresent = " + joystickIsPresent);
     bool joystickIsGamepad = JoystickIsGamepad(0);
     DebugPrint(1, "JoystickIsGamepad = " + joystickIsGamepad);
+    uint joystickHatCount = GetJoystickHatCount(0);
+    DebugPrint(1, "JoystickHatCount = " + joystickHatCount);
 
     SetClipboardString("hello world");
     // string clipoard = GetClipboardString();
@@ -170,36 +172,39 @@ void Render(uint windowID, float dt)
     //DebugPrint(1, "Frame Render on window " + windowID + " dt = " + dt);
 
     JoystickButtonStates joystickButtonStates = GetJoystickButtonStates(0);
-    // DebugPrint(1, "buttonA = " + joystickButtonStates.buttonA);
-    // DebugPrint(1, "buttonB = " + joystickButtonStates.buttonB);
-    // DebugPrint(1, "buttonX = " + joystickButtonStates.buttonX);
-    // DebugPrint(1, "buttonY = " + joystickButtonStates.buttonY);
-    // DebugPrint(1, "buttonLeftBumperOrWhite = " + joystickButtonStates.buttonLeftBumperOrWhite);
-    // DebugPrint(1, "buttonRightBumperOrBlack = " + joystickButtonStates.buttonRightBumperOrBlack);
-    // DebugPrint(1, "buttonBack = " + joystickButtonStates.buttonBack);
-    // DebugPrint(1, "buttonStart = " + joystickButtonStates.buttonStart);
-    // DebugPrint(1, "buttonGuide = " + joystickButtonStates.buttonGuide);
-    // DebugPrint(1, "buttonLeftThumb = " + joystickButtonStates.buttonLeftThumb);
-    // DebugPrint(1, "buttonRightThumb = " + joystickButtonStates.buttonRightThumb);
-    // DebugPrint(1, "buttonDpadUp = " + joystickButtonStates.buttonDpadUp);
-    // DebugPrint(1, "buttonDpadRight = " + joystickButtonStates.buttonDpadRight);
-    // DebugPrint(1, "buttonDpadDown = " + joystickButtonStates.buttonDpadDown);
-    // DebugPrint(1, "buttonDpadLeft = " + joystickButtonStates.buttonDpadLeft);
+	DebugPrintIf(joystickButtonStates.buttonA == 1, 1, "buttonA = " + joystickButtonStates.buttonA);
+	DebugPrintIf(joystickButtonStates.buttonB == 1, 1, "buttonB = " + joystickButtonStates.buttonB);
+	DebugPrintIf(joystickButtonStates.buttonX == 1, 1, "buttonX = " + joystickButtonStates.buttonX);
+	DebugPrintIf(joystickButtonStates.buttonY == 1, 1, "buttonY = " + joystickButtonStates.buttonY);
+	DebugPrintIf(joystickButtonStates.buttonLeftBumperOrWhite == 1, 1, "buttonLeftBumperOrWhite = " + joystickButtonStates.buttonLeftBumperOrWhite);
+	DebugPrintIf(joystickButtonStates.buttonRightBumperOrBlack == 1, 1, "buttonRightBumperOrBlack = " + joystickButtonStates.buttonRightBumperOrBlack);
+	DebugPrintIf(joystickButtonStates.buttonBack == 1, 1, "buttonBack = " + joystickButtonStates.buttonBack);
+	DebugPrintIf(joystickButtonStates.buttonStart == 1, 1, "buttonStart = " + joystickButtonStates.buttonStart);
+	DebugPrintIf(joystickButtonStates.buttonGuide == 1, 1, "buttonGuide = " + joystickButtonStates.buttonGuide);
+	DebugPrintIf(joystickButtonStates.buttonLeftThumb == 1, 1, "buttonLeftThumb = " + joystickButtonStates.buttonLeftThumb);
+	DebugPrintIf(joystickButtonStates.buttonRightThumb == 1, 1, "buttonRightThumb = " + joystickButtonStates.buttonRightThumb);
+	DebugPrintIf(joystickButtonStates.buttonDpadUp == 1, 1, "buttonDpadUp = " + joystickButtonStates.buttonDpadUp);
+	DebugPrintIf(joystickButtonStates.buttonDpadRight == 1, 1, "buttonDpadRight = " + joystickButtonStates.buttonDpadRight);
+	DebugPrintIf(joystickButtonStates.buttonDpadDown == 1, 1, "buttonDpadDown = " + joystickButtonStates.buttonDpadDown);
+	DebugPrintIf(joystickButtonStates.buttonDpadLeft == 1, 1, "buttonDpadLeft = " + joystickButtonStates.buttonDpadLeft);
 
     JoystickAxisStates joystickAxisStates = GetJoystickAxisStates(0);
-     DebugPrint(1, "axisLeftX = " + joystickAxisStates.axisLeftX);
-    // DebugPrint(1, "axisLeftY = " + joystickAxisStates.axisLeftY);
-    // DebugPrint(1, "axisRightX = " + joystickAxisStates.axisRightX);
-    // DebugPrint(1, "axisRightY = " + joystickAxisStates.axisRightY);
-    // DebugPrint(1, "axisLeftTrigger = " + joystickAxisStates.axisLeftTrigger);
-    // DebugPrint(1, "axisRightTrigger = " + joystickAxisStates.axisRightTrigger);
+	DebugPrintIf(abs(joystickAxisStates.axisLeftX) > 0.35, 1, "axisLeftX = " + joystickAxisStates.axisLeftX);
+	DebugPrintIf(abs(joystickAxisStates.axisLeftY) > 0.35, 1, "axisLeftY = " + joystickAxisStates.axisLeftY);
+	DebugPrintIf(abs(joystickAxisStates.axisRightX) > 0.35, 1, "axisRightX = " + joystickAxisStates.axisRightX);
+	DebugPrintIf(abs(joystickAxisStates.axisRightY) > 0.35, 1, "axisRightY = " + joystickAxisStates.axisRightY);
+	DebugPrintIf(joystickAxisStates.axisLeftTrigger > -0.65, 1, "axisLeftTrigger = " + joystickAxisStates.axisLeftTrigger);
+	DebugPrintIf(joystickAxisStates.axisRightTrigger > -0.65, 1, "axisRightTrigger = " + joystickAxisStates.axisRightTrigger);
+
+    uint joystickHatDirection = GetJoystickHatDirection(0, 0);
+    DebugPrintIf(joystickHatDirection > 0, 1, "joystickHatDirection = " + joystickHatDirection);
 
     // get space key state
-    //uint keyPressed = GetKeyPressed(windowID, 0x20);
-    //DebugPrint(1, "keyPressed = " + keyPressed);
+    uint keyPressed = GetKeyPressed(windowID, 0x20);
+    DebugPrintIf(keyPressed > 0, 1, "keyPressed = " + keyPressed);
 
-    //uint mouseButtonPressed = GetMouseButtonPressed(windowID, 0);
-    //DebugPrint(1, "mouseButtonPressed = " + mouseButtonPressed);
+    uint mouseButtonPressed = GetMouseButtonPressed(windowID, 0);
+    DebugPrintIf(mouseButtonPressed > 0, 1, "mouseButtonPressed = " + mouseButtonPressed);
 
     //Vec2D mousePosition = GetMouseCursorPosition(windowID);
     //DebugPrint(1, "mousePositionX = " + mousePosition.x + ", mousePositionY = " + mousePosition.y);

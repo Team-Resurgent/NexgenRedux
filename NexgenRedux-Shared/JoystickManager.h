@@ -41,5 +41,7 @@ namespace NexgenRedux
 		static bool JoystickIsGamepad(uint32_t joystickID, uint32_t& gamepad);
 		static bool GetJoystickButtonStates(uint32_t joystickID, JoystickButtonStates& joystickButtonStates);
 		static bool GetJoystickAxisStates(uint32_t joystickID, JoystickAxisStates& joystickAxisStates);
+		static bool GetJoystickHatCount(uint32_t joystickID, uint32_t& count);
+		static bool GetJoystickHatDirection(uint32_t joystickID, uint32_t hatIndex, uint32_t& direction);
 	};
 }

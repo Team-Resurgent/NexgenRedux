@@ -25,6 +25,17 @@ void AngelScriptMethods::DebugPrint(asIScriptGeneric* generic)
 	DebugUtility::LogMessage(logLevel, *message);
 }
 
+void AngelScriptMethods::DebugPrintIf(asIScriptGeneric* generic)
+{
+	bool condition = generic->GetArgByte(0) == 1;
+	if (condition == true) 
+	{
+		DebugUtility::LogLevel logLevel = (DebugUtility::LogLevel)generic->GetArgDWord(1);
+		std::string *message = (std::string*)generic->GetArgAddress(2);
+		DebugUtility::LogMessage(logLevel, *message);
+	}
+}
+
 void AngelScriptMethods::GetAvailableMonitorCount(asIScriptGeneric* generic)
 {
 	uint32_t monitorCount;
@@ -372,4 +383,39 @@ void AngelScriptMethods::GetJoystickAxisStates(asIScriptGeneric* generic)
 		}
 	}
 	generic->SetReturnObject(&joystickAxisStates);
+}
+
+void AngelScriptMethods::GetJoystickHatCount(asIScriptGeneric* generic)
+{
+	uint32_t joystickID = generic->GetArgDWord(0);
+
+	uint32_t count;
+	if (JoystickManager::GetJoystickHatCount(joystickID, count) == false)
+	{
+		asIScriptContext *context = asGetActiveContext();
+		if (context) 
+		{
+			context->SetException("GetJoystickHatCount failed.");
+			return;
+		}
+	}
+	*(uint32_t*)generic->GetAddressOfReturnLocation() = count;
+}
+
+void AngelScriptMethods::GetJoystickHatDirection(asIScriptGeneric* generic)
+{
+	uint32_t joystickID = generic->GetArgDWord(0);
+	uint32_t hatIndex = generic->GetArgDWord(1);
+
+	uint32_t direction;
+	if (JoystickManager::GetJoystickHatDirection(joystickID, hatIndex, direction) == false)
+	{
+		asIScriptContext *context = asGetActiveContext();
+		if (context) 
+		{
+			context->SetException("GetJoystickHatDirection failed.");
+			return;
+		}
+	}
+	*(uint32_t*)generic->GetAddressOfReturnLocation() = direction;
 }

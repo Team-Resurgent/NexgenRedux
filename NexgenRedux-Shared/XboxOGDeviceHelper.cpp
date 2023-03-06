@@ -472,8 +472,9 @@ bool XboxOGDeviceHelper::GetJoystickButtonStates(uint32_t joystickID, JoystickMa
         return false;
     }
 
-	if (joystickID >= 4)
+	if (joystickID >= 4 || m_controllerHandles[joystickID] == NULL)
 	{
+		memset(&joystickButtonStates, 0, sizeof(joystickButtonStates));
 		return true;
 	}
 
@@ -507,8 +508,9 @@ bool XboxOGDeviceHelper::GetJoystickAxisStates(uint32_t joystickID, JoystickMana
         return false;
     }
 
-	if (joystickID >= 4)
+	if (joystickID >= 4 || m_controllerHandles[joystickID] == NULL)
 	{
+		memset(&joystickAxisStates, 0, sizeof(joystickAxisStates));
 		return true;
 	}
 

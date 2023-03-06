@@ -187,7 +187,7 @@ void Render(uint windowID, float dt)
     // DebugPrint(1, "buttonDpadLeft = " + joystickButtonStates.buttonDpadLeft);
 
     JoystickAxisStates joystickAxisStates = GetJoystickAxisStates(0);
-    // DebugPrint(1, "axisLeftX = " + joystickAxisStates.axisLeftX);
+     DebugPrint(1, "axisLeftX = " + joystickAxisStates.axisLeftX);
     // DebugPrint(1, "axisLeftY = " + joystickAxisStates.axisLeftY);
     // DebugPrint(1, "axisRightX = " + joystickAxisStates.axisRightX);
     // DebugPrint(1, "axisRightY = " + joystickAxisStates.axisRightY);

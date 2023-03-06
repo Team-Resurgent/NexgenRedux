@@ -487,10 +487,10 @@ bool XboxOGDeviceHelper::GetJoystickButtonStates(uint32_t joystickID, JoystickMa
 	joystickButtonStates.buttonB = (gamePad.bAnalogButtons[XINPUT_GAMEPAD_B] > 30) ? 1 : 0;
 	joystickButtonStates.buttonX = (gamePad.bAnalogButtons[XINPUT_GAMEPAD_X] > 30) ? 1 : 0;
 	joystickButtonStates.buttonY = (gamePad.bAnalogButtons[XINPUT_GAMEPAD_Y] > 30) ? 1 : 0;
-	joystickButtonStates.buttonLeftBumperOrWhite = (gamePad.bAnalogButtons[XINPUT_GAMEPAD_BLACK] > 30) ? 1 : 0;
-	joystickButtonStates.buttonRightBumperOrBlack = (gamePad.bAnalogButtons[XINPUT_GAMEPAD_WHITE] > 30) ? 1 : 0;
-	joystickButtonStates.buttonBack = (gamePad.wButtons & XINPUT_GAMEPAD_START) == XINPUT_GAMEPAD_START ? 1 : 0;
-	joystickButtonStates.buttonStart = (gamePad.wButtons & XINPUT_GAMEPAD_BACK) == XINPUT_GAMEPAD_BACK ? 1 : 0;
+	joystickButtonStates.buttonLeftBumperOrWhite = (gamePad.bAnalogButtons[XINPUT_GAMEPAD_WHITE] > 30) ? 1 : 0;
+	joystickButtonStates.buttonRightBumperOrBlack = (gamePad.bAnalogButtons[XINPUT_GAMEPAD_BLACK] > 30) ? 1 : 0;
+	joystickButtonStates.buttonBack = (gamePad.wButtons & XINPUT_GAMEPAD_BACK) == XINPUT_GAMEPAD_BACK ? 1 : 0;
+	joystickButtonStates.buttonStart = (gamePad.wButtons & XINPUT_GAMEPAD_START) == XINPUT_GAMEPAD_START ? 1 : 0;
 	joystickButtonStates.buttonGuide = 0;
 	joystickButtonStates.buttonLeftThumb = (gamePad.wButtons & XINPUT_GAMEPAD_LEFT_THUMB) == XINPUT_GAMEPAD_LEFT_THUMB ? 1 : 0;
 	joystickButtonStates.buttonRightThumb = (gamePad.wButtons & XINPUT_GAMEPAD_RIGHT_THUMB) == XINPUT_GAMEPAD_RIGHT_THUMB ? 1 : 0;

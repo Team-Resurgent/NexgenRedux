@@ -14,8 +14,8 @@ namespace NexgenRedux
 			uint32_t buttonB;
 			uint32_t buttonX;
 			uint32_t buttonY; 
-			uint32_t buttonLeftBumper;
-			uint32_t buttonRightBumper;
+			uint32_t buttonLeftBumperOrWhite;
+			uint32_t buttonRightBumperOrBlack;
 			uint32_t buttonBack;
 			uint32_t buttonStart;
 			uint32_t buttonGuide;

@@ -174,8 +174,8 @@ void Render(uint windowID, float dt)
     // DebugPrint(1, "buttonB = " + joystickButtonStates.buttonB);
     // DebugPrint(1, "buttonX = " + joystickButtonStates.buttonX);
     // DebugPrint(1, "buttonY = " + joystickButtonStates.buttonY);
-    // DebugPrint(1, "buttonLeftBumper = " + joystickButtonStates.buttonLeftBumper);
-    // DebugPrint(1, "buttonRightBumper = " + joystickButtonStates.buttonRightBumper);
+    // DebugPrint(1, "buttonLeftBumperOrWhite = " + joystickButtonStates.buttonLeftBumperOrWhite);
+    // DebugPrint(1, "buttonRightBumperOrBlack = " + joystickButtonStates.buttonRightBumperOrBlack);
     // DebugPrint(1, "buttonBack = " + joystickButtonStates.buttonBack);
     // DebugPrint(1, "buttonStart = " + joystickButtonStates.buttonStart);
     // DebugPrint(1, "buttonGuide = " + joystickButtonStates.buttonGuide);

@@ -430,8 +430,8 @@ bool OpenGLDeviceHelper::GetJoystickButtonStates(uint32_t joystickID, JoystickMa
         joystickButtonStates.buttonB = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_B];
         joystickButtonStates.buttonX = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_X];
         joystickButtonStates.buttonY = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_Y];
-        joystickButtonStates.buttonLeftBumper = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_LEFT_BUMPER];
-        joystickButtonStates.buttonRightBumper = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_RIGHT_BUMPER];
+        joystickButtonStates.buttonLeftBumperOrWhite = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_LEFT_BUMPER];
+        joystickButtonStates.buttonRightBumperOrBlack = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_RIGHT_BUMPER];
         joystickButtonStates.buttonBack = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_BACK];
         joystickButtonStates.buttonStart = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_START];
         joystickButtonStates.buttonGuide = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_GUIDE];

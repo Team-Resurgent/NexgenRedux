@@ -123,8 +123,8 @@ bool AngelScriptRunner::Init(void)
     if (m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonB", asOFFSET(JoystickManager::JoystickButtonStates, buttonB)) < 0) { return false; }
     if (m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonX", asOFFSET(JoystickManager::JoystickButtonStates, buttonX)) < 0) { return false; }
     if (m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonY", asOFFSET(JoystickManager::JoystickButtonStates, buttonY)) < 0) { return false; }
-    if (m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonLeftBumper", asOFFSET(JoystickManager::JoystickButtonStates, buttonLeftBumper)) < 0) { return false; }
-    if (m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonRightBumper", asOFFSET(JoystickManager::JoystickButtonStates, buttonRightBumper)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonLeftBumperOrWhite", asOFFSET(JoystickManager::JoystickButtonStates, buttonLeftBumperOrWhite)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonRightBumperOrBlack", asOFFSET(JoystickManager::JoystickButtonStates, buttonRightBumperOrBlack)) < 0) { return false; }
     if (m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonBack", asOFFSET(JoystickManager::JoystickButtonStates, buttonBack)) < 0) { return false; }
     if (m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonStart", asOFFSET(JoystickManager::JoystickButtonStates, buttonStart)) < 0) { return false; }
     if (m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonGuide", asOFFSET(JoystickManager::JoystickButtonStates, buttonGuide)) < 0) { return false; }

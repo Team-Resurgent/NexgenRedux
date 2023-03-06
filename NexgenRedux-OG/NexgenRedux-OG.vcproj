@@ -208,7 +208,7 @@
 					Name="Default"
 					Filter="">
 					<File
-						RelativePath="..\NexgenRedux-Shared\Media\Default\main.nxg">
+						RelativePath="..\NexgenRedux-Shared\Media\Default\main.as">
 					</File>
 				</Filter>
 			</Filter>

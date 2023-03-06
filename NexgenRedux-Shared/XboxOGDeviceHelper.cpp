@@ -472,15 +472,20 @@ bool XboxOGDeviceHelper::GetJoystickButtonStates(uint32_t joystickID, JoystickMa
         return false;
     }
 
+	memset(&joystickButtonStates, 0, sizeof(joystickButtonStates));
+
 	if (joystickID >= 4 || m_controllerHandles[joystickID] == NULL)
 	{
-		memset(&joystickButtonStates, 0, sizeof(joystickButtonStates));
+		return true;
+	}
+
+	XINPUT_STATE inputStates;
+	if (XInputGetState(m_controllerHandles[joystickID], &inputStates) != 0) 
+	{
 		return true;
 	}
 
 	XINPUT_GAMEPAD gamePad;
-	XINPUT_STATE inputStates;
-	XInputGetState(m_controllerHandles[joystickID], &inputStates);
 	memcpy(&gamePad, &inputStates.Gamepad, sizeof(XINPUT_GAMEPAD));
 
 	joystickButtonStates.buttonA = (gamePad.bAnalogButtons[XINPUT_GAMEPAD_A] > 30) ? 1 : 0;
@@ -508,20 +513,25 @@ bool XboxOGDeviceHelper::GetJoystickAxisStates(uint32_t joystickID, JoystickMana
         return false;
     }
 
+	joystickAxisStates.axisLeftX = 0;
+	joystickAxisStates.axisLeftY = 0;
+	joystickAxisStates.axisRightX = 0;
+	joystickAxisStates.axisRightY = 0;
+	joystickAxisStates.axisLeftTrigger = -1;
+	joystickAxisStates.axisRightTrigger = -1;
+
 	if (joystickID >= 4 || m_controllerHandles[joystickID] == NULL)
 	{
-		joystickAxisStates.axisLeftX = 0;
-		joystickAxisStates.axisLeftY = 0;
-		joystickAxisStates.axisRightX = 0;
-		joystickAxisStates.axisRightY = 0;
-		joystickAxisStates.axisLeftTrigger = -1;
-		joystickAxisStates.axisRightTrigger = -1;
+		return true;
+	}
+
+	XINPUT_STATE inputStates;
+	if (XInputGetState(m_controllerHandles[joystickID], &inputStates) != 0) 
+	{
 		return true;
 	}
 
 	XINPUT_GAMEPAD gamePad;
-	XINPUT_STATE inputStates;
-	XInputGetState(m_controllerHandles[joystickID], &inputStates);
 	memcpy(&gamePad, &inputStates.Gamepad, sizeof(XINPUT_GAMEPAD));
 
 	joystickAxisStates.axisLeftX = gamePad.sThumbLX > 0 ? gamePad.sThumbLX / (float)32768 : gamePad.sThumbLX / (float)32767;
@@ -557,15 +567,20 @@ bool XboxOGDeviceHelper::GetJoystickHatDirection(uint32_t joystickID, uint32_t h
         return false;
     }
 
+	direction = 0;
+
 	if (joystickID >= 4 || hatIndex >= 1 || m_controllerHandles[joystickID] == NULL)
 	{
-		direction = 0;
+		return true;
+	}
+
+	XINPUT_STATE inputStates;
+	if (XInputGetState(m_controllerHandles[joystickID], &inputStates) != 0) 
+	{
 		return true;
 	}
 
 	XINPUT_GAMEPAD gamePad;
-	XINPUT_STATE inputStates;
-	XInputGetState(m_controllerHandles[joystickID], &inputStates);
 	memcpy(&gamePad, &inputStates.Gamepad, sizeof(XINPUT_GAMEPAD));
 	
 	direction = (gamePad.wButtons & XINPUT_GAMEPAD_DPAD_UP) == XINPUT_GAMEPAD_DPAD_UP ? 1 : 0;

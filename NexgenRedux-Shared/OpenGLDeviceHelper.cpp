@@ -6,6 +6,7 @@
 #include "Icon.h"
 
 #include <Gensys/DebugUtility.h>
+#include <Gensys/Int.h>
 #include <GLAD/glad.h>
 #include <GLFW/glfw3.h>
 
@@ -22,7 +23,7 @@ namespace
 void OpenGLDeviceHelper::Close(void) 
 {
 	std::vector<uint32_t> windowHandles = WindowManager::GetWindowHandles();
-	for (uint32_i = 0; i < windowHandles.size(); i++) 
+	for (uint32_t i = 0; i < windowHandles.size(); i++) 
 	{
 		WindowManager::WindowClose(windowHandles.at(i));
 	}

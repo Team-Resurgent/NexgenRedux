@@ -27,6 +27,7 @@ namespace
 	} KeyInfo;
 
 	bool m_initialized = false;
+
 	std::string m_clipboardValue = "";
 
 	HANDLE m_controllerHandles[XGetPortCount()] = {0};
@@ -43,15 +44,12 @@ namespace
 	{
 		1 << 0, 1 << 1, 1 << 2, 1 << 3, 1 << 16, 1 << 17, 1 << 18, 1 << 19
 	};
-
-	int32_t mouseX = 0;
-	int32_t mouseY = 0;
-
-	XINPUT_STATE m_mousePreviousState = {0};
-	XINPUT_STATE m_mouseCurrentState;
+	int32_t m_mouseX = 0;
+	int32_t m_mouseY = 0;
+	bool m_mouseButtons[5] = {false};
+	bool m_previousMouseButtons[5] = {false};
 	XINPUT_STATE m_mouseStates[XGetPortCount() * 2] = {0};
-	DWORD m_dwLastMousePacket[XGetPortCount() * 2];
-
+	uint32_t m_lastMousePacket[XGetPortCount() * 2];
 }
 
 void XboxOGDeviceHelper::Close(void) 
@@ -441,25 +439,46 @@ bool XboxOGDeviceHelper::WindowClose(uint32_t windowHandle)
 
 bool XboxOGDeviceHelper::GetKeyPressed(uint32_t windowHandle, uint32_t key, uint32_t& pressed)
 {
+	WindowManager::WindowContainer* windowContainer = WindowManager::GetWindowContainer(windowHandle);
+	if (windowContainer == NULL) 
+	{
+		return false;
+	}
+
 	pressed = 0;
 	return true;
 }
 
 bool XboxOGDeviceHelper::GetMouseButtonPressed(uint32_t windowHandle, uint32_t button, uint32_t& pressed)
 {
+	WindowManager::WindowContainer* windowContainer = WindowManager::GetWindowContainer(windowHandle);
+	if (windowContainer == NULL) 
+	{
+		return false;
+	}
+
 	pressed = 0;
+
+	if (button >= 5)
+	{
+		return true;
+	}
+
+	pressed = m_mouseButtons[button];
     return true;
 }
 
 bool XboxOGDeviceHelper::GetMouseCursorPosition(uint32_t windowHandle, double& xPos, double& yPos)
 {
-	xPos = 0;
-	yPos = 0;
+	xPos = m_mouseX;
+	yPos = m_mouseY;
     return true;
 }
 
 bool XboxOGDeviceHelper::SetMouseCursorPosition(uint32_t windowHandle, double xPos, double yPos)
 {
+	m_mouseX = (int32_t)xPos;
+	m_mouseY = (int32_t)yPos;
     return true;
 }
 
@@ -642,12 +661,6 @@ bool XboxOGDeviceHelper::Init(void)
     return true;
 }
 
-bool XboxOGDeviceHelper::InitController(void)
-{
-	//XInitDevices(0, 0);
-	return true;
-}
-
 bool XboxOGDeviceHelper::InitKeyboard(void)
 {
  	m_virtualKeyToScancodeMap.insert(std::pair<uint32_t, KeyInfo>(0x30, KeyInfo(0x00B, KEY_0)));
@@ -785,12 +798,10 @@ bool XboxOGDeviceHelper::InitKeyboard(void)
 
 	uint32_t keyboardPort = XGetDevices(XDEVICE_TYPE_DEBUG_KEYBOARD);
 
-	// Obtain handles to keyboard devices
 	for (uint32_t i = 0; i < XGetPortCount() * 2; i++)
 	{
 		if ((m_keyboardHandles[i] == NULL) && (keyboardPort & m_keyboardMaskTable[i]))
 		{
-			// Get a handle to the device
 			XINPUT_POLLING_PARAMETERS pollValues;
 			pollValues.fAutoPoll = TRUE;
 			pollValues.fInterruptOut = TRUE;
@@ -872,17 +883,14 @@ void XboxOGDeviceHelper::ProcessKeyboard()
 	XINPUT_DEBUG_KEYSTROKE currentKeyStroke;
 	memset(&currentKeyStroke, 0, sizeof(currentKeyStroke));
 
-	// Loop through all ports
 	for ( uint32_t i = 0; i < XGetPortCount()* 2; i++ )
 	{
-		// Handle removed devices.
 		if ((removals & m_keyboardMaskTable[i]) > 0)
 		{
 			XInputClose( m_keyboardHandles[i] );
 			m_keyboardHandles[i] = NULL;
 		}
 
-		// Handle inserted devices
 		if ((insertions & m_keyboardMaskTable[i]) > 0)
 		{
 			XINPUT_POLLING_PARAMETERS pollValues;
@@ -990,92 +998,58 @@ void XboxOGDeviceHelper::ProcessMouse()
 		}
 	}
 
-	DWORD bMouseMoved = 0;
-	for ( DWORD i = 0; i < XGetPortCount()*2; i++ )
+	uint32_t mouseMoved = 0;
+	for (uint32_t i = 0; i < XGetPortCount()*2; i++ )
 	{
 		if (m_mouseHandles[i]) 
 		{
 			XInputGetState(m_mouseHandles[i], &m_mouseStates[i]);
 		}
-		if (m_dwLastMousePacket[i] != m_mouseStates[i].dwPacketNumber)
+		if (m_lastMousePacket[i] != m_mouseStates[i].dwPacketNumber)
 		{
-			bMouseMoved |= m_mouseMaskTable[i];
-			m_dwLastMousePacket[i] = m_mouseStates[i].dwPacketNumber;
+			mouseMoved |= m_mouseMaskTable[i];
+			m_lastMousePacket[i] = m_mouseStates[i].dwPacketNumber;
 		}
 	}
 
-	if (bMouseMoved)
+	if (mouseMoved > 0)
 	{
-		for (DWORD i = 0; i < XGetPortCount() * 2; i++)
+		for (uint32_t i = 0; i < XGetPortCount() * 2; i++)
 		{
-			if (bMouseMoved & m_mouseMaskTable[i])
+			if ((mouseMoved & m_mouseMaskTable[i]) > 0)
 			{
-				mouseX += m_mouseStates[i].DebugMouse.cMickeysX;
-				mouseY += m_mouseStates[i].DebugMouse.cMickeysY;
-				mouseX = min(max(mouseX, 0), (int32_t)windowWidth);
-				mouseY = min(max(mouseY, 0), (int32_t)windowHeight);
+				m_mouseX += m_mouseStates[i].DebugMouse.cMickeysX;
+				m_mouseY += m_mouseStates[i].DebugMouse.cMickeysY;
+				m_mouseX = min(max(m_mouseX, 0), (int32_t)windowWidth);
+				m_mouseY = min(max(m_mouseY, 0), (int32_t)windowHeight);
 
 				if (m_mouseStates[i].DebugMouse.cMickeysX > 0 || m_mouseStates[i].DebugMouse.cMickeysY > 0) 
 				{
-					if (AngelScriptRunner::ExecuteWindowMouseCursorPositionCallback(0, mouseX, mouseY) == false)
+					if (AngelScriptRunner::ExecuteWindowMouseCursorPositionCallback(0, m_mouseX, m_mouseY) == false)
 					{
 						DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteWindowMouseCursorPositionCallback failed.");
 					}
 				}
 
-				bool previousLeftButton = (m_mousePreviousState.DebugMouse.bButtons & XINPUT_DEBUG_MOUSE_LEFT_BUTTON) != 0;
-				bool previousRightButton = (m_mousePreviousState.DebugMouse.bButtons & XINPUT_DEBUG_MOUSE_RIGHT_BUTTON) != 0;
-				bool previousMiddleButton = (m_mousePreviousState.DebugMouse.bButtons & XINPUT_DEBUG_MOUSE_MIDDLE_BUTTON) != 0;
-				bool previousExtra1Button = (m_mousePreviousState.DebugMouse.bButtons & XINPUT_DEBUG_MOUSE_XBUTTON1) != 0;
-				bool previousExtra2Button = (m_mousePreviousState.DebugMouse.bButtons & XINPUT_DEBUG_MOUSE_XBUTTON2) != 0;
+				m_mouseButtons[0] = (m_mouseStates[i].DebugMouse.bButtons & XINPUT_DEBUG_MOUSE_LEFT_BUTTON) != 0;
+				m_mouseButtons[1] = (m_mouseStates[i].DebugMouse.bButtons & XINPUT_DEBUG_MOUSE_RIGHT_BUTTON) != 0;
+				m_mouseButtons[2] = (m_mouseStates[i].DebugMouse.bButtons & XINPUT_DEBUG_MOUSE_MIDDLE_BUTTON) != 0;
+				m_mouseButtons[3] = (m_mouseStates[i].DebugMouse.bButtons & XINPUT_DEBUG_MOUSE_XBUTTON1) != 0;
+				m_mouseButtons[4] = (m_mouseStates[i].DebugMouse.bButtons & XINPUT_DEBUG_MOUSE_XBUTTON2) != 0;
 
-				bool currentLeftButton = (m_mouseStates[i].DebugMouse.bButtons & XINPUT_DEBUG_MOUSE_LEFT_BUTTON) != 0;
-				bool currentRightButton = (m_mouseStates[i].DebugMouse.bButtons & XINPUT_DEBUG_MOUSE_RIGHT_BUTTON) != 0;
-				bool currentMiddleButton = (m_mouseStates[i].DebugMouse.bButtons & XINPUT_DEBUG_MOUSE_MIDDLE_BUTTON) != 0;
-				bool currentExtra1Button = (m_mouseStates[i].DebugMouse.bButtons & XINPUT_DEBUG_MOUSE_XBUTTON1) != 0;
-				bool currentExtra2Button = (m_mouseStates[i].DebugMouse.bButtons & XINPUT_DEBUG_MOUSE_XBUTTON2) != 0;
-
-				if (previousLeftButton != currentLeftButton) 
+				for (uint32_t j = 0; j < 5; j++) 
 				{
-					if (AngelScriptRunner::ExecuteWindowMouseButtonCallback(0, 0, currentLeftButton ? 1 : 0, m_keyboardModifier) == false)
+					if (m_previousMouseButtons[j] != m_mouseButtons[j]) 
 					{
-						DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteWindowMouseCursorPositionCallback failed.");
+						if (AngelScriptRunner::ExecuteWindowMouseButtonCallback(0, j, m_mouseButtons[j] ? 1 : 0, m_keyboardModifier) == false)
+						{
+							DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteWindowMouseCursorPositionCallback failed.");
+						}
 					}
+					m_previousMouseButtons[j] = m_mouseButtons[j];
 				}
 
-				if (previousRightButton != currentRightButton) 
-				{
-					if (AngelScriptRunner::ExecuteWindowMouseButtonCallback(0, 1, currentRightButton ? 1 : 0, m_keyboardModifier) == false)
-					{
-						DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteWindowMouseCursorPositionCallback failed.");
-					}
-				}
-
-				if (previousMiddleButton != currentMiddleButton) 
-				{
-					if (AngelScriptRunner::ExecuteWindowMouseButtonCallback(0, 2, currentMiddleButton ? 1 : 0, m_keyboardModifier) == false)
-					{
-						DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteWindowMouseCursorPositionCallback failed.");
-					}
-				}
-
-				if (previousExtra1Button != currentExtra1Button) 
-				{
-					if (AngelScriptRunner::ExecuteWindowMouseButtonCallback(0, 3, currentExtra1Button ? 1 : 0, m_keyboardModifier) == false)
-					{
-						DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteWindowMouseCursorPositionCallback failed.");
-					}
-				}
-
-				if (previousExtra2Button != currentExtra2Button) 
-				{
-					if (AngelScriptRunner::ExecuteWindowMouseButtonCallback(0, 4, currentExtra2Button ? 1 : 0, m_keyboardModifier) == false)
-					{
-						DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteWindowMouseCursorPositionCallback failed.");
-					}
-				}
-
-				if (m_mousePreviousState.DebugMouse.cWheel != m_mouseStates[i].DebugMouse.cWheel) 
+				if (m_mouseStates[i].DebugMouse.cWheel != 0) 
 				{
 					if (AngelScriptRunner::ExecuteWindowMouseScrollCallback(0, 0, m_mouseStates[i].DebugMouse.cWheel) == false)
 					{
@@ -1083,7 +1057,6 @@ void XboxOGDeviceHelper::ProcessMouse()
 					}
 				}
 
-				m_mousePreviousState = m_mouseStates[i];
 				break;
 			}
 		}

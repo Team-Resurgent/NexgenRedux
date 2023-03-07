@@ -18,12 +18,9 @@ namespace
 {
 	typedef struct KeyInfo
 	{
-		 public:
 		uint32_t scancode;
 		uint32_t keyID;
-		
-		 KeyInfo(uint32_t scancode, uint32_t keyID) : scancode(scancode), keyID(keyID) {}
-
+		KeyInfo(uint32_t scancode, uint32_t keyID) : scancode(scancode), keyID(keyID) {}
 	} KeyInfo;
 
 	bool m_initialized = false;
@@ -38,6 +35,7 @@ namespace
 	};
 	std::map<uint32_t, KeyInfo> m_virtualKeyToScancodeMap;
 	uint32_t m_keyboardModifier = 0;
+	bool m_keyboardKeys[KEY_LAST] = {false};
 
 	HANDLE m_mouseHandles[XGetPortCount() * 2] = {0};
 	uint32_t m_mouseMaskTable[XGetPortCount() * 2] =
@@ -446,6 +444,13 @@ bool XboxOGDeviceHelper::GetKeyPressed(uint32_t windowHandle, uint32_t key, uint
 	}
 
 	pressed = 0;
+
+	if (key >= KEY_LAST)
+	{
+		return true;
+	}
+
+	pressed = m_keyboardKeys[key] == true ? 1 : 0;
 	return true;
 }
 
@@ -464,7 +469,7 @@ bool XboxOGDeviceHelper::GetMouseButtonPressed(uint32_t windowHandle, uint32_t b
 		return true;
 	}
 
-	pressed = m_mouseButtons[button];
+	pressed = m_mouseButtons[button] == true ? 1 : 0;
     return true;
 }
 
@@ -950,6 +955,7 @@ void XboxOGDeviceHelper::ProcessKeyboard()
 		{
 			if (it->first == currentKeyStroke.VirtualKey)
 			{
+				m_keyboardKeys[it->second.keyID] = (keyState - 1) == 1;
 				if (AngelScriptRunner::ExecuteWindowKeyboardKeyCallback(0, it->second.keyID, it->second.scancode, keyState - 1, modifier) == false)
 				{
 					DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteWindowKeyboardKeyCallback failed.");

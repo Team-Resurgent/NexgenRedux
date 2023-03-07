@@ -120,3 +120,4 @@
 #define KEY_RIGHT_SUPER 347
 #define KEY_MENU 348
 
+#define KEY_LAST KEY_MENU + 1

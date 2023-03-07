@@ -23,7 +23,7 @@ namespace NexgenRedux
 
 		static bool Init(void);
 		static bool ExecuteInit(void);
-		static bool ExecuteRender(uint32_t windowHandle, float dt);
+		static bool ExecuteRender(uint32_t windowHandle, double dt);
 		static bool ExecuteWindowIconifyCallback(uint32_t windowHandle, uint32_t iconified);
 		static bool ExecuteWindowMaximizeCallback(uint32_t windowHandle, uint32_t maximized);
 		static bool ExecuteWindowSizeCallback(uint32_t windowHandle, uint32_t width, uint32_t height);

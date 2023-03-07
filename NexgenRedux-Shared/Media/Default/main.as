@@ -62,7 +62,11 @@ void OnJoystickConnect(uint joystickID, uint connected)
     DebugPrint(0, "OnJoystickConnect joystickID = " + joystickID + ", connected = " + connected);
 }
 
- uint windowID = 0;
+uint windowID = 0;
+
+uint64 currentTime;
+uint64 previousTime;
+uint frameCount;
 
 void Init()
 {
@@ -160,16 +164,32 @@ void Init()
     double durationSeconds = GetDurationSeconds(millisecondsNowStart, millisecondsNowEnd);
     DebugPrint(1, "durationSeconds = " + durationSeconds);
 
-    // Demo of fps calculation
-    double fps = CalculateFramesPerSecond(30, millisecondsNowStart, millisecondsNowEnd);
-    DebugPrint(1, "fps = " + fps);
+    SeedRandomWithValue(123); // use to get same sequence random values each application run
+	SeedRandom(); // use to get random values each application run
+	double randomDouble = GetRandomDouble();
+    DebugPrint(1, "randomDouble = " + randomDouble);
+	int randomRange = GetRandomIntInRange(-100, 100);
+    DebugPrint(1, "randomRange = " + randomRange);
+
+    // initialize default for fps
+    previousTime = GetMillisecondsNow();
 
     //NOTE: since we created a window the program will wait for window to be closed
 }
 
-void Render(uint windowID, float dt)
+void Render(uint windowID, double dt)
 {
     //DebugPrint(1, "Frame Render on window " + windowID + " dt = " + dt);
+
+    currentTime = GetMillisecondsNow();
+    double durationFPS = GetDurationSeconds(previousTime, currentTime);
+    if (durationFPS > 2.0)
+    {
+        double fps = CalculateFramesPerSecond(frameCount, durationFPS);
+        DebugPrint(1, "fps = " + fps);
+        frameCount = 0;
+        previousTime = currentTime;
+    }
 
     JoystickButtonStates joystickButtonStates = GetJoystickButtonStates(0);
 	DebugPrintIf(joystickButtonStates.buttonA == 1, 1, "buttonA = " + joystickButtonStates.buttonA);
@@ -211,4 +231,6 @@ void Render(uint windowID, float dt)
 
     // set mouse position 10 pixels from top corner
     //SetMouseCursorPosition(windowID, 10, 10);
+
+    frameCount++;
 }

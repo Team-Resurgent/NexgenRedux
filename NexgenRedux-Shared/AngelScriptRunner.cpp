@@ -159,6 +159,11 @@ bool AngelScriptRunner::Init(void)
     if (m_engine->RegisterObjectProperty("Size", "uint width", asOFFSET(MathUtility::Size, width)) < 0) { return false; }
     if (m_engine->RegisterObjectProperty("Size", "uint height", asOFFSET(MathUtility::Size, height)) < 0) { return false; }
 
+	if (m_engine->RegisterGlobalFunction("void SeedRandom()", asFUNCTION(AngelScriptMethods::SeedRandom), asCALL_GENERIC) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("void SeedRandomWithValue(int value)", asFUNCTION(AngelScriptMethods::SeedRandomWithValue), asCALL_GENERIC) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("double GetRandomDouble()", asFUNCTION(AngelScriptMethods::GetRandomDouble), asCALL_GENERIC) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("int GetRandomIntInRange(int start, int end)", asFUNCTION(AngelScriptMethods::GetRandomIntInRange), asCALL_GENERIC) < 0) { return false; }
+
 	if (m_engine->RegisterGlobalFunction("void DebugPrint(int logLevel, string &in message)", asFUNCTION(AngelScriptMethods::DebugPrint), asCALL_GENERIC) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void DebugPrintIf(bool condition, int logLevel, string &in message)", asFUNCTION(AngelScriptMethods::DebugPrintIf), asCALL_GENERIC) < 0) { return false; }
 
@@ -180,7 +185,7 @@ bool AngelScriptRunner::Init(void)
 	if (m_engine->RegisterGlobalFunction("Time GetTimeNow()", asFUNCTION(AngelScriptMethods::GetTimeNow), asCALL_GENERIC) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("uint64 GetMillisecondsNow()", asFUNCTION(AngelScriptMethods::GetMillisecondsNow), asCALL_GENERIC) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("double GetDurationSeconds(uint64 start, uint64 end)", asFUNCTION(AngelScriptMethods::GetDurationSeconds), asCALL_GENERIC) < 0) { return false; }
-	if (m_engine->RegisterGlobalFunction("double CalculateFramesPerSecond(uint frameCount, uint64 start, uint64 end)", asFUNCTION(AngelScriptMethods::CalculateFramesPerSecond), asCALL_GENERIC) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("double CalculateFramesPerSecond(uint frameCount, double duration)", asFUNCTION(AngelScriptMethods::CalculateFramesPerSecond), asCALL_GENERIC) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void SleepMilliseconds(uint milliseconds)", asFUNCTION(AngelScriptMethods::SleepMilliseconds), asCALL_GENERIC) < 0) { return false; }
 
 	if (m_engine->RegisterGlobalFunction("bool JoystickIsPresent(uint joystickID)", asFUNCTION(AngelScriptMethods::JoystickIsPresent), asCALL_GENERIC) < 0) { return false; }
@@ -250,7 +255,7 @@ bool AngelScriptRunner::ExecuteInit(void)
 	return success;
 }
 
-bool AngelScriptRunner::ExecuteRender(uint32_t windowHandle, float dt)
+bool AngelScriptRunner::ExecuteRender(uint32_t windowHandle, double dt)
 {
 	asIScriptContext *context = m_engine->CreateContext();
 	if (context == NULL) 
@@ -258,7 +263,7 @@ bool AngelScriptRunner::ExecuteRender(uint32_t windowHandle, float dt)
 		return false;
 	}
 
-	asIScriptFunction *renderFunction = m_engine->GetModule(0)->GetFunctionByDecl("void Render(uint, float)");
+	asIScriptFunction *renderFunction = m_engine->GetModule(0)->GetFunctionByDecl("void Render(uint, double)");
 	if (renderFunction == NULL)
 	{
 		context->Release();
@@ -272,7 +277,7 @@ bool AngelScriptRunner::ExecuteRender(uint32_t windowHandle, float dt)
 	}
 
 	context->SetArgDWord(0, windowHandle);
-	context->SetArgFloat(1, dt);
+	context->SetArgDouble(1, dt);
 
 	bool success = Execute(context);
 	context->Release();

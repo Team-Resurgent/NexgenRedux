@@ -305,9 +305,8 @@ void AngelScriptMethods::GetDurationSeconds(asIScriptGeneric* generic)
 void AngelScriptMethods::CalculateFramesPerSecond(asIScriptGeneric* generic)
 {
 	uint32_t frameCount = generic->GetArgDWord(0);
-	uint64_t start = generic->GetArgQWord(1);
-	uint64_t end = generic->GetArgQWord(2);
-	double fps = TimeUtility::CalculateFramesPerSecond(frameCount, start, end);
+	double duration = generic->GetArgDouble(1);
+	double fps = TimeUtility::CalculateFramesPerSecond(frameCount, duration);
 	*(double*)generic->GetAddressOfReturnLocation() = fps;
 }
 
@@ -315,6 +314,31 @@ void AngelScriptMethods::SleepMilliseconds(asIScriptGeneric* generic)
 {
 	uint32_t milliseconds = generic->GetArgDWord(0);
 	TimeUtility::SleepMilliseconds(milliseconds);
+}
+
+void AngelScriptMethods::SeedRandom(asIScriptGeneric* generic)
+{
+	MathUtility::SeedRandom();
+}
+
+void AngelScriptMethods::SeedRandomWithValue(asIScriptGeneric* generic)
+{
+	uint32_t value = generic->GetArgDWord(0);
+	MathUtility::SeedRandomWithValue(value);
+}
+
+void AngelScriptMethods::GetRandomDouble(asIScriptGeneric* generic)
+{
+	double value = MathUtility::GetRandomDouble();
+	*(double*)generic->GetAddressOfReturnLocation() = value;
+}
+
+void AngelScriptMethods::GetRandomIntInRange(asIScriptGeneric* generic)
+{
+	int32_t start = generic->GetArgDWord(0);
+	int32_t end = generic->GetArgDWord(1);
+	int32_t value = MathUtility::GetRandomIntInRange(start, end);
+	*(int32_t*)generic->GetAddressOfReturnLocation() = value;
 }
 
 void AngelScriptMethods::JoystickIsPresent(asIScriptGeneric* generic)

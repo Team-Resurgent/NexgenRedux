@@ -33,6 +33,11 @@ namespace NexgenRedux
 		static void CalculateFramesPerSecond(asIScriptGeneric* generic);
 		static void SleepMilliseconds(asIScriptGeneric* generic);
 
+		static void SeedRandom(asIScriptGeneric* generic);
+		static void SeedRandomWithValue(asIScriptGeneric* generic);
+		static void GetRandomDouble(asIScriptGeneric* generic);
+		static void GetRandomIntInRange(asIScriptGeneric* generic);
+
 		static void JoystickIsPresent(asIScriptGeneric* generic);
 		static void JoystickIsGamepad(asIScriptGeneric* generic);
 		static void GetJoystickButtonStates(asIScriptGeneric* generic);

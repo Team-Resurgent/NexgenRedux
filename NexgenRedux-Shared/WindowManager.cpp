@@ -5,6 +5,7 @@
 
 #include <Gensys/Int.h>
 #include <Gensys/DebugUtility.h>
+#include <Gensys/TimeUtility.h>
 
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
 #include <GLAD/glad.h>
@@ -153,15 +154,26 @@ bool WindowManager::RenderLoop(void)
 		bool exitRequested = false;
 		while (exitRequested == false)
 		{
+			uint64_t now = TimeUtility::GetMillisecondsNow();
+			uint64_t previousNow = now;
+
 			std::vector<uint32_t> windowHandles = GetWindowHandles();
 
 			for (uint32_t i = 0; i < windowHandles.size(); i++)
 			{
 				uint32_t windowHandle = windowHandles.at(i);
-				AngelScriptRunner::ExecuteRender(windowHandle, 0.123f);
-				OpenGLDeviceHelper::WindowRender(windowHandle, exitRequested);
+				double dt = TimeUtility::GetDurationSeconds(previousNow, now);
+				if (AngelScriptRunner::ExecuteRender(windowHandle, dt) == false)
+				{
+					DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteRender failed.");
+				}
+				if (OpenGLDeviceHelper::WindowRender(windowHandle, exitRequested) == false)
+				{
+					DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "WindowRender failed.");
+				}
 			}
 			PollEvents();
+			previousNow = now;
 		}
 	}
 
@@ -170,19 +182,31 @@ bool WindowManager::RenderLoop(void)
 
 #elif defined NEXGEN_OG
 
-	if (GetWindowCount() > 0) {
+	if (GetWindowCount() > 0) 
+	{
 		bool exitRequested = false;
 		while (exitRequested == false)
 		{
+			uint64_t now = TimeUtility::GetMillisecondsNow();
+			uint64_t previousNow = now;
+
 			std::vector<uint32_t> windowHandles = GetWindowHandles();
 
 			for (uint32_t i = 0; i < windowHandles.size(); i++)
 			{
 				uint32_t windowHandle = windowHandles.at(i);
-				AngelScriptRunner::ExecuteRender(windowHandle, 0.123f);
-				XboxOGDeviceHelper::WindowRender(windowHandles.at(i), exitRequested);
+				double dt = TimeUtility::GetDurationSeconds(previousNow, now);
+				if (AngelScriptRunner::ExecuteRender(windowHandle, dt) == false)
+				{
+					DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteRender failed.");
+				}
+				if (XboxOGDeviceHelper::WindowRender(windowHandles.at(i), exitRequested) == false)
+				{
+					DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "WindowRender failed.");
+				}
 			}
 			PollEvents();
+			previousNow = now;
 		}
 	}
 

@@ -21,7 +21,7 @@ namespace Gensys
 		static Time GetTimeNow();
 		static uint64_t GetMillisecondsNow();
 		static double GetDurationSeconds(uint64_t start, uint64_t end);
-		static double CalculateFramesPerSecond(uint32_t frameCount, uint64_t start, uint64_t end);
+		static double CalculateFramesPerSecond(uint32_t frameCount, double duration);
 		static void SleepMilliseconds(uint32_t milliseconds);
 	};
 }

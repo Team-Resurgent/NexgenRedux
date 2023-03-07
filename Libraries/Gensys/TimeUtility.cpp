@@ -47,9 +47,9 @@ double TimeUtility::GetDurationSeconds(uint64_t start, uint64_t end)
 	return (end - start) / (double)1000;
 }
 
-double TimeUtility::CalculateFramesPerSecond(uint32_t frameCount, uint64_t start, uint64_t end)
+double TimeUtility::CalculateFramesPerSecond(uint32_t frameCount, double duration)
 {
-	return frameCount / ((end - start) / (double)1000);
+	return frameCount / duration;
 }
 
 void TimeUtility::SleepMilliseconds(uint32_t milliseconds)

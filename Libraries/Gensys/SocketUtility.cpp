@@ -78,14 +78,14 @@ bool SocketUtility::SetSocketOptions(uint64_t socket)
 #if defined NEXGEN_360
 
 	BOOL bBroadcast = TRUE;
-	int result = setsockopt(socket, SOL_SOCKET, 0x5802, (PCSTR)&bBroadcast, sizeof(BOOL));
+	int result = setsockopt((SOCKET)socket, SOL_SOCKET, 0x5802, (PCSTR)&bBroadcast, sizeof(BOOL));
 	if (result < 0)
 	{
 		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "Set socket option 5802 failed: %i", WSAGetLastError());
 		success = false;
 	}
 
-	result = setsockopt(socket, SOL_SOCKET, 0x5801, (PCSTR)&bBroadcast, sizeof(BOOL));
+	result = setsockopt((SOCKET)socket, SOL_SOCKET, 0x5801, (PCSTR)&bBroadcast, sizeof(BOOL));
 	if (result < 0)
 	{
 		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "Set socket option 5801 failed: %i", WSAGetLastError());

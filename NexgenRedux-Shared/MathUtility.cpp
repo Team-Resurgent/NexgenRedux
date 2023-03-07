@@ -12,7 +12,7 @@ using namespace NexgenRedux;
 
 void MathUtility::SeedRandom()
 {
-    srand(time(NULL));
+    srand((uint32_t)time(NULL));
 }
 
 void MathUtility::SeedRandomWithValue(uint32_t value)

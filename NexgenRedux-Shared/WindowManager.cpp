@@ -28,8 +28,9 @@ void WindowManager::Close(void)
 {
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
 	OpenGLDeviceHelper::Close();
-#elif defined NEXGEN_OG || defined NEXGEN_360
+#elif defined NEXGEN_OG 
 	XboxOGDeviceHelper::Close();
+#elif defined NEXGEN_360
 #endif
 }
 
@@ -37,7 +38,7 @@ void WindowManager::PollEvents(void)
 {
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
 	OpenGLDeviceHelper::PollEvents();
-#elif defined NEXGEN_OG || defined NEXGEN_360
+#elif defined NEXGEN_OG 
 	XboxOGDeviceHelper::PollEvents();
 #endif
 }
@@ -46,7 +47,7 @@ bool WindowManager::GetAvailableMonitorCount(uint32_t& monitorCount)
 {
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
 	return OpenGLDeviceHelper::GetAvailableMonitorCount(monitorCount);
-#elif defined NEXGEN_OG || defined NEXGEN_360
+#elif defined NEXGEN_OG 
 	return XboxOGDeviceHelper::GetAvailableMonitorCount(monitorCount);
 #elif defined NEXGEN_360
 	return true;

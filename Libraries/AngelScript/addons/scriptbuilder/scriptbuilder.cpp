@@ -1132,9 +1132,9 @@ string GetAbsolutePath(const string &file)
 
 string GetCurrentDir()
 {
-	char buffer[1024];
 #if defined(_MSC_VER) || defined(_WIN32)
 	#ifdef _WIN32_WCE
+	char buffer[1024];
 	static TCHAR apppath[MAX_PATH] = TEXT("");
 	if (!apppath[0])
 	{

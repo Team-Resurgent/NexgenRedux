@@ -159,7 +159,7 @@ void DriveManager::InitOrRefresh()
 
 	for (size_t i = 0; i < m_drives.size(); i++)
     {
-		m_drives.at(i)->Mount();
+		m_drives.at(i).Mount();
     }
 
 #elif defined NEXGEN_WIN

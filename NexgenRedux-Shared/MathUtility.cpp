@@ -1,7 +1,12 @@
 #include "MathUtility.h"
 
 #include <ctime>
+
+#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
 #include <random>
+#elif defined NEXGEN_OG || defined NEXGEN_360
+#include <xtl.h>
+#endif
 
 using namespace NexgenRedux;
 

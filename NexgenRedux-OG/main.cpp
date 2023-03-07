@@ -14,8 +14,6 @@ using namespace NexgenRedux;
 using namespace Gensys;
 using namespace AngelScript;
 
-void PrintString(std::string &str);
-
 void __cdecl main(int, char **)
 {
 	//Gensys::Test::RunTests();
@@ -38,6 +36,4 @@ void __cdecl main(int, char **)
 
     WindowManager::Close();
     AngelScriptRunner::Close();
-
-	return;
 }

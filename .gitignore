@@ -1,4 +1,5 @@
 build/
+packages/
 
 .vs/
 .vscode/**/*
@@ -10,4 +11,3 @@ build/
 *.suo
 *.ncb
 *.sdf
-

@@ -1174,6 +1174,7 @@ string GetCurrentDir()
 	// TODO: How to determine current working dir on Windows Phone?
 	return "";
 	#else
+	char buffer[1024];
 	return _getcwd(buffer, (int)1024);
 	#endif // _MSC_VER
 #elif defined(__APPLE__) || defined(__linux__)

@@ -2,7 +2,7 @@
 
 #include "Int.h"
 
-#if defined UWP_ANGLE || defined NEXGEN_WIN
+#if defined UWP_ANGLE || defined NEXGEN_WIN || defined NEXGEN_UWP
 #include <WinSock2.h>
 #include <Windows.h>
 #elif defined NEXGEN_360 || defined NEXGEN_OG

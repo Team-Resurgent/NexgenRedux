@@ -408,7 +408,7 @@ bool FileSystem::FileOpen(std::wstring const path, FileMode const fileMode, uint
 	FileContainer fileContainer;
 #if defined NEXGEN_OG || defined NEXGEN_360 || defined NEXGEN_MAC || defined NEXGEN_LINUX
 	fileContainer.file = fopen(StringUtility::ToString(path).c_str(), StringUtility::ToString(access).c_str());
-#elif defined NEXGEN_WIN 
+#elif defined NEXGEN_WIN || defined NEXGEN_UWP
 	fopen_s((FILE **)&fileContainer.file, StringUtility::ToString(path).c_str(), StringUtility::ToString(access).c_str());
 #endif
 	if (fileContainer.file == NULL)
@@ -434,7 +434,7 @@ bool FileSystem::FileReadAllAsString(std::wstring const path, std::string* buffe
 	FILE *file;
 #if defined NEXGEN_OG || defined NEXGEN_360 || defined NEXGEN_MAC || defined NEXGEN_LINUX
 	file = fopen(StringUtility::ToString(path).c_str(), "rb");
-#elif defined NEXGEN_WIN
+#elif defined NEXGEN_WIN || defined NEXGEN_UWP
 	fopen_s(&file, StringUtility::ToString(path).c_str(), "rb");
 #endif
 	if(file == NULL)

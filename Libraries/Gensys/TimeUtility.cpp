@@ -10,7 +10,7 @@
 #include <unistd.h>
 #endif
 
-#include <Gensys/Int.h>
+#include "Int.h"
 
 using namespace Gensys;
 
@@ -31,7 +31,7 @@ TimeUtility::Time TimeUtility::GetTimeNow()
 
 uint64_t TimeUtility::GetMillisecondsNow()
 {
-#if defined NEXGEN_OG || defined NEXGEN_360 || defined NEXGEN_WIN
+#if defined NEXGEN_OG || defined NEXGEN_360 || defined NEXGEN_WIN || defined NEXGEN_UWP
 	double clockRsolution = (CLOCKS_PER_SEC / (double)1000);
 	uint64_t nowMilliseconds = (uint64_t)(clock() / clockRsolution);
 	return nowMilliseconds;

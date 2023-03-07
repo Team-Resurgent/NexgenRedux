@@ -1,0 +1,53 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  IgnorableNamespaces="uap mp rescap">
+
+  <Identity
+    Name="NexgenRedux"
+    Publisher="CN=TeamResurgent"
+    Version="1.0.0.0" />
+
+  <mp:PhoneIdentity PhoneProductId="2493d6b0-33c7-416b-bdf0-87a224391766" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
+
+  <Properties>
+    <DisplayName>NexgenRedux</DisplayName>
+    <PublisherDisplayName>Team Resurgent</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+  </Properties>
+
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Universal" MinVersion="10.0.0.0" MaxVersionTested="10.0.0.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="x-generate"/>
+  </Resources>
+
+  <Applications>
+    <Application Id="App"
+      Executable="$targetnametoken$.exe"
+      EntryPoint="NexgenRedux.App">
+      <uap:VisualElements
+        DisplayName="NexgenRedux"
+        Square44x44Logo="Assets\Square44x44Logo.png"
+        Description="Nexgen a cross platform dashboard / engine."
+        BackgroundColor="#2E2E2E" Square150x150Logo="Assets\Square150x150Logo.png">
+        <uap:LockScreen BadgeLogo="Assets\BadgeLogo.png" Notification="badgeAndTileText"/>
+        <uap:DefaultTile Square71x71Logo="Assets\SmallTile.png" Wide310x150Logo="Assets\WideTile.png" Square310x310Logo="Assets\LargeTile.png"/>
+        <uap:SplashScreen Image="Assets\SplashScreen.png" BackgroundColor="#2E2E2E"/>
+      </uap:VisualElements>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <Capability Name="privateNetworkClientServer" />
+    <Capability Name="internetClientServer" />
+    <rescap:Capability Name="runFullTrust"/>
+    <rescap:Capability Name="broadFileSystemAccess"/>
+  </Capabilities>
+</Package>

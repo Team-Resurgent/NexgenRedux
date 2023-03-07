@@ -1,0 +1,481 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|ARM">
+      <Configuration>Debug</Configuration>
+      <Platform>ARM</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|ARM">
+      <Configuration>Release</Configuration>
+      <Platform>ARM</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|ARM64">
+      <Configuration>Debug</Configuration>
+      <Platform>ARM64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|ARM64">
+      <Configuration>Release</Configuration>
+      <Platform>ARM64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{87a82faa-54ef-4627-bd34-3f19b01b8a59}</ProjectGuid>
+    <Keyword>DirectXXamlApp</Keyword>
+    <RootNamespace>Nexgen</RootNamespace>
+    <DefaultLanguage>en-US</DefaultLanguage>
+    <MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>
+    <AppContainerApplication>true</AppContainerApplication>
+    <ApplicationType>Windows Store</ApplicationType>
+    <WindowsTargetPlatformVersion>10.0.22621.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformMinVersion>10.0.19041.0</WindowsTargetPlatformMinVersion>
+    <ApplicationTypeRevision>10.0</ApplicationTypeRevision>
+    <AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseDotNetNativeToolchain>true</UseDotNetNativeToolchain>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseDotNetNativeToolchain>true</UseDotNetNativeToolchain>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseDotNetNativeToolchain>true</UseDotNetNativeToolchain>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseDotNetNativeToolchain>true</UseDotNetNativeToolchain>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseDotNetNativeToolchain>true</UseDotNetNativeToolchain>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(VSINSTALLDIR)\Common7\IDE\Extensions\Microsoft\VsGraphics\ImageContentTask.props" />
+    <Import Project="$(VSINSTALLDIR)\Common7\IDE\Extensions\Microsoft\VsGraphics\MeshContentTask.props" />
+    <Import Project="$(VSINSTALLDIR)\Common7\IDE\Extensions\Microsoft\VsGraphics\ShaderGraphContentTask.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros">
+    <GenerateAppInstallerFile>True</GenerateAppInstallerFile>
+    <AppxPackageSigningTimestampDigestAlgorithm>SHA256</AppxPackageSigningTimestampDigestAlgorithm>
+    <AppxAutoIncrementPackageRevision>True</AppxAutoIncrementPackageRevision>
+    <GenerateTestArtifacts>True</GenerateTestArtifacts>
+    <AppxBundle>Always</AppxBundle>
+    <AppxBundlePlatforms>x86|x64</AppxBundlePlatforms>
+    <AppInstallerUri>D:\App</AppInstallerUri>
+    <HoursBetweenUpdateChecks>0</HoursBetweenUpdateChecks>
+    <PackageCertificateThumbprint>DD7E23ABACEEA387227CB89962A7C6364305C281</PackageCertificateThumbprint>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
+    <OutDir>$(ProjectDir)$(Configuration)\$(Platform)\$(MSBuildProjectName)\</OutDir>
+    <IntDir>$(Configuration)\$(Platform)\</IntDir>
+    <IncludePath>$(SolutionDir)\Nexgen-Shared;$(SolutionDir)\External\Lua\Src;$(SolutionDir)\External\Gensys;$(SolutionDir)\External\Angle\Includes;$(SolutionDir)\External\Stb;$(SolutionDir)\External\TinyXml;$(SolutionDir)\External\CglTF;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
+    <OutDir>$(ProjectDir)$(Configuration)\$(Platform)\$(MSBuildProjectName)\</OutDir>
+    <IntDir>$(Configuration)\$(Platform)\</IntDir>
+    <IncludePath>$(SolutionDir)\Nexgen-Shared;$(SolutionDir)\External\Lua\Src;$(SolutionDir)\External\Gensys;$(SolutionDir)\External\Angle\Includes;$(SolutionDir)\External\Stb;$(SolutionDir)\External\TinyXml;$(SolutionDir)\External\CglTF;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(ProjectDir)$(Configuration)\$(Platform)\$(MSBuildProjectName)\</OutDir>
+    <IntDir>$(Configuration)\$(Platform)\</IntDir>
+    <IncludePath>$(SolutionDir)\Nexgen-Shared;$(SolutionDir)\External\Lua\Src;$(SolutionDir)\External\Gensys;$(SolutionDir)\External\Angle\Includes;$(SolutionDir)\External\Stb;$(SolutionDir)\External\TinyXml;$(SolutionDir)\External\CglTF;$(IncludePath)</IncludePath>
+    <LibraryPath>
+    </LibraryPath>
+    <TargetName>NexgenRedux</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>$(ProjectDir)$(Configuration)\$(Platform)\$(MSBuildProjectName)\</OutDir>
+    <IntDir>$(Configuration)\$(Platform)\</IntDir>
+    <IncludePath>"$(SolutionDir)\NexgenRedux-Shared";"$(SolutionDir)\Libraries\AngelScript";"$(SolutionDir)\Libraries"</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
+    <OutDir>$(ProjectDir)$(Configuration)\$(Platform)\$(MSBuildProjectName)\</OutDir>
+    <IntDir>$(Configuration)\$(Platform)\</IntDir>
+    <IncludePath>$(SolutionDir)\Nexgen-Shared;$(SolutionDir)\External\Lua\Src;$(SolutionDir)\External\Gensys;$(SolutionDir)\External\Angle\Includes;$(SolutionDir)\External\Stb;$(SolutionDir)\External\TinyXml;$(SolutionDir)\External\CglTF;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
+    <OutDir>$(ProjectDir)$(Configuration)\$(Platform)\$(MSBuildProjectName)\</OutDir>
+    <IntDir>$(Configuration)\$(Platform)\</IntDir>
+    <IncludePath>$(SolutionDir)\Nexgen-Shared;$(SolutionDir)\External\Lua\Src;$(SolutionDir)\External\Gensys;$(SolutionDir)\External\Angle\Includes;$(SolutionDir)\External\Stb;$(SolutionDir)\External\TinyXml;$(SolutionDir)\External\CglTF;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(ProjectDir)$(Configuration)\$(Platform)\$(MSBuildProjectName)\</OutDir>
+    <IntDir>$(Configuration)\$(Platform)\</IntDir>
+    <IncludePath>$(SolutionDir)\Nexgen-Shared;$(SolutionDir)\External\Lua\Src;$(SolutionDir)\External\Gensys;$(SolutionDir)\External\Angle\Includes;$(SolutionDir)\External\Stb;$(SolutionDir)\External\TinyXml;$(SolutionDir)\External\CglTF;$(IncludePath)</IncludePath>
+    <LibraryPath>
+    </LibraryPath>
+    <TargetName>NexgenRedux</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(ProjectDir)$(Configuration)\$(Platform)\$(MSBuildProjectName)\</OutDir>
+    <IntDir>$(Configuration)\$(Platform)\</IntDir>
+    <IncludePath>"$(SolutionDir)\NexgenRedux-Shared";"$(SolutionDir)\Libraries\AngelScript";"$(SolutionDir)\Libraries"</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64)</LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Link>
+      <AdditionalDependencies>d2d1.lib;d3d11.lib;dxgi.lib;windowscodecs.lib;dwrite.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories); $(VCInstallDir)\lib\store\amd64; $(VCInstallDir)\lib\amd64</AdditionalLibraryDirectories>
+    </Link>
+    <ClCompile>
+      <PrecompiledHeaderFile>
+      </PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile>
+      </PrecompiledHeaderOutputFile>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(IntermediateOutputPath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>/bigobj /std:c++17 %(AdditionalOptions)</AdditionalOptions>
+      <DisableSpecificWarnings>4453;28204</DisableSpecificWarnings>
+      <PreprocessorDefinitions>_CRT_NON_CONFORMING_SWPRINTFS;_CRT_SECURE_NO_WARNINGS;_DEBUG;DISABLE_XAML_GENERATED_MAIN;NEXGEN_UWP;AS_XBOX;AS_NO_THREADS;AS_USE_NAMESPACE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Link>
+      <AdditionalDependencies>d2d1.lib;d3d11.lib;dxgi.lib;windowscodecs.lib;dwrite.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories); $(VCInstallDir)\lib\store\amd64; $(VCInstallDir)\lib\amd64</AdditionalLibraryDirectories>
+    </Link>
+    <ClCompile>
+      <PrecompiledHeaderFile>
+      </PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile>
+      </PrecompiledHeaderOutputFile>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(IntermediateOutputPath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>/bigobj /std:c++17 %(AdditionalOptions)</AdditionalOptions>
+      <DisableSpecificWarnings>4453;28204</DisableSpecificWarnings>
+      <PreprocessorDefinitions>_CRT_NON_CONFORMING_SWPRINTFS;_CRT_SECURE_NO_WARNINGS;NDEBUG;DISABLE_XAML_GENERATED_MAIN;NEXGEN_UWP;AS_XBOX;AS_NO_THREADS;AS_USE_NAMESPACE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <Image Include="Assets\BadgeLogo.scale-100.png" />
+    <Image Include="Assets\BadgeLogo.scale-125.png" />
+    <Image Include="Assets\BadgeLogo.scale-150.png" />
+    <Image Include="Assets\BadgeLogo.scale-200.png" />
+    <Image Include="Assets\BadgeLogo.scale-400.png" />
+    <Image Include="Assets\LargeTile.scale-100.png" />
+    <Image Include="Assets\LargeTile.scale-125.png" />
+    <Image Include="Assets\LargeTile.scale-150.png" />
+    <Image Include="Assets\LargeTile.scale-200.png" />
+    <Image Include="Assets\LargeTile.scale-400.png" />
+    <Image Include="Assets\SmallTile.scale-100.png" />
+    <Image Include="Assets\SmallTile.scale-125.png" />
+    <Image Include="Assets\SmallTile.scale-150.png" />
+    <Image Include="Assets\SmallTile.scale-200.png" />
+    <Image Include="Assets\SmallTile.scale-400.png" />
+    <Image Include="Assets\SplashScreen.scale-100.png" />
+    <Image Include="Assets\SplashScreen.scale-125.png" />
+    <Image Include="Assets\SplashScreen.scale-150.png" />
+    <Image Include="Assets\SplashScreen.scale-200.png" />
+    <Image Include="Assets\SplashScreen.scale-400.png" />
+    <Image Include="Assets\Square150x150Logo.scale-100.png" />
+    <Image Include="Assets\Square150x150Logo.scale-125.png" />
+    <Image Include="Assets\Square150x150Logo.scale-150.png" />
+    <Image Include="Assets\Square150x150Logo.scale-200.png" />
+    <Image Include="Assets\Square150x150Logo.scale-400.png" />
+    <Image Include="Assets\Square44x44Logo.altform-lightunplated_targetsize-16.png" />
+    <Image Include="Assets\Square44x44Logo.altform-lightunplated_targetsize-24.png" />
+    <Image Include="Assets\Square44x44Logo.altform-lightunplated_targetsize-256.png" />
+    <Image Include="Assets\Square44x44Logo.altform-lightunplated_targetsize-32.png" />
+    <Image Include="Assets\Square44x44Logo.altform-lightunplated_targetsize-48.png" />
+    <Image Include="Assets\Square44x44Logo.altform-unplated_targetsize-16.png" />
+    <Image Include="Assets\Square44x44Logo.altform-unplated_targetsize-256.png" />
+    <Image Include="Assets\Square44x44Logo.altform-unplated_targetsize-32.png" />
+    <Image Include="Assets\Square44x44Logo.altform-unplated_targetsize-48.png" />
+    <Image Include="Assets\Square44x44Logo.scale-100.png" />
+    <Image Include="Assets\Square44x44Logo.scale-125.png" />
+    <Image Include="Assets\Square44x44Logo.scale-150.png" />
+    <Image Include="Assets\Square44x44Logo.scale-200.png" />
+    <Image Include="Assets\Square44x44Logo.scale-400.png" />
+    <Image Include="Assets\Square44x44Logo.targetsize-16.png" />
+    <Image Include="Assets\Square44x44Logo.targetsize-24.png" />
+    <Image Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png" />
+    <Image Include="Assets\Square44x44Logo.targetsize-256.png" />
+    <Image Include="Assets\Square44x44Logo.targetsize-32.png" />
+    <Image Include="Assets\Square44x44Logo.targetsize-48.png" />
+    <Image Include="Assets\StoreLogo.scale-100.png" />
+    <Image Include="Assets\StoreLogo.scale-125.png" />
+    <Image Include="Assets\StoreLogo.scale-150.png" />
+    <Image Include="Assets\StoreLogo.scale-200.png" />
+    <Image Include="Assets\StoreLogo.scale-400.png" />
+    <Image Include="Assets\Wide310x150Logo.scale-100.png" />
+    <Image Include="Assets\Wide310x150Logo.scale-125.png" />
+    <Image Include="Assets\Wide310x150Logo.scale-150.png" />
+    <Image Include="Assets\Wide310x150Logo.scale-200.png" />
+    <Image Include="Assets\Wide310x150Logo.scale-400.png" />
+    <Image Include="Assets\WideTile.scale-100.png" />
+    <Image Include="Assets\WideTile.scale-125.png" />
+    <Image Include="Assets\WideTile.scale-150.png" />
+    <Image Include="Assets\WideTile.scale-200.png" />
+    <Image Include="Assets\WideTile.scale-400.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\Libraries\AngelScript\angelscript.h" />
+    <ClInclude Include="..\Libraries\AngelScript\as_array.h" />
+    <ClInclude Include="..\Libraries\AngelScript\as_atomic.h" />
+    <ClInclude Include="..\Libraries\AngelScript\as_builder.h" />
+    <ClInclude Include="..\Libraries\AngelScript\as_bytecode.h" />
+    <ClInclude Include="..\Libraries\AngelScript\as_callfunc.h" />
+    <ClInclude Include="..\Libraries\AngelScript\as_compiler.h" />
+    <ClInclude Include="..\Libraries\AngelScript\as_config.h" />
+    <ClInclude Include="..\Libraries\AngelScript\as_configgroup.h" />
+    <ClInclude Include="..\Libraries\AngelScript\as_context.h" />
+    <ClInclude Include="..\Libraries\AngelScript\as_criticalsection.h" />
+    <ClInclude Include="..\Libraries\AngelScript\as_datatype.h" />
+    <ClInclude Include="..\Libraries\AngelScript\as_debug.h" />
+    <ClInclude Include="..\Libraries\AngelScript\as_gc.h" />
+    <ClInclude Include="..\Libraries\AngelScript\as_generic.h" />
+    <ClInclude Include="..\Libraries\AngelScript\as_map.h" />
+    <ClInclude Include="..\Libraries\AngelScript\as_memory.h" />
+    <ClInclude Include="..\Libraries\AngelScript\as_module.h" />
+    <ClInclude Include="..\Libraries\AngelScript\as_namespace.h" />
+    <ClInclude Include="..\Libraries\AngelScript\as_objecttype.h" />
+    <ClInclude Include="..\Libraries\AngelScript\as_outputbuffer.h" />
+    <ClInclude Include="..\Libraries\AngelScript\as_parser.h" />
+    <ClInclude Include="..\Libraries\AngelScript\as_property.h" />
+    <ClInclude Include="..\Libraries\AngelScript\as_restore.h" />
+    <ClInclude Include="..\Libraries\AngelScript\as_scriptcode.h" />
+    <ClInclude Include="..\Libraries\AngelScript\as_scriptengine.h" />
+    <ClInclude Include="..\Libraries\AngelScript\as_scriptfunction.h" />
+    <ClInclude Include="..\Libraries\AngelScript\as_scriptnode.h" />
+    <ClInclude Include="..\Libraries\AngelScript\as_scriptobject.h" />
+    <ClInclude Include="..\Libraries\AngelScript\as_string.h" />
+    <ClInclude Include="..\Libraries\AngelScript\as_string_util.h" />
+    <ClInclude Include="..\Libraries\AngelScript\as_symboltable.h" />
+    <ClInclude Include="..\Libraries\AngelScript\as_texts.h" />
+    <ClInclude Include="..\Libraries\AngelScript\as_thread.h" />
+    <ClInclude Include="..\Libraries\AngelScript\as_tokendef.h" />
+    <ClInclude Include="..\Libraries\AngelScript\as_tokenizer.h" />
+    <ClInclude Include="..\Libraries\AngelScript\as_typeinfo.h" />
+    <ClInclude Include="..\Libraries\AngelScript\as_variablescope.h" />
+    <ClInclude Include="..\Libraries\Gensys\Crc32.h" />
+    <ClInclude Include="..\Libraries\Gensys\DebugUtility.h" />
+    <ClInclude Include="..\Libraries\Gensys\Drive.h" />
+    <ClInclude Include="..\Libraries\Gensys\DriveManager.h" />
+    <ClInclude Include="..\Libraries\Gensys\EndianHelper.h" />
+    <ClInclude Include="..\Libraries\Gensys\FileSystem.h" />
+    <ClInclude Include="..\Libraries\Gensys\FtpServer.h" />
+    <ClInclude Include="..\Libraries\Gensys\Int.h" />
+    <ClInclude Include="..\Libraries\Gensys\Memory.h" />
+    <ClInclude Include="..\Libraries\Gensys\SocketUtility.h" />
+    <ClInclude Include="..\Libraries\Gensys\StringUtility.h" />
+    <ClInclude Include="..\Libraries\Gensys\Test.h" />
+    <ClInclude Include="..\Libraries\Gensys\TimeUtility.h" />
+    <ClInclude Include="..\Libraries\Gensys\TreeNode.h" />
+    <ClInclude Include="..\Libraries\Gensys\UniqueIdGenerator.h" />
+    <ClInclude Include="..\Libraries\Gensys\VirtualFileSystem.h" />
+    <ClInclude Include="..\Libraries\Gensys\XboxInternals.h" />
+    <ClInclude Include="..\NexgenRedux-Shared\AngelScriptMethods.h" />
+    <ClInclude Include="..\NexgenRedux-Shared\AngelScriptRunner.h" />
+    <ClInclude Include="..\NexgenRedux-Shared\BootLoader.h" />
+    <ClInclude Include="..\NexgenRedux-Shared\ConfigLoader.h" />
+    <ClInclude Include="..\NexgenRedux-Shared\Constants.h" />
+    <ClInclude Include="..\NexgenRedux-Shared\Icon.h" />
+    <ClInclude Include="..\NexgenRedux-Shared\JoystickManager.h" />
+    <ClInclude Include="..\NexgenRedux-Shared\MathUtility.h" />
+    <ClInclude Include="..\NexgenRedux-Shared\OpenGLDeviceHelper.h" />
+    <ClInclude Include="..\NexgenRedux-Shared\WindowManager.h" />
+    <ClInclude Include="..\NexgenRedux-Shared\XboxOGDeviceHelper.h" />
+    <ClInclude Include="pch.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\Libraries\AngelScript\as_atomic.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\as_builder.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\as_bytecode.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\as_callfunc.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\as_callfunc_arm.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\as_callfunc_arm64.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\as_callfunc_mips.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\as_callfunc_ppc.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\as_callfunc_ppc_64.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\as_callfunc_sh4.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\as_callfunc_x64_gcc.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\as_callfunc_x64_mingw.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\as_callfunc_x64_msvc.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\as_callfunc_x86.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\as_callfunc_xenon.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\as_compiler.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\as_configgroup.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\as_context.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\as_datatype.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\as_gc.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\as_generic.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\as_globalproperty.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\as_memory.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\as_module.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\as_objecttype.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\as_outputbuffer.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\as_parser.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\as_restore.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\as_scriptcode.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\as_scriptengine.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\as_scriptfunction.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\as_scriptnode.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\as_scriptobject.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\as_string.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\as_string_util.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\as_thread.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\as_tokenizer.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\as_typeinfo.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\as_variablescope.cpp" />
+    <ClCompile Include="..\Libraries\Gensys\Crc32.cpp" />
+    <ClCompile Include="..\Libraries\Gensys\DebugUtility.cpp" />
+    <ClCompile Include="..\Libraries\Gensys\Drive.cpp" />
+    <ClCompile Include="..\Libraries\Gensys\DriveManager.cpp" />
+    <ClCompile Include="..\Libraries\Gensys\FileSystem.cpp" />
+    <ClCompile Include="..\Libraries\Gensys\FtpServer.cpp" />
+    <ClCompile Include="..\Libraries\Gensys\Memory.cpp" />
+    <ClCompile Include="..\Libraries\Gensys\SocketUtility.cpp" />
+    <ClCompile Include="..\Libraries\Gensys\StringUtility.cpp" />
+    <ClCompile Include="..\Libraries\Gensys\Test.cpp" />
+    <ClCompile Include="..\Libraries\Gensys\TimeUtility.cpp" />
+    <ClCompile Include="..\Libraries\Gensys\TreeNode.cpp" />
+    <ClCompile Include="..\Libraries\Gensys\UniqueIdGenerator.cpp" />
+    <ClCompile Include="..\Libraries\Gensys\VirtualFileSystem.cpp" />
+    <ClCompile Include="..\NexgenRedux-Shared\AngelScriptMethods.cpp" />
+    <ClCompile Include="..\NexgenRedux-Shared\AngelScriptRunner.cpp" />
+    <ClCompile Include="..\NexgenRedux-Shared\BootLoader.cpp" />
+    <ClCompile Include="..\NexgenRedux-Shared\ConfigLoader.cpp" />
+    <ClCompile Include="..\NexgenRedux-Shared\Icon.cpp" />
+    <ClCompile Include="..\NexgenRedux-Shared\JoystickManager.cpp" />
+    <ClCompile Include="..\NexgenRedux-Shared\MathUtility.cpp" />
+    <ClCompile Include="..\NexgenRedux-Shared\OpenGLDeviceHelper.cpp" />
+    <ClCompile Include="..\NexgenRedux-Shared\WindowManager.cpp" />
+    <ClCompile Include="..\NexgenRedux-Shared\XboxOGDeviceHelper.cpp" />
+    <ClCompile Include="main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <AppxManifest Include="Package.appxmanifest">
+      <SubType>Designer</SubType>
+    </AppxManifest>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Libraries\AngelScript\as_callfunc_arm64_gcc.S" />
+    <None Include="..\Libraries\AngelScript\as_callfunc_arm64_msvc.asm" />
+    <None Include="..\Libraries\AngelScript\as_callfunc_arm_gcc.S" />
+    <None Include="..\Libraries\AngelScript\as_callfunc_arm_msvc.asm" />
+    <None Include="..\Libraries\AngelScript\as_callfunc_arm_vita.S" />
+    <None Include="..\Libraries\AngelScript\as_callfunc_arm_xcode.S" />
+    <None Include="..\Libraries\AngelScript\as_callfunc_x64_msvc_asm.asm" />
+    <None Include="..\NexgenRedux-Shared\Media\config.ini" />
+    <None Include="..\NexgenRedux-Shared\Media\Default\main.as" />
+    <None Include="NexgenRedux-UWP.pfx" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="$(SolutionDir)\Libraries\Angle\Lib\UWP\libEGL.dll">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="$(SolutionDir)\Libraries\Angle\Lib\UWP\libGLESv2.dll">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(VSINSTALLDIR)\Common7\IDE\Extensions\Microsoft\VsGraphics\ImageContentTask.targets" />
+    <Import Project="$(VSINSTALLDIR)\Common7\IDE\Extensions\Microsoft\VsGraphics\MeshContentTask.targets" />
+    <Import Project="$(VSINSTALLDIR)\Common7\IDE\Extensions\Microsoft\VsGraphics\ShaderGraphContentTask.targets" />
+    <Import Project="..\packages\directxtk_uwp.2021.1.10.1\build\native\directxtk_uwp.targets" Condition="Exists('..\packages\directxtk_uwp.2021.1.10.1\build\native\directxtk_uwp.targets')" />
+    <Import Project="..\packages\directxtex_uwp.2021.1.10.2\build\native\directxtex_uwp.targets" Condition="Exists('..\packages\directxtex_uwp.2021.1.10.2\build\native\directxtex_uwp.targets')" />
+  </ImportGroup>
+  <ItemGroup>
+    <MediaResource Include="..\Nexgen-Shared\Media\**\*">
+      <Link>Assets\Media\%(RecursiveDir)%(FileName)%(Extension)</Link>
+      <DeploymentContent>true</DeploymentContent>
+    </MediaResource>
+  </ItemGroup>
+  <Target Name="CollectMediaResources" BeforeTargets="AssignTargetPaths">
+    <Message Text="Adding resource: %(MediaResource.Identity) -&gt; %(MediaResource.Link)" />
+    <ItemGroup>
+      <None Include="@(MediaResource)" />
+    </ItemGroup>
+  </Target>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\directxtk_uwp.2021.1.10.1\build\native\directxtk_uwp.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\directxtk_uwp.2021.1.10.1\build\native\directxtk_uwp.targets'))" />
+    <Error Condition="!Exists('..\packages\directxtex_uwp.2021.1.10.2\build\native\directxtex_uwp.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\directxtex_uwp.2021.1.10.2\build\native\directxtex_uwp.targets'))" />
+  </Target>
+</Project>

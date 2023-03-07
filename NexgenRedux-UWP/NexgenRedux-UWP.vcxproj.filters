@@ -1,0 +1,308 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Assets">
+      <UniqueIdentifier>4497023e-e9cc-4488-8164-4e0b6aa09c98</UniqueIdentifier>
+      <Extensions>bmp;fbx;gif;jpg;jpeg;tga;tiff;tif;png</Extensions>
+    </Filter>
+    <Filter Include="Gensys">
+      <UniqueIdentifier>{f4a7ab68-9f8c-4142-b942-b543798267f3}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="App.xaml.cpp" />
+    <ClCompile Include="..\Libraries\Gensys\Crc32.cpp">
+      <Filter>Gensys</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\Gensys\DebugUtility.cpp">
+      <Filter>Gensys</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\Gensys\Drive.cpp">
+      <Filter>Gensys</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\Gensys\DriveManager.cpp">
+      <Filter>Gensys</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\Gensys\FileSystem.cpp">
+      <Filter>Gensys</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\Gensys\FtpServer.cpp">
+      <Filter>Gensys</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\Gensys\Memory.cpp">
+      <Filter>Gensys</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\Gensys\SocketUtility.cpp">
+      <Filter>Gensys</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\Gensys\StringUtility.cpp">
+      <Filter>Gensys</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\Gensys\Test.cpp">
+      <Filter>Gensys</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\Gensys\TimeUtility.cpp">
+      <Filter>Gensys</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\Gensys\TreeNode.cpp">
+      <Filter>Gensys</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\Gensys\UniqueIdGenerator.cpp">
+      <Filter>Gensys</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\Gensys\VirtualFileSystem.cpp">
+      <Filter>Gensys</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="App.xaml.h" />
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="..\Libraries\Gensys\Crc32.h">
+      <Filter>Gensys</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\Gensys\DebugUtility.h">
+      <Filter>Gensys</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\Gensys\Drive.h">
+      <Filter>Gensys</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\Gensys\DriveManager.h">
+      <Filter>Gensys</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\Gensys\EndianHelper.h">
+      <Filter>Gensys</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\Gensys\FileSystem.h">
+      <Filter>Gensys</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\Gensys\FtpServer.h">
+      <Filter>Gensys</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\Gensys\Int.h">
+      <Filter>Gensys</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\Gensys\Memory.h">
+      <Filter>Gensys</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\Gensys\SocketUtility.h">
+      <Filter>Gensys</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\Gensys\StringUtility.h">
+      <Filter>Gensys</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\Gensys\Test.h">
+      <Filter>Gensys</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\Gensys\TimeUtility.h">
+      <Filter>Gensys</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\Gensys\TreeNode.h">
+      <Filter>Gensys</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\Gensys\UniqueIdGenerator.h">
+      <Filter>Gensys</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\Gensys\VirtualFileSystem.h">
+      <Filter>Gensys</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\Gensys\XboxInternals.h">
+      <Filter>Gensys</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <AppxManifest Include="Package.appxmanifest" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+    <None Include="..\External\Angle\Lib\UWP\$(Platform)\libEGL.dll" />
+    <None Include="..\External\Angle\Lib\UWP\$(Platform)\libGLESv2.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Assets\StoreLogo.scale-400.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\BadgeLogo.scale-400.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\SmallTile.scale-100.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\SmallTile.scale-125.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\SmallTile.scale-150.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\SmallTile.scale-200.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\SmallTile.scale-400.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square150x150Logo.scale-100.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square150x150Logo.scale-125.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square150x150Logo.scale-150.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square150x150Logo.scale-400.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\LargeTile.scale-100.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\LargeTile.scale-125.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\LargeTile.scale-150.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\LargeTile.scale-200.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\LargeTile.scale-400.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square44x44Logo.scale-100.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square44x44Logo.scale-125.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square44x44Logo.scale-150.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square44x44Logo.scale-400.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square44x44Logo.targetsize-16.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square44x44Logo.targetsize-24.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square44x44Logo.targetsize-32.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square44x44Logo.targetsize-48.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square44x44Logo.targetsize-256.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square44x44Logo.altform-unplated_targetsize-16.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square44x44Logo.altform-unplated_targetsize-32.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square44x44Logo.altform-unplated_targetsize-48.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square44x44Logo.altform-unplated_targetsize-256.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square44x44Logo.altform-lightunplated_targetsize-16.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square44x44Logo.altform-lightunplated_targetsize-24.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square44x44Logo.altform-lightunplated_targetsize-32.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square44x44Logo.altform-lightunplated_targetsize-48.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square44x44Logo.altform-lightunplated_targetsize-256.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\BadgeLogo.scale-100.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\BadgeLogo.scale-125.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\BadgeLogo.scale-150.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\BadgeLogo.scale-200.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\StoreLogo.scale-100.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\StoreLogo.scale-125.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\StoreLogo.scale-150.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\StoreLogo.scale-200.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\SplashScreen.scale-400.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\SplashScreen.scale-100.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\SplashScreen.scale-125.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\SplashScreen.scale-150.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Wide310x150Logo.scale-100.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Wide310x150Logo.scale-125.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Wide310x150Logo.scale-150.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Wide310x150Logo.scale-400.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\WideTile.scale-100.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\WideTile.scale-125.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\WideTile.scale-150.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\WideTile.scale-200.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\WideTile.scale-400.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\SplashScreen.scale-200.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square150x150Logo.scale-200.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square44x44Logo.scale-200.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Wide310x150Logo.scale-200.png">
+      <Filter>Assets</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Include="AnglePage.xaml" />
+  </ItemGroup>
+  <ItemGroup>
+    <ApplicationDefinition Include="App.xaml" />
+  </ItemGroup>
+</Project>

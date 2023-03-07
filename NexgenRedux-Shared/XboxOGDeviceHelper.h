@@ -45,8 +45,10 @@ namespace NexgenRedux
 		static bool Init(void);
 		static bool InitController(void);
 		static bool InitKeyboard(void);
+		static bool InitMouse(void);
 		static void ProcessController();
 		static void ProcessKeyboard();
+		static void ProcessMouse();
 	};
 }
 

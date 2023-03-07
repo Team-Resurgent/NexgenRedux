@@ -31,7 +31,7 @@ void OnWindowKeyboardCharacter(uint windowHandle, uint codepoint)
 void OnWindowMouseCursorPosition(uint windowHandle, double xPos, double yPos)
 {
     // commented out to reduce noisey logging
-    // DebugPrint(0, "OnWindowMouseCursorPosition windowHandle = " + windowHandle + ", xPos = " + xPos + ", yPos = " + yPos);
+    DebugPrint(0, "OnWindowMouseCursorPosition windowHandle = " + windowHandle + ", xPos = " + xPos + ", yPos = " + yPos);
 }
 
 void OnWindowMouseCursorEnter(uint windowHandle, uint entered)

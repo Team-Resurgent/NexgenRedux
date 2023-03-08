@@ -453,7 +453,12 @@ bool OpenGLDeviceHelper::GetJoystickAxisStates(uint32_t joystickID, JoystickMana
         return false;
     }
 
-    memset(&joystickAxisStates, 0, sizeof(joystickAxisStates));
+	joystickAxisStates.axisLeftX = 0;
+	joystickAxisStates.axisLeftY = 0;
+	joystickAxisStates.axisRightX = 0;
+	joystickAxisStates.axisRightY = 0;
+	joystickAxisStates.axisLeftTrigger = -1;
+	joystickAxisStates.axisRightTrigger = -1;
 
     GLFWgamepadstate gamepadState;
     if (glfwGetGamepadState(joystickID, &gamepadState))

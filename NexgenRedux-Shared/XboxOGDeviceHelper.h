@@ -16,7 +16,6 @@ namespace NexgenRedux
 	{		
 	public:
 		static void Close(void);
-		static void PollEvents(void);
 
 		static bool GetAvailableMonitorCount(uint32_t& monitorCount);
 		static bool GetMonitorVideoMode(uint32_t monitorIndex, WindowManager::MonitorVideoMode& monitorVideoMode);
@@ -27,6 +26,7 @@ namespace NexgenRedux
 		static bool SetCursorMode(uint32_t windowHandle, uint32_t mode);
 		static bool WindowRender(uint32_t& windowHandle, bool& exitRequested);
 		static bool WindowClose(uint32_t windowHandle);
+		static bool RenderLoop(void);
 		static bool GetKeyPressed(uint32_t windowHandle, uint32_t key, uint32_t& pressed);
 		static bool GetMouseButtonPressed(uint32_t windowHandle, uint32_t button, uint32_t& pressed);
 		static bool GetMouseCursorPosition(uint32_t windowHandle, double& xPos, double& yPos);

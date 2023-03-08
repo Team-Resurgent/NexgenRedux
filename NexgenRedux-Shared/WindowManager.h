@@ -30,7 +30,6 @@ namespace NexgenRedux
 		} WindowContainer;
 
     	static void Close(void);
-		static void PollEvents(void);
 
 		static bool GetAvailableMonitorCount(uint32_t& monitorCount);
 		static bool GetMonitorVideoMode(uint32_t monitorIndex, MonitorVideoMode& monitorVideoMode);

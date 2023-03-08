@@ -7,6 +7,7 @@
 
 #include <Gensys/Int.h>
 #include <Gensys/DebugUtility.h>
+#include <Gensys/TimeUtility.h>
 
 #include <map>
 #include <xtl.h>
@@ -65,13 +66,6 @@ void XboxOGDeviceHelper::Close(void)
 			XInputClose(m_controllerHandles[i]);
 		}
 	}
-}
-
-void XboxOGDeviceHelper::PollEvents(void)
-{
-	ProcessController();
-	ProcessKeyboard();
-	ProcessMouse();
 }
 
 bool XboxOGDeviceHelper::GetAvailableMonitorCount(uint32_t& monitorCount)
@@ -432,6 +426,44 @@ bool XboxOGDeviceHelper::WindowClose(uint32_t windowHandle)
 	IDirect3DDevice8* d3dDevice = (IDirect3DDevice8*)windowContainer->window;
 	d3dDevice->Release();
 	WindowManager::DeleteWindowContainer(windowHandle);
+	return true;
+}
+
+
+bool XboxOGDeviceHelper::RenderLoop(void)
+{
+	if (WindowManager::GetWindowCount() > 0) 
+	{
+		bool exitRequested = false;
+		while (exitRequested == false)
+		{
+			uint64_t now = TimeUtility::GetMillisecondsNow();
+			uint64_t previousNow = now;
+
+			std::vector<uint32_t> windowHandles =  WindowManager::GetWindowHandles();
+
+			for (uint32_t i = 0; i < windowHandles.size(); i++)
+			{
+				uint32_t windowHandle = windowHandles.at(i);
+				double dt = TimeUtility::GetDurationSeconds(previousNow, now);
+				if (AngelScriptRunner::ExecuteRender(windowHandle, dt) == false)
+				{
+					DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteRender failed.");
+					return false;
+				}
+				if (XboxOGDeviceHelper::WindowRender(windowHandles.at(i), exitRequested) == false)
+				{
+					DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "WindowRender failed.");
+					return false;
+				}
+			}
+			ProcessController();
+			ProcessKeyboard();
+			ProcessMouse();
+			previousNow = now;
+		}
+	}
+
 	return true;
 }
 

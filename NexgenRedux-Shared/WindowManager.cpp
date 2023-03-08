@@ -34,15 +34,6 @@ void WindowManager::Close(void)
 #endif
 }
 
-void WindowManager::PollEvents(void)
-{
-#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	OpenGLDeviceHelper::PollEvents();
-#elif defined NEXGEN_OG 
-	XboxOGDeviceHelper::PollEvents();
-#endif
-}
-
 bool WindowManager::GetAvailableMonitorCount(uint32_t& monitorCount)
 {
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
@@ -150,69 +141,9 @@ bool WindowManager::WindowClose(uint32_t windowHandle)
 bool WindowManager::RenderLoop(void)
 {
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-
-	if (GetWindowCount() > 0) {
-		bool exitRequested = false;
-		while (exitRequested == false)
-		{
-			uint64_t now = TimeUtility::GetMillisecondsNow();
-			uint64_t previousNow = now;
-
-			std::vector<uint32_t> windowHandles = GetWindowHandles();
-
-			for (uint32_t i = 0; i < windowHandles.size(); i++)
-			{
-				uint32_t windowHandle = windowHandles.at(i);
-				double dt = TimeUtility::GetDurationSeconds(previousNow, now);
-				if (AngelScriptRunner::ExecuteRender(windowHandle, dt) == false)
-				{
-					DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteRender failed.");
-				}
-				if (OpenGLDeviceHelper::WindowRender(windowHandle, exitRequested) == false)
-				{
-					DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "WindowRender failed.");
-				}
-			}
-			PollEvents();
-			previousNow = now;
-		}
-	}
-
-    glfwTerminate();
-    return true;
-
+	return OpenGLDeviceHelper::RenderLoop();
 #elif defined NEXGEN_OG
-
-	if (GetWindowCount() > 0) 
-	{
-		bool exitRequested = false;
-		while (exitRequested == false)
-		{
-			uint64_t now = TimeUtility::GetMillisecondsNow();
-			uint64_t previousNow = now;
-
-			std::vector<uint32_t> windowHandles = GetWindowHandles();
-
-			for (uint32_t i = 0; i < windowHandles.size(); i++)
-			{
-				uint32_t windowHandle = windowHandles.at(i);
-				double dt = TimeUtility::GetDurationSeconds(previousNow, now);
-				if (AngelScriptRunner::ExecuteRender(windowHandle, dt) == false)
-				{
-					DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteRender failed.");
-				}
-				if (XboxOGDeviceHelper::WindowRender(windowHandles.at(i), exitRequested) == false)
-				{
-					DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "WindowRender failed.");
-				}
-			}
-			PollEvents();
-			previousNow = now;
-		}
-	}
-
-	return true;
-	
+	return XboxOGDeviceHelper::RenderLoop();
 #elif defined NEXGEN_360
 	return true;
 #else

@@ -6,6 +6,7 @@
 #include "Icon.h"
 
 #include <Gensys/DebugUtility.h>
+#include <Gensys/TimeUtility.h>
 #include <Gensys/Int.h>
 #include <GLAD/glad.h>
 #include <GLFW/glfw3.h>
@@ -27,11 +28,6 @@ void OpenGLDeviceHelper::Close(void)
 	{
 		WindowManager::WindowClose(windowHandles.at(i));
 	}
-}
-
-void OpenGLDeviceHelper::PollEvents(void)
-{
-	glfwPollEvents();
 }
 
 bool OpenGLDeviceHelper::GetAvailableMonitorCount(uint32_t& monitorCount)
@@ -289,6 +285,41 @@ bool OpenGLDeviceHelper::WindowClose(uint32_t windowHandle)
 	glfwDestroyWindow((GLFWwindow*)windowContainer->window);
 	WindowManager::DeleteWindowContainer(windowHandle);
 	return true;
+}
+
+bool OpenGLDeviceHelper::RenderLoop(void)
+{
+	if (WindowManager::GetWindowCount() > 0) {
+		bool exitRequested = false;
+		while (exitRequested == false)
+		{
+			uint64_t now = TimeUtility::GetMillisecondsNow();
+			uint64_t previousNow = now;
+
+			std::vector<uint32_t> windowHandles = WindowManager::GetWindowHandles();
+
+			for (uint32_t i = 0; i < windowHandles.size(); i++)
+			{
+				uint32_t windowHandle = windowHandles.at(i);
+				double dt = TimeUtility::GetDurationSeconds(previousNow, now);
+				if (AngelScriptRunner::ExecuteRender(windowHandle, dt) == false)
+				{
+					DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteRender failed.");
+					return false;
+				}
+				if (OpenGLDeviceHelper::WindowRender(windowHandle, exitRequested) == false)
+				{
+					DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "WindowRender failed.");
+					return false;
+				}
+			}
+			glfwPollEvents();
+			previousNow = now;
+		}
+	}
+
+    glfwTerminate();
+    return true;
 }
 
 bool OpenGLDeviceHelper::GetKeyPressed(uint32_t windowHandle, uint32_t key, uint32_t& pressed)

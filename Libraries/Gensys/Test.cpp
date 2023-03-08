@@ -326,19 +326,23 @@ static bool DriveManager_GetMountedDrivesAndDetails(void)
 		{
 			return false;
 		}
+#ifndef NEXGEN_UWP
 		if (totalSize == 0)
 		{
 			return false;
 		}
+#endif
 		uint64_t totalFree = 0;
 		if (DriveManager::GetTotalFreeNumberOfBytes(drives.at(i), totalFree) == false)
 		{
 			return false;
 		}
+#ifndef NEXGEN_UWP
 		if (totalFree == 0)
 		{
 			return false;
 		}
+#endif
 	}
 	return true;
 }

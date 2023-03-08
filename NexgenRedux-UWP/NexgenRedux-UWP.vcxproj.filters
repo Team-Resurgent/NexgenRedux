@@ -8,9 +8,65 @@
     <Filter Include="Gensys">
       <UniqueIdentifier>{f4a7ab68-9f8c-4142-b942-b543798267f3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="AngelScipt">
+      <UniqueIdentifier>{e6df551a-9f31-486a-9065-6d45aec2d2a7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NexgenRedux-Shared">
+      <UniqueIdentifier>{4db17524-d385-4119-9c2a-4c284c507af0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NexgenRedux-Shared\Media">
+      <UniqueIdentifier>{1138bdc8-b25d-4030-aad2-30bb44c7fbb7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NexgenRedux-Shared\Media\Default">
+      <UniqueIdentifier>{f7b337f9-9d1a-43c6-8ef8-d8da95468524}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AngelScipt\addons">
+      <UniqueIdentifier>{75f28c2e-2bd6-47f6-b104-8271c160056b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AngelScipt\addons\autowrapper">
+      <UniqueIdentifier>{2326aed7-0a05-49f3-a077-0690a6241a18}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AngelScipt\addons\contextmgr">
+      <UniqueIdentifier>{d161c180-5c26-4af0-96ca-825f71084f3b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AngelScipt\addons\debugger">
+      <UniqueIdentifier>{9300f573-da92-43c1-b21e-c53390ab04b5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AngelScipt\addons\scriptany">
+      <UniqueIdentifier>{084a9456-e0a1-4921-95bb-50e202a05fd9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AngelScipt\addons\scriptarray">
+      <UniqueIdentifier>{982db954-52d5-4aa6-94d3-efd2cea28b51}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AngelScipt\addons\scriptbuilder">
+      <UniqueIdentifier>{b6a667cd-2795-441e-af87-2f3c28ff9a25}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AngelScipt\addons\scriptdictionary">
+      <UniqueIdentifier>{d47f9459-960e-4a64-9e22-9c4faef07930}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AngelScipt\addons\scriptgrid">
+      <UniqueIdentifier>{6d37d5fa-0198-40f9-a5b3-62c056e2cf1b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AngelScipt\addons\scripthandle">
+      <UniqueIdentifier>{7579517d-d307-4425-91fa-b5a1f02f4f3e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AngelScipt\addons\scripthelper">
+      <UniqueIdentifier>{e984c9c8-e631-47ce-b7dc-8eefcef9a4d9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AngelScipt\addons\scriptmath">
+      <UniqueIdentifier>{6785e1a6-0d7a-4c06-8a9a-8980df4e9ab1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AngelScipt\addons\scriptstdstring">
+      <UniqueIdentifier>{6a8016e1-e5a9-48f5-83be-38d54fce259f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AngelScipt\addons\serializer">
+      <UniqueIdentifier>{3bcd078d-f381-4377-85f0-8071e259ad33}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AngelScipt\addons\weakref">
+      <UniqueIdentifier>{553ccb10-b0ca-4baa-bc9e-92d19d4317a2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="App.xaml.cpp" />
     <ClCompile Include="..\Libraries\Gensys\Crc32.cpp">
       <Filter>Gensys</Filter>
     </ClCompile>
@@ -53,9 +109,201 @@
     <ClCompile Include="..\Libraries\Gensys\VirtualFileSystem.cpp">
       <Filter>Gensys</Filter>
     </ClCompile>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\as_atomic.cpp">
+      <Filter>AngelScipt</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\as_builder.cpp">
+      <Filter>AngelScipt</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\as_bytecode.cpp">
+      <Filter>AngelScipt</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\as_callfunc.cpp">
+      <Filter>AngelScipt</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\as_callfunc_arm.cpp">
+      <Filter>AngelScipt</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\as_callfunc_arm64.cpp">
+      <Filter>AngelScipt</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\as_callfunc_mips.cpp">
+      <Filter>AngelScipt</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\as_callfunc_ppc.cpp">
+      <Filter>AngelScipt</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\as_callfunc_ppc_64.cpp">
+      <Filter>AngelScipt</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\as_callfunc_sh4.cpp">
+      <Filter>AngelScipt</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\as_callfunc_x64_gcc.cpp">
+      <Filter>AngelScipt</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\as_callfunc_x64_mingw.cpp">
+      <Filter>AngelScipt</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\as_callfunc_x64_msvc.cpp">
+      <Filter>AngelScipt</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\as_callfunc_x86.cpp">
+      <Filter>AngelScipt</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\as_callfunc_xenon.cpp">
+      <Filter>AngelScipt</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\as_compiler.cpp">
+      <Filter>AngelScipt</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\as_configgroup.cpp">
+      <Filter>AngelScipt</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\as_context.cpp">
+      <Filter>AngelScipt</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\as_datatype.cpp">
+      <Filter>AngelScipt</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\as_gc.cpp">
+      <Filter>AngelScipt</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\as_generic.cpp">
+      <Filter>AngelScipt</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\as_globalproperty.cpp">
+      <Filter>AngelScipt</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\as_memory.cpp">
+      <Filter>AngelScipt</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\as_module.cpp">
+      <Filter>AngelScipt</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\as_objecttype.cpp">
+      <Filter>AngelScipt</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\as_outputbuffer.cpp">
+      <Filter>AngelScipt</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\as_parser.cpp">
+      <Filter>AngelScipt</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\as_restore.cpp">
+      <Filter>AngelScipt</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\as_scriptcode.cpp">
+      <Filter>AngelScipt</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\as_scriptengine.cpp">
+      <Filter>AngelScipt</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\as_scriptfunction.cpp">
+      <Filter>AngelScipt</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\as_scriptnode.cpp">
+      <Filter>AngelScipt</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\as_scriptobject.cpp">
+      <Filter>AngelScipt</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\as_string.cpp">
+      <Filter>AngelScipt</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\as_string_util.cpp">
+      <Filter>AngelScipt</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\as_thread.cpp">
+      <Filter>AngelScipt</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\as_tokenizer.cpp">
+      <Filter>AngelScipt</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\as_typeinfo.cpp">
+      <Filter>AngelScipt</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\as_variablescope.cpp">
+      <Filter>AngelScipt</Filter>
+    </ClCompile>
+    <ClCompile Include="..\NexgenRedux-Shared\AngelScriptMethods.cpp">
+      <Filter>NexgenRedux-Shared</Filter>
+    </ClCompile>
+    <ClCompile Include="..\NexgenRedux-Shared\AngelScriptRunner.cpp">
+      <Filter>NexgenRedux-Shared</Filter>
+    </ClCompile>
+    <ClCompile Include="..\NexgenRedux-Shared\BootLoader.cpp">
+      <Filter>NexgenRedux-Shared</Filter>
+    </ClCompile>
+    <ClCompile Include="..\NexgenRedux-Shared\ConfigLoader.cpp">
+      <Filter>NexgenRedux-Shared</Filter>
+    </ClCompile>
+    <ClCompile Include="..\NexgenRedux-Shared\Icon.cpp">
+      <Filter>NexgenRedux-Shared</Filter>
+    </ClCompile>
+    <ClCompile Include="..\NexgenRedux-Shared\JoystickManager.cpp">
+      <Filter>NexgenRedux-Shared</Filter>
+    </ClCompile>
+    <ClCompile Include="..\NexgenRedux-Shared\WindowManager.cpp">
+      <Filter>NexgenRedux-Shared</Filter>
+    </ClCompile>
+    <ClCompile Include="..\NexgenRedux-Shared\XboxOGDeviceHelper.cpp">
+      <Filter>NexgenRedux-Shared</Filter>
+    </ClCompile>
+    <ClCompile Include="..\NexgenRedux-Shared\OpenGLDeviceHelper.cpp">
+      <Filter>NexgenRedux-Shared</Filter>
+    </ClCompile>
+    <ClCompile Include="..\NexgenRedux-Shared\MathUtility.cpp">
+      <Filter>NexgenRedux-Shared</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\addons\contextmgr\contextmgr.cpp">
+      <Filter>AngelScipt\addons\contextmgr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\addons\debugger\debugger.cpp">
+      <Filter>AngelScipt\addons\debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\addons\weakref\weakref.cpp">
+      <Filter>AngelScipt\addons\weakref</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\addons\serializer\serializer.cpp">
+      <Filter>AngelScipt\addons\serializer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\addons\scriptstdstring\scriptstdstring.cpp">
+      <Filter>AngelScipt\addons\scriptstdstring</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\addons\scriptstdstring\scriptstdstring_utils.cpp">
+      <Filter>AngelScipt\addons\scriptstdstring</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\addons\scriptmath\scriptmath.cpp">
+      <Filter>AngelScipt\addons\scriptmath</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\addons\scriptmath\scriptmathcomplex.cpp">
+      <Filter>AngelScipt\addons\scriptmath</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\addons\scripthelper\scripthelper.cpp">
+      <Filter>AngelScipt\addons\scripthelper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\addons\scripthandle\scripthandle.cpp">
+      <Filter>AngelScipt\addons\scripthandle</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\addons\scriptgrid\scriptgrid.cpp">
+      <Filter>AngelScipt\addons\scriptgrid</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\addons\scriptdictionary\scriptdictionary.cpp">
+      <Filter>AngelScipt\addons\scriptdictionary</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\addons\scriptbuilder\scriptbuilder.cpp">
+      <Filter>AngelScipt\addons\scriptbuilder</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\addons\scriptarray\scriptarray.cpp">
+      <Filter>AngelScipt\addons\scriptarray</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\AngelScript\addons\scriptany\scriptany.cpp">
+      <Filter>AngelScipt\addons\scriptany</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="App.xaml.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="..\Libraries\Gensys\Crc32.h">
       <Filter>Gensys</Filter>
@@ -108,14 +356,234 @@
     <ClInclude Include="..\Libraries\Gensys\XboxInternals.h">
       <Filter>Gensys</Filter>
     </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\angelscript.h">
+      <Filter>AngelScipt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\as_array.h">
+      <Filter>AngelScipt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\as_atomic.h">
+      <Filter>AngelScipt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\as_builder.h">
+      <Filter>AngelScipt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\as_bytecode.h">
+      <Filter>AngelScipt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\as_callfunc.h">
+      <Filter>AngelScipt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\as_compiler.h">
+      <Filter>AngelScipt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\as_config.h">
+      <Filter>AngelScipt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\as_configgroup.h">
+      <Filter>AngelScipt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\as_context.h">
+      <Filter>AngelScipt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\as_criticalsection.h">
+      <Filter>AngelScipt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\as_datatype.h">
+      <Filter>AngelScipt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\as_debug.h">
+      <Filter>AngelScipt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\as_gc.h">
+      <Filter>AngelScipt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\as_generic.h">
+      <Filter>AngelScipt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\as_map.h">
+      <Filter>AngelScipt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\as_memory.h">
+      <Filter>AngelScipt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\as_module.h">
+      <Filter>AngelScipt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\as_namespace.h">
+      <Filter>AngelScipt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\as_objecttype.h">
+      <Filter>AngelScipt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\as_outputbuffer.h">
+      <Filter>AngelScipt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\as_parser.h">
+      <Filter>AngelScipt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\as_property.h">
+      <Filter>AngelScipt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\as_restore.h">
+      <Filter>AngelScipt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\as_scriptcode.h">
+      <Filter>AngelScipt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\as_scriptengine.h">
+      <Filter>AngelScipt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\as_scriptfunction.h">
+      <Filter>AngelScipt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\as_scriptnode.h">
+      <Filter>AngelScipt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\as_scriptobject.h">
+      <Filter>AngelScipt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\as_string.h">
+      <Filter>AngelScipt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\as_string_util.h">
+      <Filter>AngelScipt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\as_symboltable.h">
+      <Filter>AngelScipt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\as_texts.h">
+      <Filter>AngelScipt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\as_thread.h">
+      <Filter>AngelScipt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\as_tokendef.h">
+      <Filter>AngelScipt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\as_tokenizer.h">
+      <Filter>AngelScipt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\as_typeinfo.h">
+      <Filter>AngelScipt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\as_variablescope.h">
+      <Filter>AngelScipt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\NexgenRedux-Shared\AngelScriptMethods.h">
+      <Filter>NexgenRedux-Shared</Filter>
+    </ClInclude>
+    <ClInclude Include="..\NexgenRedux-Shared\AngelScriptRunner.h">
+      <Filter>NexgenRedux-Shared</Filter>
+    </ClInclude>
+    <ClInclude Include="..\NexgenRedux-Shared\BootLoader.h">
+      <Filter>NexgenRedux-Shared</Filter>
+    </ClInclude>
+    <ClInclude Include="..\NexgenRedux-Shared\ConfigLoader.h">
+      <Filter>NexgenRedux-Shared</Filter>
+    </ClInclude>
+    <ClInclude Include="..\NexgenRedux-Shared\Constants.h">
+      <Filter>NexgenRedux-Shared</Filter>
+    </ClInclude>
+    <ClInclude Include="..\NexgenRedux-Shared\Icon.h">
+      <Filter>NexgenRedux-Shared</Filter>
+    </ClInclude>
+    <ClInclude Include="..\NexgenRedux-Shared\JoystickManager.h">
+      <Filter>NexgenRedux-Shared</Filter>
+    </ClInclude>
+    <ClInclude Include="..\NexgenRedux-Shared\XboxOGDeviceHelper.h">
+      <Filter>NexgenRedux-Shared</Filter>
+    </ClInclude>
+    <ClInclude Include="..\NexgenRedux-Shared\WindowManager.h">
+      <Filter>NexgenRedux-Shared</Filter>
+    </ClInclude>
+    <ClInclude Include="..\NexgenRedux-Shared\OpenGLDeviceHelper.h">
+      <Filter>NexgenRedux-Shared</Filter>
+    </ClInclude>
+    <ClInclude Include="..\NexgenRedux-Shared\MathUtility.h">
+      <Filter>NexgenRedux-Shared</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\addons\autowrapper\aswrappedcall.h">
+      <Filter>AngelScipt\addons\autowrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\addons\contextmgr\contextmgr.h">
+      <Filter>AngelScipt\addons\contextmgr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\addons\debugger\debugger.h">
+      <Filter>AngelScipt\addons\debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\addons\weakref\weakref.h">
+      <Filter>AngelScipt\addons\weakref</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\addons\serializer\serializer.h">
+      <Filter>AngelScipt\addons\serializer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\addons\scriptstdstring\scriptstdstring.h">
+      <Filter>AngelScipt\addons\scriptstdstring</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\addons\scriptmath\scriptmath.h">
+      <Filter>AngelScipt\addons\scriptmath</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\addons\scriptmath\scriptmathcomplex.h">
+      <Filter>AngelScipt\addons\scriptmath</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\addons\scripthelper\scripthelper.h">
+      <Filter>AngelScipt\addons\scripthelper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\addons\scripthandle\scripthandle.h">
+      <Filter>AngelScipt\addons\scripthandle</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\addons\scriptgrid\scriptgrid.h">
+      <Filter>AngelScipt\addons\scriptgrid</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\addons\scriptdictionary\scriptdictionary.h">
+      <Filter>AngelScipt\addons\scriptdictionary</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\addons\scriptbuilder\scriptbuilder.h">
+      <Filter>AngelScipt\addons\scriptbuilder</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\addons\scriptarray\scriptarray.h">
+      <Filter>AngelScipt\addons\scriptarray</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\AngelScript\addons\scriptany\scriptany.h">
+      <Filter>AngelScipt\addons\scriptany</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="..\External\Angle\Lib\UWP\$(Platform)\libEGL.dll" />
-    <None Include="..\External\Angle\Lib\UWP\$(Platform)\libGLESv2.dll" />
+    <None Include="NexgenRedux-UWP.pfx" />
+    <None Include="$(SolutionDir)\Libraries\Angle\Lib\UWP\libEGL.dll" />
+    <None Include="$(SolutionDir)\Libraries\Angle\Lib\UWP\libGLESv2.dll" />
+    <None Include="..\Libraries\AngelScript\as_callfunc_arm_gcc.S">
+      <Filter>AngelScipt</Filter>
+    </None>
+    <None Include="..\Libraries\AngelScript\as_callfunc_arm_msvc.asm">
+      <Filter>AngelScipt</Filter>
+    </None>
+    <None Include="..\Libraries\AngelScript\as_callfunc_arm_vita.S">
+      <Filter>AngelScipt</Filter>
+    </None>
+    <None Include="..\Libraries\AngelScript\as_callfunc_arm_xcode.S">
+      <Filter>AngelScipt</Filter>
+    </None>
+    <None Include="..\Libraries\AngelScript\as_callfunc_arm64_gcc.S">
+      <Filter>AngelScipt</Filter>
+    </None>
+    <None Include="..\Libraries\AngelScript\as_callfunc_arm64_msvc.asm">
+      <Filter>AngelScipt</Filter>
+    </None>
+    <None Include="..\Libraries\AngelScript\as_callfunc_x64_msvc_asm.asm">
+      <Filter>AngelScipt</Filter>
+    </None>
+    <None Include="..\NexgenRedux-Shared\Media\config.ini">
+      <Filter>NexgenRedux-Shared\Media</Filter>
+    </None>
+    <None Include="..\NexgenRedux-Shared\Media\Default\main.as">
+      <Filter>NexgenRedux-Shared\Media\Default</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\StoreLogo.scale-400.png">
@@ -298,11 +766,5 @@
     <Image Include="Assets\Wide310x150Logo.scale-200.png">
       <Filter>Assets</Filter>
     </Image>
-  </ItemGroup>
-  <ItemGroup>
-    <Page Include="AnglePage.xaml" />
-  </ItemGroup>
-  <ItemGroup>
-    <ApplicationDefinition Include="App.xaml" />
   </ItemGroup>
 </Project>

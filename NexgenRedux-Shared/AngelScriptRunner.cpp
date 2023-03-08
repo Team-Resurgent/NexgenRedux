@@ -595,7 +595,7 @@ bool AngelScriptRunner::ExecuteWindowDropCallback(uint32_t windowHandle, std::ve
 	context->SetArgDWord(0, windowHandle);
 
 	asITypeInfo *arrayType = m_engine->GetTypeInfoByDecl("array<string>");
-	CScriptArray *array = CScriptArray::Create(arrayType, paths.size());
+	CScriptArray *array = CScriptArray::Create(arrayType, (uint32_t)paths.size());
 	for (uint32_t i = 0; i < paths.size(); i++)
 	{
 		((std::string*)(array->At(i)))->assign(paths.at(i));
@@ -727,9 +727,9 @@ bool AngelScriptRunner::Execute(asIScriptContext *context)
 	return false;
 }
 
-void AngelScriptRunner::SetWindowIconifyCallback(asIScriptGeneric* generic)
+void AngelScriptRunner::SetWindowIconifyCallback(asIScriptGeneric* gen)
 {
-	asIScriptFunction* callbackFunction = (asIScriptFunction*)generic->GetArgObject(0);
+	asIScriptFunction* callbackFunction = (asIScriptFunction*)gen->GetArgObject(0);
 	if (m_windowIconifyCallback != NULL) 
 	{
 		m_windowIconifyCallback->Release();
@@ -737,9 +737,9 @@ void AngelScriptRunner::SetWindowIconifyCallback(asIScriptGeneric* generic)
    	m_windowIconifyCallback = callbackFunction;
 }
 
-void AngelScriptRunner::SetWindowMaximizeCallback(asIScriptGeneric* generic)
+void AngelScriptRunner::SetWindowMaximizeCallback(asIScriptGeneric* gen)
 {
-	asIScriptFunction* callbackFunction = (asIScriptFunction*)generic->GetArgObject(0);
+	asIScriptFunction* callbackFunction = (asIScriptFunction*)gen->GetArgObject(0);
 	if (m_windowMaximizeCallback != NULL) 
 	{
 		m_windowMaximizeCallback->Release();
@@ -747,9 +747,9 @@ void AngelScriptRunner::SetWindowMaximizeCallback(asIScriptGeneric* generic)
    	m_windowMaximizeCallback = callbackFunction;
 }
 
-void AngelScriptRunner::SetWindowSizeCallback(asIScriptGeneric* generic)
+void AngelScriptRunner::SetWindowSizeCallback(asIScriptGeneric* gen)
 {
-	asIScriptFunction* callbackFunction = (asIScriptFunction*)generic->GetArgObject(0);
+	asIScriptFunction* callbackFunction = (asIScriptFunction*)gen->GetArgObject(0);
 	if (m_windowSizeCallback != NULL) 
 	{
 		m_windowSizeCallback->Release();
@@ -757,9 +757,9 @@ void AngelScriptRunner::SetWindowSizeCallback(asIScriptGeneric* generic)
    	m_windowSizeCallback = callbackFunction;
 }
 
-void AngelScriptRunner::SetWindowFocusCallback(asIScriptGeneric* generic)
+void AngelScriptRunner::SetWindowFocusCallback(asIScriptGeneric* gen)
 {
-	asIScriptFunction* callbackFunction = (asIScriptFunction*)generic->GetArgObject(0);
+	asIScriptFunction* callbackFunction = (asIScriptFunction*)gen->GetArgObject(0);
 	if (m_windowFocusCallback != NULL) 
 	{
 		m_windowFocusCallback->Release();
@@ -767,9 +767,9 @@ void AngelScriptRunner::SetWindowFocusCallback(asIScriptGeneric* generic)
    	m_windowFocusCallback = callbackFunction;
 }
 
-void AngelScriptRunner::SetWindowKeyboardKeyCallback(asIScriptGeneric* generic)
+void AngelScriptRunner::SetWindowKeyboardKeyCallback(asIScriptGeneric* gen)
 {
-	asIScriptFunction* callbackFunction = (asIScriptFunction*)generic->GetArgObject(0);
+	asIScriptFunction* callbackFunction = (asIScriptFunction*)gen->GetArgObject(0);
 	if (m_windowKeyboardKeyCallback != NULL) 
 	{
 		m_windowKeyboardKeyCallback->Release();
@@ -777,9 +777,9 @@ void AngelScriptRunner::SetWindowKeyboardKeyCallback(asIScriptGeneric* generic)
    	m_windowKeyboardKeyCallback = callbackFunction;
 }
 
-void AngelScriptRunner::SetWindowKeyboardCharacterCallback(asIScriptGeneric* generic)
+void AngelScriptRunner::SetWindowKeyboardCharacterCallback(asIScriptGeneric* gen)
 {
-	asIScriptFunction* callbackFunction = (asIScriptFunction*)generic->GetArgObject(0);
+	asIScriptFunction* callbackFunction = (asIScriptFunction*)gen->GetArgObject(0);
 	if (m_windowKeyboardCharacterCallback != NULL) 
 	{
 		m_windowKeyboardCharacterCallback->Release();
@@ -787,9 +787,9 @@ void AngelScriptRunner::SetWindowKeyboardCharacterCallback(asIScriptGeneric* gen
    	m_windowKeyboardCharacterCallback = callbackFunction;
 }
 
-void AngelScriptRunner::SetWindowMouseCursorPositionCallback(asIScriptGeneric* generic)
+void AngelScriptRunner::SetWindowMouseCursorPositionCallback(asIScriptGeneric* gen)
 {
-	asIScriptFunction* callbackFunction = (asIScriptFunction*)generic->GetArgObject(0);
+	asIScriptFunction* callbackFunction = (asIScriptFunction*)gen->GetArgObject(0);
 	if (m_windowMouseCursorPositionCallback != NULL) 
 	{
 		m_windowMouseCursorPositionCallback->Release();
@@ -797,9 +797,9 @@ void AngelScriptRunner::SetWindowMouseCursorPositionCallback(asIScriptGeneric* g
    	m_windowMouseCursorPositionCallback = callbackFunction;
 }
 
-void AngelScriptRunner::SetWindowMouseCursorEnterCallback(asIScriptGeneric* generic)
+void AngelScriptRunner::SetWindowMouseCursorEnterCallback(asIScriptGeneric* gen)
 {
-	asIScriptFunction* callbackFunction = (asIScriptFunction*)generic->GetArgObject(0);
+	asIScriptFunction* callbackFunction = (asIScriptFunction*)gen->GetArgObject(0);
 	if (m_windowMouseCursorEnterCallback != NULL) 
 	{
 		m_windowMouseCursorEnterCallback->Release();
@@ -807,9 +807,9 @@ void AngelScriptRunner::SetWindowMouseCursorEnterCallback(asIScriptGeneric* gene
    	m_windowMouseCursorEnterCallback = callbackFunction;
 }
 
-void AngelScriptRunner::SetWindowMouseButtonCallback(asIScriptGeneric* generic)
+void AngelScriptRunner::SetWindowMouseButtonCallback(asIScriptGeneric* gen)
 {
-	asIScriptFunction* callbackFunction = (asIScriptFunction*)generic->GetArgObject(0);
+	asIScriptFunction* callbackFunction = (asIScriptFunction*)gen->GetArgObject(0);
 	if (m_windowMouseButtonCallback != NULL) 
 	{
 		m_windowMouseButtonCallback->Release();
@@ -817,9 +817,9 @@ void AngelScriptRunner::SetWindowMouseButtonCallback(asIScriptGeneric* generic)
    	m_windowMouseButtonCallback = callbackFunction;
 }
 
-void AngelScriptRunner::SetWindowMouseScrollCallback(asIScriptGeneric* generic)
+void AngelScriptRunner::SetWindowMouseScrollCallback(asIScriptGeneric* gen)
 {
-	asIScriptFunction* callbackFunction = (asIScriptFunction*)generic->GetArgObject(0);
+	asIScriptFunction* callbackFunction = (asIScriptFunction*)gen->GetArgObject(0);
 	if (m_windowMouseScrollCallback != NULL) 
 	{
 		m_windowMouseScrollCallback->Release();
@@ -827,9 +827,9 @@ void AngelScriptRunner::SetWindowMouseScrollCallback(asIScriptGeneric* generic)
    	m_windowMouseScrollCallback = callbackFunction;
 }
 
-void AngelScriptRunner::SetWindowDropCallback(asIScriptGeneric* generic)
+void AngelScriptRunner::SetWindowDropCallback(asIScriptGeneric* gen)
 {
-	asIScriptFunction* callbackFunction = (asIScriptFunction*)generic->GetArgObject(0);
+	asIScriptFunction* callbackFunction = (asIScriptFunction*)gen->GetArgObject(0);
 	if (m_windowDropCallback != NULL) 
 	{
 		m_windowDropCallback->Release();
@@ -837,9 +837,9 @@ void AngelScriptRunner::SetWindowDropCallback(asIScriptGeneric* generic)
    	m_windowDropCallback = callbackFunction;
 }
 
-void AngelScriptRunner::SetJoystickConnectCallback(asIScriptGeneric* generic)
+void AngelScriptRunner::SetJoystickConnectCallback(asIScriptGeneric* gen)
 {
-	asIScriptFunction* callbackFunction = (asIScriptFunction*)generic->GetArgObject(0);
+	asIScriptFunction* callbackFunction = (asIScriptFunction*)gen->GetArgObject(0);
 	if (m_joystickConnectCallback != NULL) 
 	{
 		m_joystickConnectCallback->Release();

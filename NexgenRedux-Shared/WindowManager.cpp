@@ -302,7 +302,7 @@ bool WindowManager::SetClipboardString(std::string value)
 
 uint32_t WindowManager::GetWindowCount(void)
 {
-	return m_windowContainerMap.size();
+	return (uint32_t)m_windowContainerMap.size();
 }
 
 bool WindowManager::GetWindowHandle(void* window, uint32_t& windowHandle)

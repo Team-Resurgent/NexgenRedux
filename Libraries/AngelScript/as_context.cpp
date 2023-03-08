@@ -6095,7 +6095,7 @@ asDWORD asCContext::SerializeStackPointer(asDWORD *v) const
 	// Find the stack block that is used, and the offset into that block
 	for(asUINT i = 0; i < m_stackBlocks.GetLength(); ++i)
 	{
-		asDWORD delta = v - m_stackBlocks[i];
+		asDWORD delta = (asDWORD)(v - m_stackBlocks[i]);
 
 		if(delta < min)
 		{

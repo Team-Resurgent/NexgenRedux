@@ -39,18 +39,18 @@ namespace NexgenRedux
 		static void Close(void);
 	private:
 		static bool Execute(asIScriptContext *context);	
-		static void SetWindowIconifyCallback(asIScriptGeneric* generic);
-		static void SetWindowMaximizeCallback(asIScriptGeneric* generic);
-		static void SetWindowSizeCallback(asIScriptGeneric* generic);
-		static void SetWindowFocusCallback(asIScriptGeneric* generic);
-		static void SetWindowKeyboardKeyCallback(asIScriptGeneric* generic);
-		static void SetWindowKeyboardCharacterCallback(asIScriptGeneric* generic);
-		static void SetWindowMouseCursorPositionCallback(asIScriptGeneric* generic);
-		static void SetWindowMouseCursorEnterCallback(asIScriptGeneric* generic);
-		static void SetWindowMouseButtonCallback(asIScriptGeneric* generic);
-		static void SetWindowMouseScrollCallback(asIScriptGeneric* generic);
-		static void SetWindowDropCallback(asIScriptGeneric* generic);
-		static void SetJoystickConnectCallback(asIScriptGeneric* generic);
+		static void SetWindowIconifyCallback(asIScriptGeneric* gen);
+		static void SetWindowMaximizeCallback(asIScriptGeneric* gen);
+		static void SetWindowSizeCallback(asIScriptGeneric* gen);
+		static void SetWindowFocusCallback(asIScriptGeneric* gen);
+		static void SetWindowKeyboardKeyCallback(asIScriptGeneric* gen);
+		static void SetWindowKeyboardCharacterCallback(asIScriptGeneric* gen);
+		static void SetWindowMouseCursorPositionCallback(asIScriptGeneric* gen);
+		static void SetWindowMouseCursorEnterCallback(asIScriptGeneric* gen);
+		static void SetWindowMouseButtonCallback(asIScriptGeneric* gen);
+		static void SetWindowMouseScrollCallback(asIScriptGeneric* gen);
+		static void SetWindowDropCallback(asIScriptGeneric* gen);
+		static void SetJoystickConnectCallback(asIScriptGeneric* gen);
 
 	};
 }

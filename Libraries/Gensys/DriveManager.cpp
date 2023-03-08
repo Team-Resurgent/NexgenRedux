@@ -7,6 +7,10 @@
 #include <mntent.h>
 #endif
 
+#if defined NEXGEN_WIN || defined NEXGEN_UWP
+#include <Windows.h>
+#endif
+
 using namespace Gensys;
 
 namespace
@@ -162,7 +166,7 @@ void DriveManager::InitOrRefresh()
 		m_drives.at(i).Mount();
     }
 
-#elif defined NEXGEN_WIN
+#elif defined NEXGEN_WIN || defined NEXGEN_UWP
 
 	m_drives.clear();
 

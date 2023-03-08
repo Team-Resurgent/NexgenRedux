@@ -9,40 +9,40 @@ namespace NexgenRedux
 	class AngelScriptMethods
 	{
 	public:
-		static void DebugPrint(asIScriptGeneric* generic);
-		static void DebugPrintIf(asIScriptGeneric* generic);
+		static void DebugPrint(asIScriptGeneric* gen);
+		static void DebugPrintIf(asIScriptGeneric* gen);
 
-		static void GetAvailableMonitorCount(asIScriptGeneric* generic);
-		static void GetMonitorVideoMode(asIScriptGeneric* generic);
-		static void GetMonitorVideoModes(asIScriptGeneric* generic);
-		static void WindowCreateWithVideoMode(asIScriptGeneric* generic);
-		static void WindowCreateWithSize(asIScriptGeneric* generic);
-		static void GetWindowSize(asIScriptGeneric* generic);
-		static void SetCursorMode(asIScriptGeneric* generic);
-		static void WindowClose(asIScriptGeneric* generic);
-		static void GetKeyPressed(asIScriptGeneric* generic);
-		static void GetMouseButtonPressed(asIScriptGeneric* generic);
-		static void GetMouseCursorPosition(asIScriptGeneric* generic);
-		static void SetMouseCursorPosition(asIScriptGeneric* generic);
-		static void GetClipboardString(asIScriptGeneric* generic);
-		static void SetClipboardString(asIScriptGeneric* generic);
+		static void GetAvailableMonitorCount(asIScriptGeneric* gen);
+		static void GetMonitorVideoMode(asIScriptGeneric* gen);
+		static void GetMonitorVideoModes(asIScriptGeneric* gen);
+		static void WindowCreateWithVideoMode(asIScriptGeneric* gen);
+		static void WindowCreateWithSize(asIScriptGeneric* gen);
+		static void GetWindowSize(asIScriptGeneric* gen);
+		static void SetCursorMode(asIScriptGeneric* gen);
+		static void WindowClose(asIScriptGeneric* gen);
+		static void GetKeyPressed(asIScriptGeneric* gen);
+		static void GetMouseButtonPressed(asIScriptGeneric* gen);
+		static void GetMouseCursorPosition(asIScriptGeneric* gen);
+		static void SetMouseCursorPosition(asIScriptGeneric* gen);
+		static void GetClipboardString(asIScriptGeneric* gen);
+		static void SetClipboardString(asIScriptGeneric* gen);
 
-		static void GetTimeNow(asIScriptGeneric* generic);
-		static void GetMillisecondsNow(asIScriptGeneric* generic);
-		static void GetDurationSeconds(asIScriptGeneric* generic);
-		static void CalculateFramesPerSecond(asIScriptGeneric* generic);
-		static void SleepMilliseconds(asIScriptGeneric* generic);
+		static void GetTimeNow(asIScriptGeneric* gen);
+		static void GetMillisecondsNow(asIScriptGeneric* gen);
+		static void GetDurationSeconds(asIScriptGeneric* gen);
+		static void CalculateFramesPerSecond(asIScriptGeneric* gen);
+		static void SleepMilliseconds(asIScriptGeneric* gen);
 
-		static void SeedRandom(asIScriptGeneric* generic);
-		static void SeedRandomWithValue(asIScriptGeneric* generic);
-		static void GetRandomDouble(asIScriptGeneric* generic);
-		static void GetRandomIntInRange(asIScriptGeneric* generic);
+		static void SeedRandom(asIScriptGeneric* gen);
+		static void SeedRandomWithValue(asIScriptGeneric* gen);
+		static void GetRandomDouble(asIScriptGeneric* gen);
+		static void GetRandomIntInRange(asIScriptGeneric* gen);
 
-		static void JoystickIsPresent(asIScriptGeneric* generic);
-		static void JoystickIsGamepad(asIScriptGeneric* generic);
-		static void GetJoystickButtonStates(asIScriptGeneric* generic);
-		static void GetJoystickAxisStates(asIScriptGeneric* generic);
-		static void GetJoystickHatCount(asIScriptGeneric* generic);
-		static void GetJoystickHatDirection(asIScriptGeneric* generic);
+		static void JoystickIsPresent(asIScriptGeneric* gen);
+		static void JoystickIsGamepad(asIScriptGeneric* gen);
+		static void GetJoystickButtonStates(asIScriptGeneric* gen);
+		static void GetJoystickAxisStates(asIScriptGeneric* gen);
+		static void GetJoystickHatCount(asIScriptGeneric* gen);
+		static void GetJoystickHatDirection(asIScriptGeneric* gen);
 	};
 }

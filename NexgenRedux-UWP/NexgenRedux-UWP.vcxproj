@@ -196,10 +196,10 @@
       </PrecompiledHeaderFile>
       <PrecompiledHeaderOutputFile>
       </PrecompiledHeaderOutputFile>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(IntermediateOutputPath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(IntermediateOutputPath);"$(SolutionDir)\NexgenRedux-Shared";"$(SolutionDir)\Libraries\AngelScript";"$(SolutionDir)\Libraries";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/bigobj /std:c++17 %(AdditionalOptions)</AdditionalOptions>
       <DisableSpecificWarnings>4453;28204</DisableSpecificWarnings>
-      <PreprocessorDefinitions>_CRT_NON_CONFORMING_SWPRINTFS;_CRT_SECURE_NO_WARNINGS;_DEBUG;DISABLE_XAML_GENERATED_MAIN;NEXGEN_UWP;AS_XBOX;AS_NO_THREADS;AS_USE_NAMESPACE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_NON_CONFORMING_SWPRINTFS;_CRT_SECURE_NO_WARNINGS;_DEBUG;DISABLE_XAML_GENERATED_MAIN;NEXGEN_UWP;AS_MAX_PORTABILITY;AS_NO_THREADS;AS_USE_NAMESPACE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <PreBuildEvent>
@@ -217,10 +217,10 @@
       </PrecompiledHeaderFile>
       <PrecompiledHeaderOutputFile>
       </PrecompiledHeaderOutputFile>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(IntermediateOutputPath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(IntermediateOutputPath);$(SolutionDir)\NexgenRedux-Shared;$(SolutionDir)\Libraries\AngelScript;$(SolutionDir)\Libraries;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/bigobj /std:c++17 %(AdditionalOptions)</AdditionalOptions>
       <DisableSpecificWarnings>4453;28204</DisableSpecificWarnings>
-      <PreprocessorDefinitions>_CRT_NON_CONFORMING_SWPRINTFS;_CRT_SECURE_NO_WARNINGS;NDEBUG;DISABLE_XAML_GENERATED_MAIN;NEXGEN_UWP;AS_XBOX;AS_NO_THREADS;AS_USE_NAMESPACE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_NON_CONFORMING_SWPRINTFS;_CRT_SECURE_NO_WARNINGS;NDEBUG;DISABLE_XAML_GENERATED_MAIN;NEXGEN_UWP;AS_MAX_PORTABILITY;AS_NO_THREADS;AS_USE_NAMESPACE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <PreBuildEvent>
@@ -291,6 +291,21 @@
     <Image Include="Assets\WideTile.scale-400.png" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Libraries\AngelScript\addons\autowrapper\aswrappedcall.h" />
+    <ClInclude Include="..\Libraries\AngelScript\addons\contextmgr\contextmgr.h" />
+    <ClInclude Include="..\Libraries\AngelScript\addons\debugger\debugger.h" />
+    <ClInclude Include="..\Libraries\AngelScript\addons\scriptany\scriptany.h" />
+    <ClInclude Include="..\Libraries\AngelScript\addons\scriptarray\scriptarray.h" />
+    <ClInclude Include="..\Libraries\AngelScript\addons\scriptbuilder\scriptbuilder.h" />
+    <ClInclude Include="..\Libraries\AngelScript\addons\scriptdictionary\scriptdictionary.h" />
+    <ClInclude Include="..\Libraries\AngelScript\addons\scriptgrid\scriptgrid.h" />
+    <ClInclude Include="..\Libraries\AngelScript\addons\scripthandle\scripthandle.h" />
+    <ClInclude Include="..\Libraries\AngelScript\addons\scripthelper\scripthelper.h" />
+    <ClInclude Include="..\Libraries\AngelScript\addons\scriptmath\scriptmath.h" />
+    <ClInclude Include="..\Libraries\AngelScript\addons\scriptmath\scriptmathcomplex.h" />
+    <ClInclude Include="..\Libraries\AngelScript\addons\scriptstdstring\scriptstdstring.h" />
+    <ClInclude Include="..\Libraries\AngelScript\addons\serializer\serializer.h" />
+    <ClInclude Include="..\Libraries\AngelScript\addons\weakref\weakref.h" />
     <ClInclude Include="..\Libraries\AngelScript\angelscript.h" />
     <ClInclude Include="..\Libraries\AngelScript\as_array.h" />
     <ClInclude Include="..\Libraries\AngelScript\as_atomic.h" />
@@ -360,6 +375,21 @@
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\Libraries\AngelScript\addons\contextmgr\contextmgr.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\addons\debugger\debugger.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\addons\scriptany\scriptany.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\addons\scriptarray\scriptarray.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\addons\scriptbuilder\scriptbuilder.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\addons\scriptdictionary\scriptdictionary.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\addons\scriptgrid\scriptgrid.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\addons\scripthandle\scripthandle.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\addons\scripthelper\scripthelper.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\addons\scriptmath\scriptmath.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\addons\scriptmath\scriptmathcomplex.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\addons\scriptstdstring\scriptstdstring.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\addons\scriptstdstring\scriptstdstring_utils.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\addons\serializer\serializer.cpp" />
+    <ClCompile Include="..\Libraries\AngelScript\addons\weakref\weakref.cpp" />
     <ClCompile Include="..\Libraries\AngelScript\as_atomic.cpp" />
     <ClCompile Include="..\Libraries\AngelScript\as_builder.cpp" />
     <ClCompile Include="..\Libraries\AngelScript\as_bytecode.cpp" />
@@ -460,7 +490,7 @@
     <Import Project="..\packages\directxtex_uwp.2021.1.10.2\build\native\directxtex_uwp.targets" Condition="Exists('..\packages\directxtex_uwp.2021.1.10.2\build\native\directxtex_uwp.targets')" />
   </ImportGroup>
   <ItemGroup>
-    <MediaResource Include="..\Nexgen-Shared\Media\**\*">
+    <MediaResource Include="..\NexgenRedux-Shared\Media\**\*">
       <Link>Assets\Media\%(RecursiveDir)%(FileName)%(Extension)</Link>
       <DeploymentContent>true</DeploymentContent>
     </MediaResource>

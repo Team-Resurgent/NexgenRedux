@@ -8,6 +8,10 @@
 #include <sys/statvfs.h>
 #endif
 
+#if defined NEXGEN_WIN || defined NEXGEN_UWP
+#include <Windows.h>
+#endif
+
 using namespace Gensys;
 
 Drive::Drive(std::wstring mountPoint, std::wstring systemPath)
@@ -88,7 +92,11 @@ bool Drive::Unmount()
 
 bool Drive::IsMounted()
 {	
+#if defined NEXGEN_OG || defined NEXGEN_360 || defined NEXGEN_MAC || defined NEXGEN_LINUX
 	return GetTotalNumberOfBytes() != 0;
+#elif defined NEXGEN_WIN || defined NEXGEN_UWP
+	return true;
+#endif
 }
 
 std::wstring Drive::GetMountPoint()
@@ -113,11 +121,11 @@ uint64_t Drive::GetTotalNumberOfBytes()
 	}
 	return (uint64_t)totalNumberOfBytes.QuadPart;
 
-#elif defined NEXGEN_WIN
+#elif defined NEXGEN_WIN || defined NEXGEN_UWP
 
 	std::wstring rootPath = m_systemPath;
-	ULARGE_INTEGER totalNumberOfBytes;
-	if (GetDiskFreeSpaceExA(StringUtility::ToString(rootPath).c_str(), NULL, &totalNumberOfBytes, NULL) == 0) 
+	ULARGE_INTEGER totalNumberOfBytes = { 0 };
+	if (GetDiskFreeSpaceExA(StringUtility::ToString(rootPath).c_str(), NULL, &totalNumberOfBytes, NULL) == 0)
 	{
 		return 0;
 	}
@@ -133,10 +141,6 @@ uint64_t Drive::GetTotalNumberOfBytes()
 
 	return (uint64_t)(statvfsBuffer.f_frsize * statvfsBuffer.f_bavail);
 
-#else
-
-	return 0;
-
 #endif
 }
 
@@ -145,7 +149,7 @@ uint64_t Drive::GetTotalFreeNumberOfBytes()
 #if defined NEXGEN_OG || defined NEXGEN_360
 
 	std::wstring rootPath = m_mountPoint + L":\\";
-	ULARGE_INTEGER totalNumberOfFreeBytes;
+	ULARGE_INTEGER totalNumberOfFreeBytes = { 0 };
 	if (GetDiskFreeSpaceExA(StringUtility::ToString(rootPath).c_str(), &totalNumberOfFreeBytes, NULL, NULL) == 0) 
 	{
 		return 0;
@@ -155,7 +159,7 @@ uint64_t Drive::GetTotalFreeNumberOfBytes()
 #elif defined NEXGEN_WIN
 
 	std::wstring rootPath = m_systemPath;
-	ULARGE_INTEGER totalNumberOfFreeBytes;
+	ULARGE_INTEGER totalNumberOfFreeBytes = { 0 };
 	if (GetDiskFreeSpaceExA(StringUtility::ToString(rootPath).c_str(), &totalNumberOfFreeBytes, NULL, NULL) == 0) 
 	{
 		return 0;

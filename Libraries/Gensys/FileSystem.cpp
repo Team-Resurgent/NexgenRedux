@@ -9,7 +9,7 @@
 #include <ctime>
 
 
-#if defined NEXGEN_WIN
+#if defined NEXGEN_WIN || defined NEXGEN_UWP
 #include <windows.h>
 #elif defined NEXGEN_MAC
 #include <sys/stat.h>
@@ -206,7 +206,86 @@ bool FileSystem::FileGetFileInfoDetail(std::wstring const path, FileInfoDetail& 
 
 	DWORD fileSize = GetFileSize(fileHandle, NULL);
 	fileInfoDetail.size = fileSize;
-		
+
+	CloseHandle(fileHandle);
+	return true;
+
+#elif defined NEXGEN_UWP
+
+	const DWORD invalidFileAttributes = (DWORD)0xFFFFFFFF;
+
+	DWORD attributes = GetFileAttributesW(path.c_str());
+	if (attributes == invalidFileAttributes)
+	{
+		return false;
+	}
+
+	fileInfoDetail.path = path;
+	fileInfoDetail.isDirectory = (attributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+	fileInfoDetail.isFile = (attributes & FILE_ATTRIBUTE_DIRECTORY) == 0;
+
+	CREATEFILE2_EXTENDED_PARAMETERS extParams = { 0 };
+	extParams.dwSize = sizeof(extParams);
+	extParams.dwFileAttributes = FILE_ATTRIBUTE_NORMAL;
+	extParams.dwFileFlags = fileInfoDetail.isDirectory ? FILE_FLAG_BACKUP_SEMANTICS : 0;
+	HANDLE fileHandle = CreateFile2(path.c_str(), GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, &extParams);
+	if (fileHandle == INVALID_HANDLE_VALUE)
+	{
+		return false;
+	}
+
+	FILETIME fileTimeAccess;
+	FILETIME fileTimeWrite;
+	if (GetFileTime(fileHandle, NULL, &fileTimeAccess, &fileTimeWrite) == FALSE)
+	{
+		return false;
+	}
+
+	FILETIME fileTimeAccessLocal;
+	if (FileTimeToLocalFileTime(&fileTimeAccess, &fileTimeAccessLocal) == FALSE)
+	{
+		return false;
+	}
+
+	SYSTEMTIME systemTimeAccessLocal;
+	if (FileTimeToSystemTime(&fileTimeAccessLocal, &systemTimeAccessLocal) == FALSE)
+	{
+		return false;
+	}
+
+	fileInfoDetail.accessTime.month = systemTimeAccessLocal.wMonth;
+	fileInfoDetail.accessTime.day = systemTimeAccessLocal.wDay;
+	fileInfoDetail.accessTime.year = systemTimeAccessLocal.wYear;
+	fileInfoDetail.accessTime.hour = systemTimeAccessLocal.wHour;
+	fileInfoDetail.accessTime.minute = systemTimeAccessLocal.wMinute;
+	fileInfoDetail.accessTime.second = systemTimeAccessLocal.wSecond;
+
+	FILETIME fileTimeWriteLocal;
+	if (FileTimeToLocalFileTime(&fileTimeWrite, &fileTimeWriteLocal) == FALSE)
+	{
+		return false;
+	}
+
+	SYSTEMTIME systemTimeWriteLocal;
+	if (FileTimeToSystemTime(&fileTimeWriteLocal, &systemTimeWriteLocal) == FALSE)
+	{
+		return false;
+	}
+
+	fileInfoDetail.writeTime.month = systemTimeWriteLocal.wMonth;
+	fileInfoDetail.writeTime.day = systemTimeWriteLocal.wDay;
+	fileInfoDetail.writeTime.year = systemTimeWriteLocal.wYear;
+	fileInfoDetail.writeTime.hour = systemTimeWriteLocal.wHour;
+	fileInfoDetail.writeTime.minute = systemTimeWriteLocal.wMinute;
+	fileInfoDetail.writeTime.second = systemTimeAccessLocal.wSecond;
+
+	LARGE_INTEGER fileSize;
+	if (GetFileSizeEx(fileHandle, &fileSize) == false)
+	{
+		return false;
+	}
+	fileInfoDetail.size = fileSize.LowPart;
+
 	CloseHandle(fileHandle);
 	return true;
 
@@ -316,7 +395,7 @@ bool FileSystem::FileGetFileInfoDetails(std::wstring const path, std::vector<Fil
 	FindClose(findHandle);
 	return true;
 
-#elif defined NEXGEN_WIN
+#elif defined NEXGEN_WIN || defined NEXGEN_UWP
 
 	WIN32_FIND_DATAW findData;
 	HANDLE findHandle = FindFirstFileW(CombinePath(path, L"*").c_str(), &findData);
@@ -425,7 +504,7 @@ bool FileSystem::FileRead(uint32_t fileHandle, char* readBuffer, uint32_t const 
 	if (fileContainer == NULL) {
 		return false;
 	}
-	bytesRead = (uint32_t)fread(readBuffer, bytesToRead, 1, (FILE*)fileContainer->file);
+	bytesRead = (uint32_t)fread(readBuffer, 1, bytesToRead, (FILE*)fileContainer->file);
 	return true;
 }
 
@@ -518,7 +597,7 @@ bool FileSystem::DirectoryCreate(const std::wstring path)
 	}
 #if defined NEXGEN_OG || defined NEXGEN_360
     return CreateDirectoryA(StringUtility::ToString(path).c_str(), NULL) == TRUE;
-#elif defined NEXGEN_WIN
+#elif defined NEXGEN_WIN || defined NEXGEN_UWP
 	return CreateDirectoryW(path.c_str(), NULL) == TRUE;
 #elif defined NEXGEN_MAC || defined NEXGEN_LINUX
 	return mkdir(StringUtility::ToString(path).c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == 0;
@@ -558,7 +637,7 @@ bool FileSystem::DirectoryDelete(std::wstring const path, bool const recursive)
 
 #if defined NEXGEN_OG || defined NEXGEN_360
     return RemoveDirectoryA(StringUtility::ToString(path).c_str()) == TRUE;
-#elif defined NEXGEN_WIN
+#elif defined NEXGEN_WIN || defined NEXGEN_UWP
 	return RemoveDirectoryW(path.c_str()) == TRUE;
 #elif defined NEXGEN_MAC || defined NEXGEN_LINUX
 	return rmdir(StringUtility::ToString(path).c_str()) == 0;
@@ -739,7 +818,7 @@ bool FileSystem::GetAppDirectory(std::wstring& appDirectory)
 #elif defined NEXGEN_360
 	appDirectory = L"Game:";
 	return true;
-#elif defined NEXGEN_WIN
+#elif defined NEXGEN_WIN || defined NEXGEN_UWP
 	wchar_t buffer[260];
 	const size_t length = GetModuleFileNameW(0, &buffer[0], 260);
 	std::wstring exeFilePath = std::wstring(buffer, length);
@@ -755,8 +834,6 @@ bool FileSystem::GetAppDirectory(std::wstring& appDirectory)
   	ssize_t count = readlink( "/proc/self/exe", result, PATH_MAX );
   	appDirectory = GetDirectory(StringUtility::ToWideString(std::string(result, (count > 0) ? count : 0 )));
 	return true;
-#else
-    return false;
 #endif
 }
 
@@ -781,9 +858,9 @@ bool FileSystem::GetMediaDirectory(std::wstring& mediaDirectory)
 
 wchar_t FileSystem::GetPathSeparator()
 {
-#if defined NEXGEN_OG || defined NEXGEN_360 || defined NEXGEN_WIN
+#if defined NEXGEN_OG || defined NEXGEN_360 || defined NEXGEN_WIN || defined NEXGEN_UWP
 	return L'\\';
-#else
+#else defined NEXGEN_MAC || defined NEXGEN_LINUX
 	return L'/';
 #endif
 }

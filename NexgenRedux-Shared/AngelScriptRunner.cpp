@@ -61,7 +61,7 @@ void MessageCallback(asSMessageInfo* msg, void* param)
 	}
 }
 
-bool CompileScript(asIScriptEngine* engine)
+bool CompileScript(asIScriptEngine* engine, std::wstring launchFolder)
 {
 	int result;
 
@@ -72,7 +72,7 @@ bool CompileScript(asIScriptEngine* engine)
 	}
 
 	std::string script;
-	std::wstring scriptFile = FileSystem::CombinePath(FileSystem::CombinePath(mediaDirectory, L"Default"), L"main.as");
+	std::wstring scriptFile = FileSystem::CombinePath(FileSystem::CombinePath(mediaDirectory, launchFolder), L"main.as");
 	if (FileSystem::FileReadAllAsString(scriptFile, &script) == false)
 	{
 		return false;
@@ -94,7 +94,7 @@ bool CompileScript(asIScriptEngine* engine)
 	return true;
 }
 
-bool AngelScriptRunner::Init(void)
+bool AngelScriptRunner::Init(std::wstring launchFolder)
 {
 	m_engine = asCreateScriptEngine();
 	if (m_engine == NULL)
@@ -220,7 +220,7 @@ bool AngelScriptRunner::Init(void)
 	if (m_engine->RegisterFuncdef("void JoystickConnectCallback(uint joystickID, uint event)") < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void SetJoystickConnectCallback(JoystickConnectCallback @joystickConnectCallback)", asFUNCTION(AngelScriptRunner::SetJoystickConnectCallback), asCALL_GENERIC) < 0) { return false; }
 
-	if (CompileScript(m_engine) == false)
+	if (CompileScript(m_engine, launchFolder) == false)
 	{
 		m_engine->Release();
 		return false;

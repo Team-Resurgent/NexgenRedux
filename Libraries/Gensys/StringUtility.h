@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Int.h"
+
 #include <string>
 #include <vector>
 
@@ -24,6 +26,8 @@ namespace Gensys
 		static std::wstring Convert(float const value);
 		static std::wstring ToWideString(std::string const value);
 		static std::string ToString(std::wstring const value);
-		static int ToInt(std::wstring const value);
+		static uint32_t ToInt(std::wstring const value);
+		static std::vector<uint8_t> StringToByteArray(std::wstring value);
+		static uint32_t FNVHashString(std::wstring value);
 	};
 }

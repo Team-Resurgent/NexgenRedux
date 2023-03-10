@@ -1,9 +1,10 @@
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
 
-#include "OpenGLDeviceHelper.h"
+#include "OpenGLWindowHelper.h"
 #include "AngelScriptRunner.h"
 #include "WindowManager.h"
 #include "Icon.h"
+#include "RenderingManager.h"
 
 #include <Gensys/DebugUtility.h>
 #include <Gensys/TimeUtility.h>
@@ -21,7 +22,7 @@ namespace
 	bool m_initialized = false;
 }
 
-void OpenGLDeviceHelper::Close(void) 
+void OpenGLWindowHelper::Close(void) 
 {
 	std::vector<uint32_t> windowHandles = WindowManager::GetWindowHandles();
 	for (uint32_t i = 0; i < windowHandles.size(); i++) 
@@ -30,7 +31,7 @@ void OpenGLDeviceHelper::Close(void)
 	}
 }
 
-bool OpenGLDeviceHelper::GetAvailableMonitorCount(uint32_t& monitorCount)
+bool OpenGLWindowHelper::GetAvailableMonitorCount(uint32_t& monitorCount)
 {
 	if (Init() == false)
     {
@@ -43,7 +44,7 @@ bool OpenGLDeviceHelper::GetAvailableMonitorCount(uint32_t& monitorCount)
 	return true;
 }
 
-bool OpenGLDeviceHelper::GetMonitorVideoMode(uint32_t monitorIndex, WindowManager::MonitorVideoMode& monitorVideoMode)
+bool OpenGLWindowHelper::GetMonitorVideoMode(uint32_t monitorIndex, WindowManager::MonitorVideoMode& monitorVideoMode)
 {
 	if (Init() == false)
     {
@@ -68,7 +69,7 @@ bool OpenGLDeviceHelper::GetMonitorVideoMode(uint32_t monitorIndex, WindowManage
     return true;
 }
 
-bool OpenGLDeviceHelper::GetMonitorVideoModes(uint32_t monitorIndex, std::vector<WindowManager::MonitorVideoMode>& monitorVideoModes)
+bool OpenGLWindowHelper::GetMonitorVideoModes(uint32_t monitorIndex, std::vector<WindowManager::MonitorVideoMode>& monitorVideoModes)
 {
 	if (Init() == false)
     {
@@ -102,7 +103,7 @@ bool OpenGLDeviceHelper::GetMonitorVideoModes(uint32_t monitorIndex, std::vector
     return true;
 }
 
-bool OpenGLDeviceHelper::WindowCreateWithVideoMode(WindowManager::MonitorVideoMode monitorVideoMode, std::string title, uint32_t& windowHandle)
+bool OpenGLWindowHelper::WindowCreateWithVideoMode(WindowManager::MonitorVideoMode monitorVideoMode, std::string title, uint32_t& windowHandle)
 {
 	if (Init() == false)
     {
@@ -152,10 +153,11 @@ bool OpenGLDeviceHelper::WindowCreateWithVideoMode(WindowManager::MonitorVideoMo
     windowContainer.height = monitorVideoMode.height;
     windowContainer.window = window;
     windowHandle = WindowManager::AddWindowContainer(windowContainer);
-	return true;
+
+	return RenderingManager::Init(windowHandle);
 }
 
-bool OpenGLDeviceHelper::WindowCreateWithSize(uint32_t width, uint32_t height, std::string title, uint32_t& windowHandle)
+bool OpenGLWindowHelper::WindowCreateWithSize(uint32_t width, uint32_t height, std::string title, uint32_t& windowHandle)
 {
 	if (Init() == false)
     {
@@ -193,10 +195,11 @@ bool OpenGLDeviceHelper::WindowCreateWithSize(uint32_t width, uint32_t height, s
     windowContainer.height = height;
     windowContainer.window = window;
     windowHandle = WindowManager::AddWindowContainer(windowContainer);
-	return true;
+
+	return RenderingManager::Init(windowHandle);
 }
 
-bool OpenGLDeviceHelper::GetWindowSize(uint32_t windowHandle, uint32_t& width, uint32_t& height)
+bool OpenGLWindowHelper::GetWindowSize(uint32_t windowHandle, uint32_t& width, uint32_t& height)
 {
 	WindowManager::WindowContainer* windowContainer = WindowManager::GetWindowContainer(windowHandle);
 	if (windowContainer == NULL)
@@ -209,7 +212,7 @@ bool OpenGLDeviceHelper::GetWindowSize(uint32_t windowHandle, uint32_t& width, u
 	return true;
 }
 
-bool OpenGLDeviceHelper::SetCursorMode(uint32_t windowHandle, uint32_t mode)
+bool OpenGLWindowHelper::SetCursorMode(uint32_t windowHandle, uint32_t mode)
 {
     if (Init() == false)
     {
@@ -248,7 +251,7 @@ bool OpenGLDeviceHelper::SetCursorMode(uint32_t windowHandle, uint32_t mode)
     return false;
 }
 
-bool OpenGLDeviceHelper::WindowRender(uint32_t& windowHandle, bool& exitRequested)
+bool OpenGLWindowHelper::WindowRender(uint32_t& windowHandle, bool& exitRequested)
 {
  	WindowManager::WindowContainer* windowContainer = WindowManager::GetWindowContainer(windowHandle);
     if (windowContainer == NULL)
@@ -274,7 +277,7 @@ bool OpenGLDeviceHelper::WindowRender(uint32_t& windowHandle, bool& exitRequeste
 	return true;
 }
 
-bool OpenGLDeviceHelper::WindowClose(uint32_t windowHandle)
+bool OpenGLWindowHelper::WindowClose(uint32_t windowHandle)
 {
 	WindowManager::WindowContainer* windowContainer = WindowManager::GetWindowContainer(windowHandle);
 	if (windowContainer == NULL) 
@@ -287,7 +290,7 @@ bool OpenGLDeviceHelper::WindowClose(uint32_t windowHandle)
 	return true;
 }
 
-bool OpenGLDeviceHelper::RenderLoop(void)
+bool OpenGLWindowHelper::RenderLoop(void)
 {
 	if (WindowManager::GetWindowCount() > 0) {
 		bool exitRequested = false;
@@ -307,7 +310,7 @@ bool OpenGLDeviceHelper::RenderLoop(void)
 					DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteRender failed.");
 					return false;
 				}
-				if (OpenGLDeviceHelper::WindowRender(windowHandle, exitRequested) == false)
+				if (OpenGLWindowHelper::WindowRender(windowHandle, exitRequested) == false)
 				{
 					DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "WindowRender failed.");
 					return false;
@@ -322,7 +325,7 @@ bool OpenGLDeviceHelper::RenderLoop(void)
     return true;
 }
 
-bool OpenGLDeviceHelper::GetKeyPressed(uint32_t windowHandle, uint32_t key, uint32_t& pressed)
+bool OpenGLWindowHelper::GetKeyPressed(uint32_t windowHandle, uint32_t key, uint32_t& pressed)
 {
     if (Init() == false)
     {
@@ -342,7 +345,7 @@ bool OpenGLDeviceHelper::GetKeyPressed(uint32_t windowHandle, uint32_t key, uint
     return true;
 }
 
-bool OpenGLDeviceHelper::GetMouseButtonPressed(uint32_t windowHandle, uint32_t button, uint32_t& pressed)
+bool OpenGLWindowHelper::GetMouseButtonPressed(uint32_t windowHandle, uint32_t button, uint32_t& pressed)
 {
     if (Init() == false)
     {
@@ -363,7 +366,7 @@ bool OpenGLDeviceHelper::GetMouseButtonPressed(uint32_t windowHandle, uint32_t b
 
 }
 
-bool OpenGLDeviceHelper::GetMouseCursorPosition(uint32_t windowHandle, double& xPos, double& yPos)
+bool OpenGLWindowHelper::GetMouseCursorPosition(uint32_t windowHandle, double& xPos, double& yPos)
 {
     if (Init() == false)
     {
@@ -382,7 +385,7 @@ bool OpenGLDeviceHelper::GetMouseCursorPosition(uint32_t windowHandle, double& x
     return true;
 }
 
-bool OpenGLDeviceHelper::SetMouseCursorPosition(uint32_t windowHandle, double xPos, double yPos)
+bool OpenGLWindowHelper::SetMouseCursorPosition(uint32_t windowHandle, double xPos, double yPos)
 {
     if (Init() == false)
     {
@@ -401,7 +404,7 @@ bool OpenGLDeviceHelper::SetMouseCursorPosition(uint32_t windowHandle, double xP
     return true;
 }
 
-bool OpenGLDeviceHelper::GetClipboardString(std::string& value)
+bool OpenGLWindowHelper::GetClipboardString(std::string& value)
 {
     if (Init() == false)
     {
@@ -413,7 +416,7 @@ bool OpenGLDeviceHelper::GetClipboardString(std::string& value)
 	return true;
 }
 
-bool OpenGLDeviceHelper::SetClipboardString(std::string value)
+bool OpenGLWindowHelper::SetClipboardString(std::string value)
 {
     if (Init() == false)
     {
@@ -424,7 +427,7 @@ bool OpenGLDeviceHelper::SetClipboardString(std::string value)
 	return true;
 }
 
-bool OpenGLDeviceHelper::JoystickIsPresent(uint32_t joystickID, uint32_t& present)
+bool OpenGLWindowHelper::JoystickIsPresent(uint32_t joystickID, uint32_t& present)
 {
     if (Init() == false)
     {
@@ -435,7 +438,7 @@ bool OpenGLDeviceHelper::JoystickIsPresent(uint32_t joystickID, uint32_t& presen
     return true;
 }
 
-bool OpenGLDeviceHelper::JoystickIsGamepad(uint32_t joystickID, uint32_t& gamepad)
+bool OpenGLWindowHelper::JoystickIsGamepad(uint32_t joystickID, uint32_t& gamepad)
 {
     if (Init() == false)
     {
@@ -446,7 +449,7 @@ bool OpenGLDeviceHelper::JoystickIsGamepad(uint32_t joystickID, uint32_t& gamepa
     return true;
 }
 
-bool OpenGLDeviceHelper::GetJoystickButtonStates(uint32_t joystickID, JoystickManager::JoystickButtonStates& joystickButtonStates)
+bool OpenGLWindowHelper::GetJoystickButtonStates(uint32_t joystickID, JoystickManager::JoystickButtonStates& joystickButtonStates)
 {
     if (Init() == false)
     {
@@ -477,7 +480,7 @@ bool OpenGLDeviceHelper::GetJoystickButtonStates(uint32_t joystickID, JoystickMa
 	return true;
 }
 
-bool OpenGLDeviceHelper::GetJoystickAxisStates(uint32_t joystickID, JoystickManager::JoystickAxisStates& joystickAxisStates)
+bool OpenGLWindowHelper::GetJoystickAxisStates(uint32_t joystickID, JoystickManager::JoystickAxisStates& joystickAxisStates)
 {
     if (Init() == false)
     {
@@ -504,7 +507,7 @@ bool OpenGLDeviceHelper::GetJoystickAxisStates(uint32_t joystickID, JoystickMana
 	return true;
 }
 
-bool OpenGLDeviceHelper::GetJoystickHatCount(uint32_t joystickID, uint32_t& count)
+bool OpenGLWindowHelper::GetJoystickHatCount(uint32_t joystickID, uint32_t& count)
 {
     if (Init() == false)
     {
@@ -517,7 +520,7 @@ bool OpenGLDeviceHelper::GetJoystickHatCount(uint32_t joystickID, uint32_t& coun
     return true;
 }
 
-bool OpenGLDeviceHelper::GetJoystickHatDirection(uint32_t joystickID, uint32_t hatIndex, uint32_t& direction)
+bool OpenGLWindowHelper::GetJoystickHatDirection(uint32_t joystickID, uint32_t hatIndex, uint32_t& direction)
 {
     if (Init() == false)
     {
@@ -539,7 +542,7 @@ bool OpenGLDeviceHelper::GetJoystickHatDirection(uint32_t joystickID, uint32_t h
 
 // Privates
 
-bool OpenGLDeviceHelper::Init(void) 
+bool OpenGLWindowHelper::Init(void) 
 {
     if (m_initialized == false)
     {
@@ -555,12 +558,12 @@ bool OpenGLDeviceHelper::Init(void)
         {
             return false;
         }
-        glfwSetJoystickCallback(OpenGLDeviceHelper::JoystickConnect);
+        glfwSetJoystickCallback(OpenGLWindowHelper::JoystickConnect);
     }
     return true;
 }
 
-void OpenGLDeviceHelper::SetCallbacks(GLFWwindow* window)
+void OpenGLWindowHelper::SetCallbacks(GLFWwindow* window)
 {
     glfwSetWindowIconifyCallback(window, WindowIconify);
     glfwSetWindowMaximizeCallback(window, WindowMaximize);
@@ -575,7 +578,7 @@ void OpenGLDeviceHelper::SetCallbacks(GLFWwindow* window)
     glfwSetDropCallback(window, WindowDrop);
 }
 
-void OpenGLDeviceHelper::WindowIconify(GLFWwindow* window, int iconified)
+void OpenGLWindowHelper::WindowIconify(GLFWwindow* window, int iconified)
 {
     uint32_t windowHandle;
     if (WindowManager::GetWindowHandle(window, windowHandle) == false) 
@@ -588,7 +591,7 @@ void OpenGLDeviceHelper::WindowIconify(GLFWwindow* window, int iconified)
     }
 }
 
-void OpenGLDeviceHelper::WindowMaximize(GLFWwindow* window, int maximized)
+void OpenGLWindowHelper::WindowMaximize(GLFWwindow* window, int maximized)
 {
     uint32_t windowHandle;
     if (WindowManager::GetWindowHandle(window, windowHandle) == false) 
@@ -601,7 +604,7 @@ void OpenGLDeviceHelper::WindowMaximize(GLFWwindow* window, int maximized)
     }
 }
 
-void OpenGLDeviceHelper::WindowSize(GLFWwindow* window, int width, int height)
+void OpenGLWindowHelper::WindowSize(GLFWwindow* window, int width, int height)
 {
     uint32_t windowHandle;
     if (WindowManager::GetWindowHandle(window, windowHandle) == false) 
@@ -614,7 +617,7 @@ void OpenGLDeviceHelper::WindowSize(GLFWwindow* window, int width, int height)
     }
 }
 
-void OpenGLDeviceHelper::WindowFocus(GLFWwindow* window, int focused)
+void OpenGLWindowHelper::WindowFocus(GLFWwindow* window, int focused)
 {
     uint32_t windowHandle;
     if (WindowManager::GetWindowHandle(window, windowHandle) == false) 
@@ -627,7 +630,7 @@ void OpenGLDeviceHelper::WindowFocus(GLFWwindow* window, int focused)
     }
 }
 
-void OpenGLDeviceHelper::WindowKeyboardKey(GLFWwindow* window, int key, int scancode, int action, int modifier)
+void OpenGLWindowHelper::WindowKeyboardKey(GLFWwindow* window, int key, int scancode, int action, int modifier)
 {
     uint32_t windowHandle;
     if (WindowManager::GetWindowHandle(window, windowHandle) == false) 
@@ -640,7 +643,7 @@ void OpenGLDeviceHelper::WindowKeyboardKey(GLFWwindow* window, int key, int scan
     }
 }
 
-void OpenGLDeviceHelper::WindowKeyboardCharacter(GLFWwindow* window, unsigned int codepoint)
+void OpenGLWindowHelper::WindowKeyboardCharacter(GLFWwindow* window, unsigned int codepoint)
 {
     uint32_t windowHandle;
     if (WindowManager::GetWindowHandle(window, windowHandle) == false) 
@@ -653,7 +656,7 @@ void OpenGLDeviceHelper::WindowKeyboardCharacter(GLFWwindow* window, unsigned in
     }
 }
 
-void OpenGLDeviceHelper::WindowMouseCursorPosition(GLFWwindow* window, double xPos, double yPos)
+void OpenGLWindowHelper::WindowMouseCursorPosition(GLFWwindow* window, double xPos, double yPos)
 {
     uint32_t windowHandle;
     if (WindowManager::GetWindowHandle(window, windowHandle) == false) 
@@ -666,7 +669,7 @@ void OpenGLDeviceHelper::WindowMouseCursorPosition(GLFWwindow* window, double xP
     }
 }
 
-void OpenGLDeviceHelper::WindowMouseCursorEnter(GLFWwindow* window, int entered)
+void OpenGLWindowHelper::WindowMouseCursorEnter(GLFWwindow* window, int entered)
 {
     uint32_t windowHandle;
     if (WindowManager::GetWindowHandle(window, windowHandle) == false) 
@@ -679,7 +682,7 @@ void OpenGLDeviceHelper::WindowMouseCursorEnter(GLFWwindow* window, int entered)
     }
 }
 
-void OpenGLDeviceHelper::WindowMouseButton(GLFWwindow* window, int button, int action, int modifier)
+void OpenGLWindowHelper::WindowMouseButton(GLFWwindow* window, int button, int action, int modifier)
 {
     uint32_t windowHandle;
     if (WindowManager::GetWindowHandle(window, windowHandle) == false) 
@@ -692,7 +695,7 @@ void OpenGLDeviceHelper::WindowMouseButton(GLFWwindow* window, int button, int a
     }
 }
 
-void OpenGLDeviceHelper::WindowMouseScroll(GLFWwindow* window, double xOffset, double yOffset)
+void OpenGLWindowHelper::WindowMouseScroll(GLFWwindow* window, double xOffset, double yOffset)
 {
     uint32_t windowHandle;
     if (WindowManager::GetWindowHandle(window, windowHandle) == false) 
@@ -705,7 +708,7 @@ void OpenGLDeviceHelper::WindowMouseScroll(GLFWwindow* window, double xOffset, d
     }
 }
 
-void OpenGLDeviceHelper::WindowDrop(GLFWwindow* window, int count, const char** paths)
+void OpenGLWindowHelper::WindowDrop(GLFWwindow* window, int count, const char** paths)
 {
     std::vector<std::string> pathArray;
     for (int i = 0; i < count; i++) 
@@ -725,7 +728,7 @@ void OpenGLDeviceHelper::WindowDrop(GLFWwindow* window, int count, const char** 
     }
 }
 
-void OpenGLDeviceHelper::JoystickConnect(int joystickID, int event)
+void OpenGLWindowHelper::JoystickConnect(int joystickID, int event)
 {
     if (event == GLFW_DISCONNECTED)
     {

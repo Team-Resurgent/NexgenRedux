@@ -10,11 +10,11 @@ namespace NexgenRedux
 
 		typedef struct ConfigData 
 		{
-			std::wstring Launch;
+			std::wstring LaunchFolder;
 		} ConfigData;
 
-		static bool LoadConfig(ConfigData *configData);
+		static bool LoadConfig(ConfigData& configData);
 	private:
-		static void ParseConfigLine(ConfigData* configData, std::string line);
+		static void ParseConfigLine(ConfigData& configData, std::string line);
 	};
 }

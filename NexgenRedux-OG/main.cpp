@@ -1,4 +1,4 @@
-#include "BootLoader.h"
+#include "ConfigLoader.h"
 #include "AngelScriptRunner.h"
 #include "WindowManager.h"
 
@@ -18,12 +18,18 @@ void __cdecl main(int, char **)
 {
 	//Gensys::Test::RunTests();
 
-	BootLoader::Run();
+	ConfigLoader::ConfigData configData;
+	memset(&configData, 0, sizeof(configData));
+	if (ConfigLoader::LoadConfig(configData) == false) 
+	{
+		return;
+	}
 
-    if (AngelScriptRunner::Init() == false)
+    if (AngelScriptRunner::Init(configData.LaunchFolder) == false)
     {
         return;
     }
+
     if (AngelScriptRunner::ExecuteInit() == false)
     {
         return;

@@ -15,7 +15,7 @@
 #include <Gensys/FileSystem.h>
 #include <Gensys/Test.h>
 
-#include "BootLoader.h"
+#include "ConfigLoader.h"
 #include "AngelScriptRunner.h"
 #include "WindowManager.h"
 
@@ -109,17 +109,19 @@ static bool link_program(GLuint program)
 }
 
 static float lerp(float a, float b, float t) { return a + (b - a) * t; }
-static float frand() { return (float)rand() / RAND_MAX; }
-static float frand(float lo, float hi) { return lerp(lo, hi, frand()); }
-
 
 int main(int argc, const char* argv[])
 {
 	//Gensys::Test::RunTests();
 
-	BootLoader::Run();
+	ConfigLoader::ConfigData configData;
+	memset(&configData, 0, sizeof(configData));
+	if (ConfigLoader::LoadConfig(configData) == false) 
+	{
+		return 0;
+	}
 
-    if (AngelScriptRunner::Init() == false)
+    if (AngelScriptRunner::Init(configData.LaunchFolder) == false)
     {
         return 0;
     }

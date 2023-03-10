@@ -21,7 +21,7 @@ namespace NexgenRedux
 			float y;
 		} Vec2;
 
-		static bool Init(void);
+		static bool Init(std::wstring launchFolder);
 		static bool ExecuteInit(void);
 		static bool ExecuteRender(uint32_t windowHandle, double dt);
 		static bool ExecuteWindowIconifyCallback(uint32_t windowHandle, uint32_t iconified);

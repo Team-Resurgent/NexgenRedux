@@ -8,7 +8,7 @@
 using namespace Gensys;
 using namespace NexgenRedux;
 
-bool ConfigLoader::LoadConfig(ConfigData *configData)
+bool ConfigLoader::LoadConfig(ConfigData& configData)
 {
 	std::wstring mediaPath;
 	if (!FileSystem::GetMediaDirectory(mediaPath))
@@ -58,7 +58,7 @@ bool ConfigLoader::LoadConfig(ConfigData *configData)
 }
 
 
-void ConfigLoader::ParseConfigLine(ConfigData* configData, std::string line)
+void ConfigLoader::ParseConfigLine(ConfigData& configData, std::string line)
 {
     std::string params[2];
 	params[0] = "";
@@ -88,8 +88,8 @@ void ConfigLoader::ParseConfigLine(ConfigData* configData, std::string line)
 	std::wstring param2 = StringUtility::ToWideString(params[1]);
 	param2 = StringUtility::Trim(param2, ' ');
 
-    if (param1.compare(L"LAUNCH") == 0) {
-		configData->Launch = param2;
+    if (param1.compare(L"LAUNCHFOLDER") == 0) {
+		configData.LaunchFolder = std::wstring(param2);
     }
 }
 

@@ -330,13 +330,13 @@
     <ClInclude Include="..\NexgenRedux-Shared\MathUtility.h">
       <Filter>NexgenRedux-Shared</Filter>
     </ClInclude>
-    <ClInclude Include="..\NexgenRedux-Shared\OpenGLDeviceHelper.h">
+    <ClInclude Include="..\NexgenRedux-Shared\OpenGLWindowHelper.h">
       <Filter>NexgenRedux-Shared</Filter>
     </ClInclude>
     <ClInclude Include="..\NexgenRedux-Shared\WindowManager.h">
       <Filter>NexgenRedux-Shared</Filter>
     </ClInclude>
-    <ClInclude Include="..\NexgenRedux-Shared\XboxOGDeviceHelper.h">
+    <ClInclude Include="..\NexgenRedux-Shared\XboxOGWindowHelper.h">
       <Filter>NexgenRedux-Shared</Filter>
     </ClInclude>
   </ItemGroup>
@@ -572,13 +572,13 @@
     <ClCompile Include="..\NexgenRedux-Shared\MathUtility.cpp">
       <Filter>NexgenRedux-Shared</Filter>
     </ClCompile>
-    <ClCompile Include="..\NexgenRedux-Shared\OpenGLDeviceHelper.cpp">
+    <ClCompile Include="..\NexgenRedux-Shared\OpenGLWindowHelper.cpp">
       <Filter>NexgenRedux-Shared</Filter>
     </ClCompile>
     <ClCompile Include="..\NexgenRedux-Shared\WindowManager.cpp">
       <Filter>NexgenRedux-Shared</Filter>
     </ClCompile>
-    <ClCompile Include="..\NexgenRedux-Shared\XboxOGDeviceHelper.cpp">
+    <ClCompile Include="..\NexgenRedux-Shared\XboxOGWindowHelper.cpp">
       <Filter>NexgenRedux-Shared</Filter>
     </ClCompile>
   </ItemGroup>

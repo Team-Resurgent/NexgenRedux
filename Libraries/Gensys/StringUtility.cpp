@@ -1,5 +1,7 @@
 #include "StringUtility.h"
 
+#include "Int.h"
+
 #include <algorithm>
 #include <sstream>
 #include <cstdarg>
@@ -161,13 +163,32 @@ std::string StringUtility::ToString(std::wstring const value)
 	return result;
 }
 
-int StringUtility::ToInt(std::wstring const value)
+uint32_t StringUtility::ToInt(std::wstring const value)
 {
-	int result = 0;
-	for (size_t i = 0; i < value.length(); i++)
+	uint32_t result = 0;
+	for (uint32_t i = 0; i < (uint32_t)value.length(); i++)
 	{
 		result = result * 10;
 		result += value.at(i) - 48;
 	}
 	return result;
+}
+
+std::vector<uint8_t> StringUtility::StringToByteArray(std::wstring value) 
+{
+	const uint8_t* data = (const uint8_t*)(value.c_str());
+	const uint32_t size = value.size() * sizeof(wchar_t);
+	return std::vector<uint8_t>(data, data + size);
+}
+
+uint32_t StringUtility::FNVHashString(std::wstring value) 
+ {
+	uint32_t hash = 2166136261u;
+	std::vector<uint8_t> bytes = StringToByteArray(value);
+	for (uint32_t i = 0; i < bytes.size(); i++)
+    {
+        hash ^= bytes.at(i);
+        hash *= 16777619u;
+    }
+    return hash;
 }

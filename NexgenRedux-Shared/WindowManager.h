@@ -47,8 +47,10 @@ namespace NexgenRedux
 		static bool GetClipboardString(std::string& value);
 		static bool SetClipboardString(std::string value);
 
-		friend class OpenGLDeviceHelper;
-		friend class XboxOGDeviceHelper;
+		friend class OpenGLWindowHelper;
+		friend class XboxOGWindowHelper;
+		friend class OpenGLRenderingHelper;
+		friend class XboxOGRenderingHelper;
 
 	private:
 

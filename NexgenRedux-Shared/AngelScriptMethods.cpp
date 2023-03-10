@@ -244,9 +244,7 @@ void AngelScriptMethods::GetMouseCursorPosition(asIScriptGeneric* gen)
 		}
 	}
 
-	MathUtility::Vec2D vec2D;
-	vec2D.x = xPos;
-	vec2D.y = yPos;
+	MathUtility::Vec2D vec2D = MathUtility::Vec2D(xPos, yPos);
 	gen->SetReturnObject(&vec2D);
 }
 

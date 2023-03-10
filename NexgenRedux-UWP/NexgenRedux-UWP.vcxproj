@@ -369,9 +369,9 @@
     <ClInclude Include="..\NexgenRedux-Shared\Icon.h" />
     <ClInclude Include="..\NexgenRedux-Shared\JoystickManager.h" />
     <ClInclude Include="..\NexgenRedux-Shared\MathUtility.h" />
-    <ClInclude Include="..\NexgenRedux-Shared\OpenGLDeviceHelper.h" />
+    <ClInclude Include="..\NexgenRedux-Shared\OpenGLWindowHelper.h" />
     <ClInclude Include="..\NexgenRedux-Shared\WindowManager.h" />
-    <ClInclude Include="..\NexgenRedux-Shared\XboxOGDeviceHelper.h" />
+    <ClInclude Include="..\NexgenRedux-Shared\XboxOGWindowHelper.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
@@ -450,9 +450,9 @@
     <ClCompile Include="..\NexgenRedux-Shared\Icon.cpp" />
     <ClCompile Include="..\NexgenRedux-Shared\JoystickManager.cpp" />
     <ClCompile Include="..\NexgenRedux-Shared\MathUtility.cpp" />
-    <ClCompile Include="..\NexgenRedux-Shared\OpenGLDeviceHelper.cpp" />
+    <ClCompile Include="..\NexgenRedux-Shared\OpenGLWindowHelper.cpp" />
     <ClCompile Include="..\NexgenRedux-Shared\WindowManager.cpp" />
-    <ClCompile Include="..\NexgenRedux-Shared\XboxOGDeviceHelper.cpp" />
+    <ClCompile Include="..\NexgenRedux-Shared\XboxOGWindowHelper.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>

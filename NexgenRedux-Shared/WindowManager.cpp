@@ -1,7 +1,7 @@
 #include "WindowManager.h"
 #include "AngelScriptRunner.h"
-#include "XboxOGDeviceHelper.h"
-#include "OpenGLDeviceHelper.h"
+#include "XboxOGWindowHelper.h"
+#include "OpenGLWindowHelper.h"
 
 #include <Gensys/Int.h>
 #include <Gensys/DebugUtility.h>
@@ -27,9 +27,9 @@ namespace
 void WindowManager::Close(void) 
 {
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	OpenGLDeviceHelper::Close();
+	OpenGLWindowHelper::Close();
 #elif defined NEXGEN_OG 
-	XboxOGDeviceHelper::Close();
+	XboxOGWindowHelper::Close();
 #elif defined NEXGEN_360
 #endif
 }
@@ -37,9 +37,9 @@ void WindowManager::Close(void)
 bool WindowManager::GetAvailableMonitorCount(uint32_t& monitorCount)
 {
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	return OpenGLDeviceHelper::GetAvailableMonitorCount(monitorCount);
+	return OpenGLWindowHelper::GetAvailableMonitorCount(monitorCount);
 #elif defined NEXGEN_OG 
-	return XboxOGDeviceHelper::GetAvailableMonitorCount(monitorCount);
+	return XboxOGWindowHelper::GetAvailableMonitorCount(monitorCount);
 #elif defined NEXGEN_360
 	return true;
 #else
@@ -50,9 +50,9 @@ bool WindowManager::GetAvailableMonitorCount(uint32_t& monitorCount)
 bool WindowManager::GetMonitorVideoMode(uint32_t monitorIndex, MonitorVideoMode& monitorVideoMode)
 {
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-    return OpenGLDeviceHelper::GetMonitorVideoMode(monitorIndex, monitorVideoMode);
+    return OpenGLWindowHelper::GetMonitorVideoMode(monitorIndex, monitorVideoMode);
 #elif defined NEXGEN_OG
-	return XboxOGDeviceHelper::GetMonitorVideoMode(monitorIndex, monitorVideoMode);
+	return XboxOGWindowHelper::GetMonitorVideoMode(monitorIndex, monitorVideoMode);
 #elif defined NEXGEN_360
 	return true;
 #else
@@ -63,9 +63,9 @@ bool WindowManager::GetMonitorVideoMode(uint32_t monitorIndex, MonitorVideoMode&
 bool WindowManager::GetMonitorVideoModes(uint32_t monitorIndex, std::vector<MonitorVideoMode>& monitorVideoModes)
 {
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-   return OpenGLDeviceHelper::GetMonitorVideoModes(monitorIndex, monitorVideoModes);
+   return OpenGLWindowHelper::GetMonitorVideoModes(monitorIndex, monitorVideoModes);
 #elif defined NEXGEN_OG
-	return XboxOGDeviceHelper::GetMonitorVideoModes(monitorIndex, monitorVideoModes);
+	return XboxOGWindowHelper::GetMonitorVideoModes(monitorIndex, monitorVideoModes);
 #elif defined NEXGEN_360
 	return true;
 #else
@@ -76,9 +76,9 @@ bool WindowManager::GetMonitorVideoModes(uint32_t monitorIndex, std::vector<Moni
 bool WindowManager::WindowCreateWithVideoMode(MonitorVideoMode monitorVideoMode, std::string title, uint32_t& windowHandle)
 {
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-    return OpenGLDeviceHelper::WindowCreateWithVideoMode(monitorVideoMode, title, windowHandle);
+    return OpenGLWindowHelper::WindowCreateWithVideoMode(monitorVideoMode, title, windowHandle);
 #elif defined NEXGEN_OG
-	return XboxOGDeviceHelper::WindowCreateWithVideoMode(monitorVideoMode, windowHandle);
+	return XboxOGWindowHelper::WindowCreateWithVideoMode(monitorVideoMode, windowHandle);
 #elif defined NEXGEN_360
 	return true;
 #else
@@ -89,9 +89,9 @@ bool WindowManager::WindowCreateWithVideoMode(MonitorVideoMode monitorVideoMode,
 bool WindowManager::WindowCreateWithSize(uint32_t width, uint32_t height, std::string title, uint32_t& windowHandle)
 {
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	return OpenGLDeviceHelper::WindowCreateWithSize(width, height, title, windowHandle);
+	return OpenGLWindowHelper::WindowCreateWithSize(width, height, title, windowHandle);
 #elif defined NEXGEN_OG
-	return XboxOGDeviceHelper::WindowCreateWithSize(width, height, windowHandle);
+	return XboxOGWindowHelper::WindowCreateWithSize(width, height, windowHandle);
 #elif defined NEXGEN_360
 	return true;
 #else
@@ -102,9 +102,9 @@ bool WindowManager::WindowCreateWithSize(uint32_t width, uint32_t height, std::s
 bool WindowManager::GetWindowSize(uint32_t windowHandle, uint32_t& width, uint32_t& height)
 {
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	return OpenGLDeviceHelper::GetWindowSize(windowHandle, width, height);
+	return OpenGLWindowHelper::GetWindowSize(windowHandle, width, height);
 #elif defined NEXGEN_OG
-	return XboxOGDeviceHelper::GetWindowSize(windowHandle, width, height);
+	return XboxOGWindowHelper::GetWindowSize(windowHandle, width, height);
 #elif defined NEXGEN_360
 	return true;
 #else
@@ -115,9 +115,9 @@ bool WindowManager::GetWindowSize(uint32_t windowHandle, uint32_t& width, uint32
 bool WindowManager::SetCursorMode(uint32_t windowHandle, uint32_t mode)
 {
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	return OpenGLDeviceHelper::SetCursorMode(windowHandle, mode);
+	return OpenGLWindowHelper::SetCursorMode(windowHandle, mode);
 #elif defined NEXGEN_OG
-	return XboxOGDeviceHelper::SetCursorMode(windowHandle, mode);
+	return XboxOGWindowHelper::SetCursorMode(windowHandle, mode);
 #elif defined NEXGEN_360
 	return true;
 #else
@@ -128,9 +128,9 @@ bool WindowManager::SetCursorMode(uint32_t windowHandle, uint32_t mode)
 bool WindowManager::WindowClose(uint32_t windowHandle)
 {
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	return OpenGLDeviceHelper::WindowClose(windowHandle);
+	return OpenGLWindowHelper::WindowClose(windowHandle);
 #elif defined NEXGEN_OG
-	return XboxOGDeviceHelper::WindowClose(windowHandle);
+	return XboxOGWindowHelper::WindowClose(windowHandle);
 #elif defined NEXGEN_360
 	return true;
 #else
@@ -141,9 +141,9 @@ bool WindowManager::WindowClose(uint32_t windowHandle)
 bool WindowManager::RenderLoop(void)
 {
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	return OpenGLDeviceHelper::RenderLoop();
+	return OpenGLWindowHelper::RenderLoop();
 #elif defined NEXGEN_OG
-	return XboxOGDeviceHelper::RenderLoop();
+	return XboxOGWindowHelper::RenderLoop();
 #elif defined NEXGEN_360
 	return true;
 #else
@@ -154,9 +154,9 @@ bool WindowManager::RenderLoop(void)
 bool WindowManager::GetKeyPressed(uint32_t windowHandle, uint32_t key, uint32_t& pressed)
 {
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	return OpenGLDeviceHelper::GetKeyPressed(windowHandle, key, pressed);
+	return OpenGLWindowHelper::GetKeyPressed(windowHandle, key, pressed);
 #elif defined NEXGEN_OG
-	return XboxOGDeviceHelper::GetKeyPressed(windowHandle, key, pressed);
+	return XboxOGWindowHelper::GetKeyPressed(windowHandle, key, pressed);
 #elif defined NEXGEN_360
 	return true;
 #else
@@ -167,9 +167,9 @@ bool WindowManager::GetKeyPressed(uint32_t windowHandle, uint32_t key, uint32_t&
 bool WindowManager::GetMouseButtonPressed(uint32_t windowHandle, uint32_t button, uint32_t& pressed)
 {
     #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	return OpenGLDeviceHelper::GetMouseButtonPressed(windowHandle, button, pressed);
+	return OpenGLWindowHelper::GetMouseButtonPressed(windowHandle, button, pressed);
 #elif defined NEXGEN_OG
-	return XboxOGDeviceHelper::GetMouseButtonPressed(windowHandle, button, pressed);
+	return XboxOGWindowHelper::GetMouseButtonPressed(windowHandle, button, pressed);
 #elif defined NEXGEN_360
 	return true;
 #else
@@ -180,9 +180,9 @@ bool WindowManager::GetMouseButtonPressed(uint32_t windowHandle, uint32_t button
 bool WindowManager::GetMouseCursorPosition(uint32_t windowHandle, double& xPos, double& yPos)
 {
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	return OpenGLDeviceHelper::GetMouseCursorPosition(windowHandle, xPos, yPos);
+	return OpenGLWindowHelper::GetMouseCursorPosition(windowHandle, xPos, yPos);
 #elif defined NEXGEN_OG
-	return XboxOGDeviceHelper::GetMouseCursorPosition(windowHandle, xPos, yPos);
+	return XboxOGWindowHelper::GetMouseCursorPosition(windowHandle, xPos, yPos);
 #elif defined NEXGEN_360
 	return true;
 #else
@@ -193,9 +193,9 @@ bool WindowManager::GetMouseCursorPosition(uint32_t windowHandle, double& xPos, 
 bool WindowManager::SetMouseCursorPosition(uint32_t windowHandle, double xPos, double yPos)
 {
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	return OpenGLDeviceHelper::SetMouseCursorPosition(windowHandle, xPos, yPos);
+	return OpenGLWindowHelper::SetMouseCursorPosition(windowHandle, xPos, yPos);
 #elif defined NEXGEN_OG
-	return XboxOGDeviceHelper::SetMouseCursorPosition(windowHandle, xPos, yPos);
+	return XboxOGWindowHelper::SetMouseCursorPosition(windowHandle, xPos, yPos);
 #elif defined NEXGEN_360
 	return true;
 #else
@@ -206,9 +206,9 @@ bool WindowManager::SetMouseCursorPosition(uint32_t windowHandle, double xPos, d
 bool WindowManager::GetClipboardString(std::string& value)
 {
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	return OpenGLDeviceHelper::GetClipboardString(value);
+	return OpenGLWindowHelper::GetClipboardString(value);
 #elif defined NEXGEN_OG
-	return XboxOGDeviceHelper::GetClipboardString(value);
+	return XboxOGWindowHelper::GetClipboardString(value);
 #elif defined NEXGEN_360
 	return true;
 #else
@@ -219,9 +219,9 @@ bool WindowManager::GetClipboardString(std::string& value)
 bool WindowManager::SetClipboardString(std::string value)
 {
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	return OpenGLDeviceHelper::SetClipboardString(value);
+	return OpenGLWindowHelper::SetClipboardString(value);
 #elif defined NEXGEN_OG
-	return XboxOGDeviceHelper::SetClipboardString(value);
+	return XboxOGWindowHelper::SetClipboardString(value);
 #elif defined NEXGEN_360
 	return true;
 #else

@@ -106,7 +106,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386 /FIXED:NO"
-				AdditionalDependencies="xbdm.lib dsound.lib xnetd.lib xperf.lib xapilib.lib d3d8.lib d3dx8.lib xgraphics.lib dsound.lib xboxkrnl.lib"
+				AdditionalDependencies="xbdm.lib dsound.lib xnetd.lib xperf.lib xapilib.lib d3d8.lib d3dx8.lib xgraphics.lib xboxkrnl.lib xkbd.lib"
 				OutputFile="$(OutDir)/Nexgen.exe"
 				SuppressStartupBanner="TRUE"
 				GenerateDebugInformation="TRUE"

@@ -467,7 +467,8 @@ bool OpenGLRenderingHelper::LoadTexture(std::wstring path, uint32_t& textureID)
 	textureContainer.width = width;
 	textureContainer.height = height;
 	m_textureContainerMap.insert(std::pair<int, TextureContainer>(id, textureContainer));
-	return id;
+	textureID = id;
+	return true;
 }
 
 // Privates 

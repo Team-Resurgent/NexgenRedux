@@ -1166,6 +1166,7 @@ string GetCurrentDir()
 	return buffer;
 	#elif defined(__S3E__)
 	// Marmalade uses its own portable C library
+	char buffer[1024];
 	return getcwd(buffer, (int)1024);
 	#elif _XBOX_VER >= 200
 	// XBox 360 doesn't support the getcwd function, just use the root folder
@@ -1174,10 +1175,12 @@ string GetCurrentDir()
 	// TODO: How to determine current working dir on Windows Phone?
 	return "";
 	#else
-	char buffer[1024];
-	return _getcwd(buffer, (int)1024);
+	//char buffer[1024];
+	//return _getcwd(buffer, (int)1024);
+	return "";
 	#endif // _MSC_VER
 #elif defined(__APPLE__) || defined(__linux__)
+	char buffer[1024];
 	return getcwd(buffer, 1024);
 #else
 	return "";

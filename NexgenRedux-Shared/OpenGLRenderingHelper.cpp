@@ -1,12 +1,17 @@
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
 
 #include "OpenGLRenderingHelper.h"
+#include "ConfigLoader.h"
 
 #include <Gensys/DebugUtility.h>
 #include <Gensys/StringUtility.h>
 #include <GLAD/glad.h>
 #include <map>
 #include <string>
+
+#define STB_IMAGE_IMPLEMENTATION
+#define STBI_ASSERT(x)
+#include <STB/stb_image.h>
 
 using namespace Gensys;
 using namespace NexgenRedux;
@@ -357,6 +362,15 @@ namespace
 
     bool m_initialized = false;
     std::map<std::string, std::map<std::string, uint32_t>> m_shaderValueMap;
+
+	typedef struct TextureContainer
+	{
+		uint32_t texture;
+		uint32_t width;
+		uint32_t height;
+	} TextureContainer;
+
+	std::map<uint32_t, TextureContainer> m_textureContainerMap;
 }
 
 void OpenGLRenderingHelper::Close(void)
@@ -417,6 +431,43 @@ bool OpenGLRenderingHelper::SetShader(std::string shaderName)
 	}
 	glUseProgram(program);
 	return true;
+}
+
+bool OpenGLRenderingHelper::LoadTexture(std::wstring path, uint32_t& textureID)
+{	
+	std::wstring mappedPath;
+	if (ConfigLoader::MapPath(path, mappedPath) == 0)
+	{
+		return false;
+	}
+	
+	int width;
+	int height;
+	int channels;
+	unsigned char* data = stbi_load(StringUtility::ToString(mappedPath).c_str(), &width, &height, &channels, STBI_rgb_alpha);
+	if (!data)
+	{
+		return false;
+	}
+
+	GLuint textureId;
+	glGenTextures(1, &textureId);
+	glBindTexture(GL_TEXTURE_2D, textureId);		
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+	
+	stbi_image_free(data);
+
+	uint32_t id = m_textureContainerMap.size() + 1;
+	TextureContainer textureContainer;
+	textureContainer.texture = textureId;
+	textureContainer.width = width;
+	textureContainer.height = height;
+	m_textureContainerMap.insert(std::pair<int, TextureContainer>(id, textureContainer));
+	return id;
 }
 
 // Privates 

@@ -14,6 +14,7 @@ namespace NexgenRedux
 
 		static bool Init();
 		static bool SetShader(std::string shaderName);
+		static bool LoadTexture(std::wstring path, uint32_t& textureID);
 	private:
 		static void CreateShaderLookup(std::string shaderName);
 		static bool AddShaderLookupKeyValue(std::string shaderName, std::string key, uint32_t value);

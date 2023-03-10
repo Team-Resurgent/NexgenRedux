@@ -131,6 +131,7 @@ namespace NexgenRedux
 		static void Close(void);
 
 		static bool SetShader(std::string shaderName);
+		static bool LoadTexture(std::wstring path, uint32_t& textureID);
 
 	private:
 		RenderState m_currentRenderState;

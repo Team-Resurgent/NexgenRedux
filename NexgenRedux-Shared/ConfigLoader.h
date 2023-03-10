@@ -13,8 +13,8 @@ namespace NexgenRedux
 			std::wstring LaunchFolder;
 		} ConfigData;
 
-		static bool LoadConfig(ConfigData& configData);
-	private:
-		static void ParseConfigLine(ConfigData& configData, std::string line);
+		static bool LoadConfig();
+		static std::wstring GetLaunchFolder();
+		static bool MapPath(const std::wstring& path, std::wstring& mappedPath);
 	};
 }

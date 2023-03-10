@@ -440,6 +440,12 @@ bool XboxOGWindowHelper::WindowClose(uint32_t windowHandle)
 
 bool XboxOGWindowHelper::RenderLoop(void)
 {
+	uint32_t textureID;
+    if (XboxOGRenderingHelper::LoadTexture(L"skin:background.png", textureID) == false)
+    {
+        return false;
+    }
+
 	if (WindowManager::GetWindowCount() > 0) 
 	{
 		bool exitRequested = false;
@@ -450,7 +456,7 @@ bool XboxOGWindowHelper::RenderLoop(void)
 
 			std::vector<uint32_t> windowHandles =  WindowManager::GetWindowHandles();
 
-			if (XboxOGWindowHelper::SetShader("Default") == false)
+			if (XboxOGRenderingHelper::SetShader("Default") == false)
 			{
 				return false;
 			}

@@ -30,14 +30,12 @@ int main(int argc, const char* argv[])
 {
 	//Gensys::Test::RunTests();
 
-	ConfigLoader::ConfigData configData;
-	memset(&configData, 0, sizeof(configData));
-	if (ConfigLoader::LoadConfig(configData) == false) 
+	if (ConfigLoader::LoadConfig() == false) 
 	{
 		return 0;
 	}
 
-    if (AngelScriptRunner::Init(configData.LaunchFolder) == false)
+    if (AngelScriptRunner::Init(ConfigLoader::GetLaunchFolder()) == false)
     {
         return 0;
     }

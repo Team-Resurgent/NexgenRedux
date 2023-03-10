@@ -19,14 +19,12 @@ void __cdecl main(int, char **)
 {
 	//Gensys::Test::RunTests();
 
-	ConfigLoader::ConfigData configData;
-	memset(&configData, 0, sizeof(configData));
-	if (ConfigLoader::LoadConfig(configData) == false) 
+    if (ConfigLoader::LoadConfig() == false) 
 	{
 		return;
 	}
 
-    if (AngelScriptRunner::Init(configData.LaunchFolder) == false)
+    if (AngelScriptRunner::Init(ConfigLoader::GetLaunchFolder()) == false)
     {
         return;
     }

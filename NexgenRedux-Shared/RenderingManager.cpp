@@ -27,3 +27,16 @@ bool RenderingManager::SetShader(std::string shaderName)
 	return false;
 #endif
 }
+
+bool RenderingManager::LoadTexture(std::wstring path, uint32_t& textureID)
+{
+#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
+	return OpenGLRenderingHelper::LoadTexture(path, textureID);
+#elif defined NEXGEN_OG 
+	return XboxOGRenderingHelper::LoadTexture(path, textureID);
+#elif defined NEXGEN_360
+	return true;
+#else
+	return false;
+#endif
+}

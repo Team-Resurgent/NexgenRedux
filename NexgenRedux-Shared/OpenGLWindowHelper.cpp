@@ -305,6 +305,12 @@ bool OpenGLWindowHelper::WindowClose(uint32_t windowHandle)
 
 bool OpenGLWindowHelper::RenderLoop(void)
 {
+    uint32_t textureID;
+    if (OpenGLRenderingHelper::LoadTexture(L"skin:background.png", textureID) == false)
+    {
+        return false;
+    }
+
 	if (WindowManager::GetWindowCount() > 0) 
 	{
 		bool exitRequested = false;

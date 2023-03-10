@@ -10,7 +10,10 @@ namespace NexgenRedux
 	class OpenGLRenderingHelper
 	{		
 	public:
-		static bool Init(uint32_t windowHandle);
+		static void Close(void);
+
+		static bool Init();
+		static bool SetShader(std::string shaderName);
 	private:
 		static void CreateShaderLookup(std::string shaderName);
 		static bool AddShaderLookupKeyValue(std::string shaderName, std::string key, uint32_t value);

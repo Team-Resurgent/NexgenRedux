@@ -1,10 +1,10 @@
 #if defined NEXGEN_OG
 
 #include "XboxOGWindowHelper.h"
+#include "XboxOGRenderingHelper.h"
 #include "AngelScriptRunner.h"
 #include "WindowManager.h"
 #include "Constants.h"
-#include "RenderingManager.h"
 
 #include <Gensys/Int.h>
 #include <Gensys/DebugUtility.h>
@@ -26,6 +26,7 @@ namespace
 	} KeyInfo;
 
 	bool m_initialized = false;
+	IDirect3DDevice8* m_d3dDevice;
 
 	std::string m_clipboardValue = "";
 
@@ -275,8 +276,7 @@ bool XboxOGWindowHelper::WindowCreateWithVideoMode(WindowManager::MonitorVideoMo
 	d3dPresentParameters.AutoDepthStencilFormat = D3DFMT_D24S8;	
 	d3dPresentParameters.FullScreen_PresentationInterval = D3DPRESENT_INTERVAL_ONE;
 
-	IDirect3DDevice8* d3dDevice;
-	if (FAILED(IDirect3D8::CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, NULL, D3DCREATE_HARDWARE_VERTEXPROCESSING, &d3dPresentParameters, &d3dDevice)))
+	if (FAILED(IDirect3D8::CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, NULL, D3DCREATE_HARDWARE_VERTEXPROCESSING, &d3dPresentParameters, &m_d3dDevice)))
 	{
 		return false;
 	}
@@ -284,10 +284,10 @@ bool XboxOGWindowHelper::WindowCreateWithVideoMode(WindowManager::MonitorVideoMo
     WindowManager::WindowContainer windowContainer;
 	windowContainer.width = selectedDisplayMode.Width;
     windowContainer.height = selectedDisplayMode.Height;
-    windowContainer.window = d3dDevice;
+    windowContainer.window = NULL;
     windowHandle = WindowManager::AddWindowContainer(windowContainer);
 
-	return RenderingManager::Init(windowHandle);
+	return XboxOGRenderingHelper::Init();
 }
 
 bool XboxOGWindowHelper::WindowCreateWithSize(uint32_t width, uint32_t height, uint32_t& windowHandle)
@@ -354,8 +354,7 @@ bool XboxOGWindowHelper::WindowCreateWithSize(uint32_t width, uint32_t height, u
 	d3dPresentParameters.AutoDepthStencilFormat = D3DFMT_D24S8;	
 	d3dPresentParameters.FullScreen_PresentationInterval = D3DPRESENT_INTERVAL_ONE;
 
-	IDirect3DDevice8* d3dDevice;
-	if (FAILED(IDirect3D8::CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, NULL, D3DCREATE_HARDWARE_VERTEXPROCESSING, &d3dPresentParameters, &d3dDevice)))
+	if (FAILED(IDirect3D8::CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, NULL, D3DCREATE_HARDWARE_VERTEXPROCESSING, &d3dPresentParameters, &m_d3dDevice)))
 	{
 		return false;
 	}
@@ -363,10 +362,10 @@ bool XboxOGWindowHelper::WindowCreateWithSize(uint32_t width, uint32_t height, u
     WindowManager::WindowContainer windowContainer;
 	windowContainer.width = selectedDisplayMode.Width;
     windowContainer.height = selectedDisplayMode.Height;
-    windowContainer.window = d3dDevice;
+    windowContainer.window = NULL;
     windowHandle = WindowManager::AddWindowContainer(windowContainer);
 
-	return RenderingManager::Init(windowHandle);
+	return XboxOGRenderingHelper::Init();
 }
 
 bool XboxOGWindowHelper::GetWindowSize(uint32_t windowHandle, uint32_t& width, uint32_t& height)
@@ -387,7 +386,7 @@ bool XboxOGWindowHelper::SetCursorMode(uint32_t windowHandle, uint32_t mode)
 	return true;
 }
 
-bool XboxOGWindowHelper::WindowRender(uint32_t& windowHandle, bool& exitRequested)
+bool XboxOGWindowHelper::WindowPreRender(uint32_t& windowHandle, bool& exitRequested)
 {
 	WindowManager::WindowContainer* windowContainer = WindowManager::GetWindowContainer(windowHandle);
 	if (windowContainer == NULL)
@@ -395,21 +394,36 @@ bool XboxOGWindowHelper::WindowRender(uint32_t& windowHandle, bool& exitRequeste
 		return false;
 	}
 
-	IDirect3DDevice8* d3dDevice = (IDirect3DDevice8*)windowContainer->window;
-
 	D3DCOLOR color = D3DCOLOR_RGBA(255, 0, 0, 255);
-	if (FAILED(d3dDevice->Clear(0, NULL, D3DCLEAR_TARGET, color, 0, 0)))
+	if (FAILED(m_d3dDevice->Clear(0, NULL, D3DCLEAR_TARGET, color, 0, 0)))
 	{
 		return false;
 	}
 
-	if (FAILED(d3dDevice->Present(NULL, NULL, NULL, NULL)))
+	if (FAILED(m_d3dDevice->Present(NULL, NULL, NULL, NULL)))
 	{
 		return false;
 	}
 
 	return true;
 }
+
+bool XboxOGWindowHelper::WindowPostRender(uint32_t& windowHandle)
+{
+	WindowManager::WindowContainer* windowContainer = WindowManager::GetWindowContainer(windowHandle);
+	if (windowContainer == NULL)
+	{
+		return false;
+	}
+
+	if (FAILED(m_d3dDevice->Present(NULL, NULL, NULL, NULL)))
+	{
+		return false;
+	}
+
+	return true;
+}
+
 
 bool XboxOGWindowHelper::WindowClose(uint32_t windowHandle)
 {
@@ -419,8 +433,7 @@ bool XboxOGWindowHelper::WindowClose(uint32_t windowHandle)
 		return false;
 	}
 
-	IDirect3DDevice8* d3dDevice = (IDirect3DDevice8*)windowContainer->window;
-	d3dDevice->Release();
+	m_d3dDevice->Release();
 	WindowManager::DeleteWindowContainer(windowHandle);
 	return true;
 }
@@ -437,18 +450,28 @@ bool XboxOGWindowHelper::RenderLoop(void)
 
 			std::vector<uint32_t> windowHandles =  WindowManager::GetWindowHandles();
 
+			if (XboxOGWindowHelper::SetShader("Default") == false)
+			{
+				return false;
+			}
+
 			for (uint32_t i = 0; i < windowHandles.size(); i++)
 			{
 				uint32_t windowHandle = windowHandles.at(i);
 				double dt = TimeUtility::GetDurationSeconds(previousNow, now);
+				if (XboxOGWindowHelper::WindowPreRender(windowHandles.at(i), exitRequested) == false)
+				{
+					DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "WindowPreRender failed.");
+					return false;
+				}
 				if (AngelScriptRunner::ExecuteRender(windowHandle, dt) == false)
 				{
 					DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteRender failed.");
 					return false;
 				}
-				if (XboxOGWindowHelper::WindowRender(windowHandles.at(i), exitRequested) == false)
+				if (XboxOGWindowHelper::WindowPostRender(windowHandles.at(i)) == false)
 				{
-					DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "WindowRender failed.");
+					DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "WindowPostRender failed.");
 					return false;
 				}
 			}
@@ -677,6 +700,11 @@ bool XboxOGWindowHelper::GetJoystickHatDirection(uint32_t joystickID, uint32_t h
 	direction |= (gamePad.wButtons & XINPUT_GAMEPAD_DPAD_DOWN) == XINPUT_GAMEPAD_DPAD_DOWN ? 4 : 0;
 	direction |= (gamePad.wButtons & XINPUT_GAMEPAD_DPAD_LEFT) == XINPUT_GAMEPAD_DPAD_LEFT ? 8 : 0;
 	return true;
+}
+
+void* XboxOGWindowHelper::GetD3DDevice()
+{
+	return m_d3dDevice;
 }
 
 // Privates

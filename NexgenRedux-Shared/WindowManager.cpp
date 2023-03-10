@@ -31,6 +31,7 @@ void WindowManager::Close(void)
 #elif defined NEXGEN_OG 
 	XboxOGWindowHelper::Close();
 #elif defined NEXGEN_360
+	return;
 #endif
 }
 

@@ -2,6 +2,8 @@
 
 #include "MathUtility.h"
 
+#include <string>
+
 namespace NexgenRedux
 {
 	class RenderingManager
@@ -126,7 +128,9 @@ namespace NexgenRedux
 			DrawModeState drawModeState;
 		} RenderState;
 
-		static bool Init(uint32_t windowHandle);
+		static void Close(void);
+
+		static bool SetShader(std::string shaderName);
 
 	private:
 		RenderState m_currentRenderState;

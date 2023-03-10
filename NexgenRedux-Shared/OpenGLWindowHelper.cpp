@@ -1,10 +1,10 @@
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
 
 #include "OpenGLWindowHelper.h"
+#include "OpenGLRenderingHelper.h"
 #include "AngelScriptRunner.h"
 #include "WindowManager.h"
 #include "Icon.h"
-#include "RenderingManager.h"
 
 #include <Gensys/DebugUtility.h>
 #include <Gensys/TimeUtility.h>
@@ -154,7 +154,7 @@ bool OpenGLWindowHelper::WindowCreateWithVideoMode(WindowManager::MonitorVideoMo
     windowContainer.window = window;
     windowHandle = WindowManager::AddWindowContainer(windowContainer);
 
-	return RenderingManager::Init(windowHandle);
+	return OpenGLRenderingHelper::Init();
 }
 
 bool OpenGLWindowHelper::WindowCreateWithSize(uint32_t width, uint32_t height, std::string title, uint32_t& windowHandle)
@@ -196,7 +196,7 @@ bool OpenGLWindowHelper::WindowCreateWithSize(uint32_t width, uint32_t height, s
     windowContainer.window = window;
     windowHandle = WindowManager::AddWindowContainer(windowContainer);
 
-	return RenderingManager::Init(windowHandle);
+	return OpenGLRenderingHelper::Init();
 }
 
 bool OpenGLWindowHelper::GetWindowSize(uint32_t windowHandle, uint32_t& width, uint32_t& height)
@@ -251,7 +251,7 @@ bool OpenGLWindowHelper::SetCursorMode(uint32_t windowHandle, uint32_t mode)
     return false;
 }
 
-bool OpenGLWindowHelper::WindowRender(uint32_t& windowHandle, bool& exitRequested)
+bool OpenGLWindowHelper::WindowPreRender(uint32_t& windowHandle, bool& exitRequested)
 {
  	WindowManager::WindowContainer* windowContainer = WindowManager::GetWindowContainer(windowHandle);
     if (windowContainer == NULL)
@@ -269,6 +269,19 @@ bool OpenGLWindowHelper::WindowRender(uint32_t& windowHandle, bool& exitRequeste
 	}
 
 	glfwMakeContextCurrent(window);
+
+	return true;
+}
+
+bool OpenGLWindowHelper::WindowPostRender(uint32_t& windowHandle)
+{
+    WindowManager::WindowContainer* windowContainer = WindowManager::GetWindowContainer(windowHandle);
+    if (windowContainer == NULL)
+	{
+		return false;
+	}
+
+	GLFWwindow* window = (GLFWwindow*)windowContainer->window;
 
 	glClearColor(1.0f, .1f, .1f, .1f);
 	glClear(GL_COLOR_BUFFER_BIT);
@@ -292,7 +305,8 @@ bool OpenGLWindowHelper::WindowClose(uint32_t windowHandle)
 
 bool OpenGLWindowHelper::RenderLoop(void)
 {
-	if (WindowManager::GetWindowCount() > 0) {
+	if (WindowManager::GetWindowCount() > 0) 
+	{
 		bool exitRequested = false;
 		while (exitRequested == false)
 		{
@@ -301,18 +315,28 @@ bool OpenGLWindowHelper::RenderLoop(void)
 
 			std::vector<uint32_t> windowHandles = WindowManager::GetWindowHandles();
 
+            if (OpenGLRenderingHelper::SetShader("Default") == false)
+            {
+                return false;
+            }
+
 			for (uint32_t i = 0; i < windowHandles.size(); i++)
 			{
 				uint32_t windowHandle = windowHandles.at(i);
 				double dt = TimeUtility::GetDurationSeconds(previousNow, now);
+                if (OpenGLWindowHelper::WindowPreRender(windowHandle, exitRequested) == false)
+				{
+					DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "WindowPreRender failed.");
+					return false;
+				}
 				if (AngelScriptRunner::ExecuteRender(windowHandle, dt) == false)
 				{
 					DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteRender failed.");
 					return false;
 				}
-				if (OpenGLWindowHelper::WindowRender(windowHandle, exitRequested) == false)
+				if (OpenGLWindowHelper::WindowPostRender(windowHandle) == false)
 				{
-					DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "WindowRender failed.");
+					DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "WindowPostRender failed.");
 					return false;
 				}
 			}

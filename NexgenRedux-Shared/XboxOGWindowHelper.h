@@ -24,7 +24,8 @@ namespace NexgenRedux
 		static bool WindowCreateWithSize(uint32_t width, uint32_t height, uint32_t& windowHandle);
 		static bool GetWindowSize(uint32_t windowHandle, uint32_t& width, uint32_t& height);
 		static bool SetCursorMode(uint32_t windowHandle, uint32_t mode);
-		static bool WindowRender(uint32_t& windowHandle, bool& exitRequested);
+		static bool WindowPreRender(uint32_t& windowHandle, bool& exitRequested);
+		static bool WindowPostRender(uint32_t& windowHandle);
 		static bool WindowClose(uint32_t windowHandle);
 		static bool RenderLoop(void);
 		static bool GetKeyPressed(uint32_t windowHandle, uint32_t key, uint32_t& pressed);
@@ -40,7 +41,8 @@ namespace NexgenRedux
 		static bool GetJoystickAxisStates(uint32_t joystickID, JoystickManager::JoystickAxisStates& joystickAxisStates);
 		static bool GetJoystickHatCount(uint32_t joystickID, uint32_t& count);
 		static bool GetJoystickHatDirection(uint32_t joystickID, uint32_t hatIndex, uint32_t& direction);
-	
+		static void* GetD3DDevice();
+
 	private:
 		static bool Init(void);
 		static bool InitKeyboard(void);

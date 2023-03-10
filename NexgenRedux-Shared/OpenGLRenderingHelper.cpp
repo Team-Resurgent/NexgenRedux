@@ -359,16 +359,25 @@ namespace
     std::map<std::string, std::map<std::string, uint32_t>> m_shaderValueMap;
 }
 
-bool OpenGLRenderingHelper::Init(uint32_t windowHandle)
+void OpenGLRenderingHelper::Close(void)
 {
-    if (m_initialized == false)
+	uint32_t program;
+	if (GetShaderLookupValue("Default", "Program", program) == true)
+	{
+		glDeleteProgram(program);
+	}
+}
+
+bool OpenGLRenderingHelper::Init()
+{
+    if (m_initialized == true)
     {
-        m_initialized = true;
         return true;
     }
-    
-    uint32_t program = CompileProgram(vertexShader, fragmentShader);
-    
+    m_initialized = true;
+
+	uint32_t program = CompileProgram(vertexShader, fragmentShader);
+
     CreateShaderLookup("Default");
     AddShaderLookupKeyValue("Default", "Program", program);
     AddShaderLookupKeyValue("Default", "aPosition", glGetAttribLocation(program, "aPosition"));
@@ -396,8 +405,17 @@ bool OpenGLRenderingHelper::Init(uint32_t windowHandle)
     AddShaderLookupKeyValue("Default", "uFogDensity", glGetUniformLocation(program, "uFogDensity"));
     AddShaderLookupKeyValue("Default", "uTintColor", glGetUniformLocation(program, "uTintColor"));
 
+	return true;
+}
+
+bool OpenGLRenderingHelper::SetShader(std::string shaderName)
+{
+	uint32_t program;
+	if (GetShaderLookupValue(shaderName, "Program", program) == false)
+	{
+		return false;
+	}
 	glUseProgram(program);
-	
 	return true;
 }
 

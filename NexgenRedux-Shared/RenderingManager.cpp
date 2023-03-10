@@ -4,12 +4,23 @@
 
 using namespace NexgenRedux;
 
-bool RenderingManager::Init(uint32_t windowHandle)
+void RenderingManager::Close(void)
 {
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	return OpenGLRenderingHelper::Init(windowHandle);
+	OpenGLRenderingHelper::Close();
 #elif defined NEXGEN_OG 
-	return XboxOGRenderingHelper::Init(windowHandle);
+	XboxOGRenderingHelper::Close();
+#elif defined NEXGEN_360
+	return;
+#endif
+}
+
+bool RenderingManager::SetShader(std::string shaderName)
+{
+#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
+	return OpenGLRenderingHelper::SetShader(shaderName);
+#elif defined NEXGEN_OG 
+	return XboxOGRenderingHelper::SetShader(shaderName);
 #elif defined NEXGEN_360
 	return true;
 #else

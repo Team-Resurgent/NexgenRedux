@@ -4,12 +4,17 @@
 
 #include <Gensys/Int.h>
 
+#include <string>
+
 namespace NexgenRedux
 {
 	class XboxOGRenderingHelper
 	{		
 	public:
-		static bool Init(uint32_t windowHandle);
+		static void Close(void);
+
+		static bool Init();
+		static bool SetShader(std::string shaderName);
 	};
 }
 

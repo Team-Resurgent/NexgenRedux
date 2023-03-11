@@ -518,7 +518,7 @@ bool OpenGLRenderingHelper::LoadTexture(std::wstring path, uint32_t& textureID)
 	return true;
 }
 
-bool OpenGLRenderingHelper::RenderDynamicBuffer(uint32_t meshID)
+bool OpenGLRenderingHelper::RenderMesh(uint32_t meshID)
 {
 	MeshUtility::Mesh* mesh = MeshUtility::GetMesh(meshID);
 	if (mesh == NULL)
@@ -531,6 +531,9 @@ bool OpenGLRenderingHelper::RenderDynamicBuffer(uint32_t meshID)
 	{
 		return false;
 	}
+
+	uint32_t requestedSize =  mesh->vertices.size() * sizeof(MeshUtility::Vertex);
+	ResizeDynamicBufferIfNeeded(requestedSize);
 
 	uint32_t aPosition;
 	GetShaderLookupValue("Default", "aPosition", aPosition);

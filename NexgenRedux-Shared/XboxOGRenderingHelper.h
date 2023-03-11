@@ -15,7 +15,7 @@ namespace NexgenRedux
 
 		typedef struct TextureContainer
 		{
-			IDirect3DTexture8 *texture;
+			IDirect3DTexture8* texture;
 			uint32_t width;
 			uint32_t height;
 		} TextureContainer;
@@ -25,7 +25,7 @@ namespace NexgenRedux
 		static bool Init();
 		static bool SetShader(std::string shaderName);
 		static bool LoadTexture(std::wstring path, uint32_t& textureID);
-		static bool RenderDynamicBuffer(uint32_t meshID);
+		static bool RenderMesh(uint32_t meshID);
 	private:
 
 		static void ResizeDynamicBufferIfNeeded(uint32_t requestedSize);

@@ -325,7 +325,7 @@ bool OpenGLWindowHelper::RenderLoop(void)
         return false;
     }
 
-    uint32_t meshID = MeshUtility::CreateQuadXY(MathUtility::Vec3F(10, 10, 0), MathUtility::SizeF(640, 480), MathUtility::RectF(0, 0, 1, 1), textureID);
+    uint32_t meshID = MeshUtility::CreateQuadXY(MathUtility::Vec3F(0, 0, 0), MathUtility::SizeF(640, 480), MathUtility::RectF(0, 0, 1, 1), textureID);
 
 	if (m_windowContainerMap.size() > 0) 
 	{
@@ -352,7 +352,7 @@ bool OpenGLWindowHelper::RenderLoop(void)
 					return false;
 				}
 
-                OpenGLRenderingHelper::RenderDynamicBuffer(meshID);
+                OpenGLRenderingHelper::RenderMesh(meshID);
 
 				if (AngelScriptRunner::ExecuteRender(windowHandle, dt) == false)
 				{

@@ -29,6 +29,8 @@ namespace
 
 	uint32_t m_maxTextureContainerID = 0;
 	std::map<uint32_t, XboxOGRenderingHelper::TextureContainer> m_textureContainerMap;
+
+
 }
 
 void XboxOGRenderingHelper::Close()
@@ -45,15 +47,7 @@ bool XboxOGRenderingHelper::Init()
     }
     m_initialized = true;
 
-	//CreateDynamicBuffer();
-
-		IDirect3DDevice8* d3dDevice = (IDirect3DDevice8*)XboxOGWindowHelper::GetD3DDevice();
-
-	m_dynamicBufferSize = 65535;
-	if (FAILED(d3dDevice->CreateVertexBuffer(65535, D3DUSAGE_WRITEONLY, 0, D3DPOOL_DEFAULT, &m_dynamicBuffer)))
-	{
-		return false;
-	}
+	CreateDynamicBuffer();
 
 	return true;
 }
@@ -214,52 +208,29 @@ bool XboxOGRenderingHelper::LoadTexture(std::wstring path, uint32_t& textureID)
 	{
 		return false;
 	}
-	
-	int width;
-	int height;
-	int channels;
-	unsigned char* data = stbi_load(StringUtility::ToString(mappedPath).c_str(), &width, &height, &channels, STBI_rgb_alpha);
-	if (!data)
-	{
-		return false;
-	}
 
 	IDirect3DDevice8* d3dDevice = (IDirect3DDevice8*)XboxOGWindowHelper::GetD3DDevice();
 
 	IDirect3DTexture8 *texture;
-	//if (FAILED(D3DXCreateTexture(d3dDevice, width, height, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &texture)))
-	//{
-	//	return false;
-	//}
+	if (FAILED(D3DXCreateTextureFromFileA(d3dDevice, StringUtility::ToString(mappedPath).c_str(), &texture)))
+	{
+		return false;
+	}
 
-	D3DXCreateTextureFromFileA(d3dDevice, StringUtility::ToString(mappedPath).c_str(), &texture);
-
-	//D3DLOCKED_RECT lockedRect;
-	//if (FAILED(texture->LockRect(0, &lockedRect, NULL, 0)))
-	//{
-	//	return false;
-	//}
-
-	//memcpy(lockedRect.pBits, data, width * height * channels);
-
-	//if (FAILED(texture->UnlockRect(0)))
-	//{
-	//	return false;
-	//}
-
-	stbi_image_free(data);
+	D3DSURFACE_DESC surfaceDesc;
+	texture->GetLevelDesc(0, &surfaceDesc);
 
 	uint32_t textureContainerID = ++m_maxTextureContainerID;
 	TextureContainer textureContainer;
 	textureContainer.texture = texture;
-	textureContainer.width = width;
-	textureContainer.height = height;
+	textureContainer.width = surfaceDesc.Width;
+	textureContainer.height = surfaceDesc.Height;
 	m_textureContainerMap.insert(std::pair<int, TextureContainer>(textureContainerID, textureContainer));
 	textureID = textureContainerID;
 	return true;
 }
 
-bool XboxOGRenderingHelper::RenderDynamicBuffer(uint32_t meshID)
+bool XboxOGRenderingHelper::RenderMesh(uint32_t meshID)
 {
 	MeshUtility::Mesh* mesh = MeshUtility::GetMesh(meshID);
 	if (mesh == NULL)
@@ -272,6 +243,9 @@ bool XboxOGRenderingHelper::RenderDynamicBuffer(uint32_t meshID)
 	{
 		return false;
 	}
+
+	uint32_t requestedSize =  mesh->vertices.size() * sizeof(MeshUtility::Vertex);
+	ResizeDynamicBufferIfNeeded(requestedSize);
 
 	/*uint32_t aPosition;
 	GetShaderLookupValue("Default", "aPosition", aPosition);
@@ -346,13 +320,7 @@ void XboxOGRenderingHelper::ResizeDynamicBufferIfNeeded(uint32_t requestedSize)
 
 void XboxOGRenderingHelper::CreateDynamicBuffer()
 {
-	IDirect3DDevice8* d3dDevice = (IDirect3DDevice8*)XboxOGWindowHelper::GetD3DDevice();
-
-	m_dynamicBufferSize = 65535;
-	if (FAILED(d3dDevice->CreateVertexBuffer(65535, D3DUSAGE_WRITEONLY, 0, D3DPOOL_DEFAULT, &m_dynamicBuffer)))
-	{
-		return;
-	}
+	ResizeDynamicBufferIfNeeded(65535);
 }
 
 void XboxOGRenderingHelper::DeleteDynamicBuffer()
@@ -377,11 +345,11 @@ XboxOGRenderingHelper::TextureContainer* XboxOGRenderingHelper::GetTextureContai
 
 void XboxOGRenderingHelper::DeleteTextures()
 {
-	//for (std::map<uint32_t, TextureContainer>::iterator it = m_textureContainerMap.begin(); it != m_textureContainerMap.end(); ++it)
-	//{
-	//	uint32_t texture = it->second.texture;
-	//	glDeleteTextures(1, &texture);
-	//}
+	for (std::map<uint32_t, TextureContainer>::iterator it = m_textureContainerMap.begin(); it != m_textureContainerMap.end(); ++it)
+	{
+		IDirect3DTexture8* texture = it->second.texture;
+		texture->Release();
+	}
 }
 
 #endif

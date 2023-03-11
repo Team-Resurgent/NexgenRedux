@@ -23,7 +23,6 @@ namespace NexgenRedux
 		} MonitorVideoMode;
 
     	static void Close(void);
-
 		static bool GetAvailableMonitorCount(uint32_t& monitorCount);
 		static bool GetMonitorVideoMode(uint32_t monitorIndex, MonitorVideoMode& monitorVideoMode);
 		static bool GetMonitorVideoModes(uint32_t monitorIndex, std::vector<MonitorVideoMode>& monitorVideoModes);
@@ -39,19 +38,5 @@ namespace NexgenRedux
 		static bool SetMouseCursorPosition(uint32_t windowHandle, double xPos, double yPos);
 		static bool GetClipboardString(std::string& value);
 		static bool SetClipboardString(std::string value);
-
-		// friend class OpenGLWindowHelper;
-		// friend class XboxOGWindowHelper;
-		// friend class OpenGLRenderingHelper;
-		// friend class XboxOGRenderingHelper;
-
-	private:
-
-		// static uint32_t GetWindowCount(void);
-		// static bool GetWindowHandle(void* window, uint32_t& windowHandle);
-		// static std::vector<uint32_t> GetWindowHandles(void);
-		// static uint32_t AddWindowContainer(WindowContainer windowContainer);
-		// static WindowContainer* GetWindowContainer(uint32_t windowHandle);
-		// static void DeleteWindowContainer(uint32_t windowHandle);
 	};
 }

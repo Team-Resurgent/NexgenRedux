@@ -25,7 +25,7 @@ namespace NexgenRedux
 		static bool Init();
 		static bool SetShader(std::string shaderName);
 		static bool LoadTexture(std::wstring path, uint32_t& textureID);
-		static bool RenderDynamicBuffer(uint32_t meshID);
+		static bool RenderMesh(uint32_t meshID);
 	private:
 
 		static void ResizeDynamicBufferIfNeeded(uint32_t requestedSize);

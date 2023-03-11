@@ -15,6 +15,14 @@ namespace NexgenRedux
 	class OpenGLWindowHelper
 	{		
 	public:
+
+		typedef struct WindowContainer
+		{
+			uint32_t width;
+			uint32_t height;
+			GLFWwindow* window;
+		} WindowContainer;
+
 		static void Close(void);
 
 		static bool GetAvailableMonitorCount(uint32_t& monitorCount);
@@ -57,6 +65,8 @@ namespace NexgenRedux
 		static void WindowMouseScroll(GLFWwindow* window, double xOffset, double yOffset);
 		static void WindowDrop(GLFWwindow* window, int count, const char** paths);
 		static void JoystickConnect(int joystickID, int event);
+		static bool GetWindowHandle(GLFWwindow* window, uint32_t& windowHandle);
+		static std::vector<uint32_t> GetWindowHandles(void);
 	};
 }
 

@@ -18,11 +18,11 @@
 using namespace Gensys;
 using namespace NexgenRedux;
 
-namespace 
-{
-	uint32_t m_maxWindowContainerID = 0;
-	std::map<uint32_t, WindowManager::WindowContainer> m_windowContainerMap;
-}
+// namespace 
+// {
+// 	uint32_t m_maxWindowContainerID = 0;
+// 	std::map<uint32_t, WindowManager::WindowContainer> m_windowContainerMap;
+// }
 
 void WindowManager::Close(void) 
 {
@@ -232,53 +232,52 @@ bool WindowManager::SetClipboardString(std::string value)
 
 // Privates
 
-uint32_t WindowManager::GetWindowCount(void)
-{
-	return (uint32_t)m_windowContainerMap.size();
-}
+// uint32_t WindowManager::GetWindowCount(void)
+// {
+// 	return (uint32_t)m_windowContainerMap.size();
+// }
 
-bool WindowManager::GetWindowHandle(void* window, uint32_t& windowHandle)
-{
-	for (std::map<uint32_t, WindowContainer>::iterator it = m_windowContainerMap.begin(); it != m_windowContainerMap.end(); ++it)
-	{
-		if (it->second.window == window)
-		{
-			windowHandle = it->first;
-			return true;
-		} 
-	}
-	return false;
-}
+// bool WindowManager::GetWindowHandle(void* window, uint32_t& windowHandle)
+// {
+// 	for (std::map<uint32_t, WindowContainer>::iterator it = m_windowContainerMap.begin(); it != m_windowContainerMap.end(); ++it)
+// 	{
+// 		if (it->second.window == window)
+// 		{
+// 			windowHandle = it->first;
+// 			return true;
+// 		} 
+// 	}
+// 	return false;
+// }
 
-std::vector<uint32_t> WindowManager::GetWindowHandles(void)
-{
-	std::vector<uint32_t> windowHandles;
-	for (std::map<uint32_t, WindowContainer>::iterator it = m_windowContainerMap.begin(); it != m_windowContainerMap.end(); ++it)
-	{
-		 windowHandles.push_back(it->first);
-	}
-	return windowHandles;
-}
+// std::vector<uint32_t> WindowManager::GetWindowHandles(void)
+// {
+// 	std::vector<uint32_t> windowHandles;
+// 	for (std::map<uint32_t, WindowContainer>::iterator it = m_windowContainerMap.begin(); it != m_windowContainerMap.end(); ++it)
+// 	{
+// 		 windowHandles.push_back(it->first);
+// 	}
+// 	return windowHandles;
+// }
 
-uint32_t WindowManager::AddWindowContainer(WindowManager::WindowContainer windowContainer)
-{
-	uint32_t result = m_maxWindowContainerID;
-	m_windowContainerMap.insert(std::pair<uint32_t, WindowContainer>(result, windowContainer));
-	m_maxWindowContainerID++;
-	return result;
-}
+// uint32_t WindowManager::AddWindowContainer(WindowManager::WindowContainer windowContainer)
+// {
+// 	uint32_t windowContainerID = ++m_maxWindowContainerID;
+// 	m_windowContainerMap.insert(std::pair<uint32_t, WindowContainer>(windowContainerID, windowContainer));
+// 	return windowContainerID;
+// }
 
-WindowManager::WindowContainer* WindowManager::GetWindowContainer(uint32_t windowHandle)
-{
-	std::map<uint32_t, WindowContainer>::iterator it = m_windowContainerMap.find(windowHandle);
-	if (it == m_windowContainerMap.end()) 
-	{
-		return NULL;
-	}
-	return (WindowContainer*)&it->second;
-}
+// WindowManager::WindowContainer* WindowManager::GetWindowContainer(uint32_t windowHandle)
+// {
+// 	std::map<uint32_t, WindowContainer>::iterator it = m_windowContainerMap.find(windowHandle);
+// 	if (it == m_windowContainerMap.end()) 
+// 	{
+// 		return NULL;
+// 	}
+// 	return (WindowContainer*)&it->second;
+// }
 
-void WindowManager::DeleteWindowContainer(uint32_t windowHandle)
-{
-	m_windowContainerMap.erase(windowHandle);
-}
+// void WindowManager::DeleteWindowContainer(uint32_t windowHandle)
+// {
+// 	m_windowContainerMap.erase(windowHandle);
+// }

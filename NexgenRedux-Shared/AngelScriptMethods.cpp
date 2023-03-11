@@ -125,7 +125,7 @@ void AngelScriptMethods::GetWindowSize(asIScriptGeneric* gen)
 			return;
 		}
 	}
-	MathUtility::Size size;
+	MathUtility::SizeI size;
 	size.width = width;
 	size.height = height;
 	gen->SetReturnObject(&size);

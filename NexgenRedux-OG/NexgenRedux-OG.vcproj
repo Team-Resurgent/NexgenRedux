@@ -183,6 +183,12 @@
 				RelativePath="..\NexgenRedux-Shared\MathUtility.h">
 			</File>
 			<File
+				RelativePath="..\NexgenRedux-Shared\MeshUtility.cpp">
+			</File>
+			<File
+				RelativePath="..\NexgenRedux-Shared\MeshUtility.h">
+			</File>
+			<File
 				RelativePath="..\NexgenRedux-Shared\OpenGLRenderingHelper.cpp">
 			</File>
 			<File

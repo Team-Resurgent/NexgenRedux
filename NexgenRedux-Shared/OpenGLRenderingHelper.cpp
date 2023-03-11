@@ -363,23 +363,18 @@ namespace
     bool m_initialized = false;
     std::map<std::string, std::map<std::string, uint32_t>> m_shaderValueMap;
 
-	typedef struct TextureContainer
-	{
-		uint32_t texture;
-		uint32_t width;
-		uint32_t height;
-	} TextureContainer;
+	uint32_t m_dynamicBuffer;
+	uint32_t m_dynamicBufferSize = 0;
 
-	std::map<uint32_t, TextureContainer> m_textureContainerMap;
+    uint32_t m_maxTextureContainerID = 0;
+	std::map<uint32_t, OpenGLRenderingHelper::TextureContainer> m_textureContainerMap;
 }
 
 void OpenGLRenderingHelper::Close(void)
 {
-	uint32_t program;
-	if (GetShaderLookupValue("Default", "Program", program) == true)
-	{
-		glDeleteProgram(program);
-	}
+	DeleteShaders();
+	DeleteTextures();
+	DeleteDynamicBuffer();
 }
 
 bool OpenGLRenderingHelper::Init()
@@ -419,6 +414,8 @@ bool OpenGLRenderingHelper::Init()
     AddShaderLookupKeyValue("Default", "uFogDensity", glGetUniformLocation(program, "uFogDensity"));
     AddShaderLookupKeyValue("Default", "uTintColor", glGetUniformLocation(program, "uTintColor"));
 
+	CreateDynamicBuffer();
+
 	return true;
 }
 
@@ -430,6 +427,56 @@ bool OpenGLRenderingHelper::SetShader(std::string shaderName)
 		return false;
 	}
 	glUseProgram(program);
+
+	MathUtility::Vec3F eye = MathUtility::Vec3F(0, 0, 2);
+	MathUtility::Vec3F target = MathUtility::Vec3F(0, 0, 0);
+	MathUtility::Vec3F up = MathUtility::Vec3F(0, 1, 0);
+	MathUtility::Matrix4x4 viewMatrix = MathUtility::Matrix4x4::LookAtRH(eye, target, up);
+	MathUtility::Matrix4x4 modelMatrix = MathUtility::Matrix4x4();
+	MathUtility::Matrix4x4 perspectiveMatrix = MathUtility::Matrix4x4::OrthoOffCenterRH(0, 640, 0, 480, 1, 100);
+
+	uint32_t value;
+	GetShaderLookupValue("Default", "uModelMatrix", value);
+	glUniformMatrix4fv(value, 1, GL_FALSE, modelMatrix.values);
+	GetShaderLookupValue("Default", "uViewMatrix", value);
+	glUniformMatrix4fv(value, 1, GL_FALSE, viewMatrix.values);
+	GetShaderLookupValue("Default", "uProjectionMatrix", value);
+	glUniformMatrix4fv(value, 1, GL_FALSE, perspectiveMatrix.values);
+	GetShaderLookupValue("Default", "uCameraPosition", value);
+	glUniform4f(value, -viewMatrix.values[12], -viewMatrix.values[13], -viewMatrix.values[14], 0);
+	GetShaderLookupValue("Default", "uAmbientColor", value);
+	glUniform4f(value, 0.1f, 0.1f, 0.1f, 0);
+	GetShaderLookupValue("Default", "uLightPosition0", value);
+	glUniform4f(value, 0, 0, 0, 0);
+	GetShaderLookupValue("Default", "uLightDiffuseColor0", value);
+	glUniform4f(value, 0, 0, 0, -1.0f);
+	GetShaderLookupValue("Default", "uLightPosition1", value);
+	glUniform4f(value, 0, 0, 0, 0);
+	GetShaderLookupValue("Default", "uLightDiffuseColor1", value);
+	glUniform4f(value, 0, 0, 0, -1.0f);
+	GetShaderLookupValue("Default", "uLightPosition2", value);
+	glUniform4f(value, 0, 0, 0, 0);
+	GetShaderLookupValue("Default", "uLightDiffuseColor2", value);
+	glUniform4f(value, 0, 0, 0, -1.0f);
+	GetShaderLookupValue("Default", "uLightPosition3", value);
+	glUniform4f(value, 0, 0, 0, 0);
+	GetShaderLookupValue("Default", "uLightDiffuseColor3", value);
+	glUniform4f(value, 0, 0, 0, -1.0f);
+	GetShaderLookupValue("Default", "uLightsEnable", value);
+	glUniform1i(value, 0);
+	GetShaderLookupValue("Default", "uFogMode", value);
+	glUniform1i(value, 0);
+	GetShaderLookupValue("Default", "uFogColor", value);
+	glUniform4f(value, 0, 0, 0, 1);
+	GetShaderLookupValue("Default", "uFogStart", value);
+	glUniform1f(value, 0);
+	GetShaderLookupValue("Default", "uFogEnd", value);
+	glUniform1f(value, 0);
+	GetShaderLookupValue("Default", "uFogDensity", value);
+	glUniform1f(value, 0);
+	GetShaderLookupValue("Default", "uTintColor", value);
+	glUniform4f(value, 1, 1, 1, 1);
+
 	return true;
 }
 
@@ -461,17 +508,104 @@ bool OpenGLRenderingHelper::LoadTexture(std::wstring path, uint32_t& textureID)
 	
 	stbi_image_free(data);
 
-	uint32_t id = m_textureContainerMap.size() + 1;
+	uint32_t textureContainerID = ++m_maxTextureContainerID;
 	TextureContainer textureContainer;
 	textureContainer.texture = textureId;
 	textureContainer.width = width;
 	textureContainer.height = height;
-	m_textureContainerMap.insert(std::pair<int, TextureContainer>(id, textureContainer));
-	textureID = id;
+	m_textureContainerMap.insert(std::pair<int, TextureContainer>(textureContainerID, textureContainer));
+	textureID = textureContainerID;
+	return true;
+}
+
+bool OpenGLRenderingHelper::RenderDynamicBuffer(uint32_t meshID)
+{
+	MeshUtility::Mesh* mesh = MeshUtility::GetMesh(meshID);
+	if (mesh == NULL)
+	{
+		return false;
+	}
+
+	TextureContainer* textureContainer = GetTextureContainer(mesh->textureID);
+	if (textureContainer == NULL)
+	{
+		return false;
+	}
+
+	uint32_t aPosition;
+	GetShaderLookupValue("Default", "aPosition", aPosition);
+	uint32_t aNormal;
+	GetShaderLookupValue("Default", "aNormal", aNormal);
+	uint32_t aTexCoord;
+	GetShaderLookupValue("Default", "aTexCoord", aTexCoord);
+
+	glActiveTexture(GL_TEXTURE0 + 0);
+	glBindTexture(GL_TEXTURE_2D, textureContainer->texture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	glBindBuffer(GL_ARRAY_BUFFER, m_dynamicBuffer);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, mesh->vertices.size() * sizeof(MeshUtility::Vertex), mesh->vertices.data());
+
+	glBindBuffer(GL_ARRAY_BUFFER, m_dynamicBuffer);
+	glEnableVertexAttribArray(aPosition);
+	glVertexAttribPointer(aPosition, 3, GL_FLOAT, GL_FALSE, sizeof(MeshUtility::Vertex), (void*)offsetof(MeshUtility::Vertex, position));
+	glEnableVertexAttribArray(aNormal);
+	glVertexAttribPointer(aNormal, 3, GL_FLOAT, GL_FALSE, sizeof(MeshUtility::Vertex), (void*)offsetof(MeshUtility::Vertex, normal));
+	glEnableVertexAttribArray(aTexCoord);
+	glVertexAttribPointer(aTexCoord, 2, GL_FLOAT, GL_FALSE, sizeof(MeshUtility::Vertex), (void*)offsetof(MeshUtility::Vertex, texcoord));
+
+	uint32_t vertexCount = mesh->vertices.size();
+	glDrawArrays(GL_TRIANGLES, 0, (GLsizei)vertexCount);
 	return true;
 }
 
 // Privates 
+
+void OpenGLRenderingHelper::ResizeDynamicBufferIfNeeded(uint32_t requestedSize)
+{
+	if (requestedSize <= m_dynamicBufferSize)
+	{
+		return;
+	}
+	glBindBuffer(GL_ARRAY_BUFFER, m_dynamicBuffer);
+	glBufferData(GL_ARRAY_BUFFER, requestedSize, nullptr, GL_DYNAMIC_DRAW);
+	m_dynamicBufferSize = requestedSize;
+}
+
+void OpenGLRenderingHelper::CreateDynamicBuffer()
+{
+	glGenBuffers(1, &m_dynamicBuffer);
+	ResizeDynamicBufferIfNeeded(65535);
+}
+
+void OpenGLRenderingHelper::DeleteDynamicBuffer()
+{
+	if (m_dynamicBufferSize == 0)
+	{
+		return;
+	}
+	glDeleteBuffers(1, &m_dynamicBuffer);
+}
+
+OpenGLRenderingHelper::TextureContainer* OpenGLRenderingHelper::GetTextureContainer(uint32_t textureID)
+{
+    std::map<uint32_t, TextureContainer>::iterator it = m_textureContainerMap.find(textureID);
+	if (it == m_textureContainerMap.end()) 
+	{
+		return NULL;
+	}
+	return (TextureContainer*)&it->second;
+}
+
+void OpenGLRenderingHelper::DeleteTextures()
+{
+	for (std::map<uint32_t, TextureContainer>::iterator it = m_textureContainerMap.begin(); it != m_textureContainerMap.end(); ++it)
+	{
+		uint32_t texture = it->second.texture;
+		glDeleteTextures(1, &texture);
+	}
+}
 
 void OpenGLRenderingHelper::CreateShaderLookup(std::string shaderName)
 {
@@ -509,6 +643,15 @@ bool OpenGLRenderingHelper::GetShaderLookupValue(std::string shaderName, std::st
 
 	value = keyValueIt->second;
     return true;
+}
+
+void OpenGLRenderingHelper::DeleteShaders()
+{
+	uint32_t program;
+	if (GetShaderLookupValue("Default", "Program", program) == true)
+	{
+		glDeleteProgram(program);
+	}
 }
 
 #endif

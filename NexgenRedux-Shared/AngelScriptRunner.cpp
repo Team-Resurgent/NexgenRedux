@@ -155,9 +155,9 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
     if (m_engine->RegisterObjectProperty("Vec2D", "double x", asOFFSET(MathUtility::Vec2D, x)) < 0) { return false; }
     if (m_engine->RegisterObjectProperty("Vec2D", "double y", asOFFSET(MathUtility::Vec2D, y)) < 0) { return false; }
 
-	if (m_engine->RegisterObjectType("Size", sizeof(MathUtility::Size), asOBJ_VALUE | asOBJ_POD) < 0) { return false; }
-    if (m_engine->RegisterObjectProperty("Size", "uint width", asOFFSET(MathUtility::Size, width)) < 0) { return false; }
-    if (m_engine->RegisterObjectProperty("Size", "uint height", asOFFSET(MathUtility::Size, height)) < 0) { return false; }
+	if (m_engine->RegisterObjectType("SizeI", sizeof(MathUtility::SizeI), asOBJ_VALUE | asOBJ_POD) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("SizeI", "int width", asOFFSET(MathUtility::SizeI, width)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("SizeI", "int height", asOFFSET(MathUtility::SizeI, height)) < 0) { return false; }
 
 	if (m_engine->RegisterGlobalFunction("void SeedRandom()", asFUNCTION(AngelScriptMethods::SeedRandom), asCALL_GENERIC) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void SeedRandomWithValue(int value)", asFUNCTION(AngelScriptMethods::SeedRandomWithValue), asCALL_GENERIC) < 0) { return false; }
@@ -172,7 +172,7 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	if (m_engine->RegisterGlobalFunction("array<MonitorVideoMode> @GetMonitorVideoModes(uint monitorIndex)", asFUNCTION(AngelScriptMethods::GetMonitorVideoModes), asCALL_GENERIC) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("uint WindowCreateWithVideoMode(MonitorVideoMode monitorVideoMode, string &in title)", asFUNCTION(AngelScriptMethods::WindowCreateWithVideoMode), asCALL_GENERIC) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("uint WindowCreateWithSize(uint width, uint height, string &in title)", asFUNCTION(AngelScriptMethods::WindowCreateWithSize), asCALL_GENERIC) < 0) { return false; }
-	if (m_engine->RegisterGlobalFunction("Size GetWindowSize(uint windowHandle)", asFUNCTION(AngelScriptMethods::GetWindowSize), asCALL_GENERIC) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("SizeI GetWindowSize(uint windowHandle)", asFUNCTION(AngelScriptMethods::GetWindowSize), asCALL_GENERIC) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void SetCursorMode(uint windowHandle, uint mode)", asFUNCTION(AngelScriptMethods::SetCursorMode), asCALL_GENERIC) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void WindowClose(uint windowHandle)", asFUNCTION(AngelScriptMethods::WindowClose), asCALL_GENERIC) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("uint GetKeyPressed(uint windowHandle, uint key)", asFUNCTION(AngelScriptMethods::GetKeyPressed), asCALL_GENERIC) < 0) { return false; }

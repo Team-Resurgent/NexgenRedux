@@ -15,6 +15,13 @@ namespace NexgenRedux
 	class XboxOGWindowHelper
 	{		
 	public:
+
+		typedef struct WindowContainer
+		{
+			uint32_t width;
+			uint32_t height;
+		} WindowContainer;
+
 		static void Close(void);
 
 		static bool GetAvailableMonitorCount(uint32_t& monitorCount);
@@ -50,6 +57,7 @@ namespace NexgenRedux
 		static void ProcessController();
 		static void ProcessKeyboard();
 		static void ProcessMouse();
+		static std::vector<uint32_t> GetWindowHandles(void);
 	};
 }
 

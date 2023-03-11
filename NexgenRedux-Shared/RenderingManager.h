@@ -91,13 +91,13 @@ namespace NexgenRedux
 
 		typedef struct ViewportState
 		{
-			MathUtility::Rect rect;
+			MathUtility::RectF rect;
 		} ViewportState;
 
 		typedef struct ScissorState
 		{
 			bool enabled;
-			MathUtility::Rect rect;
+			MathUtility::RectF rect;
 		} ScissorState;
 
 		typedef struct DrawModeState

@@ -284,7 +284,6 @@ namespace NexgenRedux
 				return result;
 			}
 
-
 			static Matrix4x4 Scale(const Vec3F value)
 			{
 				Matrix4x4 result;
@@ -346,13 +345,13 @@ namespace NexgenRedux
 				return result;
 			}
 
-			Matrix4x4 LookAtRH(const Vec3F& eye, const Vec3F& target, const Vec3F& up)
+			static Matrix4x4 LookAtRH(const Vec3F& eye, const Vec3F& target, const Vec3F& up)
 			{
 				Vec3F zaxis = eye - target;
 				zaxis = zaxis.Normal();
 				
 				Vec3F xaxis = up;
-				xaxis.Cross(zaxis);
+				xaxis = xaxis.Cross(zaxis);
 				xaxis = xaxis.Normal();
 
 				Vec3F yaxis = zaxis.Cross(xaxis);
@@ -370,20 +369,20 @@ namespace NexgenRedux
 				result.values[9] = yaxis.values[2];
 				result.values[10] = zaxis.values[2];
 				result.values[11] = 0;
-				result.values[12] = -xaxis.Dot(eye);;
-				result.values[13] = -yaxis.Dot(eye);;
-				result.values[14] = -zaxis.Dot(eye);;
+				result.values[12] = -xaxis.Dot(eye);
+				result.values[13] = -yaxis.Dot(eye);
+				result.values[14] = -zaxis.Dot(eye);
 				result.values[15] = 1;
 				return result;
 			}
 					
-			Matrix4x4 LookAtLH(const Vec3F eye, const Vec3F target, const Vec3F up)
+			static Matrix4x4 LookAtLH(const Vec3F eye, const Vec3F target, const Vec3F up)
 			{
 				Vec3F zaxis = target - eye;
 				zaxis = zaxis.Normal();
 				
 				Vec3F xaxis = up;
-				xaxis.Cross(zaxis);
+				xaxis = xaxis.Cross(zaxis);
 				xaxis = xaxis.Normal();
 
 				Vec3F yaxis = zaxis.Cross(xaxis);
@@ -401,9 +400,9 @@ namespace NexgenRedux
 				result.values[9] = yaxis.values[2];
 				result.values[10] = zaxis.values[2];
 				result.values[11] = 0;
-				result.values[12] = -xaxis.Dot(eye);;
-				result.values[13] = -yaxis.Dot(eye);;
-				result.values[14] = -zaxis.Dot(eye);;
+				result.values[12] = -xaxis.Dot(eye);
+				result.values[13] = -yaxis.Dot(eye);
+				result.values[14] = -zaxis.Dot(eye);
 				result.values[15] = 1;
 				return result;
 			}
@@ -558,20 +557,20 @@ namespace NexgenRedux
 
 		} Matrix4x4;
 
-		typedef struct Size
+		typedef struct SizeI
 		{
 			union {
 				struct {
-					uint32_t width;
-					uint32_t height;
+					int32_t width;
+					int32_t height;
 				};
-				uint32_t values[2];
+				int32_t values[2];
 			};
 
-			Size() : width(0), height(0) {}  
-			Size(uint32_t width, uint32_t height) : width(width), height(height) {}  
+			SizeI() : width(0), height(0) {}  
+			SizeI(int32_t width, int32_t height) : width(width), height(height) {}  
 
-			Size(const Size& other) 
+			SizeI(const SizeI& other) 
 			{
 				for (uint32_t i = 0; i < 2; i++)
 				{
@@ -579,23 +578,70 @@ namespace NexgenRedux
 				}
 			}
 
-		} Size;
+		} SizeI;
 
-		struct Rect
+		typedef struct SizeF
 		{
 			union {
 				struct {
-					uint32_t x;
-					uint32_t y;
-					uint32_t width;
-					uint32_t height;
+					float width;
+					float height;
 				};
-				uint32_t values[4];
+				float values[2];
 			};
 
-			Rect(uint32_t x, uint32_t y, uint32_t width, uint32_t height) : x(x), y(y), width(width), height(height) {}  
+			SizeF() : width(0), height(0) {}  
+			SizeF(float width, float height) : width(width), height(height) {}  
 
-			Rect(const Rect& other) 
+			SizeF(const SizeF& other) 
+			{
+				for (uint32_t i = 0; i < 2; i++)
+				{
+					values[i] = other.values[i];
+				}
+			}
+
+		} SizeF;
+
+		struct RectI
+		{
+			union {
+				struct {
+					int32_t x;
+					int32_t y;
+					int32_t width;
+					int32_t height;
+				};
+				int32_t values[4];
+			};
+
+			RectI(int32_t x, int32_t y, int32_t width, int32_t height) : x(x), y(y), width(width), height(height) {}  
+
+			RectI(const RectI& other) 
+			{
+				for (uint32_t i = 0; i < 4; i++)
+				{
+					values[i] = other.values[i];
+				}
+			} 
+
+		};
+
+		struct RectF
+		{
+			union {
+				struct {
+					float x;
+					float y;
+					float width;
+					float height;
+				};
+				float values[4];
+			};
+
+			RectF(float x, float y, float width, float height) : x(x), y(y), width(width), height(height) {}  
+
+			RectF(const RectF& other) 
 			{
 				for (uint32_t i = 0; i < 4; i++)
 				{

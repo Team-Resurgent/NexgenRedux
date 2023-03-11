@@ -4,6 +4,8 @@
 #include "XboxOGRenderingHelper.h"
 #include "AngelScriptRunner.h"
 #include "WindowManager.h"
+#include "MeshUtility.h"
+#include "MathUtility.h"
 #include "Constants.h"
 
 #include <Gensys/Int.h>
@@ -26,6 +28,10 @@ namespace
 	} KeyInfo;
 
 	bool m_initialized = false;
+
+    uint32_t m_maxWindowContainerID = 0;
+	std::map<uint32_t, XboxOGWindowHelper::WindowContainer> m_windowContainerMap;
+
 	IDirect3DDevice8* m_d3dDevice;
 
 	std::string m_clipboardValue = "";
@@ -55,10 +61,10 @@ namespace
 
 void XboxOGWindowHelper::Close(void) 
 {
-	std::vector<uint32_t> windowHandles = WindowManager::GetWindowHandles();
-	for (uint32_t i = 0; i < windowHandles.size(); i++) 
+    std::vector<uint32_t> windowHandles = GetWindowHandles();
+    for (uint32_t i = 0; i < windowHandles.size(); i++)
 	{
-		WindowManager::WindowClose(windowHandles.at(i));
+        WindowClose(windowHandles.at(i));
 	}
 
 	for (uint32_t i = 0; i < XGetPortCount(); i++) 
@@ -194,7 +200,7 @@ bool XboxOGWindowHelper::GetMonitorVideoModes(uint32_t monitorIndex, std::vector
 
 bool XboxOGWindowHelper::WindowCreateWithVideoMode(WindowManager::MonitorVideoMode monitorVideoMode, uint32_t& windowHandle)
 {
-	if (WindowManager::GetWindowCount() > 0)
+	if (m_windowContainerMap.size() > 0)
 	{
 		return false;
 	}
@@ -281,18 +287,20 @@ bool XboxOGWindowHelper::WindowCreateWithVideoMode(WindowManager::MonitorVideoMo
 		return false;
 	}
 
-    WindowManager::WindowContainer windowContainer;
+    WindowContainer windowContainer;
 	windowContainer.width = selectedDisplayMode.Width;
     windowContainer.height = selectedDisplayMode.Height;
-    windowContainer.window = NULL;
-    windowHandle = WindowManager::AddWindowContainer(windowContainer);
+
+	uint32_t windowContainerID = ++m_maxWindowContainerID;
+    m_windowContainerMap.insert(std::pair<uint32_t, WindowContainer>(windowContainerID, windowContainer));
+    windowHandle = windowContainerID;
 
 	return XboxOGRenderingHelper::Init();
 }
 
 bool XboxOGWindowHelper::WindowCreateWithSize(uint32_t width, uint32_t height, uint32_t& windowHandle)
 {
-	if (WindowManager::GetWindowCount() > 0)
+	if (m_windowContainerMap.size() > 0)
 	{
 		return false;
 	}
@@ -359,25 +367,27 @@ bool XboxOGWindowHelper::WindowCreateWithSize(uint32_t width, uint32_t height, u
 		return false;
 	}
 
-    WindowManager::WindowContainer windowContainer;
+    WindowContainer windowContainer;
 	windowContainer.width = selectedDisplayMode.Width;
     windowContainer.height = selectedDisplayMode.Height;
-    windowContainer.window = NULL;
-    windowHandle = WindowManager::AddWindowContainer(windowContainer);
+
+    uint32_t windowContainerID = ++m_maxWindowContainerID;
+    m_windowContainerMap.insert(std::pair<uint32_t, WindowContainer>(windowContainerID, windowContainer));
+    windowHandle = windowContainerID;
 
 	return XboxOGRenderingHelper::Init();
 }
 
 bool XboxOGWindowHelper::GetWindowSize(uint32_t windowHandle, uint32_t& width, uint32_t& height)
 {
-	WindowManager::WindowContainer* windowContainer = WindowManager::GetWindowContainer(windowHandle);
-	if (windowContainer == NULL)
+	std::map<uint32_t, WindowContainer>::iterator it = m_windowContainerMap.find(windowHandle);
+	if (it == m_windowContainerMap.end()) 
 	{
 		return false;
 	}
 
-	width = windowContainer->width;
-	height = windowContainer->height;
+	width = it->second.width;
+	height = it->second.height;
 	return true;
 }
 
@@ -388,19 +398,14 @@ bool XboxOGWindowHelper::SetCursorMode(uint32_t windowHandle, uint32_t mode)
 
 bool XboxOGWindowHelper::WindowPreRender(uint32_t& windowHandle, bool& exitRequested)
 {
-	WindowManager::WindowContainer* windowContainer = WindowManager::GetWindowContainer(windowHandle);
-	if (windowContainer == NULL)
+	std::map<uint32_t, WindowContainer>::iterator it = m_windowContainerMap.find(windowHandle);
+	if (it == m_windowContainerMap.end()) 
 	{
 		return false;
 	}
 
 	D3DCOLOR color = D3DCOLOR_RGBA(255, 0, 0, 255);
-	if (FAILED(m_d3dDevice->Clear(0, NULL, D3DCLEAR_TARGET, color, 0, 0)))
-	{
-		return false;
-	}
-
-	if (FAILED(m_d3dDevice->Present(NULL, NULL, NULL, NULL)))
+	if (FAILED(m_d3dDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, color, 1, 0)))
 	{
 		return false;
 	}
@@ -410,8 +415,8 @@ bool XboxOGWindowHelper::WindowPreRender(uint32_t& windowHandle, bool& exitReque
 
 bool XboxOGWindowHelper::WindowPostRender(uint32_t& windowHandle)
 {
-	WindowManager::WindowContainer* windowContainer = WindowManager::GetWindowContainer(windowHandle);
-	if (windowContainer == NULL)
+	std::map<uint32_t, WindowContainer>::iterator it = m_windowContainerMap.find(windowHandle);
+	if (it == m_windowContainerMap.end()) 
 	{
 		return false;
 	}
@@ -424,17 +429,16 @@ bool XboxOGWindowHelper::WindowPostRender(uint32_t& windowHandle)
 	return true;
 }
 
-
 bool XboxOGWindowHelper::WindowClose(uint32_t windowHandle)
 {
-	WindowManager::WindowContainer* windowContainer = WindowManager::GetWindowContainer(windowHandle);
-	if (windowContainer == NULL) 
+	std::map<uint32_t, WindowContainer>::iterator it = m_windowContainerMap.find(windowHandle);
+	if (it == m_windowContainerMap.end()) 
 	{
 		return false;
 	}
 
 	m_d3dDevice->Release();
-	WindowManager::DeleteWindowContainer(windowHandle);
+	m_windowContainerMap.erase(windowHandle);
 	return true;
 }
 
@@ -446,7 +450,9 @@ bool XboxOGWindowHelper::RenderLoop(void)
         return false;
     }
 
-	if (WindowManager::GetWindowCount() > 0) 
+	uint32_t meshID = MeshUtility::CreateQuadXY(MathUtility::Vec3F(10, 10, 0), MathUtility::SizeF(640, 480), MathUtility::RectF(0, 0, 1, 1), textureID);
+
+	if (m_windowContainerMap.size() > 0) 
 	{
 		bool exitRequested = false;
 		while (exitRequested == false)
@@ -454,7 +460,7 @@ bool XboxOGWindowHelper::RenderLoop(void)
 			uint64_t now = TimeUtility::GetMillisecondsNow();
 			uint64_t previousNow = now;
 
-			std::vector<uint32_t> windowHandles =  WindowManager::GetWindowHandles();
+			std::vector<uint32_t> windowHandles =  GetWindowHandles();
 
 			if (XboxOGRenderingHelper::SetShader("Default") == false)
 			{
@@ -470,6 +476,9 @@ bool XboxOGWindowHelper::RenderLoop(void)
 					DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "WindowPreRender failed.");
 					return false;
 				}
+
+				XboxOGRenderingHelper::RenderDynamicBuffer(meshID);
+
 				if (AngelScriptRunner::ExecuteRender(windowHandle, dt) == false)
 				{
 					DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteRender failed.");
@@ -493,8 +502,8 @@ bool XboxOGWindowHelper::RenderLoop(void)
 
 bool XboxOGWindowHelper::GetKeyPressed(uint32_t windowHandle, uint32_t key, uint32_t& pressed)
 {
-	WindowManager::WindowContainer* windowContainer = WindowManager::GetWindowContainer(windowHandle);
-	if (windowContainer == NULL) 
+	std::map<uint32_t, WindowContainer>::iterator it = m_windowContainerMap.find(windowHandle);
+	if (it == m_windowContainerMap.end()) 
 	{
 		return false;
 	}
@@ -512,8 +521,8 @@ bool XboxOGWindowHelper::GetKeyPressed(uint32_t windowHandle, uint32_t key, uint
 
 bool XboxOGWindowHelper::GetMouseButtonPressed(uint32_t windowHandle, uint32_t button, uint32_t& pressed)
 {
-	WindowManager::WindowContainer* windowContainer = WindowManager::GetWindowContainer(windowHandle);
-	if (windowContainer == NULL) 
+	std::map<uint32_t, WindowContainer>::iterator it = m_windowContainerMap.find(windowHandle);
+	if (it == m_windowContainerMap.end()) 
 	{
 		return false;
 	}
@@ -1128,6 +1137,16 @@ void XboxOGWindowHelper::ProcessMouse()
 			}
 		}
 	}
+}
+
+std::vector<uint32_t> XboxOGWindowHelper::GetWindowHandles(void)
+{
+	std::vector<uint32_t> windowHandles;
+	for (std::map<uint32_t, WindowContainer>::iterator it = m_windowContainerMap.begin(); it != m_windowContainerMap.end(); ++it)
+	{
+		 windowHandles.push_back(it->first);
+	}
+	return windowHandles;
 }
 
 #endif

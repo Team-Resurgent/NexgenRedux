@@ -147,7 +147,7 @@ void Init()
     DebugPrint(1, "Window id = " + windowID);
     // SetWindowBackground(windowID, 0xff00ff);
 
-    Size windowSize = GetWindowSize(windowID);
+    SizeI windowSize = GetWindowSize(windowID);
     DebugPrint(1, "windowSizeHeight = " + windowSize.width + ", windowSizeHeight = " + windowSize.height);
 
     Time timeNow = GetTimeNow();

@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include "MeshUtility.h"
+
 #include <map>
 #include <string>
 
@@ -10,15 +12,33 @@ namespace NexgenRedux
 	class OpenGLRenderingHelper
 	{		
 	public:
+
+		typedef struct TextureContainer
+		{
+			uint32_t texture;
+			uint32_t width;
+			uint32_t height;
+		} TextureContainer;
+
 		static void Close(void);
 
 		static bool Init();
 		static bool SetShader(std::string shaderName);
 		static bool LoadTexture(std::wstring path, uint32_t& textureID);
+		static bool RenderDynamicBuffer(uint32_t meshID);
 	private:
+
+		static void ResizeDynamicBufferIfNeeded(uint32_t requestedSize);
+		static void CreateDynamicBuffer();
+		static void DeleteDynamicBuffer();
+
+		static OpenGLRenderingHelper::TextureContainer* GetTextureContainer(uint32_t textureID);
+		static void DeleteTextures();
+
 		static void CreateShaderLookup(std::string shaderName);
 		static bool AddShaderLookupKeyValue(std::string shaderName, std::string key, uint32_t value);
 		static bool GetShaderLookupValue(std::string shaderName, std::string key, uint32_t& value);
+		static void DeleteShaders();
 	};
 }
 

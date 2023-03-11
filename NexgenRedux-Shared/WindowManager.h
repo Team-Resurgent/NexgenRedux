@@ -22,13 +22,6 @@ namespace NexgenRedux
 			uint32_t refreshRate;
 		} MonitorVideoMode;
 
-		typedef struct WindowContainer
-		{
-			uint32_t width;
-			uint32_t height;
-			void* window;
-		} WindowContainer;
-
     	static void Close(void);
 
 		static bool GetAvailableMonitorCount(uint32_t& monitorCount);
@@ -47,18 +40,18 @@ namespace NexgenRedux
 		static bool GetClipboardString(std::string& value);
 		static bool SetClipboardString(std::string value);
 
-		friend class OpenGLWindowHelper;
-		friend class XboxOGWindowHelper;
-		friend class OpenGLRenderingHelper;
-		friend class XboxOGRenderingHelper;
+		// friend class OpenGLWindowHelper;
+		// friend class XboxOGWindowHelper;
+		// friend class OpenGLRenderingHelper;
+		// friend class XboxOGRenderingHelper;
 
 	private:
 
-		static uint32_t GetWindowCount(void);
-		static bool GetWindowHandle(void* window, uint32_t& windowHandle);
-		static std::vector<uint32_t> GetWindowHandles(void);
-		static uint32_t AddWindowContainer(WindowContainer windowContainer);
-		static WindowContainer* GetWindowContainer(uint32_t windowHandle);
-		static void DeleteWindowContainer(uint32_t windowHandle);
+		// static uint32_t GetWindowCount(void);
+		// static bool GetWindowHandle(void* window, uint32_t& windowHandle);
+		// static std::vector<uint32_t> GetWindowHandles(void);
+		// static uint32_t AddWindowContainer(WindowContainer windowContainer);
+		// static WindowContainer* GetWindowContainer(uint32_t windowHandle);
+		// static void DeleteWindowContainer(uint32_t windowHandle);
 	};
 }

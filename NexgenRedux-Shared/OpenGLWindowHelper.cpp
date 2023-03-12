@@ -15,6 +15,12 @@
 #include <GLAD/glad.h>
 #include <GLFW/glfw3.h>
 
+#if defined NEXGEN_WIN
+#define GLFW_EXPOSE_NATIVE_WIN32
+#include <GLFW/glfw3native.h>
+#include <dwmapi.h> 
+#endif
+
 #include <cstring>
 
 using namespace Gensys;
@@ -154,6 +160,8 @@ bool OpenGLWindowHelper::WindowCreateWithVideoMode(WindowManager::MonitorVideoMo
     glfwSetWindowIcon(window, 1, iconImages);
 	free(buffer); 
 
+    SetDarkTitleBar(window);
+
     WindowContainer windowContainer;
     windowContainer.width = monitorVideoMode.width;
     windowContainer.height = monitorVideoMode.height;
@@ -198,6 +206,8 @@ bool OpenGLWindowHelper::WindowCreateWithSize(uint32_t width, uint32_t height, s
     iconImages[0].height = Icon::Height();
     glfwSetWindowIcon(window, 1, iconImages); 
 	free(buffer); 
+
+    SetDarkTitleBar(window);
 
     WindowContainer windowContainer;
     windowContainer.width = width;
@@ -599,6 +609,44 @@ bool OpenGLWindowHelper::Init(void)
         glfwSetJoystickCallback(OpenGLWindowHelper::JoystickConnect);
     }
     return true;
+}
+
+void OpenGLWindowHelper::SetDarkTitleBar(GLFWwindow* window)
+{
+#if defined NEXGEN_WIN
+    bool validVersion = false;
+    NTSTATUS(WINAPI *RtlGetVersion)(LPOSVERSIONINFOEXW);
+    OSVERSIONINFOEXW osInfo;
+    *(FARPROC*)&RtlGetVersion = GetProcAddress(GetModuleHandleA("ntdll"), "RtlGetVersion");
+    if (RtlGetVersion != NULL)
+    {
+        osInfo.dwOSVersionInfoSize = sizeof(osInfo);
+        RtlGetVersion(&osInfo);
+        validVersion = true;
+        if (osInfo.dwMajorVersion < 10) 
+        {
+            validVersion = false;
+        }
+        else if (osInfo.dwMajorVersion == 10) 
+        {
+            if (osInfo.dwMinorVersion == 0) 
+            {
+                if (osInfo.dwBuildNumber < 22000) 
+                {
+                    validVersion = false;
+                }
+            }
+        }
+    }
+
+    if (validVersion == true) 
+    {
+        DWORD value = -1;
+        DWORD DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
+        HWND hwnd = glfwGetWin32Window(window);
+        DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, &value, (DWORD)sizeof(int));
+    }
+#endif
 }
 
 void OpenGLWindowHelper::SetCallbacks(GLFWwindow* window)

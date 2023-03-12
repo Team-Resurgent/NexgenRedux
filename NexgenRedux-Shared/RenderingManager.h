@@ -27,7 +27,7 @@ namespace NexgenRedux
 
 		typedef struct AmbientLightState
 		{
-			MathUtility::Color3 color;
+			MathUtility::Color3I color;
 		} AmbientLightState;
 
 		typedef struct TextureState
@@ -38,7 +38,7 @@ namespace NexgenRedux
 
 		typedef struct TintState
 		{
-			MathUtility::Color4 color;
+			MathUtility::Color4I color;
 		} TintState;
 
 		typedef struct MeshInstance
@@ -76,14 +76,14 @@ namespace NexgenRedux
 			bool enabled;
 			MathUtility::Vec3F position;
 			float distance;
-			MathUtility::Color4 diffuseColor;
+			MathUtility::Color4I diffuseColor;
 		} LightState;
 
 		typedef struct FogState
 		{
 			bool enabled;
 			int operation;
-			MathUtility::Color3 color;
+			MathUtility::Color3I color;
 			float start;
 			float end;
 			float density;

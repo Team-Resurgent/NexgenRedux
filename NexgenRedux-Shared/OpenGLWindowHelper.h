@@ -51,7 +51,9 @@ namespace NexgenRedux
 		static bool GetJoystickHatDirection(uint32_t joystickID, uint32_t hatIndex, uint32_t& direction);
 
 	private:
+
 		static bool Init(void);
+		static void SetDarkTitleBar(GLFWwindow* window);
 		static void SetCallbacks(GLFWwindow* window);
 		static void WindowIconify(GLFWwindow* window, int iconified);
 		static void WindowMaximize(GLFWwindow* window, int maximized);

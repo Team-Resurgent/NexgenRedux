@@ -207,6 +207,12 @@
 				RelativePath="..\NexgenRedux-Shared\RenderingManager.h">
 			</File>
 			<File
+				RelativePath="..\NexgenRedux-Shared\RenderStateManager.cpp">
+			</File>
+			<File
+				RelativePath="..\NexgenRedux-Shared\RenderStateManager.h">
+			</File>
+			<File
 				RelativePath="..\NexgenRedux-Shared\WindowManager.cpp">
 			</File>
 			<File

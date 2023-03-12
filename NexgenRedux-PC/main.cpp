@@ -18,7 +18,7 @@
 #include "ConfigLoader.h"
 #include "AngelScriptRunner.h"
 #include "WindowManager.h"
-#include "RenderingManager.h"
+#include "RenderStateManager.h"
 
 using namespace NexgenRedux;
 using namespace Gensys;
@@ -50,7 +50,7 @@ int main(int argc, const char* argv[])
         return 0;
     }
 
-    RenderingManager::Close();
+    RenderStateManager::Close();
     WindowManager::Close();
     AngelScriptRunner::Close();
 

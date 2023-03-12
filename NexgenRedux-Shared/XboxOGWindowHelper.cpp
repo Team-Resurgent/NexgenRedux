@@ -462,10 +462,7 @@ bool XboxOGWindowHelper::RenderLoop(void)
 
 			std::vector<uint32_t> windowHandles =  GetWindowHandles();
 
-			if (XboxOGRenderingHelper::SetShader("Default") == false)
-			{
-				return false;
-			}
+			XboxOGRenderingHelper::SetShader("Default");
 
 			for (uint32_t i = 0; i < windowHandles.size(); i++)
 			{

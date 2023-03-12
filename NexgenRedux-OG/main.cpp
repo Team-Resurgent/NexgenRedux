@@ -1,7 +1,7 @@
 #include "ConfigLoader.h"
 #include "AngelScriptRunner.h"
 #include "WindowManager.h"
-#include "RenderingManager.h"
+#include "RenderStateManager.h"
 
 #include <Gensys/DebugUtility.h>
 #include <Gensys/StringUtility.h>
@@ -39,7 +39,7 @@ void __cdecl main(int, char **)
         return;
     }
 
-	RenderingManager::Close();
+	RenderStateManager::Close();
     WindowManager::Close();
     AngelScriptRunner::Close();
 }

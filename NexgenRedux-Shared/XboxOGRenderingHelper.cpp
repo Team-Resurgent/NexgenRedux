@@ -2,11 +2,13 @@
 
 #include "XboxOGRenderingHelper.h"
 #include "XboxOGWindowHelper.h"
+#include "RenderStateManager.h"
 #include "WindowManager.h"
 #include "MeshUtility.h"
 #include "ConfigLoader.h"
 
 #include <Gensys/Int.h>
+#include <Gensys/DebugUtility.h>
 #include <Gensys/StringUtility.h>
 
 #include <xtl.h>
@@ -52,73 +54,74 @@ bool XboxOGRenderingHelper::Init()
 	return true;
 }
 
-bool XboxOGRenderingHelper::SetShader(std::string shaderName)
+void XboxOGRenderingHelper::SetShader(std::string shaderName)
 {
 	if (shaderName != "Default")
 	{
-		return false;
+		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "SetShader: Shader '%s' not recognized.", shaderName.c_str());
+		return;
 	}
 
 	IDirect3DDevice8* d3dDevice = (IDirect3DDevice8*)XboxOGWindowHelper::GetD3DDevice();
 
 	if (FAILED(d3dDevice->SetRenderState(D3DRS_TEXTUREFACTOR, 0XFFFFFFFF)))
 	{
-		return false;
+		return;
 	}
 
 	if (FAILED(d3dDevice->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE)))
 	{
-		return false;
+		return;
 	}
 
 	if (FAILED(d3dDevice->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE)))
 	{
-		return false;
+		return;
 	}
 
 	if (FAILED(d3dDevice->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_CURRENT)))
 	{
-		return false;
+		return;
 	}
 
 	if (FAILED(d3dDevice->SetTextureStageState(1, D3DTSS_COLOROP, D3DTOP_MODULATE)))
 	{
-		return false;
+		return;
 	}
 
 	if (FAILED(d3dDevice->SetTextureStageState(1, D3DTSS_COLORARG1, D3DTA_CURRENT)))
 	{
-		return false;
+		return;
 	}
 	
 	if (FAILED(d3dDevice->SetTextureStageState(1, D3DTSS_COLORARG2, D3DTA_TFACTOR)))
 	{
-		return false;
+		return;
 	}
 
 	if (FAILED(d3dDevice->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1)))
 	{
-		return false;
+		return;
 	}
 
 	if (FAILED(d3dDevice->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE)))
 	{
-		return false;
+		return;
 	}
 
 	if (FAILED(d3dDevice->SetTextureStageState(0, D3DTSS_MAGFILTER, D3DTEXF_LINEAR)))
 	{
-		return false;
+		return;
 	}
 
 	if (FAILED(d3dDevice->SetTextureStageState(0, D3DTSS_MINFILTER, D3DTEXF_LINEAR)))
 	{
-		return false;
+		return;
 	}
 	
 	if (FAILED(d3dDevice->SetVertexShader(D3DFVF_XYZ | D3DFVF_NORMAL| D3DFVF_TEX1)))
 	{
-		return false;
+		return;
 	}
 
 	d3dDevice->SetRenderState(D3DRS_TEXTUREFACTOR, D3DCOLOR_RGBA(255, 255, 255, 255));
@@ -141,19 +144,19 @@ bool XboxOGRenderingHelper::SetShader(std::string shaderName)
 	tempMatrix = D3DXMATRIX(scaledViewMatrix.values);
 	if (FAILED(d3dDevice->SetTransform(D3DTS_VIEW, &tempMatrix)))
 	{
-		return false;
+		return;
 	}
 
 	tempMatrix = D3DXMATRIX(modelMatrix.values);
 	if (FAILED(d3dDevice->SetTransform(D3DTS_WORLD, &tempMatrix)))
 	{
-		return false;
+		return;
 	}
 
 	tempMatrix = D3DXMATRIX(perspectiveMatrix.values);
 	if (FAILED(d3dDevice->SetTransform(D3DTS_PROJECTION, &tempMatrix)))
 	{
-		return false;
+		return;
 	}
 
 	/*uint32_t value;
@@ -197,9 +200,33 @@ bool XboxOGRenderingHelper::SetShader(std::string shaderName)
 	glUniform1f(value, 0);
 	GetShaderLookupValue("Default", "uTintColor", value);
 	glUniform4f(value, 1, 1, 1, 1);*/
-
-	return true;
 }
+
+void XboxOGRenderingHelper::SetModelMatrix(const MathUtility::Matrix4x4& matrix) {}
+void XboxOGRenderingHelper::SetViewMatrix(const MathUtility::Matrix4x4& matrix) {}
+void XboxOGRenderingHelper::SetProjectionMatrix(const MathUtility::Matrix4x4& matrix) {}
+void XboxOGRenderingHelper::SetAmbientLight(const MathUtility::Color3I& color) {}
+void XboxOGRenderingHelper::SetTexture(const uint32_t& textureID, const RenderStateManager::TextureFilter& filter) {}
+void XboxOGRenderingHelper::SetTint(const MathUtility::Color4I& color) {}
+void XboxOGRenderingHelper::SetBlend(const RenderStateManager::BlendOperation& operation) {}
+void XboxOGRenderingHelper::SetBlendFactors(const RenderStateManager::BlendFactor& srcFactor, const RenderStateManager::BlendFactor& dstFactor) {}
+void XboxOGRenderingHelper::SetCulling(const RenderStateManager::CullingOperation& operation) {}
+void XboxOGRenderingHelper::SetDepth(const RenderStateManager::DepthOperation& operation) {}
+void XboxOGRenderingHelper::SetLights(const RenderStateManager::LightsOperation& operation) {}
+void XboxOGRenderingHelper::SetLight1(const RenderStateManager::LightOperation& operation) {}
+void XboxOGRenderingHelper::SetLightInstance1(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse) {}
+void XboxOGRenderingHelper::SetLight2(const RenderStateManager::LightOperation& operation) {}
+void XboxOGRenderingHelper::SetLightInstance2(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse) {}
+void XboxOGRenderingHelper::SetLight3(const RenderStateManager::LightOperation& operation) {}
+void XboxOGRenderingHelper::SetLightInstance3(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse) {}
+void XboxOGRenderingHelper::SetLight4(const RenderStateManager::LightOperation& operation) {}
+void XboxOGRenderingHelper::SetLightInstance4(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse) {}
+void XboxOGRenderingHelper::SetFog(const RenderStateManager::FogOperation& operation) {}
+void XboxOGRenderingHelper::SetFogInstance(const MathUtility::Color3I& color, const float& start, const float& end, const float& density) {}
+void XboxOGRenderingHelper::SetViewport(const MathUtility::RectI rect) {}
+void XboxOGRenderingHelper::SetScissor(const RenderStateManager::ScissorOperation& operation) {}
+void XboxOGRenderingHelper::SetScissorInstance(const MathUtility::RectI rect) {}
+void XboxOGRenderingHelper::SetDrawMode(const RenderStateManager::DrawModeOperation& operation) {}
 
 bool XboxOGRenderingHelper::LoadTexture(std::wstring path, uint32_t& textureID)
 {	

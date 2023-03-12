@@ -201,12 +201,6 @@
 				RelativePath="..\NexgenRedux-Shared\OpenGLWindowHelper.h">
 			</File>
 			<File
-				RelativePath="..\NexgenRedux-Shared\RenderingManager.cpp">
-			</File>
-			<File
-				RelativePath="..\NexgenRedux-Shared\RenderingManager.h">
-			</File>
-			<File
 				RelativePath="..\NexgenRedux-Shared\RenderStateManager.cpp">
 			</File>
 			<File

@@ -4,6 +4,7 @@
 
 #include <Gensys/Int.h>
 
+#include <string>
 #include <vector>
 
 namespace NexgenRedux
@@ -88,6 +89,12 @@ namespace NexgenRedux
 			ScissorOperationEnabled
 		} ScissorOperation;
 
+		typedef struct ShaderState
+		{
+			std::string shader;
+			bool isDirty;
+		} ShaderState;
+
 		typedef struct ModelMatrixState
 		{
 			MathUtility::Matrix4x4 matrix;
@@ -133,8 +140,8 @@ namespace NexgenRedux
 
 		typedef struct BlendFactorsState
 		{
-			uint32_t srcFactor;
-			uint32_t dstFactor;
+			BlendFactor srcFactor;
+			BlendFactor dstFactor;
 			bool isDirty;
 		} BlendFactorsState;
 
@@ -211,6 +218,7 @@ namespace NexgenRedux
 
 		typedef struct RenderState
 		{
+			ShaderState shaderState;
 			ModelMatrixState modelMatrixState;
 			ViewMatrixState viewMatrixState;
 			ProjectionMatrixState projectionMatrixState;
@@ -238,8 +246,12 @@ namespace NexgenRedux
 			DrawModeState drawModeState;
 		} RenderState;
 
-		static RenderState* GetRenderState();
+		static void Close(void);
 
+		static RenderState* GetRenderState(void);
+		static bool CanBatch(void);
+
+		static void SetShader(const std::string& shader);
 		static void SetModelMatrix(const MathUtility::Matrix4x4& matrix);
 		static void SetViewMatrix(const MathUtility::Matrix4x4& matrix);
 		static void SetProjectionMatrix(const MathUtility::Matrix4x4& matrix);
@@ -265,5 +277,7 @@ namespace NexgenRedux
 		static void SetScissor(const ScissorOperation& operation);
 		static void SetScissorInstance(const MathUtility::RectI rect);
 		static void SetDrawMode(const DrawModeOperation& operation);
+
+		static void ApplyChanges(void);
 	};
 }

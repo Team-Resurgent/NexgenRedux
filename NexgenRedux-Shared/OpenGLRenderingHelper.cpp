@@ -1,6 +1,7 @@
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
 
 #include "OpenGLRenderingHelper.h"
+#include "RenderStateManager.h"
 #include "ConfigLoader.h"
 
 #include <Gensys/DebugUtility.h>
@@ -419,12 +420,13 @@ bool OpenGLRenderingHelper::Init()
 	return true;
 }
 
-bool OpenGLRenderingHelper::SetShader(std::string shaderName)
+void OpenGLRenderingHelper::SetShader(std::string shaderName)
 {
 	uint32_t program;
 	if (GetShaderLookupValue(shaderName, "Program", program) == false)
 	{
-		return false;
+		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "Shader '%s' not recognized.", shaderName.c_str());
+		return;
 	}
 	glUseProgram(program);
 
@@ -476,9 +478,33 @@ bool OpenGLRenderingHelper::SetShader(std::string shaderName)
 	glUniform1f(value, 0);
 	GetShaderLookupValue("Default", "uTintColor", value);
 	glUniform4f(value, 1, 1, 1, 1);
-
-	return true;
 }
+
+void OpenGLRenderingHelper::SetModelMatrix(const MathUtility::Matrix4x4& matrix) {}
+void OpenGLRenderingHelper::SetViewMatrix(const MathUtility::Matrix4x4& matrix) {}
+void OpenGLRenderingHelper::SetProjectionMatrix(const MathUtility::Matrix4x4& matrix) {}
+void OpenGLRenderingHelper::SetAmbientLight(const MathUtility::Color3I& color) {}
+void OpenGLRenderingHelper::SetTexture(const uint32_t& textureID, const RenderStateManager::TextureFilter& filter) {}
+void OpenGLRenderingHelper::SetTint(const MathUtility::Color4I& color) {}
+void OpenGLRenderingHelper::SetBlend(const RenderStateManager::BlendOperation& operation) {}
+void OpenGLRenderingHelper::SetBlendFactors(const RenderStateManager::BlendFactor& srcFactor, const RenderStateManager::BlendFactor& dstFactor) {}
+void OpenGLRenderingHelper::SetCulling(const RenderStateManager::CullingOperation& operation) {}
+void OpenGLRenderingHelper::SetDepth(const RenderStateManager::DepthOperation& operation) {}
+void OpenGLRenderingHelper::SetLights(const RenderStateManager::LightsOperation& operation) {}
+void OpenGLRenderingHelper::SetLight1(const RenderStateManager::LightOperation& operation) {}
+void OpenGLRenderingHelper::SetLightInstance1(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse) {}
+void OpenGLRenderingHelper::SetLight2(const RenderStateManager::LightOperation& operation) {}
+void OpenGLRenderingHelper::SetLightInstance2(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse) {}
+void OpenGLRenderingHelper::SetLight3(const RenderStateManager::LightOperation& operation) {}
+void OpenGLRenderingHelper::SetLightInstance3(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse) {}
+void OpenGLRenderingHelper::SetLight4(const RenderStateManager::LightOperation& operation) {}
+void OpenGLRenderingHelper::SetLightInstance4(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse) {}
+void OpenGLRenderingHelper::SetFog(const RenderStateManager::FogOperation& operation) {}
+void OpenGLRenderingHelper::SetFogInstance(const MathUtility::Color3I& color, const float& start, const float& end, const float& density) {}
+void OpenGLRenderingHelper::SetViewport(const MathUtility::RectI rect) {}
+void OpenGLRenderingHelper::SetScissor(const RenderStateManager::ScissorOperation& operation) {}
+void OpenGLRenderingHelper::SetScissorInstance(const MathUtility::RectI rect) {}
+void OpenGLRenderingHelper::SetDrawMode(const RenderStateManager::DrawModeOperation& operation) {}
 
 bool OpenGLRenderingHelper::LoadTexture(std::wstring path, uint32_t& textureID)
 {	

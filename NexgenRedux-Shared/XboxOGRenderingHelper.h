@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include "RenderStateManager.h"
+
 #include <Gensys/Int.h>
 
 #include <xtl.h>
@@ -23,7 +25,33 @@ namespace NexgenRedux
 		static void Close(void);
 
 		static bool Init();
-		static bool SetShader(std::string shaderName);
+		static void SetShader(std::string shaderName);
+		static void SetModelMatrix(const MathUtility::Matrix4x4& matrix);
+		static void SetViewMatrix(const MathUtility::Matrix4x4& matrix);
+		static void SetProjectionMatrix(const MathUtility::Matrix4x4& matrix);
+		static void SetAmbientLight(const MathUtility::Color3I& color);
+		static void SetTexture(const uint32_t& textureID, const RenderStateManager::TextureFilter& filter);
+		static void SetTint(const MathUtility::Color4I& color);
+		static void SetBlend(const RenderStateManager::BlendOperation& operation);
+		static void SetBlendFactors(const RenderStateManager::BlendFactor& srcFactor, const RenderStateManager::BlendFactor& dstFactor);
+		static void SetCulling(const RenderStateManager::CullingOperation& operation);
+		static void SetDepth(const RenderStateManager::DepthOperation& operation);
+		static void SetLights(const RenderStateManager::LightsOperation& operation);
+		static void SetLight1(const RenderStateManager::LightOperation& operation);
+		static void SetLightInstance1(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse);
+		static void SetLight2(const RenderStateManager::LightOperation& operation);
+		static void SetLightInstance2(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse);
+		static void SetLight3(const RenderStateManager::LightOperation& operation);
+		static void SetLightInstance3(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse);
+		static void SetLight4(const RenderStateManager::LightOperation& operation);
+		static void SetLightInstance4(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse);
+		static void SetFog(const RenderStateManager::FogOperation& operation);
+		static void SetFogInstance(const MathUtility::Color3I& color, const float& start, const float& end, const float& density);
+		static void SetViewport(const MathUtility::RectI rect);
+		static void SetScissor(const RenderStateManager::ScissorOperation& operation);
+		static void SetScissorInstance(const MathUtility::RectI rect);
+		static void SetDrawMode(const RenderStateManager::DrawModeOperation& operation);
+
 		static bool LoadTexture(std::wstring path, uint32_t& textureID);
 		static bool RenderMesh(uint32_t meshID);
 	private:

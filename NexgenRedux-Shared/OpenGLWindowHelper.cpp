@@ -347,10 +347,7 @@ bool OpenGLWindowHelper::RenderLoop(void)
 
 			std::vector<uint32_t> windowHandles = GetWindowHandles();
 
-            if (OpenGLRenderingHelper::SetShader("Default") == false)
-            {
-                return false;
-            }
+            OpenGLRenderingHelper::SetShader("Default");
 
 			for (uint32_t i = 0; i < windowHandles.size(); i++)
 			{

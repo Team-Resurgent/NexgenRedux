@@ -202,31 +202,130 @@ void XboxOGRenderingHelper::SetShader(std::string shaderName)
 	glUniform4f(value, 1, 1, 1, 1);*/
 }
 
-void XboxOGRenderingHelper::SetModelMatrix(const MathUtility::Matrix4x4& matrix) {}
-void XboxOGRenderingHelper::SetViewMatrix(const MathUtility::Matrix4x4& matrix) {}
-void XboxOGRenderingHelper::SetProjectionMatrix(const MathUtility::Matrix4x4& matrix) {}
-void XboxOGRenderingHelper::SetAmbientLight(const MathUtility::Color3I& color) {}
-void XboxOGRenderingHelper::SetTexture(const uint32_t& textureID, const RenderStateManager::TextureFilter& filter) {}
-void XboxOGRenderingHelper::SetTint(const MathUtility::Color4I& color) {}
-void XboxOGRenderingHelper::SetBlend(const RenderStateManager::BlendOperation& operation) {}
-void XboxOGRenderingHelper::SetBlendFactors(const RenderStateManager::BlendFactor& srcFactor, const RenderStateManager::BlendFactor& dstFactor) {}
-void XboxOGRenderingHelper::SetCulling(const RenderStateManager::CullingOperation& operation) {}
-void XboxOGRenderingHelper::SetDepth(const RenderStateManager::DepthOperation& operation) {}
-void XboxOGRenderingHelper::SetLights(const RenderStateManager::LightsOperation& operation) {}
-void XboxOGRenderingHelper::SetLight1(const RenderStateManager::LightOperation& operation) {}
-void XboxOGRenderingHelper::SetLightInstance1(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse) {}
-void XboxOGRenderingHelper::SetLight2(const RenderStateManager::LightOperation& operation) {}
-void XboxOGRenderingHelper::SetLightInstance2(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse) {}
-void XboxOGRenderingHelper::SetLight3(const RenderStateManager::LightOperation& operation) {}
-void XboxOGRenderingHelper::SetLightInstance3(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse) {}
-void XboxOGRenderingHelper::SetLight4(const RenderStateManager::LightOperation& operation) {}
-void XboxOGRenderingHelper::SetLightInstance4(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse) {}
-void XboxOGRenderingHelper::SetFog(const RenderStateManager::FogOperation& operation) {}
-void XboxOGRenderingHelper::SetFogInstance(const MathUtility::Color3I& color, const float& start, const float& end, const float& density) {}
-void XboxOGRenderingHelper::SetViewport(const MathUtility::RectI rect) {}
-void XboxOGRenderingHelper::SetScissor(const RenderStateManager::ScissorOperation& operation) {}
-void XboxOGRenderingHelper::SetScissorInstance(const MathUtility::RectI rect) {}
-void XboxOGRenderingHelper::SetDrawMode(const RenderStateManager::DrawModeOperation& operation) {}
+void XboxOGRenderingHelper::SetModelMatrix(const MathUtility::Matrix4x4& matrix) 
+{
+
+}
+
+void XboxOGRenderingHelper::SetViewMatrix(const MathUtility::Matrix4x4& matrix) 
+{
+
+}
+
+void XboxOGRenderingHelper::SetProjectionMatrix(const MathUtility::Matrix4x4& matrix) 
+{
+
+}
+
+void XboxOGRenderingHelper::SetAmbientLight(const MathUtility::Color3I& color) 
+{
+
+}
+
+void XboxOGRenderingHelper::SetTexture(const uint32_t& textureID, const RenderStateManager::TextureFilter& filter) 
+{
+
+}
+
+void XboxOGRenderingHelper::SetTint(const MathUtility::Color4I& color) 
+{
+
+}
+
+void XboxOGRenderingHelper::SetBlend(const RenderStateManager::BlendOperation& operation) 
+{
+
+}
+
+void XboxOGRenderingHelper::SetBlendFactors(const RenderStateManager::BlendFactor& srcFactor, const RenderStateManager::BlendFactor& dstFactor) 
+{
+
+}
+
+void XboxOGRenderingHelper::SetCulling(const RenderStateManager::CullingOperation& operation) 
+{
+
+}
+
+void XboxOGRenderingHelper::SetDepth(const RenderStateManager::DepthOperation& operation) 
+{
+
+}
+
+void XboxOGRenderingHelper::SetLights(const RenderStateManager::LightsOperation& operation) 
+{
+
+}
+
+void XboxOGRenderingHelper::SetLight1(const RenderStateManager::LightOperation& operation) 
+{
+
+}
+
+void XboxOGRenderingHelper::SetLightInstance1(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse) 
+{
+
+}
+
+void XboxOGRenderingHelper::SetLight2(const RenderStateManager::LightOperation& operation) 
+{
+
+}
+
+void XboxOGRenderingHelper::SetLightInstance2(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse) 
+{
+
+}
+
+void XboxOGRenderingHelper::SetLight3(const RenderStateManager::LightOperation& operation) 
+{
+
+}
+
+void XboxOGRenderingHelper::SetLightInstance3(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse) 
+{
+
+}
+
+void XboxOGRenderingHelper::SetLight4(const RenderStateManager::LightOperation& operation) 
+{
+
+}
+
+void XboxOGRenderingHelper::SetLightInstance4(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse) 
+{
+
+}
+
+void XboxOGRenderingHelper::SetFog(const RenderStateManager::FogOperation& operation) 
+{
+
+}
+
+void XboxOGRenderingHelper::SetFogInstance(const MathUtility::Color3I& color, const float& start, const float& end, const float& density) 
+{
+
+}
+
+void XboxOGRenderingHelper::SetViewport(const MathUtility::RectI rect) 
+{
+
+}
+
+void XboxOGRenderingHelper::SetScissor(const RenderStateManager::ScissorOperation& operation) 
+{
+
+}
+
+void XboxOGRenderingHelper::SetScissorInstance(const MathUtility::RectI rect) 
+{
+
+}
+
+void XboxOGRenderingHelper::SetDrawMode(const RenderStateManager::DrawModeOperation& operation) 
+{
+	
+}
 
 bool XboxOGRenderingHelper::LoadTexture(std::wstring path, uint32_t& textureID)
 {	

@@ -27,7 +27,6 @@ namespace
 		"uniform mat4 uModelMatrix;\n"
 		"uniform mat4 uViewMatrix;\n"
 		"uniform mat4 uProjectionMatrix;\n"
-		"uniform vec4 uCameraPosition;\n"
 		"uniform vec4 uAmbientColor;\n"
 		"uniform vec4 uLightPosition0;\n"
 		"uniform vec4 uLightDiffuseColor0;\n"
@@ -59,6 +58,7 @@ namespace
 		"};\n"
 
 		"struct vertex_shader_input {\n"
+		"    vec3 cameraPosition;\n"
 		"    vec3 position;\n"
 		"    vec3 normal;\n"
 		"    vec2 uv;\n"
@@ -69,7 +69,7 @@ namespace
 		"    pixel_shader_input OUT;\n"
 		"    OUT.position = (uModelMatrix * vec4(IN.position, 1.0));\n"
 		"    OUT.w_position = OUT.position.xyz;\n"
-		"    OUT.fog = length(uCameraPosition.xyz - OUT.w_position);\n"
+		"    OUT.fog = length(IN.cameraPosition.xyz - OUT.w_position);\n"
 		"    OUT.position = (uViewMatrix * OUT.position);\n"
 		"    OUT.position = (uProjectionMatrix * OUT.position);\n"
 		"    OUT.normal = IN.normal;\n"
@@ -78,6 +78,7 @@ namespace
 		"    return OUT;\n"
 		"}\n"
 
+		"varying vec3 vCameraPosition;\n"
 		"varying vec3 vPositionW;\n"
 		"varying vec3 vNormalW;\n"
 		"varying vec3 vNormal;\n"
@@ -87,6 +88,7 @@ namespace
 		"void main() {\n"
 
 		"    vertex_shader_input IN;\n"
+		"    IN.cameraPosition = vec3(-uViewMatrix[3][0], -uViewMatrix[3][1], -uViewMatrix[3][2]);\n"
 		"    IN.position = aPosition;\n"
 		"    IN.normal = aNormal;\n"
 		"    IN.uv = aTexCoord;\n"
@@ -94,6 +96,7 @@ namespace
 		"    pixel_shader_input result = process(IN);\n"
 		"    gl_Position = result.position;\n"
 
+		"    vCameraPosition = IN.cameraPosition;\n"
 		"    vPositionW = result.w_position;\n"
 		"    vNormalW = result.w_normal;\n"
 		"    vNormal = result.normal;\n"
@@ -110,7 +113,6 @@ namespace
 		"uniform mat4 uModelMatrix;\n"
 		"uniform mat4 uViewMatrix;\n"
 		"uniform mat4 uProjectionMatrix;\n"
-		"uniform vec4 uCameraPosition;\n"
 		"uniform vec4 uAmbientColor;\n"
 		"uniform vec4 uLightPosition0;\n"
 		"uniform vec4 uLightDiffuseColor0;\n"
@@ -128,6 +130,7 @@ namespace
 		"uniform float uFogDensity;\n"
 		"uniform vec4 uTintColor;\n"
 
+		"varying vec3 vCameraPosition;\n"
 		"varying vec3 vPositionW;\n"
 		"varying vec3 vNormalW;\n"
 		"varying vec3 vNormal;\n"
@@ -195,7 +198,7 @@ namespace
 		"        float diffuse_lighting = saturate_f(dot(IN.w_normal, -light_dir));\n"
 		"        diffuse_lighting *= (uLightPosition0.w / (length(uLightPosition0.xyz - IN.w_position.xyz) * length(uLightPosition0.xyz - IN.w_position.xyz)));\n"
 		"        diffuse_total += (((diffuse_color.xyz * uLightDiffuseColor0.xyz) * diffuse_lighting) * attenuation);\n"
-		"        vec3 h = normalize((normalize(uCameraPosition.xyz - IN.w_position.xyz) - light_dir));\n"
+		"        vec3 h = normalize((normalize(vCameraPosition.xyz - IN.w_position.xyz) - light_dir));\n"
 		"        float spec_lighting = pow(saturate_f(dot(h, IN.normal)), 8.0);\n"
 		"        specular_total += ((uLightDiffuseColor1.xyz * spec_lighting) * attenuation);\n"
 		"    }\n"
@@ -212,7 +215,7 @@ namespace
 		"        float diffuse_lighting = saturate_f(dot(IN.w_normal, -light_dir));\n"
 		"        diffuse_lighting *= (uLightPosition1.w / (length((uLightPosition1.xyz - IN.w_position.xyz)) * length((uLightPosition1.xyz - IN.w_position.xyz))));\n"
 		"        diffuse_total += (((diffuse_color.xyz * uLightDiffuseColor1.xyz) * diffuse_lighting) * attenuation);\n"
-		"        vec3 h = normalize((normalize((uCameraPosition.xyz - IN.w_position.xyz)) - light_dir));\n"
+		"        vec3 h = normalize((normalize((vCameraPosition.xyz - IN.w_position.xyz)) - light_dir));\n"
 		"        float spec_lighting = pow(saturate_f(dot( h, IN.normal)), 8.0);\n"
 		"        specular_total += ((uLightDiffuseColor1.xyz * spec_lighting) * attenuation);\n"
 		"    }\n"
@@ -229,7 +232,7 @@ namespace
 		"        float diffuse_lighting = saturate_f(dot(IN.w_normal, -light_dir));\n"
 		"        diffuse_lighting *= (uLightPosition2.w / (length((uLightPosition2.xyz - IN.w_position.xyz)) * length((uLightPosition2.xyz - IN.w_position.xyz))));\n"
 		"        diffuse_total += (((diffuse_color.xyz * uLightDiffuseColor2.xyz) * diffuse_lighting) * attenuation);\n"
-		"        vec3 h = normalize((normalize((uCameraPosition.xyz - IN.w_position.xyz)) - light_dir));\n"
+		"        vec3 h = normalize((normalize((vCameraPosition.xyz - IN.w_position.xyz)) - light_dir));\n"
 		"        float spec_lighting = pow(saturate_f(dot( h, IN.normal)), 8.0);\n"
 		"        specular_total += ((uLightDiffuseColor1.xyz * spec_lighting) * attenuation);\n"
 		"    }\n"
@@ -246,7 +249,7 @@ namespace
 		"        float diffuse_lighting = saturate_f(dot( IN.w_normal, -light_dir));\n"
 		"        diffuse_lighting *= (uLightPosition3.w / (length((uLightPosition3.xyz - IN.w_position.xyz)) * length((uLightPosition3.xyz - IN.w_position.xyz))));\n"
 		"        diffuse_total += (((diffuse_color.xyz * uLightDiffuseColor3.xyz) * diffuse_lighting) * attenuation);\n"
-		"        vec3 h = normalize((normalize((uCameraPosition.xyz - IN.w_position.xyz)) - light_dir));\n"
+		"        vec3 h = normalize((normalize((vCameraPosition.xyz - IN.w_position.xyz)) - light_dir));\n"
 		"        float spec_lighting = pow(saturate_f(dot(h, IN.normal)), 8.0);\n"
 		"        specular_total += ((uLightDiffuseColor1.xyz * spec_lighting) * attenuation);\n"
 		"    }\n"
@@ -304,8 +307,9 @@ namespace
             glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &infoLogLength);
             std::vector<GLchar> infoLog(infoLogLength);
             glGetShaderInfoLog(shader, (GLsizei)infoLog.size(), NULL, infoLog.data());
-            std::wstring errorMessage = std::wstring(L"Shader compilation failed: ");
-            errorMessage += std::wstring(infoLog.begin(), infoLog.end());
+            std::string errorMessage = std::string("Shader compilation failed: ");
+            errorMessage += std::string(infoLog.begin(), infoLog.end());
+			DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "Shader compiled failed: %s", errorMessage.c_str());
             return 0;
         }
         return shader;
@@ -316,7 +320,7 @@ namespace
         GLuint program = glCreateProgram();
         if (program == 0)
         {
-            DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "Creare program failed: %i", glGetError());
+            DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "Create program failed: %i", glGetError());
             return 0;
         }
 
@@ -354,7 +358,7 @@ namespace
             glGetProgramInfoLog(program, (GLsizei)infoLog.size(), NULL, infoLog.data());
             std::string errorMessage = "Program link failed: ";
             errorMessage += std::string(infoLog.begin(), infoLog.end());
-            DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "Program link failed.");
+            DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "Program link failed '%s'.", errorMessage.c_str());
             return 0;
         }
 
@@ -397,7 +401,6 @@ bool OpenGLRenderingHelper::Init()
     AddShaderLookupKeyValue("Default", "uViewMatrix", glGetUniformLocation(program, "uViewMatrix"));
     AddShaderLookupKeyValue("Default", "uProjectionMatrix", glGetUniformLocation(program, "uProjectionMatrix"));
     AddShaderLookupKeyValue("Default", "uTextureDiffuse", glGetUniformLocation(program, "uTextureDiffuse"));
-	AddShaderLookupKeyValue("Default", "uCameraPosition", glGetUniformLocation(program, "uCameraPosition"));
     AddShaderLookupKeyValue("Default", "uAmbientColor", glGetUniformLocation(program, "uAmbientColor"));
     AddShaderLookupKeyValue("Default", "uLightPosition0", glGetUniformLocation(program, "uLightPosition0"));
     AddShaderLookupKeyValue("Default", "uLightDiffuseColor0", glGetUniformLocation(program, "uLightDiffuseColor0"));
@@ -444,8 +447,6 @@ void OpenGLRenderingHelper::SetShader(std::string shaderName)
 	glUniformMatrix4fv(value, 1, GL_FALSE, viewMatrix.values);
 	GetShaderLookupValue("Default", "uProjectionMatrix", value);
 	glUniformMatrix4fv(value, 1, GL_FALSE, perspectiveMatrix.values);
-	GetShaderLookupValue("Default", "uCameraPosition", value);
-	glUniform4f(value, -viewMatrix.values[12], -viewMatrix.values[13], -viewMatrix.values[14], 0);
 	GetShaderLookupValue("Default", "uAmbientColor", value);
 	glUniform4f(value, 0.1f, 0.1f, 0.1f, 0);
 	GetShaderLookupValue("Default", "uLightPosition0", value);
@@ -480,31 +481,136 @@ void OpenGLRenderingHelper::SetShader(std::string shaderName)
 	glUniform4f(value, 1, 1, 1, 1);
 }
 
-void OpenGLRenderingHelper::SetModelMatrix(const MathUtility::Matrix4x4& matrix) {}
-void OpenGLRenderingHelper::SetViewMatrix(const MathUtility::Matrix4x4& matrix) {}
-void OpenGLRenderingHelper::SetProjectionMatrix(const MathUtility::Matrix4x4& matrix) {}
-void OpenGLRenderingHelper::SetAmbientLight(const MathUtility::Color3I& color) {}
-void OpenGLRenderingHelper::SetTexture(const uint32_t& textureID, const RenderStateManager::TextureFilter& filter) {}
-void OpenGLRenderingHelper::SetTint(const MathUtility::Color4I& color) {}
-void OpenGLRenderingHelper::SetBlend(const RenderStateManager::BlendOperation& operation) {}
-void OpenGLRenderingHelper::SetBlendFactors(const RenderStateManager::BlendFactor& srcFactor, const RenderStateManager::BlendFactor& dstFactor) {}
-void OpenGLRenderingHelper::SetCulling(const RenderStateManager::CullingOperation& operation) {}
-void OpenGLRenderingHelper::SetDepth(const RenderStateManager::DepthOperation& operation) {}
-void OpenGLRenderingHelper::SetLights(const RenderStateManager::LightsOperation& operation) {}
-void OpenGLRenderingHelper::SetLight1(const RenderStateManager::LightOperation& operation) {}
-void OpenGLRenderingHelper::SetLightInstance1(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse) {}
-void OpenGLRenderingHelper::SetLight2(const RenderStateManager::LightOperation& operation) {}
-void OpenGLRenderingHelper::SetLightInstance2(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse) {}
-void OpenGLRenderingHelper::SetLight3(const RenderStateManager::LightOperation& operation) {}
-void OpenGLRenderingHelper::SetLightInstance3(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse) {}
-void OpenGLRenderingHelper::SetLight4(const RenderStateManager::LightOperation& operation) {}
-void OpenGLRenderingHelper::SetLightInstance4(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse) {}
-void OpenGLRenderingHelper::SetFog(const RenderStateManager::FogOperation& operation) {}
-void OpenGLRenderingHelper::SetFogInstance(const MathUtility::Color3I& color, const float& start, const float& end, const float& density) {}
-void OpenGLRenderingHelper::SetViewport(const MathUtility::RectI rect) {}
-void OpenGLRenderingHelper::SetScissor(const RenderStateManager::ScissorOperation& operation) {}
-void OpenGLRenderingHelper::SetScissorInstance(const MathUtility::RectI rect) {}
-void OpenGLRenderingHelper::SetDrawMode(const RenderStateManager::DrawModeOperation& operation) {}
+void OpenGLRenderingHelper::SetModelMatrix(const MathUtility::Matrix4x4& matrix) 
+{
+	uint32_t value;
+	GetShaderLookupValue("Default", "uModelMatrix", value);
+	glUniformMatrix4fv(value, 1, GL_FALSE, matrix.values);
+}
+
+void OpenGLRenderingHelper::SetViewMatrix(const MathUtility::Matrix4x4& matrix) 
+{
+	uint32_t value;
+	GetShaderLookupValue("Default", "uViewMatrix", value);
+	glUniformMatrix4fv(value, 1, GL_FALSE, matrix.values);
+}
+
+void OpenGLRenderingHelper::SetProjectionMatrix(const MathUtility::Matrix4x4& matrix) 
+{
+	uint32_t value;
+	GetShaderLookupValue("Default", "uProjectionMatrix", value);
+	glUniformMatrix4fv(value, 1, GL_FALSE, matrix.values);
+}
+
+void OpenGLRenderingHelper::SetAmbientLight(const MathUtility::Color3I& color) 
+{
+
+}
+
+void OpenGLRenderingHelper::SetTexture(const uint32_t& textureID, const RenderStateManager::TextureFilter& filter) 
+{
+
+}
+
+void OpenGLRenderingHelper::SetTint(const MathUtility::Color4I& color) 
+{
+
+}
+
+void OpenGLRenderingHelper::SetBlend(const RenderStateManager::BlendOperation& operation) 
+{
+
+}
+
+void OpenGLRenderingHelper::SetBlendFactors(const RenderStateManager::BlendFactor& srcFactor, const RenderStateManager::BlendFactor& dstFactor) 
+{
+
+}
+
+void OpenGLRenderingHelper::SetCulling(const RenderStateManager::CullingOperation& operation) 
+{
+
+}
+
+void OpenGLRenderingHelper::SetDepth(const RenderStateManager::DepthOperation& operation) 
+{
+
+}
+
+void OpenGLRenderingHelper::SetLights(const RenderStateManager::LightsOperation& operation) 
+{
+
+}
+
+void OpenGLRenderingHelper::SetLight1(const RenderStateManager::LightOperation& operation) 
+{
+
+}
+
+void OpenGLRenderingHelper::SetLightInstance1(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse) 
+{
+
+}
+
+void OpenGLRenderingHelper::SetLight2(const RenderStateManager::LightOperation& operation) 
+{
+
+}
+
+void OpenGLRenderingHelper::SetLightInstance2(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse) 
+{
+
+}
+
+void OpenGLRenderingHelper::SetLight3(const RenderStateManager::LightOperation& operation) 
+{
+
+}
+
+void OpenGLRenderingHelper::SetLightInstance3(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse) 
+{
+
+}
+
+void OpenGLRenderingHelper::SetLight4(const RenderStateManager::LightOperation& operation) 
+{
+
+}
+
+void OpenGLRenderingHelper::SetLightInstance4(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse) 
+{
+
+}
+
+void OpenGLRenderingHelper::SetFog(const RenderStateManager::FogOperation& operation) 
+{
+
+}
+
+void OpenGLRenderingHelper::SetFogInstance(const MathUtility::Color3I& color, const float& start, const float& end, const float& density) 
+{
+
+}
+
+void OpenGLRenderingHelper::SetViewport(const MathUtility::RectI rect) 
+{
+
+}
+
+void OpenGLRenderingHelper::SetScissor(const RenderStateManager::ScissorOperation& operation) 
+{
+
+}
+
+void OpenGLRenderingHelper::SetScissorInstance(const MathUtility::RectI rect) 
+{
+
+}
+
+void OpenGLRenderingHelper::SetDrawMode(const RenderStateManager::DrawModeOperation& operation) 
+{
+	
+}
 
 bool OpenGLRenderingHelper::LoadTexture(std::wstring path, uint32_t& textureID)
 {	

@@ -20,6 +20,7 @@
 			ATLMinimizesCRunTimeLibraryUsage="FALSE">
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalOptions="/GR"
 				Optimization="0"
 				OptimizeForProcessor="2"
 				AdditionalIncludeDirectories="&quot;$(SolutionDir)\NexgenRedux-Shared&quot;;&quot;$(SolutionDir)\Libraries\AngelScript&quot;;&quot;$(SolutionDir)\Libraries&quot;"
@@ -28,6 +29,7 @@
 				RuntimeLibrary="1"
 				BufferSecurityCheck="TRUE"
 				EnableEnhancedInstructionSet="1"
+				RuntimeTypeInfo="TRUE"
 				UsePrecompiledHeader="0"
 				PrecompiledHeaderThrough=""
 				PrecompiledHeaderFile=""
@@ -37,6 +39,7 @@
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
 				DebugInformationFormat="4"
+				CallingConvention="0"
 				CompileAs="0"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
@@ -91,6 +94,7 @@
 				BufferSecurityCheck="TRUE"
 				EnableFunctionLevelLinking="TRUE"
 				EnableEnhancedInstructionSet="1"
+				RuntimeTypeInfo="TRUE"
 				UsePrecompiledHeader="0"
 				PrecompiledHeaderThrough=""
 				PrecompiledHeaderFile=""

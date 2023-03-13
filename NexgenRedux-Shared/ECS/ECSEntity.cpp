@@ -24,8 +24,9 @@ void ECSEntity::AddComponent(ECSComponent* component)
 
 ECSComponent* ECSEntity::GetComponent(const std::type_info& type) const 
 {
-    for (ECSComponent* component : m_components) 
+	for (uint32_t i = 0; i < m_components.size(); i++)
     {
+		ECSComponent* component = m_components.at(i);
         if (typeid(*component) == type) 
         {
             return component;

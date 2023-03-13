@@ -466,10 +466,10 @@ bool XboxOGWindowHelper::RenderLoop(void)
 			MathUtility::Vec3F target = MathUtility::Vec3F(0, 0, 0);
 			MathUtility::Vec3F up = MathUtility::Vec3F(0, 1, 0);
             MathUtility::Matrix4x4 modelMatrix = MathUtility::Matrix4x4();
-			MathUtility::Matrix4x4 viewMatrix = MathUtility::Matrix4x4::LookAtRH(eye, target, up);
-			MathUtility::Matrix4x4 projectionMatrix = MathUtility::Matrix4x4::OrthoOffCenterRH(0, 640, 0, 480, 1, 100);
+			MathUtility::Matrix4x4 viewMatrix = MathUtility::Matrix4x4::LookAtLH(eye, target, up);
+			MathUtility::Matrix4x4 projectionMatrix = MathUtility::Matrix4x4::OrthoOffCenterLH(0, 640, 0, 480, 1, 100);
 
-            RenderStateManager::Init();
+			RenderStateManager::Init();
 			RenderStateManager::SetShader("Default");
             RenderStateManager::SetModelMatrix(modelMatrix);
             RenderStateManager::SetViewMatrix(viewMatrix);

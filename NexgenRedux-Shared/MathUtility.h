@@ -479,6 +479,15 @@ namespace NexgenRedux
 				result.values[15] = 1;
 				return result;
 			}
+
+			static Matrix4x4 LookAt(const Vec3F eye, const Vec3F target, const Vec3F up)
+			{
+#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
+				return LookAtRH(eye, target, up);
+#else
+				return LookAtLH(eye, target, up);
+#endif
+			}
 					
 			static Matrix4x4 PerspectiveFovRH(const float fovDegrees, const float aspectRatio, const float znear, const float zfar)
 			{
@@ -534,6 +543,15 @@ namespace NexgenRedux
 				return result;
 			}
 
+			static Matrix4x4 PerspectiveFov(const float fovDegrees, const float aspectRatio, const float znear, const float zfar)
+			{
+#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
+				return PerspectiveFovRH(fovDegrees, aspectRatio, znear, zfar);
+#else
+				return PerspectiveFovLH(fovDegrees, aspectRatio, znear, zfar);
+#endif
+			}
+
 			static Matrix4x4 OrthoRH(const float width, const float height, const float znear, const float zfar)
 			{
 				Matrix4x4 result;
@@ -578,6 +596,15 @@ namespace NexgenRedux
 				return result;
 			}
 
+			static Matrix4x4 Ortho(const float width, const float height, const float znear, const float zfar)
+			{
+#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
+				return OrthoRH(width, height, znear, zfar);
+#else
+				return OrthoLH(width, height, znear, zfar);
+#endif
+			}
+
 			static Matrix4x4 OrthoOffCenterRH(const float left, const float right, const float bottom, const float top, const float znear, const float zfar)
 			{
 				float wInv = 1.0f / (right - left);
@@ -594,7 +621,7 @@ namespace NexgenRedux
 				result.values[7] = 0.0f;
 				result.values[8] = 0.0f;			
 				result.values[9] = 0.0f;
-				result.values[10] = 1.0f / (znear - zfar);;
+				result.values[10] = 1.0f / (znear - zfar);
 				result.values[11] = 0.0f;
 				result.values[12] = -(left + right) * wInv;
 				result.values[13] = -(top + bottom) * hInv;
@@ -626,6 +653,15 @@ namespace NexgenRedux
 				result.values[14] = -result.values[10] * znear;
 				result.values[15] = 1.0f;
 				return result;
+			}
+
+			static Matrix4x4 OrthoOffCenter(const float left, const float right, const float bottom, const float top, const float znear, const float zfar)
+			{
+#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
+				return OrthoOffCenterRH(left, right, bottom, top, znear, zfar);
+#else
+				return OrthoOffCenterLH(left, right, bottom, top, znear, zfar);
+#endif
 			}
 
 		} Matrix4x4;

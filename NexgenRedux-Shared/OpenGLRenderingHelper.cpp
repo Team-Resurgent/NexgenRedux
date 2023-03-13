@@ -959,7 +959,7 @@ bool OpenGLRenderingHelper::RenderMesh(uint32_t meshID)
 	}
 	else if (RenderStateManager::GetRenderState()->drawModeState.operation == RenderStateManager::DrawModeLines) 
 	{
-		glDrawArrays(GL_TRIANGLES, 0, (GLsizei)vertexCount);
+		glDrawArrays(GL_LINES, 0, (GLsizei)vertexCount);
 	}
 	return true;
 }

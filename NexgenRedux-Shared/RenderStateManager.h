@@ -244,6 +244,8 @@ namespace NexgenRedux
 
 		static RenderState* GetRenderState(void);
 		static bool CanBatch(void);
+		static bool LoadTexture(std::wstring path, uint32_t& textureID);
+		static bool RenderMesh(uint32_t meshID);
 
 		static void SetShader(const std::string& shader);
 		static void SetModelMatrix(const MathUtility::Matrix4x4& matrix);

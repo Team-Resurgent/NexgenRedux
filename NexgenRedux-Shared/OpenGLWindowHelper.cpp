@@ -41,6 +41,7 @@ void OpenGLWindowHelper::Close(void)
 	{
         WindowClose(windowHandles.at(i));
 	}
+    glfwTerminate();
 }
 
 bool OpenGLWindowHelper::GetAvailableMonitorCount(uint32_t& monitorCount)
@@ -314,6 +315,11 @@ bool OpenGLWindowHelper::WindowPostRender(uint32_t& windowHandle)
 	return true;
 }
 
+void OpenGLWindowHelper::PollEvents(void)
+{
+    glfwPollEvents();
+}
+
 bool OpenGLWindowHelper::WindowClose(uint32_t windowHandle)
 {
     std::map<uint32_t, WindowContainer>::iterator it = m_windowContainerMap.find(windowHandle);
@@ -325,91 +331,6 @@ bool OpenGLWindowHelper::WindowClose(uint32_t windowHandle)
 	glfwDestroyWindow(it->second.window);
 	m_windowContainerMap.erase(windowHandle);
 	return true;
-}
-
-bool OpenGLWindowHelper::RenderLoop(void)
-{
-    uint32_t textureID;
-    if (OpenGLRenderingHelper::LoadTexture(L"skin:background.png", textureID) == false)
-    {
-        return false;
-    }
-
-    uint32_t meshID = MeshUtility::CreateQuadXY(MathUtility::Vec3F(0, 0, 0), MathUtility::SizeF(640, 480), MathUtility::RectF(0, 0, 1, 1), textureID);
-
-	if (m_windowContainerMap.size() > 0) 
-	{
-		bool exitRequested = false;
-		while (exitRequested == false)
-		{
-			uint64_t now = TimeUtility::GetMillisecondsNow();
-			uint64_t previousNow = now;
-
-			std::vector<uint32_t> windowHandles = GetWindowHandles();
-
-            MathUtility::Vec3F eye = MathUtility::Vec3F(0, 0, 2);
-			MathUtility::Vec3F target = MathUtility::Vec3F(0, 0, 0);
-			MathUtility::Vec3F up = MathUtility::Vec3F(0, 1, 0);
-            MathUtility::Matrix4x4 modelMatrix = MathUtility::Matrix4x4();
-			MathUtility::Matrix4x4 viewMatrix = MathUtility::Matrix4x4::LookAtRH(eye, target, up);
-			MathUtility::Matrix4x4 projectionMatrix = MathUtility::Matrix4x4::OrthoOffCenterRH(0, 640, 0, 480, 1, 100);
-
-            RenderStateManager::Init();
-			RenderStateManager::SetShader("Default");
-            RenderStateManager::SetModelMatrix(modelMatrix);
-            RenderStateManager::SetViewMatrix(viewMatrix);
-            RenderStateManager::SetProjectionMatrix(projectionMatrix);
-            RenderStateManager::SetAmbientLight(MathUtility::Color3I(25, 25, 25));
-            RenderStateManager::SetTint(MathUtility::Color4I(255, 255, 255, 255));
-            RenderStateManager::SetBlend(RenderStateManager::BlendOperationDisabled);
-            RenderStateManager::SetBlendFactors(RenderStateManager::BlendFactorOne, RenderStateManager::BlendFactorOne);
-            RenderStateManager::SetCulling(RenderStateManager::CullingOperationDisabled);
-            RenderStateManager::SetDepth(RenderStateManager::DepthOperationLess);
-            RenderStateManager::SetLights(RenderStateManager::LightsOperationDisabled);
-            RenderStateManager::SetLight1(RenderStateManager::LightOperationDisabled);
-            RenderStateManager::SetLightInstance1(MathUtility::Vec3F(0, 0, 0), 0, MathUtility::Color4I(0, 0, 0, 0));
-            RenderStateManager::SetLight2(RenderStateManager::LightOperationDisabled);
-            RenderStateManager::SetLightInstance2(MathUtility::Vec3F(0, 0, 0), 0, MathUtility::Color4I(0, 0, 0, 0));
-            RenderStateManager::SetLight3(RenderStateManager::LightOperationDisabled);
-            RenderStateManager::SetLightInstance3(MathUtility::Vec3F(0, 0, 0), 0, MathUtility::Color4I(0, 0, 0, 0));
-            RenderStateManager::SetLight4(RenderStateManager::LightOperationDisabled);
-            RenderStateManager::SetLightInstance4(MathUtility::Vec3F(0, 0, 0), 0, MathUtility::Color4I(0, 0, 0, 0));
-            RenderStateManager::SetFog(RenderStateManager::FogOperationDisabled);
-            RenderStateManager::SetFogInstance(MathUtility::Color3I(0, 0, 0), 0, 0, 0);
-            RenderStateManager::SetViewport(MathUtility::RectI(0, 0, 640, 480));
-            RenderStateManager::SetScissor(RenderStateManager::ScissorOperationDisabled, MathUtility::RectI());
-            RenderStateManager::SetDrawMode(RenderStateManager::DrawModeTriangles);
-
-			for (uint32_t i = 0; i < windowHandles.size(); i++)
-			{
-				uint32_t windowHandle = windowHandles.at(i);
-				double dt = TimeUtility::GetDurationSeconds(previousNow, now);
-                if (OpenGLWindowHelper::WindowPreRender(windowHandle, exitRequested) == false)
-				{
-					DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "WindowPreRender failed.");
-					return false;
-				}
-
-                OpenGLRenderingHelper::RenderMesh(meshID);
-
-				if (AngelScriptRunner::ExecuteRender(windowHandle, dt) == false)
-				{
-					DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteRender failed.");
-					return false;
-				}
-				if (OpenGLWindowHelper::WindowPostRender(windowHandle) == false)
-				{
-					DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "WindowPostRender failed.");
-					return false;
-				}
-			}
-			glfwPollEvents();
-			previousNow = now;
-		}
-	}
-
-    glfwTerminate();
-    return true;
 }
 
 bool OpenGLWindowHelper::GetKeyPressed(uint32_t windowHandle, uint32_t key, uint32_t& pressed)

@@ -33,7 +33,7 @@ double MathUtility::GetRandomDouble()
 int32_t MathUtility::GetRandomIntInRange(int32_t start, int32_t end)
 {
     int first = start > end ? end : start;
-    int last =  start > end ? start : end;;
+    int last =  start > end ? start : end;
     return (rand() % (last - first)) + first;
 }
 

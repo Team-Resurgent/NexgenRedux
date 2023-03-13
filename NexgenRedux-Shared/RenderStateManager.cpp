@@ -160,6 +160,32 @@ bool RenderStateManager::CanBatch(void)
     return true;
 }
 
+bool RenderStateManager::LoadTexture(std::wstring path, uint32_t& textureID)
+{
+#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
+	return OpenGLRenderingHelper::LoadTexture(path, textureID);
+#elif defined NEXGEN_OG
+	return XboxOGRenderingHelper::LoadTexture(path, textureID);
+#elif defined NEXGEN_360
+	return true;
+#else
+	return false;
+#endif
+}
+
+bool RenderStateManager::RenderMesh(uint32_t meshID)
+{
+#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
+	return OpenGLRenderingHelper::RenderMesh(meshID);
+#elif defined NEXGEN_OG
+	return XboxOGRenderingHelper::RenderMesh(meshID);
+#elif defined NEXGEN_360
+	return true;
+#else
+	return false;
+#endif
+}
+
 void RenderStateManager::SetShader(const std::string& shader)
 {
     bool isDirty = false;

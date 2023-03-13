@@ -440,92 +440,37 @@ void OpenGLRenderingHelper::SetShader(std::string shaderName)
 	uint32_t program;
 	if (GetShaderLookupValue(shaderName, "Program", program) == false)
 	{
-		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "Shader '%s' not recognized.", shaderName.c_str());
+		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "SetShader: Shader '%s' not recognized.", shaderName.c_str());
 		return;
 	}
 	glUseProgram(program);
-
-	MathUtility::Vec3F eye = MathUtility::Vec3F(0, 0, 2);
-	MathUtility::Vec3F target = MathUtility::Vec3F(0, 0, 0);
-	MathUtility::Vec3F up = MathUtility::Vec3F(0, 1, 0);
-	MathUtility::Matrix4x4 viewMatrix = MathUtility::Matrix4x4::LookAtRH(eye, target, up);
-	MathUtility::Matrix4x4 modelMatrix = MathUtility::Matrix4x4();
-	MathUtility::Matrix4x4 perspectiveMatrix = MathUtility::Matrix4x4::OrthoOffCenterRH(0, 640, 0, 480, 1, 100);
-
-	uint32_t value;
-	GetShaderLookupValue("Default", "uModelMatrix", value);
-	glUniformMatrix4fv(value, 1, GL_FALSE, modelMatrix.values);
-	GetShaderLookupValue("Default", "uViewMatrix", value);
-	glUniformMatrix4fv(value, 1, GL_FALSE, viewMatrix.values);
-	GetShaderLookupValue("Default", "uProjectionMatrix", value);
-	glUniformMatrix4fv(value, 1, GL_FALSE, perspectiveMatrix.values);
-	GetShaderLookupValue("Default", "uAmbientColor", value);
-	glUniform4f(value, 0.1f, 0.1f, 0.1f, 0);
-	GetShaderLookupValue("Default", "uLightEnable0", value);
-	glUniform1i(value, 0);
-	GetShaderLookupValue("Default", "uLightPosition0", value);
-	glUniform4f(value, 0, 0, 0, 0);
-	GetShaderLookupValue("Default", "uLightDiffuseColor0", value);
-	glUniform4f(value, 0, 0, 0, 0);
-	GetShaderLookupValue("Default", "uLightEnable1", value);
-	glUniform1i(value, 0);
-	GetShaderLookupValue("Default", "uLightPosition1", value);
-	glUniform4f(value, 0, 0, 0, 0);
-	GetShaderLookupValue("Default", "uLightDiffuseColor1", value);
-	glUniform4f(value, 0, 0, 0, 0);
-	GetShaderLookupValue("Default", "uLightEnable2", value);
-	glUniform1i(value, 0);
-	GetShaderLookupValue("Default", "uLightPosition2", value);
-	glUniform4f(value, 0, 0, 0, 0);
-	GetShaderLookupValue("Default", "uLightDiffuseColor2", value);
-	glUniform4f(value, 0, 0, 0, 0);
-	GetShaderLookupValue("Default", "uLightEnable3", value);
-	glUniform1i(value, 0);
-	GetShaderLookupValue("Default", "uLightPosition3", value);
-	glUniform4f(value, 0, 0, 0, 0);
-	GetShaderLookupValue("Default", "uLightDiffuseColor3", value);
-	glUniform4f(value, 0, 0, 0, 0);
-	GetShaderLookupValue("Default", "uLightsEnable", value);
-	glUniform1i(value, 0);
-	GetShaderLookupValue("Default", "uFogMode", value);
-	glUniform1i(value, 0);
-	GetShaderLookupValue("Default", "uFogColor", value);
-	glUniform4f(value, 0, 0, 0, 1);
-	GetShaderLookupValue("Default", "uFogStart", value);
-	glUniform1f(value, 0);
-	GetShaderLookupValue("Default", "uFogEnd", value);
-	glUniform1f(value, 0);
-	GetShaderLookupValue("Default", "uFogDensity", value);
-	glUniform1f(value, 0);
-	GetShaderLookupValue("Default", "uTintColor", value);
-	glUniform4f(value, 1, 1, 1, 1);
 }
 
 void OpenGLRenderingHelper::SetModelMatrix(const MathUtility::Matrix4x4& matrix) 
 {
 	uint32_t value;
-	GetShaderLookupValue("Default", "uModelMatrix", value);
+	GetShaderLookupValue(RenderStateManager::GetRenderState()->shaderState.shader, "uModelMatrix", value);
 	glUniformMatrix4fv(value, 1, GL_FALSE, matrix.values);
 }
 
 void OpenGLRenderingHelper::SetViewMatrix(const MathUtility::Matrix4x4& matrix) 
 {
 	uint32_t value;
-	GetShaderLookupValue("Default", "uViewMatrix", value);
+	GetShaderLookupValue(RenderStateManager::GetRenderState()->shaderState.shader, "uViewMatrix", value);
 	glUniformMatrix4fv(value, 1, GL_FALSE, matrix.values);
 }
 
 void OpenGLRenderingHelper::SetProjectionMatrix(const MathUtility::Matrix4x4& matrix) 
 {
 	uint32_t value;
-	GetShaderLookupValue("Default", "uProjectionMatrix", value);
+	GetShaderLookupValue(RenderStateManager::GetRenderState()->shaderState.shader, "uProjectionMatrix", value);
 	glUniformMatrix4fv(value, 1, GL_FALSE, matrix.values);
 }
 
 void OpenGLRenderingHelper::SetAmbientLight(const MathUtility::Color3I& color) 
 {
 	uint32_t value;
-	GetShaderLookupValue("Default", "uAmbientColor", value);
+	GetShaderLookupValue(RenderStateManager::GetRenderState()->shaderState.shader, "uAmbientColor", value);
 	glUniform4f(value, color.r / 255.0f, color.g / 255.0f, color.b / 255.0f, 0);
 }
 
@@ -555,7 +500,7 @@ void OpenGLRenderingHelper::SetTexture(const uint32_t& textureID, const RenderSt
 void OpenGLRenderingHelper::SetTint(const MathUtility::Color4I& color) 
 {
 	uint32_t value;
-	GetShaderLookupValue("Default", "uTintColor", value);
+	GetShaderLookupValue(RenderStateManager::GetRenderState()->shaderState.shader, "uTintColor", value);
 	glUniform4f(value, color.r / 255.0f, color.g / 255.0f, color.b / 255.0f, color.a / 255.0f);
 }
 
@@ -983,11 +928,8 @@ bool OpenGLRenderingHelper::RenderMesh(uint32_t meshID)
 		return false;
 	}
 
-	TextureContainer* textureContainer = GetTextureContainer(mesh->textureID);
-	if (textureContainer == NULL)
-	{
-		return false;
-	}
+	RenderStateManager::SetTexture(mesh->textureID, RenderStateManager::TextureFilterLinear);
+	RenderStateManager::ApplyChanges();
 
 	uint32_t requestedSize =  mesh->vertices.size() * sizeof(MeshUtility::Vertex);
 	ResizeDynamicBufferIfNeeded(requestedSize);
@@ -998,11 +940,6 @@ bool OpenGLRenderingHelper::RenderMesh(uint32_t meshID)
 	GetShaderLookupValue("Default", "aNormal", aNormal);
 	uint32_t aTexCoord;
 	GetShaderLookupValue("Default", "aTexCoord", aTexCoord);
-
-	glActiveTexture(GL_TEXTURE0 + 0);
-	glBindTexture(GL_TEXTURE_2D, textureContainer->texture);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 	glBindBuffer(GL_ARRAY_BUFFER, m_dynamicBuffer);
 	glBufferSubData(GL_ARRAY_BUFFER, 0, mesh->vertices.size() * sizeof(MeshUtility::Vertex), mesh->vertices.data());

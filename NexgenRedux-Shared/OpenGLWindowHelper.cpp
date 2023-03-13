@@ -347,7 +347,38 @@ bool OpenGLWindowHelper::RenderLoop(void)
 
 			std::vector<uint32_t> windowHandles = GetWindowHandles();
 
-            OpenGLRenderingHelper::SetShader("Default");
+            MathUtility::Vec3F eye = MathUtility::Vec3F(0, 0, 2);
+			MathUtility::Vec3F target = MathUtility::Vec3F(0, 0, 0);
+			MathUtility::Vec3F up = MathUtility::Vec3F(0, 1, 0);
+            MathUtility::Matrix4x4 modelMatrix = MathUtility::Matrix4x4();
+			MathUtility::Matrix4x4 viewMatrix = MathUtility::Matrix4x4::LookAtRH(eye, target, up);
+			MathUtility::Matrix4x4 projectionMatrix = MathUtility::Matrix4x4::OrthoOffCenterRH(0, 640, 0, 480, 1, 100);
+
+            RenderStateManager::Init();
+			RenderStateManager::SetShader("Default");
+            RenderStateManager::SetModelMatrix(modelMatrix);
+            RenderStateManager::SetViewMatrix(viewMatrix);
+            RenderStateManager::SetProjectionMatrix(projectionMatrix);
+            RenderStateManager::SetAmbientLight(MathUtility::Color3I(25, 25, 25));
+            RenderStateManager::SetTint(MathUtility::Color4I(255, 255, 255, 255));
+            RenderStateManager::SetBlend(RenderStateManager::BlendOperationDisabled);
+            RenderStateManager::SetBlendFactors(RenderStateManager::BlendFactorOne, RenderStateManager::BlendFactorOne);
+            RenderStateManager::SetCulling(RenderStateManager::CullingOperationDisabled);
+            RenderStateManager::SetDepth(RenderStateManager::DepthOperationLess);
+            RenderStateManager::SetLights(RenderStateManager::LightsOperationDisabled);
+            RenderStateManager::SetLight1(RenderStateManager::LightOperationDisabled);
+            RenderStateManager::SetLightInstance1(MathUtility::Vec3F(0, 0, 0), 0, MathUtility::Color4I(0, 0, 0, 0));
+            RenderStateManager::SetLight2(RenderStateManager::LightOperationDisabled);
+            RenderStateManager::SetLightInstance2(MathUtility::Vec3F(0, 0, 0), 0, MathUtility::Color4I(0, 0, 0, 0));
+            RenderStateManager::SetLight3(RenderStateManager::LightOperationDisabled);
+            RenderStateManager::SetLightInstance3(MathUtility::Vec3F(0, 0, 0), 0, MathUtility::Color4I(0, 0, 0, 0));
+            RenderStateManager::SetLight4(RenderStateManager::LightOperationDisabled);
+            RenderStateManager::SetLightInstance4(MathUtility::Vec3F(0, 0, 0), 0, MathUtility::Color4I(0, 0, 0, 0));
+            RenderStateManager::SetFog(RenderStateManager::FogOperationDisabled);
+            RenderStateManager::SetFogInstance(MathUtility::Color3I(0, 0, 0), 0, 0, 0);
+            RenderStateManager::SetViewport(MathUtility::RectI(0, 0, 640, 480));
+            RenderStateManager::SetScissor(RenderStateManager::ScissorOperationDisabled, MathUtility::RectI());
+            RenderStateManager::SetDrawMode(RenderStateManager::DrawModeTriangles);
 
 			for (uint32_t i = 0; i < windowHandles.size(); i++)
 			{

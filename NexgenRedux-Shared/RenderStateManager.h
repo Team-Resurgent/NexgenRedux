@@ -239,6 +239,7 @@ namespace NexgenRedux
 			DrawModeState drawModeState;
 		} RenderState;
 
+		static void Init(void);
 		static void Close(void);
 
 		static RenderState* GetRenderState(void);

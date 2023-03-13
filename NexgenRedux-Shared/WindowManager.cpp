@@ -202,6 +202,8 @@ bool WindowManager::RenderLoop(void)
 
 	std::vector<uint32_t> windowHandles = GetWindowHandles();
 
+	float f = 0;
+
 	if (windowHandles.size() > 0) 
 	{
 		bool exitRequested = false;
@@ -254,6 +256,13 @@ bool WindowManager::RenderLoop(void)
 					DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "WindowPreRender failed.");
 					return false;
 				}
+
+
+				modelMatrix = MathUtility::Matrix4x4::Translate(MathUtility::Vec3F(-320, -240, 0));
+				modelMatrix *= MathUtility::Matrix4x4::RotateZ(f);
+				modelMatrix *= MathUtility::Matrix4x4::Translate(MathUtility::Vec3F(320, 240, 0));
+				RenderStateManager::SetModelMatrix(modelMatrix);
+				f+=0.5;
 
                 RenderStateManager::RenderMesh(meshID);
 

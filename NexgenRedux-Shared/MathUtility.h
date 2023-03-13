@@ -21,7 +21,7 @@ namespace NexgenRedux
 			};
 
 			Vec2D() : x(0), y(0) {} 
-			Vec2D(double x, double y) : x(x), y(y) {}  
+			Vec2D(const double& x, const double& y) : x(x), y(y) {}  
 
 			Vec2D(const Vec2D& other) 
 			{
@@ -35,6 +35,42 @@ namespace NexgenRedux
 			Vec2D operator * (const Vec2D& other) const { return Vec2D(x * other.x, y * other.y); }  
 			Vec2D operator + (const Vec2D& other) const { return Vec2D(x + other.x, y + other.y); }  
 			Vec2D operator - (const Vec2D& other) const { return Vec2D(x - other.x, y - other.y); }
+
+			void operator /= (const Vec2D& other)
+			{
+				Vec2D result = *this / other;
+				for (uint32_t i = 0; i < 2; i++)
+				{
+					this->values[i] = result.values[i];
+				}
+			}
+
+			void operator *= (const Vec2D& other)
+			{
+				Vec2D result = *this * other;
+				for (uint32_t i = 0; i < 2; i++)
+				{
+					this->values[i] = result.values[i];
+				}
+			}
+			
+			void operator += (const Vec2D& other)
+			{
+				Vec2D result = *this + other;
+				for (uint32_t i = 0; i < 2; i++)
+				{
+					this->values[i] = result.values[i];
+				}
+			}
+
+			void operator -= (const Vec2D& other)
+			{
+				Vec2D result = *this - other;
+				for (uint32_t i = 0; i < 2; i++)
+				{
+					this->values[i] = result.values[i];
+				}
+			}
 
 			bool operator == (const Vec2D& other) const 
 			{ 
@@ -63,7 +99,7 @@ namespace NexgenRedux
 			};
 
 			Vec2F() : x(0), y(0) {}  
-			Vec2F(float x, float y) : x(x), y(y) {}  
+			Vec2F(const float& x, const float& y) : x(x), y(y) {}  
 
 			Vec2F(const Vec2F& other) 
 			{
@@ -77,6 +113,42 @@ namespace NexgenRedux
 			Vec2F operator * (const Vec2F& other) const { return Vec2F(x * other.x, y * other.y); }  
 			Vec2F operator + (const Vec2F& other) const { return Vec2F(x + other.x, y + other.y); }  
 			Vec2F operator - (const Vec2F& other) const { return Vec2F(x - other.x, y - other.y); }
+
+			void operator /= (const Vec2F& other)
+			{
+				Vec2F result = *this / other;
+				for (uint32_t i = 0; i < 2; i++)
+				{
+					this->values[i] = result.values[i];
+				}
+			}
+
+			void operator *= (const Vec2F& other)
+			{
+				Vec2F result = *this * other;
+				for (uint32_t i = 0; i < 2; i++)
+				{
+					this->values[i] = result.values[i];
+				}
+			}
+			
+			void operator += (const Vec2F& other)
+			{
+				Vec2F result = *this + other;
+				for (uint32_t i = 0; i < 2; i++)
+				{
+					this->values[i] = result.values[i];
+				}
+			}
+
+			void operator -= (const Vec2F& other)
+			{
+				Vec2F result = *this - other;
+				for (uint32_t i = 0; i < 2; i++)
+				{
+					this->values[i] = result.values[i];
+				}
+			}
 
 			bool operator == (const Vec2F& other) const 
 			{ 
@@ -106,7 +178,7 @@ namespace NexgenRedux
 			};
 
 			Vec3F() : x(0), y(0), z(0) {}  
-			Vec3F(float x, float y, float z) : x(x), y(y), z(z) {}  
+			Vec3F(const float& x, const float& y, const float& z) : x(x), y(y), z(z) {}  
 
 			Vec3F(const Vec3F& other) 
 			{
@@ -120,6 +192,42 @@ namespace NexgenRedux
 			Vec3F operator * (const Vec3F& other) const { return Vec3F(x * other.x, y * other.y, z * other.z); }  
 			Vec3F operator + (const Vec3F& other) const { return Vec3F(x + other.x, y + other.y, z + other.z); }  
 			Vec3F operator - (const Vec3F& other) const { return Vec3F(x - other.x, y - other.y, z - other.z); }
+
+			void operator /= (const Vec3F& other)
+			{
+				Vec3F result = *this / other;
+				for (uint32_t i = 0; i < 3; i++)
+				{
+					this->values[i] = result.values[i];
+				}
+			}
+
+			void operator *= (const Vec3F& other)
+			{
+				Vec3F result = *this * other;
+				for (uint32_t i = 0; i < 3; i++)
+				{
+					this->values[i] = result.values[i];
+				}
+			}
+			
+			void operator += (const Vec3F& other)
+			{
+				Vec3F result = *this + other;
+				for (uint32_t i = 0; i < 3; i++)
+				{
+					this->values[i] = result.values[i];
+				}
+			}
+
+			void operator -= (const Vec3F& other)
+			{
+				Vec3F result = *this - other;
+				for (uint32_t i = 0; i < 3; i++)
+				{
+					this->values[i] = result.values[i];
+				}
+			}
 
 			bool operator == (const Vec3F& other) const 
 			{ 
@@ -170,7 +278,7 @@ namespace NexgenRedux
 			};
 
 			Vec4F() : x(0), y(0), z(0), w(0) {}  
-			Vec4F(float x, float y, float z, float w) : x(x), y(y), z(z), w(w) {}  
+			Vec4F(const float& x, const float& y, const float& z, const float& w) : x(x), y(y), z(z), w(w) {}  
 
 			Vec4F(const Vec4F& other) 
 			{
@@ -184,6 +292,42 @@ namespace NexgenRedux
 			Vec4F operator * (const Vec4F& other) const { return Vec4F(x * other.x, y * other.y, z * other.z, w * other.w); }  
 			Vec4F operator + (const Vec4F& other) const { return Vec4F(x + other.x, y + other.y, z + other.z, w + other.w); }  
 			Vec4F operator - (const Vec4F& other) const { return Vec4F(x - other.x, y - other.y, z - other.z, w - other.w); }
+
+			void operator /= (const Vec4F& other)
+			{
+				Vec4F result = *this / other;
+				for (uint32_t i = 0; i < 4; i++)
+				{
+					this->values[i] = result.values[i];
+				}
+			}
+
+			void operator *= (const Vec4F& other)
+			{
+				Vec4F result = *this * other;
+				for (uint32_t i = 0; i < 4; i++)
+				{
+					this->values[i] = result.values[i];
+				}
+			}
+			
+			void operator += (const Vec4F& other)
+			{
+				Vec4F result = *this + other;
+				for (uint32_t i = 0; i < 4; i++)
+				{
+					this->values[i] = result.values[i];
+				}
+			}
+
+			void operator -= (const Vec4F& other)
+			{
+				Vec4F result = *this - other;
+				for (uint32_t i = 0; i < 4; i++)
+				{
+					this->values[i] = result.values[i];
+				}
+			}
 
 			bool operator == (const Vec4F& other) const 
 			{ 
@@ -291,6 +435,33 @@ namespace NexgenRedux
 				return result;
 			}
 
+			void operator *= (const Matrix4x4& other)
+			{
+				Matrix4x4 result = *this * other;
+				for (uint32_t i = 0; i < 16; i++)
+				{
+					this->values[i] = result.values[i];
+				}
+			}
+
+			void operator += (const Matrix4x4& other)
+			{
+				Matrix4x4 result = *this + other;
+				for (uint32_t i = 0; i < 16; i++)
+				{
+					this->values[i] = result.values[i];
+				}
+			}
+
+			void operator -= (const Matrix4x4& other)
+			{
+				Matrix4x4 result = *this - other;
+				for (uint32_t i = 0; i < 16; i++)
+				{
+					this->values[i] = result.values[i];
+				}
+			}
+
 			bool operator == (const Matrix4x4& other) const 
 			{ 
 				for (uint32_t i = 0; i < 16; i++) 
@@ -357,7 +528,7 @@ namespace NexgenRedux
 				return result;
 			}
 
-			static Matrix4x4 Scale(const Vec3F value)
+			static Matrix4x4 Scale(const Vec3F& value)
 			{
 				Matrix4x4 result;
 				result.values[0] = value.values[0];
@@ -366,7 +537,7 @@ namespace NexgenRedux
 				return result;
 			}
 
-			static Matrix4x4 RotateX(const float degreesX)
+			static Matrix4x4 RotateX(const float& degreesX)
 			{
 				Matrix4x4 result;
 				result.values[5] = cosf(DegreesToRadians(degreesX));
@@ -376,7 +547,7 @@ namespace NexgenRedux
 				return result;
 			}
 
-			static Matrix4x4 RotateY(const float degreesY)
+			static Matrix4x4 RotateY(const float& degreesY)
 			{
 				Matrix4x4 result;
 				result.values[0] = cosf(DegreesToRadians(degreesY));
@@ -386,7 +557,7 @@ namespace NexgenRedux
 				return result;
 			}
 
-			static Matrix4x4 RotateZ(const float degreesZ)
+			static Matrix4x4 RotateZ(const float& degreesZ)
 			{
 				Matrix4x4 result;
 				result.values[0] = cosf(DegreesToRadians(degreesZ));
@@ -396,7 +567,7 @@ namespace NexgenRedux
 				return result;
 			}
 
-			static Matrix4x4 Translate(const Vec3F value)
+			static Matrix4x4 Translate(const Vec3F& value)
 			{
 				Matrix4x4 result;
 				result.values[0] = 1.0f;
@@ -449,7 +620,7 @@ namespace NexgenRedux
 				return result;
 			}
 					
-			static Matrix4x4 LookAtLH(const Vec3F eye, const Vec3F target, const Vec3F up)
+			static Matrix4x4 LookAtLH(const Vec3F& eye, const Vec3F& target, const Vec3F& up)
 			{
 				Vec3F zaxis = target - eye;
 				zaxis = zaxis.Normal();
@@ -480,7 +651,7 @@ namespace NexgenRedux
 				return result;
 			}
 
-			static Matrix4x4 LookAt(const Vec3F eye, const Vec3F target, const Vec3F up)
+			static Matrix4x4 LookAt(const Vec3F& eye, const Vec3F& target, const Vec3F& up)
 			{
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
 				return LookAtRH(eye, target, up);
@@ -489,7 +660,7 @@ namespace NexgenRedux
 #endif
 			}
 					
-			static Matrix4x4 PerspectiveFovRH(const float fovDegrees, const float aspectRatio, const float znear, const float zfar)
+			static Matrix4x4 PerspectiveFovRH(const float& fovDegrees, const float& aspectRatio, const float& znear, const float& zfar)
 			{
 				float sin = sinf(0.5f * DegreesToRadians(fovDegrees));
 				float cos = cosf(0.5f * DegreesToRadians(fovDegrees));
@@ -516,7 +687,7 @@ namespace NexgenRedux
 				return result;
 			}
 
-			static Matrix4x4 PerspectiveFovLH(const float fovDegrees, const float aspectRatio, const float znear, const float zfar)
+			static Matrix4x4 PerspectiveFovLH(const float& fovDegrees, const float& aspectRatio, const float& znear, const float& zfar)
 			{
 				float sin = sinf(0.5f * DegreesToRadians(fovDegrees));
 				float cos = cosf(0.5f * DegreesToRadians(fovDegrees));
@@ -543,7 +714,7 @@ namespace NexgenRedux
 				return result;
 			}
 
-			static Matrix4x4 PerspectiveFov(const float fovDegrees, const float aspectRatio, const float znear, const float zfar)
+			static Matrix4x4 PerspectiveFov(const float& fovDegrees, const float& aspectRatio, const float& znear, const float& zfar)
 			{
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
 				return PerspectiveFovRH(fovDegrees, aspectRatio, znear, zfar);
@@ -552,7 +723,7 @@ namespace NexgenRedux
 #endif
 			}
 
-			static Matrix4x4 OrthoRH(const float width, const float height, const float znear, const float zfar)
+			static Matrix4x4 OrthoRH(const float& width, const float& height, const float& znear, const float& zfar)
 			{
 				Matrix4x4 result;
 				result.values[0] = 2.0f / width;
@@ -574,7 +745,7 @@ namespace NexgenRedux
 				return result;
 			}
 
-			static Matrix4x4 OrthoLH(const float width, const float height, const float znear, const float zfar)
+			static Matrix4x4 OrthoLH(const float& width, const float& height, const float& znear, const float& zfar)
 			{
 				Matrix4x4 result;
 				result.values[0] = 2.0f / width;
@@ -596,7 +767,7 @@ namespace NexgenRedux
 				return result;
 			}
 
-			static Matrix4x4 Ortho(const float width, const float height, const float znear, const float zfar)
+			static Matrix4x4 Ortho(const float& width, const float& height, const float& znear, const float& zfar)
 			{
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
 				return OrthoRH(width, height, znear, zfar);
@@ -605,7 +776,7 @@ namespace NexgenRedux
 #endif
 			}
 
-			static Matrix4x4 OrthoOffCenterRH(const float left, const float right, const float bottom, const float top, const float znear, const float zfar)
+			static Matrix4x4 OrthoOffCenterRH(const float& left, const float& right, const float& bottom, const float& top, const float& znear, const float& zfar)
 			{
 				float wInv = 1.0f / (right - left);
 				float hInv = 1.0f / (top - bottom);
@@ -630,7 +801,7 @@ namespace NexgenRedux
 				return result;
 			}
 
-			static Matrix4x4 OrthoOffCenterLH(const float left, const float right, const float bottom, const float top, const float znear, const float zfar)
+			static Matrix4x4 OrthoOffCenterLH(const float& left, const float& right, const float& bottom, const float& top, const float& znear, const float& zfar)
 			{
 				float wInv = 1.0f / (right - left);
 				float hInv = 1.0f / (top - bottom);
@@ -655,7 +826,7 @@ namespace NexgenRedux
 				return result;
 			}
 
-			static Matrix4x4 OrthoOffCenter(const float left, const float right, const float bottom, const float top, const float znear, const float zfar)
+			static Matrix4x4 OrthoOffCenter(const float& left, const float& right, const float& bottom, const float& top, const float& znear, const float& zfar)
 			{
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
 				return OrthoOffCenterRH(left, right, bottom, top, znear, zfar);
@@ -677,13 +848,54 @@ namespace NexgenRedux
 			};
 
 			SizeI() : width(0), height(0) {}  
-			SizeI(int32_t width, int32_t height) : width(width), height(height) {}  
+			SizeI(const int32_t& width, const int32_t& height) : width(width), height(height) {}  
 
 			SizeI(const SizeI& other) 
 			{
 				for (uint32_t i = 0; i < 2; i++)
 				{
 					values[i] = other.values[i];
+				}
+			}
+
+			SizeI operator / (const SizeI& other) const { return SizeI(width / other.width, height / other.height); }  
+			SizeI operator * (const SizeI& other) const { return SizeI(width * other.width, height * other.height); }  
+			SizeI operator + (const SizeI& other) const { return SizeI(width + other.width, height + other.height); }  
+			SizeI operator - (const SizeI& other) const { return SizeI(width - other.width, height - other.height); }
+
+			void operator /= (const SizeI& other)
+			{
+				SizeI result = *this / other;
+				for (uint32_t i = 0; i < 2; i++)
+				{
+					this->values[i] = result.values[i];
+				}
+			}
+
+			void operator *= (const SizeI& other)
+			{
+				SizeI result = *this * other;
+				for (uint32_t i = 0; i < 2; i++)
+				{
+					this->values[i] = result.values[i];
+				}
+			}
+			
+			void operator += (const SizeI& other)
+			{
+				SizeI result = *this + other;
+				for (uint32_t i = 0; i < 2; i++)
+				{
+					this->values[i] = result.values[i];
+				}
+			}
+
+			void operator -= (const SizeI& other)
+			{
+				SizeI result = *this - other;
+				for (uint32_t i = 0; i < 2; i++)
+				{
+					this->values[i] = result.values[i];
 				}
 			}
 
@@ -714,13 +926,54 @@ namespace NexgenRedux
 			};
 
 			SizeF() : width(0), height(0) {}  
-			SizeF(float width, float height) : width(width), height(height) {}  
+			SizeF(const float& width, const float& height) : width(width), height(height) {}  
 
 			SizeF(const SizeF& other) 
 			{
 				for (uint32_t i = 0; i < 2; i++)
 				{
 					values[i] = other.values[i];
+				}
+			}
+
+			SizeF operator / (const SizeF& other) const { return SizeF(width / other.width, height / other.height); }  
+			SizeF operator * (const SizeF& other) const { return SizeF(width * other.width, height * other.height); }  
+			SizeF operator + (const SizeF& other) const { return SizeF(width + other.width, height + other.height); }  
+			SizeF operator - (const SizeF& other) const { return SizeF(width - other.width, height - other.height); }
+
+			void operator /= (const SizeF& other)
+			{
+				SizeF result = *this / other;
+				for (uint32_t i = 0; i < 2; i++)
+				{
+					this->values[i] = result.values[i];
+				}
+			}
+
+			void operator *= (const SizeF& other)
+			{
+				SizeF result = *this * other;
+				for (uint32_t i = 0; i < 2; i++)
+				{
+					this->values[i] = result.values[i];
+				}
+			}
+			
+			void operator += (const SizeF& other)
+			{
+				SizeF result = *this + other;
+				for (uint32_t i = 0; i < 2; i++)
+				{
+					this->values[i] = result.values[i];
+				}
+			}
+
+			void operator -= (const SizeF& other)
+			{
+				SizeF result = *this - other;
+				for (uint32_t i = 0; i < 2; i++)
+				{
+					this->values[i] = result.values[i];
 				}
 			}
 
@@ -753,7 +1006,7 @@ namespace NexgenRedux
 			};
 
 			RectI() : x(0), y(0), width(0), height(0) {} 
-			RectI(int32_t x, int32_t y, int32_t width, int32_t height) : x(x), y(y), width(width), height(height) {}  
+			RectI(const int32_t& x, const int32_t& y, const int32_t& width, const int32_t& height) : x(x), y(y), width(width), height(height) {}  
 
 			RectI(const RectI& other) 
 			{
@@ -762,6 +1015,47 @@ namespace NexgenRedux
 					values[i] = other.values[i];
 				}
 			} 
+
+			RectI operator / (const RectI& other) const { return RectI(x / other.x, y / other.y, width / other.width, height / other.height); }  
+			RectI operator * (const RectI& other) const { return RectI(x * other.x, y * other.y, width / other.width, height / other.height); }  
+			RectI operator + (const RectI& other) const { return RectI(x + other.x, y + other.y, width / other.width, height / other.height); }  
+			RectI operator - (const RectI& other) const { return RectI(x - other.x, y - other.y, width / other.width, height / other.height); }
+			
+			void operator /= (const RectI& other)
+			{
+				RectI result = *this / other;
+				for (uint32_t i = 0; i < 4; i++)
+				{
+					this->values[i] = result.values[i];
+				}
+			}
+
+			void operator *= (const RectI& other)
+			{
+				RectI result = *this * other;
+				for (uint32_t i = 0; i < 4; i++)
+				{
+					this->values[i] = result.values[i];
+				}
+			}
+			
+			void operator += (const RectI& other)
+			{
+				RectI result = *this + other;
+				for (uint32_t i = 0; i < 4; i++)
+				{
+					this->values[i] = result.values[i];
+				}
+			}
+
+			void operator -= (const RectI& other)
+			{
+				RectI result = *this - other;
+				for (uint32_t i = 0; i < 4; i++)
+				{
+					this->values[i] = result.values[i];
+				}
+			}
 
 			bool operator == (const RectI& other) const 
 			{ 
@@ -792,7 +1086,7 @@ namespace NexgenRedux
 			};
 
 			RectF() : x(0), y(0), width(0), height(0) {}  
-			RectF(float x, float y, float width, float height) : x(x), y(y), width(width), height(height) {}  
+			RectF(const float& x, const float& y, const float& width, const float& height) : x(x), y(y), width(width), height(height) {}  
 
 			RectF(const RectF& other) 
 			{
@@ -801,6 +1095,47 @@ namespace NexgenRedux
 					values[i] = other.values[i];
 				}
 			} 
+
+			RectF operator / (const RectF& other) const { return RectF(x / other.x, y / other.y, width / other.width, height / other.height); }  
+			RectF operator * (const RectF& other) const { return RectF(x * other.x, y * other.y, width / other.width, height / other.height); }  
+			RectF operator + (const RectF& other) const { return RectF(x + other.x, y + other.y, width / other.width, height / other.height); }  
+			RectF operator - (const RectF& other) const { return RectF(x - other.x, y - other.y, width / other.width, height / other.height); }
+			
+			void operator /= (const RectF& other)
+			{
+				RectF result = *this / other;
+				for (uint32_t i = 0; i < 4; i++)
+				{
+					this->values[i] = result.values[i];
+				}
+			}
+
+			void operator *= (const RectF& other)
+			{
+				RectF result = *this * other;
+				for (uint32_t i = 0; i < 4; i++)
+				{
+					this->values[i] = result.values[i];
+				}
+			}
+			
+			void operator += (const RectF& other)
+			{
+				RectF result = *this + other;
+				for (uint32_t i = 0; i < 4; i++)
+				{
+					this->values[i] = result.values[i];
+				}
+			}
+
+			void operator -= (const RectF& other)
+			{
+				RectF result = *this - other;
+				for (uint32_t i = 0; i < 4; i++)
+				{
+					this->values[i] = result.values[i];
+				}
+			}
 
 			bool operator == (const RectF& other) const 
 			{ 
@@ -830,7 +1165,7 @@ namespace NexgenRedux
 			};
 
 			Color3I() : r(0), g(0), b(0) {}  
-			Color3I(uint8_t r, uint8_t g, uint8_t b) : r(r), g(g), b(b) {}  
+			Color3I(const uint8_t& r, const uint8_t& g, const uint8_t& b) : r(r), g(g), b(b) {}  
 
 			Color3I(const Color3I& other) 
 			{
@@ -839,6 +1174,47 @@ namespace NexgenRedux
 					values[i] = other.values[i];
 				}
 			} 
+
+			Color3I operator / (const Color3I& other) const { return Color3I(r / other.r, g / other.g, b / b); }  
+			Color3I operator * (const Color3I& other) const { return Color3I(r * other.r, g * other.g, b * b); }  
+			Color3I operator + (const Color3I& other) const { return Color3I(r + other.r, g + other.g, b + b); }  
+			Color3I operator - (const Color3I& other) const { return Color3I(r - other.r, g - other.g, b - b); }
+
+			void operator /= (const Color3I& other)
+			{
+				Color3I result = *this / other;
+				for (uint32_t i = 0; i < 3; i++)
+				{
+					this->values[i] = result.values[i];
+				}
+			}
+
+			void operator *= (const Color3I& other)
+			{
+				Color3I result = *this * other;
+				for (uint32_t i = 0; i < 3; i++)
+				{
+					this->values[i] = result.values[i];
+				}
+			}
+			
+			void operator += (const Color3I& other)
+			{
+				Color3I result = *this + other;
+				for (uint32_t i = 0; i < 3; i++)
+				{
+					this->values[i] = result.values[i];
+				}
+			}
+
+			void operator -= (const Color3I& other)
+			{
+				Color3I result = *this - other;
+				for (uint32_t i = 0; i < 3; i++)
+				{
+					this->values[i] = result.values[i];
+				}
+			}
 
 			bool operator == (const Color3I& other) const 
 			{ 
@@ -869,7 +1245,7 @@ namespace NexgenRedux
 			};
 
 			Color4I() : r(0), g(0), b(0), a(0) {}  
-			Color4I(uint8_t r, uint8_t g, uint8_t b, uint8_t a) : r(r), g(g), b(b), a(a) {}  
+			Color4I(const uint8_t& r, const uint8_t& g, const uint8_t& b, const uint8_t& a) : r(r), g(g), b(b), a(a) {}  
 
 			Color4I(const Color4I& other) 
 			{
@@ -878,6 +1254,47 @@ namespace NexgenRedux
 					values[i] = other.values[i];
 				}
 			} 
+
+			Color4I operator / (const Color4I& other) const { return Color4I(r / other.r, g / other.g, b / b, a / a); }  
+			Color4I operator * (const Color4I& other) const { return Color4I(r * other.r, g * other.g, b * b, a * a); }  
+			Color4I operator + (const Color4I& other) const { return Color4I(r + other.r, g + other.g, b + b, a + a); }  
+			Color4I operator - (const Color4I& other) const { return Color4I(r - other.r, g - other.g, b - b, a - a); }
+
+			void operator /= (const Color4I& other)
+			{
+				Color4I result = *this / other;
+				for (uint32_t i = 0; i < 4; i++)
+				{
+					this->values[i] = result.values[i];
+				}
+			}
+
+			void operator *= (const Color4I& other)
+			{
+				Color4I result = *this * other;
+				for (uint32_t i = 0; i < 4; i++)
+				{
+					this->values[i] = result.values[i];
+				}
+			}
+			
+			void operator += (const Color4I& other)
+			{
+				Color4I result = *this + other;
+				for (uint32_t i = 0; i < 4; i++)
+				{
+					this->values[i] = result.values[i];
+				}
+			}
+
+			void operator -= (const Color4I& other)
+			{
+				Color4I result = *this - other;
+				for (uint32_t i = 0; i < 4; i++)
+				{
+					this->values[i] = result.values[i];
+				}
+			}
 
 			bool operator == (const Color4I& other) const 
 			{ 

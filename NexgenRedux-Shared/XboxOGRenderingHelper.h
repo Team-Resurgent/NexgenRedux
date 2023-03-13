@@ -48,9 +48,7 @@ namespace NexgenRedux
 		static void SetFog(const RenderStateManager::FogOperation& operation);
 		static void SetFogInstance(const MathUtility::Color3I& color, const float& start, const float& end, const float& density);
 		static void SetViewport(const MathUtility::RectI rect);
-		static void SetScissor(const RenderStateManager::ScissorOperation& operation);
-		static void SetScissorInstance(const MathUtility::RectI rect);
-		static void SetDrawMode(const RenderStateManager::DrawModeOperation& operation);
+		static void SetScissor(const RenderStateManager::ScissorOperation& operation, const MathUtility::RectI& rect);
 
 		static bool LoadTexture(std::wstring path, uint32_t& textureID);
 		static bool RenderMesh(uint32_t meshID);

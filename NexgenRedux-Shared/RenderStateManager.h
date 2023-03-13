@@ -51,8 +51,7 @@ namespace NexgenRedux
 		typedef enum CullingOperation {
 			CullingOperationDisabled,
 			CullingOperationFront,
-			CullingOperationBack,
-			CullingOperationFrontAndBack
+			CullingOperationBack
 		} CullingOperation;
 
 		typedef enum DepthOperation {
@@ -68,7 +67,7 @@ namespace NexgenRedux
 		} DepthOperation;
 
 		typedef enum LightsOperation {
-			LightsperationDisabled,
+			LightsOperationDisabled,
 			LightsOperationEnabled
 		} LightsOperation;
 
@@ -201,14 +200,9 @@ namespace NexgenRedux
 		typedef struct ScissorState
 		{
 			ScissorOperation operation;
-			bool isDirty;
-		} ScissorState;
-
-		typedef struct ScissorInstanceState
-		{
 			MathUtility::RectI rect;
 			bool isDirty;
-		} ScissorInstanceState;
+		} ScissorState;
 
 		typedef struct DrawModeState
 		{
@@ -242,7 +236,6 @@ namespace NexgenRedux
 			FogInstanceState fogInstanceState;
 			ViewportState viewportState;
 			ScissorState scissorState;
-			ScissorInstanceState scissorInstanceState;
 			DrawModeState drawModeState;
 		} RenderState;
 
@@ -274,8 +267,7 @@ namespace NexgenRedux
 		static void SetFog(const FogOperation& operation);
 		static void SetFogInstance(const MathUtility::Color3I& color, const float& start, const float& end, const float& density);
 		static void SetViewport(const MathUtility::RectI rect);
-		static void SetScissor(const ScissorOperation& operation);
-		static void SetScissorInstance(const MathUtility::RectI rect);
+		static void SetScissor(const ScissorOperation& operation, const MathUtility::RectI rect);
 		static void SetDrawMode(const DrawModeOperation& operation);
 
 		static void ApplyChanges(void);

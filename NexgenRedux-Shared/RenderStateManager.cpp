@@ -124,10 +124,6 @@ bool RenderStateManager::CanBatch(void)
     {
         return false;
     }
-    if (m_renderState.scissorInstanceState.isDirty)
-    {
-        return false;
-    }
     if (m_renderState.drawModeState.isDirty)
     {
         return false;
@@ -453,7 +449,7 @@ void RenderStateManager::SetViewport(const MathUtility::RectI rect)
     m_renderState.viewportState.isDirty = isDirty;
 }
 
-void RenderStateManager::SetScissor(const ScissorOperation& operation) 
+void RenderStateManager::SetScissor(const ScissorOperation& operation, const MathUtility::RectI rect) 
 { 
     bool isDirty = false;
     if (m_renderState.scissorState.operation != operation)
@@ -461,18 +457,12 @@ void RenderStateManager::SetScissor(const ScissorOperation& operation)
         m_renderState.scissorState.operation = operation;
         isDirty = true;
     }
-    m_renderState.scissorState.isDirty = isDirty;
-}
-
-void RenderStateManager::SetScissorInstance(const MathUtility::RectI rect)
-{
-    bool isDirty = false;
-    if (m_renderState.scissorInstanceState.rect != rect)
+	if (m_renderState.scissorState.rect != rect)
     {
-        m_renderState.scissorInstanceState.rect = rect;
+        m_renderState.scissorState.rect = rect;
         isDirty = true;
     }
-    m_renderState.scissorInstanceState.isDirty = isDirty;
+    m_renderState.scissorState.isDirty = isDirty;
 }
 
 void RenderStateManager::SetDrawMode(const DrawModeOperation& operation) 
@@ -721,31 +711,15 @@ void RenderStateManager::ApplyChanges(void)
     if (m_renderState.scissorState.isDirty)
     {
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	    OpenGLRenderingHelper::SetScissor(m_renderState.scissorState.operation);
+	    OpenGLRenderingHelper::SetScissor(m_renderState.scissorState.operation, m_renderState.scissorState.rect);
 #elif defined NEXGEN_OG
-	    XboxOGRenderingHelper::SetScissor(m_renderState.scissorState.operation);
+	    XboxOGRenderingHelper::SetScissor(m_renderState.scissorState.operation, m_renderState.scissorState.rect);
 #elif defined NEXGEN_360
 #endif
         m_renderState.scissorState.isDirty = false;
     }
-    if (m_renderState.scissorInstanceState.isDirty)
-    {
-#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	    OpenGLRenderingHelper::SetScissorInstance(m_renderState.scissorInstanceState.rect);
-#elif defined NEXGEN_OG
-	    XboxOGRenderingHelper::SetScissorInstance(m_renderState.scissorInstanceState.rect);
-#elif defined NEXGEN_360
-#endif
-        m_renderState.scissorInstanceState.isDirty = false;
-    }
     if (m_renderState.drawModeState.isDirty)
     {
-#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	    OpenGLRenderingHelper::SetDrawMode(m_renderState.drawModeState.operation);
-#elif defined NEXGEN_OG
-	    XboxOGRenderingHelper::SetDrawMode(m_renderState.drawModeState.operation);
-#elif defined NEXGEN_360
-#endif
         m_renderState.drawModeState.isDirty = false;
     }
 }

@@ -752,5 +752,5 @@ void RenderStateManager::ApplyChanges(void)
         m_renderState.drawModeState.isDirty = false;
     }
 
-    m_initialized == true;
+    m_initialized = true;
 }

@@ -860,7 +860,7 @@ wchar_t FileSystem::GetPathSeparator()
 {
 #if defined NEXGEN_OG || defined NEXGEN_360 || defined NEXGEN_WIN || defined NEXGEN_UWP
 	return L'\\';
-#else defined NEXGEN_MAC || defined NEXGEN_LINUX
+#elif defined NEXGEN_MAC || defined NEXGEN_LINUX
 	return L'/';
 #endif
 }

@@ -257,7 +257,6 @@ bool WindowManager::RenderLoop(void)
 					return false;
 				}
 
-
 				modelMatrix = MathUtility::Matrix4x4::Translate(MathUtility::Vec3F(-320, -240, 0));
 				modelMatrix *= MathUtility::Matrix4x4::RotateZ(f);
 				modelMatrix *= MathUtility::Matrix4x4::Translate(MathUtility::Vec3F(320, 240, 0));

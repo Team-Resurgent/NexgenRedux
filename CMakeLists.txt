@@ -47,6 +47,7 @@ list(APPEND INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/Libraries/GLFW/Includes/")
 list(APPEND INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/Libraries/AngelScript/")
 list(APPEND INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/Libraries/")
 list(APPEND INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/")
+list(APPEND INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/ECS")
 include_directories(${INCLUDE_DIRS})
 
 # Define source code files
@@ -65,6 +66,12 @@ list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/OpenGLWindowHel
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/XboxOGRenderingHelper.cpp")
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/OpenGLRenderingHelper.cpp")
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/RenderStateManager.cpp")
+list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/ECSManager.cpp")
+list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/ECS/ECSEntity.cpp")
+list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/ECS/ECSEntityManager.cpp")
+list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/ECS/ECSRenderSystem.cpp")
+list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/ECS/ECSTransformComponent.cpp")
+
 # Gensys
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/Libraries/Gensys/Crc32.cpp")
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/Libraries/Gensys/DebugUtility.cpp")

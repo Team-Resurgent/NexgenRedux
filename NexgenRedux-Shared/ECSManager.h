@@ -8,5 +8,5 @@
 class ECSManager 
 {
 public:
-    void ECSManagerExample(void);
+    static void ECSManagerExample(void);
 };

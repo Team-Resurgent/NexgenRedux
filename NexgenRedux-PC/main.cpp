@@ -20,6 +20,8 @@
 #include "WindowManager.h"
 #include "RenderStateManager.h"
 
+#include "ECSManager.h"
+
 using namespace NexgenRedux;
 using namespace Gensys;
 using namespace AngelScript;
@@ -29,6 +31,8 @@ using namespace AngelScript;
 int main(int argc, const char* argv[])
 {
 	//Gensys::Test::RunTests();
+
+    ECSManager::ECSManagerExample();
 
 	if (ConfigLoader::LoadConfig() == false) 
 	{

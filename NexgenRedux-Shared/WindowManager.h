@@ -3,6 +3,7 @@
 #include "RenderStateManager.h"
 #include "IWindowHelper.h"
 #include "AngelScriptRunner.h"
+#include "GlobalTypes.h"
 
 #include <Gensys/Int.h>
 
@@ -11,12 +12,14 @@
 
 namespace NexgenRedux
 {
+	class RenderStateManager;
+	class IWindowHelper;
 	class AngelScriptRunner;
 	class WindowManager
 	{		
 	public:
 
-		WindowManager(RenderStateManager* renderStateManager);
+		WindowManager();
 		~WindowManager();
 
 		IWindowHelper* GetWindowHelper(void);
@@ -32,7 +35,7 @@ namespace NexgenRedux
 		bool WindowPreRender(uint32_t& windowHandle, bool& exitRequested);
 		bool WindowPostRender(uint32_t& windowHandle);
 		void PollEvents(void);
-		bool RenderLoop(AngelScriptRunner* angelScriptRunner);
+		bool RenderLoop(AngelScriptRunner* angelScriptRunner, RenderStateManager* renderStateManager);
 		bool GetKeyPressed(uint32_t windowHandle, uint32_t key, uint32_t& pressed);
 		bool GetMouseButtonPressed(uint32_t windowHandle, uint32_t button, uint32_t& pressed);
 		bool GetMouseCursorPosition(uint32_t windowHandle, double& xPos, double& yPos);
@@ -42,7 +45,6 @@ namespace NexgenRedux
 
 	private:
 
-		RenderStateManager* m_renderStateManager;
 		IWindowHelper* m_windowHelper;
 	};
 }

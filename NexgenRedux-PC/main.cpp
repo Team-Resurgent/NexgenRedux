@@ -32,8 +32,8 @@ int main(int argc, const char* argv[])
 {
 	//Gensys::Test::RunTests();
 
+    WindowManager *windowManager = new WindowManager();
     RenderStateManager *renderStateManager = new RenderStateManager();
-    WindowManager *windowManager = new WindowManager(renderStateManager);
     AngelScriptRunner *angelScriptRunner = new AngelScriptRunner(windowManager);
 
     //ECSManager::ECSManagerExample();
@@ -53,7 +53,7 @@ int main(int argc, const char* argv[])
         return 0;
     }
 
-    if (windowManager->RenderLoop(angelScriptRunner) == false)
+    if (windowManager->RenderLoop(angelScriptRunner, renderStateManager) == false)
     {
         return 0;
     }

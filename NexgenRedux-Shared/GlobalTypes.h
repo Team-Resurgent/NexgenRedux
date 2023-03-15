@@ -5,7 +5,47 @@
 
 namespace NexgenRedux
 {
-typedef enum DrawModeOperation {
+    typedef struct MonitorVideoMode
+	{
+		uint32_t monitorIndex;
+		uint32_t width;
+		uint32_t height; 
+		uint32_t redBits;
+		uint32_t greenBits;
+		uint32_t blueBits;
+		uint32_t refreshRate;
+	} MonitorVideoMode;
+
+	typedef struct JoystickButtonStates
+	{
+		uint32_t buttonA;
+		uint32_t buttonB;
+		uint32_t buttonX;
+		uint32_t buttonY; 
+		uint32_t buttonLeftBumperOrWhite;
+		uint32_t buttonRightBumperOrBlack;
+		uint32_t buttonBack;
+		uint32_t buttonStart;
+		uint32_t buttonGuide;
+		uint32_t buttonLeftThumb;
+		uint32_t buttonRightThumb;
+		uint32_t buttonDpadUp;
+		uint32_t buttonDpadRight;
+		uint32_t buttonDpadDown;
+		uint32_t buttonDpadLeft;
+	} JoystickButtonStates;
+
+	typedef struct JoystickAxisStates
+	{
+		float axisLeftX;
+		float axisLeftY;
+		float axisRightX;
+		float axisRightY; 
+		float axisLeftTrigger;
+		float axisRightTrigger;
+	} JoystickAxisStates;
+
+    typedef enum DrawModeOperation {
 		DrawModeTriangles,
 		DrawModeLines
 	} DrawModeOperation;

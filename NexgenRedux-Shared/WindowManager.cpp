@@ -21,13 +21,12 @@
 using namespace Gensys;
 using namespace NexgenRedux;
 
-WindowManager::WindowManager(RenderStateManager* renderStateManager)
+WindowManager::WindowManager()
 {
-	m_renderStateManager = renderStateManager;
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	m_windowHelper = (IWindowHelper*)new OpenGLWindowHelper();
+	m_windowHelper = new OpenGLWindowHelper();
 #else
-	m_windowHelper = (IWindowHelper*)new XboxOGWindowHelper();
+	m_windowHelper = new XboxOGWindowHelper();
 #endif
 }
 
@@ -101,15 +100,15 @@ void WindowManager::PollEvents(void)
 	m_windowHelper->PollEvents();
 }
 
-bool WindowManager::RenderLoop(AngelScriptRunner* angelScriptRunner)
+bool WindowManager::RenderLoop(AngelScriptRunner* angelScriptRunner, RenderStateManager* renderStateManager)
 {
     uint32_t textureID;
-    if (m_renderStateManager->LoadTexture(L"skin:background.png", textureID) == false)
+    if (renderStateManager->LoadTexture(L"skin:background.png", textureID) == false)
     {
         return false;
     }
 
-	m_renderStateManager->Init();
+	renderStateManager->Init();
 
     uint32_t meshID = MeshUtility::CreateQuadXY(MathUtility::Vec3F(0, 0, 0), MathUtility::SizeF(640, 480), MathUtility::RectF(0, 0, 1, 1), textureID);
 
@@ -134,30 +133,30 @@ bool WindowManager::RenderLoop(AngelScriptRunner* angelScriptRunner)
 			MathUtility::Matrix4x4 viewMatrix = MathUtility::Matrix4x4::LookAt(eye, target, up);
 			MathUtility::Matrix4x4 projectionMatrix = MathUtility::Matrix4x4::OrthoOffCenter(0, 640, 0, 480, 1, 100);
 
-			m_renderStateManager->SetShader("Default");
-            m_renderStateManager->SetModelMatrix(modelMatrix);
-            m_renderStateManager->SetViewMatrix(viewMatrix);
-            m_renderStateManager->SetProjectionMatrix(projectionMatrix);
-            m_renderStateManager->SetAmbientLight(MathUtility::Color3I(25, 25, 25));
-            m_renderStateManager->SetTint(MathUtility::Color4I(255, 255, 255, 255));
-            m_renderStateManager->SetBlend(BlendOperationDisabled);
-            m_renderStateManager->SetBlendFactors(BlendFactorOne, BlendFactorOne);
-            m_renderStateManager->SetCulling(CullingOperationDisabled);
-            m_renderStateManager->SetDepth(DepthOperationLess);
-            m_renderStateManager->SetLights(LightsOperationDisabled);
-            m_renderStateManager->SetLight1(LightOperationDisabled);
-            m_renderStateManager->SetLightInstance1(MathUtility::Vec3F(0, 0, 0), 0, MathUtility::Color4I(0, 0, 0, 0));
-            m_renderStateManager->SetLight2(LightOperationDisabled);
-            m_renderStateManager->SetLightInstance2(MathUtility::Vec3F(0, 0, 0), 0, MathUtility::Color4I(0, 0, 0, 0));
-            m_renderStateManager->SetLight3(LightOperationDisabled);
-            m_renderStateManager->SetLightInstance3(MathUtility::Vec3F(0, 0, 0), 0, MathUtility::Color4I(0, 0, 0, 0));
-            m_renderStateManager->SetLight4(LightOperationDisabled);
-            m_renderStateManager->SetLightInstance4(MathUtility::Vec3F(0, 0, 0), 0, MathUtility::Color4I(0, 0, 0, 0));
-            m_renderStateManager->SetFog(FogOperationDisabled);
-            m_renderStateManager->SetFogInstance(MathUtility::Color3I(0, 0, 0), 0, 0, 0);
-            m_renderStateManager->SetViewport(MathUtility::RectI(0, 0, 640, 480));
-            m_renderStateManager->SetScissor(ScissorOperationDisabled, MathUtility::RectI());
-            m_renderStateManager->SetDrawMode(DrawModeTriangles);
+			renderStateManager->SetShader("Default");
+            renderStateManager->SetModelMatrix(modelMatrix);
+            renderStateManager->SetViewMatrix(viewMatrix);
+            renderStateManager->SetProjectionMatrix(projectionMatrix);
+            renderStateManager->SetAmbientLight(MathUtility::Color3I(25, 25, 25));
+            renderStateManager->SetTint(MathUtility::Color4I(255, 255, 255, 255));
+            renderStateManager->SetBlend(BlendOperationDisabled);
+            renderStateManager->SetBlendFactors(BlendFactorOne, BlendFactorOne);
+            renderStateManager->SetCulling(CullingOperationDisabled);
+            renderStateManager->SetDepth(DepthOperationLess);
+            renderStateManager->SetLights(LightsOperationDisabled);
+            renderStateManager->SetLight1(LightOperationDisabled);
+            renderStateManager->SetLightInstance1(MathUtility::Vec3F(0, 0, 0), 0, MathUtility::Color4I(0, 0, 0, 0));
+            renderStateManager->SetLight2(LightOperationDisabled);
+            renderStateManager->SetLightInstance2(MathUtility::Vec3F(0, 0, 0), 0, MathUtility::Color4I(0, 0, 0, 0));
+            renderStateManager->SetLight3(LightOperationDisabled);
+            renderStateManager->SetLightInstance3(MathUtility::Vec3F(0, 0, 0), 0, MathUtility::Color4I(0, 0, 0, 0));
+            renderStateManager->SetLight4(LightOperationDisabled);
+            renderStateManager->SetLightInstance4(MathUtility::Vec3F(0, 0, 0), 0, MathUtility::Color4I(0, 0, 0, 0));
+            renderStateManager->SetFog(FogOperationDisabled);
+            renderStateManager->SetFogInstance(MathUtility::Color3I(0, 0, 0), 0, 0, 0);
+            renderStateManager->SetViewport(MathUtility::RectI(0, 0, 640, 480));
+            renderStateManager->SetScissor(ScissorOperationDisabled, MathUtility::RectI());
+            renderStateManager->SetDrawMode(DrawModeTriangles);
 
 			for (uint32_t i = 0; i < windowHandles.size(); i++)
 			{
@@ -172,10 +171,10 @@ bool WindowManager::RenderLoop(AngelScriptRunner* angelScriptRunner)
 				modelMatrix = MathUtility::Matrix4x4::Translate(MathUtility::Vec3F(-320, -240, 0));
 				modelMatrix *= MathUtility::Matrix4x4::RotateZ(f);
 				modelMatrix *= MathUtility::Matrix4x4::Translate(MathUtility::Vec3F(320, 240, 0));
-				m_renderStateManager->SetModelMatrix(modelMatrix);
+				renderStateManager->SetModelMatrix(modelMatrix);
 				f+=0.5;
 
-                m_renderStateManager->RenderMesh(meshID);
+                renderStateManager->RenderMesh(meshID);
 
 				if (angelScriptRunner->ExecuteRender(windowHandle, dt) == false)
 				{

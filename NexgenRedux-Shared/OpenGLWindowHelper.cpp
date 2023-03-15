@@ -34,12 +34,12 @@ namespace
 	std::map<uint32_t, OpenGLWindowHelper::WindowContainer> m_windowContainerMap;
 }
 
-// OpenGLWindowHelper::OpenGLWindowHelper()
-// {
+OpenGLWindowHelper::OpenGLWindowHelper()
+{
 
-// }
+}
 
-void OpenGLWindowHelper::Close(void)
+OpenGLWindowHelper::~OpenGLWindowHelper()
 {
     std::vector<uint32_t> windowHandles = GetWindowHandles();
     for (uint32_t i = 0; i < windowHandles.size(); i++)

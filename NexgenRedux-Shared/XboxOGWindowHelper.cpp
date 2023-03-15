@@ -66,11 +66,7 @@ XboxOGWindowHelper::XboxOGWindowHelper()
 
 XboxOGWindowHelper::~XboxOGWindowHelper()
 {
-}
-
-void XboxOGWindowHelper::Close(void) 
-{
-    std::vector<uint32_t> windowHandles = GetWindowHandles();
+	std::vector<uint32_t> windowHandles = GetWindowHandles();
     for (uint32_t i = 0; i < windowHandles.size(); i++)
 	{
         WindowClose(windowHandles.at(i));
@@ -675,7 +671,7 @@ bool XboxOGWindowHelper::GetJoystickHatDirection(uint32_t joystickID, uint32_t h
 	return true;
 }
 
-void* XboxOGWindowHelper::GetD3DDevice()
+IDirect3DDevice8* XboxOGWindowHelper::GetD3DDevice()
 {
 	return m_d3dDevice;
 }

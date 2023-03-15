@@ -27,8 +27,6 @@ namespace NexgenRedux
 		XboxOGWindowHelper();
 		~XboxOGWindowHelper();
 
-		void Close(void);
-
 		std::vector<uint32_t> GetWindowHandles(void);
 		bool GetAvailableMonitorCount(uint32_t& monitorCount);
 		bool GetMonitorVideoMode(uint32_t monitorIndex, MonitorVideoMode& monitorVideoMode);
@@ -55,7 +53,7 @@ namespace NexgenRedux
 		bool GetJoystickHatCount(uint32_t joystickID, uint32_t& count);
 		bool GetJoystickHatDirection(uint32_t joystickID, uint32_t hatIndex, uint32_t& direction);
 
-		static void* GetD3DDevice();
+		IDirect3DDevice8* GetD3DDevice();
 
 	private:
 		bool Init(void);

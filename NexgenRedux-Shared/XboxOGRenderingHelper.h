@@ -23,7 +23,7 @@ namespace NexgenRedux
 			uint32_t height;
 		} TextureContainer;
 
-		XboxOGRenderingHelper(RenderStateManager* renderStateManager);
+		XboxOGRenderingHelper(RenderStateManager* renderStateManager, IWindowHelper *windowHelper);
 		~XboxOGRenderingHelper();
 
 		bool Init();
@@ -57,6 +57,7 @@ namespace NexgenRedux
 	private:
 
 		RenderStateManager* m_renderStateManager;
+		IWindowHelper *m_windowHelper;
 
 		void ResizeDynamicBufferIfNeeded(uint32_t requestedSize);
 		void CreateDynamicBuffer();

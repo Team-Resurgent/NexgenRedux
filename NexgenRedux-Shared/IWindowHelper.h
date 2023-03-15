@@ -17,8 +17,6 @@ namespace NexgenRedux
 
 		virtual ~IWindowHelper() {};
 
-		virtual void Close(void) = 0;
-
 		virtual std::vector<uint32_t> GetWindowHandles(void) = 0;
 		virtual bool GetAvailableMonitorCount(uint32_t& monitorCount) = 0;
 		virtual bool GetMonitorVideoMode(uint32_t monitorIndex, MonitorVideoMode& monitorVideoMode) = 0;

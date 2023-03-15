@@ -3,6 +3,7 @@
 #include "MathUtility.h"
 
 #include "IRenderingHelper.h"
+#include "IWindowHelper.h"
 
 #include <Gensys/Int.h>
 
@@ -16,7 +17,7 @@ namespace NexgenRedux
 	{		
 	public:
 
-		RenderStateManager();
+		RenderStateManager(IWindowHelper *windowHelper);
 		~RenderStateManager();
 
 		void Init(void);

@@ -1,19 +1,20 @@
 #include "RenderStateManager.h"
 #include "OpenGLRenderingHelper.h"
 #include "XboxOGRenderingHelper.h"
+#include "IWindowHelper.h"
 #include "IRenderingHelper.h"
 
 #include <string>
 
 using namespace NexgenRedux;
 
-RenderStateManager::RenderStateManager()
+RenderStateManager::RenderStateManager(IWindowHelper *windowHelper)
 {
     m_initialized = false;
  #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	m_renderingHelper = new OpenGLRenderingHelper(this);
+	m_renderingHelper = new OpenGLRenderingHelper(this, windowHelper);
 #else
-	m_renderingHelper = new XboxOGRenderingHelper(this);
+	m_renderingHelper = new XboxOGRenderingHelper(this, windowHelper);
 #endif
 }
 

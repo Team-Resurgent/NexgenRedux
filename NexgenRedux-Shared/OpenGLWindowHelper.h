@@ -23,7 +23,8 @@ namespace NexgenRedux
 			GLFWwindow* window;
 		} WindowContainer;
 
-		void Close(void) override;
+		OpenGLWindowHelper();
+		~OpenGLWindowHelper();
 
 		std::vector<uint32_t> GetWindowHandles(void) override;
 		bool GetAvailableMonitorCount(uint32_t& monitorCount) override;

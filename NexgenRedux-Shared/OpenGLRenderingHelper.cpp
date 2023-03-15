@@ -383,9 +383,10 @@ namespace
 	std::map<uint32_t, OpenGLRenderingHelper::TextureContainer> m_textureContainerMap;
 }
 
-OpenGLRenderingHelper::OpenGLRenderingHelper(RenderStateManager *renderStateManager)
+OpenGLRenderingHelper::OpenGLRenderingHelper(RenderStateManager *renderStateManager, IWindowHelper *windowHelper)
 {
 	m_renderStateManager = renderStateManager;
+	m_windowHelper = windowHelper;
 }
 
 OpenGLRenderingHelper::~OpenGLRenderingHelper()

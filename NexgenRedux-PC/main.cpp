@@ -33,7 +33,7 @@ int main(int argc, const char* argv[])
 	//Gensys::Test::RunTests();
 
     WindowManager *windowManager = new WindowManager();
-    RenderStateManager *renderStateManager = new RenderStateManager();
+    RenderStateManager *renderStateManager = new RenderStateManager(windowManager->GetWindowHelper());
     AngelScriptRunner *angelScriptRunner = new AngelScriptRunner(windowManager);
 
     //ECSManager::ECSManagerExample();

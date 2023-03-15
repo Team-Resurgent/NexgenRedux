@@ -4,6 +4,7 @@
 
 #include "MeshUtility.h"
 #include "IRenderingHelper.h"
+#include "IWindowHelper.h"
 #include "RenderStateManager.h"
 
 #include <map>
@@ -22,7 +23,7 @@ namespace NexgenRedux
 			uint32_t height;
 		} TextureContainer;
 
-		OpenGLRenderingHelper(RenderStateManager* renderStateManager);
+		OpenGLRenderingHelper(RenderStateManager* renderStateManager, IWindowHelper *windowHelper);
 		~OpenGLRenderingHelper();
 
 		bool Init() override;
@@ -56,6 +57,7 @@ namespace NexgenRedux
 	private:
 
 		RenderStateManager* m_renderStateManager;
+		IWindowHelper *m_windowHelper;
 
 		void ResizeDynamicBufferIfNeeded(uint32_t requestedSize);
 		void CreateDynamicBuffer();

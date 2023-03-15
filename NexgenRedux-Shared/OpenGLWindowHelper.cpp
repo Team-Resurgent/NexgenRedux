@@ -26,17 +26,10 @@
 using namespace Gensys;
 using namespace NexgenRedux;
 
-namespace 
-{
-	bool m_initialized = false;
-
-    uint32_t m_maxWindowContainerID = 0;
-	std::map<uint32_t, OpenGLWindowHelper::WindowContainer> m_windowContainerMap;
-}
-
 OpenGLWindowHelper::OpenGLWindowHelper()
 {
-
+    m_initialized = false;
+    m_maxWindowContainerID = 0;
 }
 
 OpenGLWindowHelper::~OpenGLWindowHelper()
@@ -47,6 +40,16 @@ OpenGLWindowHelper::~OpenGLWindowHelper()
         WindowClose(windowHandles.at(i));
 	}
     glfwTerminate();
+}
+
+std::vector<uint32_t> OpenGLWindowHelper::GetWindowHandles(void)
+{
+	std::vector<uint32_t> windowHandles;
+	for (std::map<uint32_t, WindowContainer>::iterator it = m_windowContainerMap.begin(); it != m_windowContainerMap.end(); ++it)
+	{
+		 windowHandles.push_back(it->first);
+	}
+	return windowHandles;
 }
 
 bool OpenGLWindowHelper::GetAvailableMonitorCount(uint32_t& monitorCount)
@@ -605,6 +608,7 @@ void OpenGLWindowHelper::SetDarkTitleBar(GLFWwindow* window)
 
 void OpenGLWindowHelper::SetCallbacks(GLFWwindow* window)
 {
+    glfwSetWindowUserPointer(window, this);
     glfwSetWindowIconifyCallback(window, WindowIconify);
     glfwSetWindowMaximizeCallback(window, WindowMaximize);
     glfwSetWindowSizeCallback(window, WindowSize);
@@ -620,8 +624,10 @@ void OpenGLWindowHelper::SetCallbacks(GLFWwindow* window)
 
 void OpenGLWindowHelper::WindowIconify(GLFWwindow* window, int iconified)
 {
+    OpenGLWindowHelper* instance = static_cast<OpenGLWindowHelper*>(glfwGetWindowUserPointer(window));
+
     uint32_t windowHandle;
-    if (GetWindowHandle(window, windowHandle) == false) 
+    if (instance->GetWindowHandle(window, windowHandle) == false) 
     {
         DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "GetWindowHandle failed.");
     }
@@ -633,8 +639,10 @@ void OpenGLWindowHelper::WindowIconify(GLFWwindow* window, int iconified)
 
 void OpenGLWindowHelper::WindowMaximize(GLFWwindow* window, int maximized)
 {
+    OpenGLWindowHelper* instance = static_cast<OpenGLWindowHelper*>(glfwGetWindowUserPointer(window));
+
     uint32_t windowHandle;
-    if (GetWindowHandle(window, windowHandle) == false) 
+    if (instance->GetWindowHandle(window, windowHandle) == false) 
     {
         DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "GetWindowHandle failed.");
     }
@@ -646,8 +654,10 @@ void OpenGLWindowHelper::WindowMaximize(GLFWwindow* window, int maximized)
 
 void OpenGLWindowHelper::WindowSize(GLFWwindow* window, int width, int height)
 {
+    OpenGLWindowHelper* instance = static_cast<OpenGLWindowHelper*>(glfwGetWindowUserPointer(window));
+
     uint32_t windowHandle;
-    if (GetWindowHandle(window, windowHandle) == false) 
+    if (instance->GetWindowHandle(window, windowHandle) == false) 
     {
         DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "GetWindowHandle failed.");
     }
@@ -659,8 +669,10 @@ void OpenGLWindowHelper::WindowSize(GLFWwindow* window, int width, int height)
 
 void OpenGLWindowHelper::WindowFocus(GLFWwindow* window, int focused)
 {
+    OpenGLWindowHelper* instance = static_cast<OpenGLWindowHelper*>(glfwGetWindowUserPointer(window));
+
     uint32_t windowHandle;
-    if (GetWindowHandle(window, windowHandle) == false) 
+    if (instance->GetWindowHandle(window, windowHandle) == false) 
     {
         DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "GetWindowHandle failed.");
     }
@@ -672,8 +684,10 @@ void OpenGLWindowHelper::WindowFocus(GLFWwindow* window, int focused)
 
 void OpenGLWindowHelper::WindowKeyboardKey(GLFWwindow* window, int key, int scancode, int action, int modifier)
 {
+    OpenGLWindowHelper* instance = static_cast<OpenGLWindowHelper*>(glfwGetWindowUserPointer(window));
+
     uint32_t windowHandle;
-    if (GetWindowHandle(window, windowHandle) == false) 
+    if (instance->GetWindowHandle(window, windowHandle) == false) 
     {
         DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "GetWindowHandle failed.");
     }
@@ -685,8 +699,10 @@ void OpenGLWindowHelper::WindowKeyboardKey(GLFWwindow* window, int key, int scan
 
 void OpenGLWindowHelper::WindowKeyboardCharacter(GLFWwindow* window, unsigned int codepoint)
 {
+    OpenGLWindowHelper* instance = static_cast<OpenGLWindowHelper*>(glfwGetWindowUserPointer(window));
+
     uint32_t windowHandle;
-    if (GetWindowHandle(window, windowHandle) == false) 
+    if (instance->GetWindowHandle(window, windowHandle) == false) 
     {
         DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "GetWindowHandle failed.");
     }
@@ -698,8 +714,10 @@ void OpenGLWindowHelper::WindowKeyboardCharacter(GLFWwindow* window, unsigned in
 
 void OpenGLWindowHelper::WindowMouseCursorPosition(GLFWwindow* window, double xPos, double yPos)
 {
+    OpenGLWindowHelper* instance = static_cast<OpenGLWindowHelper*>(glfwGetWindowUserPointer(window));
+
     uint32_t windowHandle;
-    if (GetWindowHandle(window, windowHandle) == false) 
+    if (instance->GetWindowHandle(window, windowHandle) == false) 
     {
         DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "GetWindowHandle failed.");
     }
@@ -711,8 +729,10 @@ void OpenGLWindowHelper::WindowMouseCursorPosition(GLFWwindow* window, double xP
 
 void OpenGLWindowHelper::WindowMouseCursorEnter(GLFWwindow* window, int entered)
 {
+    OpenGLWindowHelper* instance = static_cast<OpenGLWindowHelper*>(glfwGetWindowUserPointer(window));
+
     uint32_t windowHandle;
-    if (GetWindowHandle(window, windowHandle) == false) 
+    if (instance->GetWindowHandle(window, windowHandle) == false) 
     {
         DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "GetWindowHandle failed.");
     }
@@ -724,8 +744,10 @@ void OpenGLWindowHelper::WindowMouseCursorEnter(GLFWwindow* window, int entered)
 
 void OpenGLWindowHelper::WindowMouseButton(GLFWwindow* window, int button, int action, int modifier)
 {
+    OpenGLWindowHelper* instance = static_cast<OpenGLWindowHelper*>(glfwGetWindowUserPointer(window));
+
     uint32_t windowHandle;
-    if (GetWindowHandle(window, windowHandle) == false) 
+    if (instance->GetWindowHandle(window, windowHandle) == false) 
     {
         DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "GetWindowHandle failed.");
     }
@@ -737,8 +759,10 @@ void OpenGLWindowHelper::WindowMouseButton(GLFWwindow* window, int button, int a
 
 void OpenGLWindowHelper::WindowMouseScroll(GLFWwindow* window, double xOffset, double yOffset)
 {
+    OpenGLWindowHelper* instance = static_cast<OpenGLWindowHelper*>(glfwGetWindowUserPointer(window));
+
     uint32_t windowHandle;
-    if (GetWindowHandle(window, windowHandle) == false) 
+    if (instance->GetWindowHandle(window, windowHandle) == false) 
     {
         DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "GetWindowHandle failed.");
     }
@@ -750,6 +774,8 @@ void OpenGLWindowHelper::WindowMouseScroll(GLFWwindow* window, double xOffset, d
 
 void OpenGLWindowHelper::WindowDrop(GLFWwindow* window, int count, const char** paths)
 {
+    OpenGLWindowHelper* instance = static_cast<OpenGLWindowHelper*>(glfwGetWindowUserPointer(window));
+
     std::vector<std::string> pathArray;
     for (int i = 0; i < count; i++) 
     {
@@ -758,7 +784,7 @@ void OpenGLWindowHelper::WindowDrop(GLFWwindow* window, int count, const char** 
     }
 
     uint32_t windowHandle;
-    if (GetWindowHandle(window, windowHandle) == false) 
+    if (instance->GetWindowHandle(window, windowHandle) == false) 
     {
         DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "GetWindowHandle failed.");
     }
@@ -797,16 +823,6 @@ bool OpenGLWindowHelper::GetWindowHandle(GLFWwindow* window, uint32_t& windowHan
 		} 
 	}
 	return false;
-}
-
-std::vector<uint32_t> OpenGLWindowHelper::GetWindowHandles(void)
-{
-	std::vector<uint32_t> windowHandles;
-	for (std::map<uint32_t, WindowContainer>::iterator it = m_windowContainerMap.begin(); it != m_windowContainerMap.end(); ++it)
-	{
-		 windowHandles.push_back(it->first);
-	}
-	return windowHandles;
 }
 
 #endif

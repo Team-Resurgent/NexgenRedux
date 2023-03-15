@@ -14,7 +14,7 @@ namespace NexgenRedux
 {
 	class XboxOGRenderingHelper : public IRenderingHelper
 	{		
-	public:
+	private:
 
 		typedef struct TextureContainer
 		{
@@ -22,6 +22,18 @@ namespace NexgenRedux
 			uint32_t width;
 			uint32_t height;
 		} TextureContainer;
+
+		RenderStateManager* m_renderStateManager;
+		IWindowHelper *m_windowHelper;
+
+		bool m_initialized;
+		D3DVertexBuffer* m_dynamicBuffer;
+		uint32_t m_dynamicBufferSize;
+
+		uint32_t m_maxTextureContainerID;
+		std::map<uint32_t, XboxOGRenderingHelper::TextureContainer> m_textureContainerMap;
+
+	public:
 
 		XboxOGRenderingHelper(RenderStateManager* renderStateManager, IWindowHelper *windowHelper);
 		~XboxOGRenderingHelper();
@@ -54,16 +66,13 @@ namespace NexgenRedux
 
 		bool LoadTexture(std::wstring path, uint32_t& textureID);
 		bool RenderMesh(uint32_t meshID);
-	private:
 
-		RenderStateManager* m_renderStateManager;
-		IWindowHelper *m_windowHelper;
+	private:
 
 		void ResizeDynamicBufferIfNeeded(uint32_t requestedSize);
 		void CreateDynamicBuffer();
 		void DeleteDynamicBuffer();
-
-		XboxOGRenderingHelper::TextureContainer* GetTextureContainer(uint32_t textureID);
+		TextureContainer* GetTextureContainer(uint32_t textureID);
 		void DeleteTextures();
 	};
 }

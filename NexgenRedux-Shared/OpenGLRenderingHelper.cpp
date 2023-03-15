@@ -17,9 +17,9 @@
 using namespace Gensys;
 using namespace NexgenRedux;
 
-namespace 
+namespace
 {
-    const std::string vertexShader =
+    const std::string defaultVertexShader =
 
 		"precision mediump float;\n"
 
@@ -109,7 +109,7 @@ namespace
 
 		"}";
 
-	const std::string fragmentShader =
+	const std::string defaultFragmentShader =
 
 		"precision mediump float;\n"
 	
@@ -301,92 +301,17 @@ namespace
 
 		"}";
 
-    GLuint CompileShader(GLenum type, const std::string& source)
-    {
-        GLuint shader = glCreateShader(type);
-        const char* sourceArray[1] = { source.c_str() };
-        glShaderSource(shader, 1, sourceArray, NULL);
-        glCompileShader(shader);
-        GLint compileResult;
-        glGetShaderiv(shader, GL_COMPILE_STATUS, &compileResult);
-        if (compileResult == 0)
-        {
-            GLint infoLogLength;
-            glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &infoLogLength);
-            std::vector<GLchar> infoLog(infoLogLength);
-            glGetShaderInfoLog(shader, (GLsizei)infoLog.size(), NULL, infoLog.data());
-            std::string errorMessage = std::string("Shader compilation failed: ");
-            errorMessage += std::string(infoLog.begin(), infoLog.end());
-			DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "Shader compiled failed: %s", errorMessage.c_str());
-            return 0;
-        }
-        return shader;
-    }
-
-    GLuint CompileProgram(const std::string& vsSource, const std::string& fsSource)
-    {
-        GLuint program = glCreateProgram();
-        if (program == 0)
-        {
-            DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "Create program failed: %i", glGetError());
-            return 0;
-        }
-
-        GLuint vs = CompileShader(GL_VERTEX_SHADER, vsSource);
-        if (vs == 0)
-        {
-            DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "Compile vertex shader failed.");
-            glDeleteShader(vs);
-            glDeleteProgram(program);
-            return 0;
-        }
-
-        GLuint fs = CompileShader(GL_FRAGMENT_SHADER, fsSource);
-        if (fs == 0)
-        {
-            DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "Compile pixel shader failed.");
-            glDeleteShader(fs);
-            glDeleteProgram(program);
-            return 0;
-        }
-
-        glAttachShader(program, vs);
-        glDeleteShader(vs);
-        glAttachShader(program, fs);
-        glDeleteShader(fs);
-        glLinkProgram(program);
-
-        GLint linkStatus;
-        glGetProgramiv(program, GL_LINK_STATUS, &linkStatus);
-        if (linkStatus == 0)
-        {
-            GLint infoLogLength;
-            glGetProgramiv(program, GL_INFO_LOG_LENGTH, &infoLogLength);
-            std::vector<GLchar> infoLog(infoLogLength);
-            glGetProgramInfoLog(program, (GLsizei)infoLog.size(), NULL, infoLog.data());
-            std::string errorMessage = "Program link failed: ";
-            errorMessage += std::string(infoLog.begin(), infoLog.end());
-            DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "Program link failed '%s'.", errorMessage.c_str());
-            return 0;
-        }
-
-        return program;
-    }
-
-    bool m_initialized = false;
-    std::map<std::string, std::map<std::string, uint32_t>> m_shaderValueMap;
-
-	uint32_t m_dynamicBuffer;
-	uint32_t m_dynamicBufferSize = 0;
-
-    uint32_t m_maxTextureContainerID = 0;
-	std::map<uint32_t, OpenGLRenderingHelper::TextureContainer> m_textureContainerMap;
 }
 
 OpenGLRenderingHelper::OpenGLRenderingHelper(RenderStateManager *renderStateManager, IWindowHelper *windowHelper)
 {
 	m_renderStateManager = renderStateManager;
 	m_windowHelper = windowHelper;
+
+	m_initialized = false;
+ 	m_dynamicBuffer = 0;
+	m_dynamicBufferSize = 0;
+	m_maxTextureContainerID = 0;
 }
 
 OpenGLRenderingHelper::~OpenGLRenderingHelper()
@@ -404,7 +329,7 @@ bool OpenGLRenderingHelper::Init()
     }
     m_initialized = true;
 
-	uint32_t program = CompileProgram(vertexShader, fragmentShader);
+	uint32_t program = CompileProgram(defaultVertexShader, defaultFragmentShader);
 
     CreateShaderLookup("Default");
     AddShaderLookupKeyValue("Default", "Program", program);
@@ -1015,6 +940,78 @@ void OpenGLRenderingHelper::DeleteTextures()
 		uint32_t texture = it->second.texture;
 		glDeleteTextures(1, &texture);
 	}
+}
+
+uint32_t OpenGLRenderingHelper::CompileShader(uint32_t type, const std::string& source)
+{
+	uint32_t shader = glCreateShader(type);
+	const char* sourceArray[1] = { source.c_str() };
+	glShaderSource(shader, 1, sourceArray, NULL);
+	glCompileShader(shader);
+	int32_t compileResult;
+	glGetShaderiv(shader, GL_COMPILE_STATUS, &compileResult);
+	if (compileResult == 0)
+	{
+		int32_t infoLogLength;
+		glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &infoLogLength);
+		std::vector<GLchar> infoLog(infoLogLength);
+		glGetShaderInfoLog(shader, (GLsizei)infoLog.size(), NULL, infoLog.data());
+		std::string errorMessage = std::string("Shader compilation failed: ");
+		errorMessage += std::string(infoLog.begin(), infoLog.end());
+		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "Shader compiled failed: %s", errorMessage.c_str());
+		return 0;
+	}
+	return shader;
+}
+
+uint32_t OpenGLRenderingHelper::CompileProgram(const std::string& vsSource, const std::string& fsSource)
+{
+	uint32_t program = glCreateProgram();
+	if (program == 0)
+	{
+		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "Create program failed: %i", glGetError());
+		return 0;
+	}
+
+	uint32_t vs = CompileShader(GL_VERTEX_SHADER, vsSource);
+	if (vs == 0)
+	{
+		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "Compile vertex shader failed.");
+		glDeleteShader(vs);
+		glDeleteProgram(program);
+		return 0;
+	}
+
+	uint32_t fs = CompileShader(GL_FRAGMENT_SHADER, fsSource);
+	if (fs == 0)
+	{
+		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "Compile pixel shader failed.");
+		glDeleteShader(fs);
+		glDeleteProgram(program);
+		return 0;
+	}
+
+	glAttachShader(program, vs);
+	glDeleteShader(vs);
+	glAttachShader(program, fs);
+	glDeleteShader(fs);
+	glLinkProgram(program);
+
+	int32_t linkStatus;
+	glGetProgramiv(program, GL_LINK_STATUS, &linkStatus);
+	if (linkStatus == 0)
+	{
+		int32_t infoLogLength;
+		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &infoLogLength);
+		std::vector<GLchar> infoLog(infoLogLength);
+		glGetProgramInfoLog(program, (GLsizei)infoLog.size(), NULL, infoLog.data());
+		std::string errorMessage = "Program link failed: ";
+		errorMessage += std::string(infoLog.begin(), infoLog.end());
+		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "Program link failed '%s'.", errorMessage.c_str());
+		return 0;
+	}
+
+	return program;
 }
 
 void OpenGLRenderingHelper::CreateShaderLookup(std::string shaderName)

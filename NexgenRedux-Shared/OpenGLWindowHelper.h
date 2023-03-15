@@ -14,7 +14,7 @@ namespace NexgenRedux
 {
 	class OpenGLWindowHelper : public IWindowHelper
 	{		
-	public:
+	private:
 
 		typedef struct WindowContainer
 		{
@@ -22,6 +22,12 @@ namespace NexgenRedux
 			uint32_t height;
 			GLFWwindow* window;
 		} WindowContainer;
+
+		bool m_initialized;
+		uint32_t m_maxWindowContainerID;
+		std::map<uint32_t, WindowContainer> m_windowContainerMap;
+
+	public:
 
 		OpenGLWindowHelper();
 		~OpenGLWindowHelper();
@@ -69,7 +75,7 @@ namespace NexgenRedux
 		static void WindowMouseScroll(GLFWwindow* window, double xOffset, double yOffset);
 		static void WindowDrop(GLFWwindow* window, int count, const char** paths);
 		static void JoystickConnect(int joystickID, int event);
-		static bool GetWindowHandle(GLFWwindow* window, uint32_t& windowHandle);
+		bool GetWindowHandle(GLFWwindow* window, uint32_t& windowHandle);
 	};
 }
 

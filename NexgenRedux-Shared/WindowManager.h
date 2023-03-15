@@ -17,6 +17,10 @@ namespace NexgenRedux
 	class AngelScriptRunner;
 	class WindowManager
 	{		
+	private:
+
+		IWindowHelper* m_windowHelper;
+		
 	public:
 
 		WindowManager();
@@ -42,9 +46,5 @@ namespace NexgenRedux
 		bool SetMouseCursorPosition(uint32_t windowHandle, double xPos, double yPos);
 		bool GetClipboardString(std::string& value);
 		bool SetClipboardString(std::string value);
-
-	private:
-
-		IWindowHelper* m_windowHelper;
 	};
 }

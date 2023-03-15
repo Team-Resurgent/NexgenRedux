@@ -19,49 +19,46 @@
 using namespace Gensys;
 using namespace NexgenRedux;
 
-namespace 
-{
-	typedef struct KeyInfo
-	{
-		uint32_t scancode;
-		uint32_t keyID;
-		KeyInfo(uint32_t scancode, uint32_t keyID) : scancode(scancode), keyID(keyID) {}
-	} KeyInfo;
-
-	bool m_initialized = false;
-
-    uint32_t m_maxWindowContainerID = 0;
-	std::map<uint32_t, XboxOGWindowHelper::WindowContainer> m_windowContainerMap;
-
-	IDirect3DDevice8* m_d3dDevice;
-
-	std::string m_clipboardValue = "";
-
-	HANDLE m_controllerHandles[XGetPortCount()] = {0};
-
-	HANDLE m_keyboardHandles[XGetPortCount() * 2] = {0};
-	uint32_t m_keyboardMaskTable[XGetPortCount() * 2] = {
-		1 << 0, 1 << 1, 1 << 2, 1 << 3, 1 << 16, 1 << 17, 1 << 18, 1 << 19
-	};
-	std::map<uint32_t, KeyInfo> m_virtualKeyToScancodeMap;
-	uint32_t m_keyboardModifier = 0;
-	bool m_keyboardKeys[KEY_LAST] = {false};
-
-	HANDLE m_mouseHandles[XGetPortCount() * 2] = {0};
-	uint32_t m_mouseMaskTable[XGetPortCount() * 2] =
-	{
-		1 << 0, 1 << 1, 1 << 2, 1 << 3, 1 << 16, 1 << 17, 1 << 18, 1 << 19
-	};
-	int32_t m_mouseX = 0;
-	int32_t m_mouseY = 0;
-	bool m_mouseButtons[5] = {false};
-	bool m_previousMouseButtons[5] = {false};
-	XINPUT_STATE m_mouseStates[XGetPortCount() * 2] = {0};
-	uint32_t m_lastMousePacket[XGetPortCount() * 2];
-}
-
 XboxOGWindowHelper::XboxOGWindowHelper()
 {
+	m_initialized = false;
+	m_maxWindowContainerID = 0;
+	m_d3dDevice = NULL;
+	m_clipboardValue = "";
+	m_mouseX = 0;
+	m_mouseY = 0;
+	m_keyboardModifier = 0;
+
+	for (uint32_t i = 0; i < XGetPortCount(); i++)
+	{
+		m_controllerHandles[i] = 0;
+	}
+
+	for (uint32_t i = 0; i < KEY_LAST; i++)
+	{
+		m_keyboardKeys[i] = false;
+	}
+
+	for (uint32_t i = 0; i < 5; i++)
+	{
+		m_mouseButtons[i] = false;
+		m_previousMouseButtons[i] = false;
+	}
+
+	for (uint32_t i = 0; i < XGetPortCount() * 2; i++)
+	{
+		m_keyboardHandles[i] = 0;
+		m_mouseHandles[i] = 0;
+
+		XINPUT_STATE state;
+		memset(&state, 0, sizeof(state));
+		m_mouseStates[i] = state;
+		m_lastMousePacket[i] = 0;
+
+		uint32_t x = i >= 4 ? i + 12 : i;
+		m_keyboardMaskTable[i] = 1 << x;
+		m_mouseMaskTable[i] = 1 << x;
+	}
 }
 
 XboxOGWindowHelper::~XboxOGWindowHelper()

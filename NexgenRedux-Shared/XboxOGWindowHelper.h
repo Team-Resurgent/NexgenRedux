@@ -6,6 +6,7 @@
 #include "IRenderingHelper.h"
 #include "IWindowHelper.h"
 #include "GlobalTypes.h"
+#include "Constants.h"
 
 #include <Gensys/Int.h>
 
@@ -23,6 +24,40 @@ namespace NexgenRedux
 			uint32_t width;
 			uint32_t height;
 		} WindowContainer;
+
+		bool m_initialized;
+		uint32_t m_maxWindowContainerID;
+		std::map<uint32_t, XboxOGWindowHelper::WindowContainer> m_windowContainerMap;
+
+		IDirect3DDevice8* m_d3dDevice;
+		std::string m_clipboardValue;
+
+		typedef struct KeyInfo
+		{
+			uint32_t scancode;
+			uint32_t keyID;
+			KeyInfo(uint32_t scancode, uint32_t keyID) : scancode(scancode), keyID(keyID) {}
+		} KeyInfo;
+
+		std::map<uint32_t, KeyInfo> m_virtualKeyToScancodeMap;
+		uint32_t m_keyboardModifier;
+		bool m_keyboardKeys[KEY_LAST];
+
+		int32_t m_mouseX;
+		int32_t m_mouseY;
+		bool m_mouseButtons[5];
+		bool m_previousMouseButtons[5];
+		XINPUT_STATE m_mouseStates[XGetPortCount() * 2];
+		uint32_t m_lastMousePacket[XGetPortCount() * 2];
+
+		HANDLE m_controllerHandles[XGetPortCount()];
+		HANDLE m_keyboardHandles[XGetPortCount() * 2];
+		HANDLE m_mouseHandles[XGetPortCount() * 2];
+
+		uint32_t m_keyboardMaskTable[XGetPortCount() * 2];
+		uint32_t m_mouseMaskTable[XGetPortCount() * 2];
+
+	public:
 
 		XboxOGWindowHelper();
 		~XboxOGWindowHelper();
@@ -56,6 +91,7 @@ namespace NexgenRedux
 		IDirect3DDevice8* GetD3DDevice();
 
 	private:
+
 		bool Init(void);
 		bool InitKeyboard(void);
 		bool InitMouse(void);

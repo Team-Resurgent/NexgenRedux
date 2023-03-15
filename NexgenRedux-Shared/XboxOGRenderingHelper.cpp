@@ -22,23 +22,15 @@
 using namespace Gensys;
 using namespace NexgenRedux;
 
-namespace 
-{
-	bool m_initialized = false;
-
-	D3DVertexBuffer* m_dynamicBuffer = NULL;
-	uint32_t m_dynamicBufferSize = 0;
-
-	uint32_t m_maxTextureContainerID = 0;
-	std::map<uint32_t, XboxOGRenderingHelper::TextureContainer> m_textureContainerMap;
-
-
-}
-
 XboxOGRenderingHelper::XboxOGRenderingHelper(RenderStateManager *renderStateManager, IWindowHelper *windowHelper)
 {
 	m_renderStateManager = renderStateManager;
 	m_windowHelper = windowHelper;
+
+	m_initialized = false;
+	m_dynamicBuffer = NULL;
+	m_dynamicBufferSize = 0;
+	m_maxTextureContainerID = 0;
 }
 
 XboxOGRenderingHelper::~XboxOGRenderingHelper()

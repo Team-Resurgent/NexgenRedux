@@ -14,7 +14,7 @@ namespace NexgenRedux
 {
 	class OpenGLRenderingHelper : public IRenderingHelper
 	{		
-	public:
+	private:
 
 		typedef struct TextureContainer
 		{
@@ -22,6 +22,18 @@ namespace NexgenRedux
 			uint32_t width;
 			uint32_t height;
 		} TextureContainer;
+
+		RenderStateManager* m_renderStateManager;
+		IWindowHelper *m_windowHelper;
+
+		bool m_initialized;
+		std::map<std::string, std::map<std::string, uint32_t>> m_shaderValueMap;
+		uint32_t m_dynamicBuffer;
+		uint32_t m_dynamicBufferSize;
+		uint32_t m_maxTextureContainerID;
+		std::map<uint32_t, TextureContainer> m_textureContainerMap;
+
+	public:
 
 		OpenGLRenderingHelper(RenderStateManager* renderStateManager, IWindowHelper *windowHelper);
 		~OpenGLRenderingHelper();
@@ -54,18 +66,16 @@ namespace NexgenRedux
 
 		bool LoadTexture(std::wstring path, uint32_t& textureID) override;
 		bool RenderMesh(uint32_t meshID) override;
+		
 	private:
-
-		RenderStateManager* m_renderStateManager;
-		IWindowHelper *m_windowHelper;
 
 		void ResizeDynamicBufferIfNeeded(uint32_t requestedSize);
 		void CreateDynamicBuffer();
 		void DeleteDynamicBuffer();
-
-		OpenGLRenderingHelper::TextureContainer* GetTextureContainer(uint32_t textureID);
+		TextureContainer* GetTextureContainer(uint32_t textureID);
 		void DeleteTextures();
-
+		uint32_t CompileShader(uint32_t type, const std::string& source);
+		uint32_t CompileProgram(const std::string& vsSource, const std::string& fsSource);
 		void CreateShaderLookup(std::string shaderName);
 		bool AddShaderLookupKeyValue(std::string shaderName, std::string key, uint32_t value);
 		bool GetShaderLookupValue(std::string shaderName, std::string key, uint32_t& value);

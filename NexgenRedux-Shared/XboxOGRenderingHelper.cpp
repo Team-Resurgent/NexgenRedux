@@ -35,7 +35,12 @@ namespace
 
 }
 
-void XboxOGRenderingHelper::Close()
+XboxOGRenderingHelper::XboxOGRenderingHelper(RenderStateManager *renderStateManager)
+{
+	m_renderStateManager = renderStateManager;
+}
+
+XboxOGRenderingHelper::~XboxOGRenderingHelper()
 {
 	DeleteTextures();
 	DeleteDynamicBuffer();
@@ -166,7 +171,7 @@ void XboxOGRenderingHelper::SetAmbientLight(const MathUtility::Color3I& color)
 	}
 }
 
-void XboxOGRenderingHelper::SetTexture(const uint32_t& textureID, const RenderStateManager::TextureFilter& filter) 
+void XboxOGRenderingHelper::SetTexture(const uint32_t& textureID, const TextureFilter& filter) 
 {
 	TextureContainer* textureContainer = GetTextureContainer(textureID);
 	if (textureContainer == NULL)
@@ -182,7 +187,7 @@ void XboxOGRenderingHelper::SetTexture(const uint32_t& textureID, const RenderSt
 		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "SetTexture: Failed to set texture.");
 	}
 
-	if (filter == RenderStateManager::TextureFilterLinear)
+	if (filter == TextureFilterLinear)
 	{
 		if (FAILED(d3dDevice->SetTextureStageState(0, D3DTSS_MAGFILTER, D3DTEXF_LINEAR)))
 		{
@@ -193,7 +198,7 @@ void XboxOGRenderingHelper::SetTexture(const uint32_t& textureID, const RenderSt
 			DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "SetTexture: Failed to set min filter.");
 		}
 	}
-	else if (filter == RenderStateManager::TextureFilterNearest)
+	else if (filter == TextureFilterNearest)
 	{
 		if (FAILED(d3dDevice->SetTextureStageState(0, D3DTSS_MAGFILTER, D3DTEXF_POINT)))
 		{
@@ -217,18 +222,18 @@ void XboxOGRenderingHelper::SetTint(const MathUtility::Color4I& color)
 	}
 }
 
-void XboxOGRenderingHelper::SetBlend(const RenderStateManager::BlendOperation& operation) 
+void XboxOGRenderingHelper::SetBlend(const BlendOperation& operation) 
 {
 	IDirect3DDevice8* d3dDevice = (IDirect3DDevice8*)XboxOGWindowHelper::GetD3DDevice();
 
-	if (operation == RenderStateManager::BlendOperationDisabled)
+	if (operation == BlendOperationDisabled)
 	{
 		if (FAILED(d3dDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE)))
 		{
 			DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "SetBlend: Failed to disable.");
 		}
 	}
-	else if (operation == RenderStateManager::BlendOperationAdd)
+	else if (operation == BlendOperationAdd)
 	{
 		if (FAILED(d3dDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE)))
 		{
@@ -239,7 +244,7 @@ void XboxOGRenderingHelper::SetBlend(const RenderStateManager::BlendOperation& o
 			DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "SetBlend: Failed to set operation add.");
 		}
 	}
-	else if (operation == RenderStateManager::BlendOperationSubtract)
+	else if (operation == BlendOperationSubtract)
 	{
 		if (FAILED(d3dDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE)))
 		{
@@ -250,7 +255,7 @@ void XboxOGRenderingHelper::SetBlend(const RenderStateManager::BlendOperation& o
 			DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "SetBlend: Failed to set operation subtract.");
 		}
 	}
-	else if (operation == RenderStateManager::BlendOperationReverseSubtract)
+	else if (operation == BlendOperationReverseSubtract)
 	{
 		if (FAILED(d3dDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE)))
 		{
@@ -263,128 +268,128 @@ void XboxOGRenderingHelper::SetBlend(const RenderStateManager::BlendOperation& o
 	}
 }
 
-void XboxOGRenderingHelper::SetBlendFactors(const RenderStateManager::BlendFactor& srcFactor, const RenderStateManager::BlendFactor& dstFactor) 
+void XboxOGRenderingHelper::SetBlendFactors(const BlendFactor& srcFactor, const BlendFactor& dstFactor) 
 {
-	uint32_t srcFactorValue = RenderStateManager::BlendFactorZero;
-	if (srcFactor == RenderStateManager::BlendFactorZero) 
+	uint32_t srcFactorValue = BlendFactorZero;
+	if (srcFactor == BlendFactorZero) 
 	{
 		srcFactorValue = D3DBLEND_ZERO;
 	}
-	else if (srcFactor == RenderStateManager::BlendFactorOne) 
+	else if (srcFactor == BlendFactorOne) 
 	{
 		srcFactorValue = D3DBLEND_ONE;
 	}
-	else if (srcFactor == RenderStateManager::BlendFactorSrcColor) 
+	else if (srcFactor == BlendFactorSrcColor) 
 	{
 		srcFactorValue = D3DBLEND_SRCCOLOR;
 	}
-	else if (srcFactor == RenderStateManager::BlendFactorOneMinusSrcColor) 
+	else if (srcFactor == BlendFactorOneMinusSrcColor) 
 	{
 		srcFactorValue = D3DBLEND_INVSRCCOLOR;
 	}
-	else if (srcFactor == RenderStateManager::BlendFactorDstColor) 
+	else if (srcFactor == BlendFactorDstColor) 
 	{
 		srcFactorValue = D3DBLEND_DESTCOLOR;
 	}
-	else if (srcFactor == RenderStateManager::BlendFactorOneMinusDstColor) 
+	else if (srcFactor == BlendFactorOneMinusDstColor) 
 	{
 		srcFactorValue = D3DBLEND_INVDESTCOLOR;
 	}
-	else if (srcFactor == RenderStateManager::BlendFactorSrcAlpha) 
+	else if (srcFactor == BlendFactorSrcAlpha) 
 	{
 		srcFactorValue = D3DBLEND_SRCALPHA;
 	}
-	else if (srcFactor == RenderStateManager::BlendFactorOneMinusSrcAlpha) 
+	else if (srcFactor == BlendFactorOneMinusSrcAlpha) 
 	{
 		srcFactorValue = D3DBLEND_INVSRCALPHA;
 	}
-	else if (srcFactor == RenderStateManager::BlendFactorDstAlpha) 
+	else if (srcFactor == BlendFactorDstAlpha) 
 	{
 		srcFactorValue = D3DBLEND_DESTALPHA;
 	}
-	else if (srcFactor == RenderStateManager::BlendFactorOneMinusDstAlpha) 
+	else if (srcFactor == BlendFactorOneMinusDstAlpha) 
 	{
 		srcFactorValue = D3DBLEND_INVDESTALPHA;
 	}
-	else if (srcFactor == RenderStateManager::BlendFactorConstantColor) 
+	else if (srcFactor == BlendFactorConstantColor) 
 	{
 		srcFactorValue = D3DBLEND_CONSTANTCOLOR;
 	}
-	else if (srcFactor == RenderStateManager::BlendFactorOneMinusConstantColor) 
+	else if (srcFactor == BlendFactorOneMinusConstantColor) 
 	{
 		srcFactorValue = D3DBLEND_INVCONSTANTCOLOR;
 	}
-	else if (srcFactor == RenderStateManager::BlendFactorConstantAlpha) 
+	else if (srcFactor == BlendFactorConstantAlpha) 
 	{
 		srcFactorValue = D3DBLEND_CONSTANTALPHA;
 	}
-	else if (srcFactor == RenderStateManager::BlendFactorOneMinusConstantAlpha) 
+	else if (srcFactor == BlendFactorOneMinusConstantAlpha) 
 	{
 		srcFactorValue = D3DBLEND_INVCONSTANTALPHA;
 	}
-	else if (srcFactor == RenderStateManager::BlendFactorSrcAlphaSaturate) 
+	else if (srcFactor == BlendFactorSrcAlphaSaturate) 
 	{
 		srcFactorValue = D3DBLEND_SRCALPHASAT;
 	}
 
-	uint32_t dstFactorValue = RenderStateManager::BlendFactorZero;
-	if (dstFactor == RenderStateManager::BlendFactorZero) 
+	uint32_t dstFactorValue = BlendFactorZero;
+	if (dstFactor == BlendFactorZero) 
 	{
 		dstFactorValue = D3DBLEND_ZERO;
 	}
-	else if (dstFactor == RenderStateManager::BlendFactorOne) 
+	else if (dstFactor == BlendFactorOne) 
 	{
 		dstFactorValue = D3DBLEND_ONE;
 	}
-	else if (dstFactor == RenderStateManager::BlendFactorSrcColor) 
+	else if (dstFactor == BlendFactorSrcColor) 
 	{
 		dstFactorValue = D3DBLEND_SRCCOLOR;
 	}
-	else if (dstFactor == RenderStateManager::BlendFactorOneMinusSrcColor) 
+	else if (dstFactor == BlendFactorOneMinusSrcColor) 
 	{
 		dstFactorValue = D3DBLEND_INVSRCCOLOR;
 	}
-	else if (dstFactor == RenderStateManager::BlendFactorDstColor) 
+	else if (dstFactor == BlendFactorDstColor) 
 	{
 		dstFactorValue = D3DBLEND_DESTCOLOR;
 	}
-	else if (dstFactor == RenderStateManager::BlendFactorOneMinusDstColor) 
+	else if (dstFactor == BlendFactorOneMinusDstColor) 
 	{
 		dstFactorValue = D3DBLEND_INVDESTCOLOR;
 	}
-	else if (dstFactor == RenderStateManager::BlendFactorSrcAlpha) 
+	else if (dstFactor == BlendFactorSrcAlpha) 
 	{
 		dstFactorValue = D3DBLEND_SRCALPHA;
 	}
-	else if (dstFactor == RenderStateManager::BlendFactorOneMinusSrcAlpha) 
+	else if (dstFactor == BlendFactorOneMinusSrcAlpha) 
 	{
 		dstFactorValue = D3DBLEND_INVSRCALPHA;
 	}
-	else if (dstFactor == RenderStateManager::BlendFactorDstAlpha) 
+	else if (dstFactor == BlendFactorDstAlpha) 
 	{
 		dstFactorValue = D3DBLEND_DESTALPHA;
 	}
-	else if (dstFactor == RenderStateManager::BlendFactorOneMinusDstAlpha) 
+	else if (dstFactor == BlendFactorOneMinusDstAlpha) 
 	{
 		dstFactorValue = D3DBLEND_INVDESTALPHA;
 	}
-	else if (dstFactor == RenderStateManager::BlendFactorConstantColor) 
+	else if (dstFactor == BlendFactorConstantColor) 
 	{
 		dstFactorValue = D3DBLEND_CONSTANTCOLOR;
 	}
-	else if (dstFactor == RenderStateManager::BlendFactorOneMinusConstantColor) 
+	else if (dstFactor == BlendFactorOneMinusConstantColor) 
 	{
 		dstFactorValue = D3DBLEND_INVCONSTANTCOLOR;
 	}
-	else if (dstFactor == RenderStateManager::BlendFactorConstantAlpha) 
+	else if (dstFactor == BlendFactorConstantAlpha) 
 	{
 		dstFactorValue = D3DBLEND_CONSTANTALPHA;
 	}
-	else if (dstFactor == RenderStateManager::BlendFactorOneMinusConstantAlpha) 
+	else if (dstFactor == BlendFactorOneMinusConstantAlpha) 
 	{
 		dstFactorValue = D3DBLEND_INVCONSTANTALPHA;
 	}
-	else if (dstFactor == RenderStateManager::BlendFactorSrcAlphaSaturate) 
+	else if (dstFactor == BlendFactorSrcAlphaSaturate) 
 	{
 		dstFactorValue = D3DBLEND_SRCALPHASAT;
 	}
@@ -401,25 +406,25 @@ void XboxOGRenderingHelper::SetBlendFactors(const RenderStateManager::BlendFacto
 	}
 }
 
-void XboxOGRenderingHelper::SetCulling(const RenderStateManager::CullingOperation& operation) 
+void XboxOGRenderingHelper::SetCulling(const CullingOperation& operation) 
 {
 	IDirect3DDevice8* d3dDevice = (IDirect3DDevice8*)XboxOGWindowHelper::GetD3DDevice();
 
-	if (operation == RenderStateManager::CullingOperationDisabled) 
+	if (operation == CullingOperationDisabled) 
 	{
 		if (FAILED(d3dDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE)))
 		{
 			DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "SetCulling: Failed to disable.");
 		}
 	}
-	else if (operation == RenderStateManager::CullingOperationFront) 
+	else if (operation == CullingOperationFront) 
 	{
 		if (FAILED(d3dDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW)))
 		{
 			DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "SetCulling: Failed to set cull operation front.");
 		}
 	}
-	else if (operation == RenderStateManager::CullingOperationBack) 
+	else if (operation == CullingOperationBack) 
 	{
 		if (FAILED(d3dDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW)))
 		{
@@ -428,18 +433,18 @@ void XboxOGRenderingHelper::SetCulling(const RenderStateManager::CullingOperatio
 	}
 }
 
-void XboxOGRenderingHelper::SetDepth(const RenderStateManager::DepthOperation& operation) 
+void XboxOGRenderingHelper::SetDepth(const DepthOperation& operation) 
 {
 	IDirect3DDevice8* d3dDevice = (IDirect3DDevice8*)XboxOGWindowHelper::GetD3DDevice();
 
-	if (operation == RenderStateManager::DepthOperationDisabled) 
+	if (operation == DepthOperationDisabled) 
 	{
 		if (FAILED(d3dDevice->SetRenderState(D3DRS_ZENABLE, FALSE)))
 		{
 			DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "SetDepth: Failed to disable.");
 		}
 	}
-	else if (operation == RenderStateManager::DepthOperationNever) 
+	else if (operation == DepthOperationNever) 
 	{
 		if (FAILED(d3dDevice->SetRenderState(D3DRS_ZENABLE, TRUE)))
 		{
@@ -450,7 +455,7 @@ void XboxOGRenderingHelper::SetDepth(const RenderStateManager::DepthOperation& o
 			DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "SetDepth: Failed to set operation never.");
 		}
 	}
-	else if (operation == RenderStateManager::DepthOperationLess) 
+	else if (operation == DepthOperationLess) 
 	{
 		if (FAILED(d3dDevice->SetRenderState(D3DRS_ZENABLE, TRUE)))
 		{
@@ -461,7 +466,7 @@ void XboxOGRenderingHelper::SetDepth(const RenderStateManager::DepthOperation& o
 			DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "SetDepth: Failed to set operation less.");
 		}
 	}
-	else if (operation == RenderStateManager::DepthOperationEqual) 
+	else if (operation == DepthOperationEqual) 
 	{
 		if (FAILED(d3dDevice->SetRenderState(D3DRS_ZENABLE, TRUE)))
 		{
@@ -472,7 +477,7 @@ void XboxOGRenderingHelper::SetDepth(const RenderStateManager::DepthOperation& o
 			DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "SetDepth: Failed to set operation equal.");
 		}
 	}
-	else if (operation == RenderStateManager::DepthOperationGreater) 
+	else if (operation == DepthOperationGreater) 
 	{
 		if (FAILED(d3dDevice->SetRenderState(D3DRS_ZENABLE, TRUE)))
 		{
@@ -483,7 +488,7 @@ void XboxOGRenderingHelper::SetDepth(const RenderStateManager::DepthOperation& o
 			DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "SetDepth: Failed to set operation greater.");
 		}
 	}
-	else if (operation == RenderStateManager::DepthOperationLessOrEqual) 
+	else if (operation == DepthOperationLessOrEqual) 
 	{
 		if (FAILED(d3dDevice->SetRenderState(D3DRS_ZENABLE, TRUE)))
 		{
@@ -494,7 +499,7 @@ void XboxOGRenderingHelper::SetDepth(const RenderStateManager::DepthOperation& o
 			DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "SetDepth: Failed to set operation less or equal.");
 		}
 	}
-	else if (operation == RenderStateManager::DepthOperationNotEqual) 
+	else if (operation == DepthOperationNotEqual) 
 	{
 		if (FAILED(d3dDevice->SetRenderState(D3DRS_ZENABLE, TRUE)))
 		{
@@ -505,7 +510,7 @@ void XboxOGRenderingHelper::SetDepth(const RenderStateManager::DepthOperation& o
 			DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "SetDepth: Failed to set operation not euqal.");
 		}
 	}
-	else if (operation == RenderStateManager::DepthOperationGreaterOrEqual) 
+	else if (operation == DepthOperationGreaterOrEqual) 
 	{
 		if (FAILED(d3dDevice->SetRenderState(D3DRS_ZENABLE, TRUE)))
 		{
@@ -516,7 +521,7 @@ void XboxOGRenderingHelper::SetDepth(const RenderStateManager::DepthOperation& o
 			DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "SetDepth: Failed to set operation greater or equal.");
 		}
 	}
-	else if (operation == RenderStateManager::DepthOperationAlways) 
+	else if (operation == DepthOperationAlways) 
 	{
 		if (FAILED(d3dDevice->SetRenderState(D3DRS_ZENABLE, TRUE)))
 		{
@@ -529,18 +534,18 @@ void XboxOGRenderingHelper::SetDepth(const RenderStateManager::DepthOperation& o
 	}
 }
 
-void XboxOGRenderingHelper::SetLights(const RenderStateManager::LightsOperation& operation) 
+void XboxOGRenderingHelper::SetLights(const LightsOperation& operation) 
 {
 	IDirect3DDevice8* d3dDevice = (IDirect3DDevice8*)XboxOGWindowHelper::GetD3DDevice();
 
-	if (operation == RenderStateManager::LightsOperationDisabled) 
+	if (operation == LightsOperationDisabled) 
 	{
 		if (FAILED(d3dDevice->SetRenderState(D3DRS_LIGHTING, FALSE)))
 		{
 			DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "SetLights: Failed to disable.");
 		}
 	}
-	else if (operation == RenderStateManager::LightsOperationEnabled) 
+	else if (operation == LightsOperationEnabled) 
 	{
 		if (FAILED(d3dDevice->SetRenderState(D3DRS_LIGHTING, TRUE)))
 		{
@@ -549,18 +554,18 @@ void XboxOGRenderingHelper::SetLights(const RenderStateManager::LightsOperation&
 	}
 }
 
-void XboxOGRenderingHelper::SetLight1(const RenderStateManager::LightOperation& operation) 
+void XboxOGRenderingHelper::SetLight1(const LightOperation& operation) 
 {
 	IDirect3DDevice8* d3dDevice = (IDirect3DDevice8*)XboxOGWindowHelper::GetD3DDevice();
 
-	if (operation == RenderStateManager::LightOperationDisabled) 
+	if (operation == LightOperationDisabled) 
 	{
 		if (FAILED(d3dDevice->LightEnable(0, FALSE)))
 		{
 			DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "SetLight1: Failed to disable.");
 		}
 	}
-	else if (operation == RenderStateManager::LightOperationEnabled) 
+	else if (operation == LightOperationEnabled) 
 	{
 		if (FAILED(d3dDevice->LightEnable(0, TRUE)))
 		{
@@ -598,18 +603,18 @@ void XboxOGRenderingHelper::SetLightInstance1(const MathUtility::Vec3F& position
 	}
 }
 
-void XboxOGRenderingHelper::SetLight2(const RenderStateManager::LightOperation& operation) 
+void XboxOGRenderingHelper::SetLight2(const LightOperation& operation) 
 {
 	IDirect3DDevice8* d3dDevice = (IDirect3DDevice8*)XboxOGWindowHelper::GetD3DDevice();
 
-	if (operation == RenderStateManager::LightOperationDisabled) 
+	if (operation == LightOperationDisabled) 
 	{
 		if (FAILED(d3dDevice->LightEnable(1, FALSE)))
 		{
 			DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "SetLight2: Failed to disable.");
 		}
 	}
-	else if (operation == RenderStateManager::LightOperationEnabled) 
+	else if (operation == LightOperationEnabled) 
 	{
 		if (FAILED(d3dDevice->LightEnable(1, TRUE)))
 		{
@@ -647,18 +652,18 @@ void XboxOGRenderingHelper::SetLightInstance2(const MathUtility::Vec3F& position
 	}
 }
 
-void XboxOGRenderingHelper::SetLight3(const RenderStateManager::LightOperation& operation) 
+void XboxOGRenderingHelper::SetLight3(const LightOperation& operation) 
 {
 	IDirect3DDevice8* d3dDevice = (IDirect3DDevice8*)XboxOGWindowHelper::GetD3DDevice();
 
-	if (operation == RenderStateManager::LightOperationDisabled) 
+	if (operation == LightOperationDisabled) 
 	{
 		if (FAILED(d3dDevice->LightEnable(2, FALSE)))
 		{
 			DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "SetLight3: Failed to disable.");
 		}
 	}
-	else if (operation == RenderStateManager::LightOperationEnabled) 
+	else if (operation == LightOperationEnabled) 
 	{
 		if (FAILED(d3dDevice->LightEnable(2, TRUE)))
 		{
@@ -696,18 +701,18 @@ void XboxOGRenderingHelper::SetLightInstance3(const MathUtility::Vec3F& position
 	}
 }
 
-void XboxOGRenderingHelper::SetLight4(const RenderStateManager::LightOperation& operation) 
+void XboxOGRenderingHelper::SetLight4(const LightOperation& operation) 
 {
 	IDirect3DDevice8* d3dDevice = (IDirect3DDevice8*)XboxOGWindowHelper::GetD3DDevice();
 
-	if (operation == RenderStateManager::LightOperationDisabled) 
+	if (operation == LightOperationDisabled) 
 	{
 		if (FAILED(d3dDevice->LightEnable(3, FALSE)))
 		{
 			DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "SetLight4: Failed to disable.");
 		}
 	}
-	else if (operation == RenderStateManager::LightOperationEnabled) 
+	else if (operation == LightOperationEnabled) 
 	{
 		if (FAILED(d3dDevice->LightEnable(3, TRUE)))
 		{
@@ -745,18 +750,18 @@ void XboxOGRenderingHelper::SetLightInstance4(const MathUtility::Vec3F& position
 	}
 }
 
-void XboxOGRenderingHelper::SetFog(const RenderStateManager::FogOperation& operation) 
+void XboxOGRenderingHelper::SetFog(const FogOperation& operation) 
 {
 	IDirect3DDevice8* d3dDevice = (IDirect3DDevice8*)XboxOGWindowHelper::GetD3DDevice();
 
-	if (operation == RenderStateManager::FogOperationDisabled) 
+	if (operation == FogOperationDisabled) 
 	{
 		if (FAILED(d3dDevice->SetRenderState(D3DRS_FOGENABLE, FALSE)))
 		{
 			DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "SetFog: Failed to disable.");
 		}
 	}
-	else if (operation == RenderStateManager::FogOperationExponent) 
+	else if (operation == FogOperationExponent) 
 	{
 		if (FAILED(d3dDevice->SetRenderState(D3DRS_FOGENABLE, TRUE)))
 		{
@@ -767,7 +772,7 @@ void XboxOGRenderingHelper::SetFog(const RenderStateManager::FogOperation& opera
 			DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "SetFog: Failed to set operation exponent.");
 		}
 	}
-	else if (operation == RenderStateManager::FogOperationExponent2) 
+	else if (operation == FogOperationExponent2) 
 	{
 		if (FAILED(d3dDevice->SetRenderState(D3DRS_FOGENABLE, TRUE)))
 		{
@@ -778,7 +783,7 @@ void XboxOGRenderingHelper::SetFog(const RenderStateManager::FogOperation& opera
 			DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "SetFog: Failed to set operation exponent 2.");
 		}
 	}
-	else if (operation == RenderStateManager::FogOperationLinear) 
+	else if (operation == FogOperationLinear) 
 	{
 		if (FAILED(d3dDevice->SetRenderState(D3DRS_FOGENABLE, TRUE)))
 		{
@@ -836,18 +841,18 @@ void XboxOGRenderingHelper::SetViewport(const MathUtility::RectI rect)
 	}
 }
 
-void XboxOGRenderingHelper::SetScissor(const RenderStateManager::ScissorOperation& operation, const MathUtility::RectI& rect) 
+void XboxOGRenderingHelper::SetScissor(const ScissorOperation& operation, const MathUtility::RectI& rect) 
 {
 	IDirect3DDevice8* d3dDevice = (IDirect3DDevice8*)XboxOGWindowHelper::GetD3DDevice();
 
-	if (operation == RenderStateManager::ScissorOperationDisabled) 
+	if (operation == ScissorOperationDisabled) 
 	{
 		if (FAILED(d3dDevice->SetScissors(0, FALSE, NULL)))
 		{
 			DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "SetScissor: Failed to disable.");
 		}
 	}
-	else if (operation == RenderStateManager::ScissorOperationEnabled) 
+	else if (operation == ScissorOperationEnabled) 
 	{
 		D3DRECT scrissorRect;
 		memset(&scrissorRect, 0, sizeof(scrissorRect));
@@ -900,8 +905,8 @@ bool XboxOGRenderingHelper::RenderMesh(uint32_t meshID)
 		return false;
 	}
 
-	RenderStateManager::SetTexture(mesh->textureID, RenderStateManager::TextureFilterLinear);
-	RenderStateManager::ApplyChanges();
+	m_renderStateManager->SetTexture(mesh->textureID, TextureFilterLinear);
+	m_renderStateManager->ApplyChanges();
 
 	uint32_t requestedSize =  mesh->vertices.size() * sizeof(MeshUtility::Vertex);
 	ResizeDynamicBufferIfNeeded(requestedSize);
@@ -909,11 +914,11 @@ bool XboxOGRenderingHelper::RenderMesh(uint32_t meshID)
 	IDirect3DDevice8* d3dDevice = (IDirect3DDevice8*)XboxOGWindowHelper::GetD3DDevice();
 
 	uint32_t vertexCount = mesh->vertices.size();
-	if (RenderStateManager::GetRenderState()->drawModeState.operation == RenderStateManager::DrawModeTriangles) 
+	if (m_renderStateManager->GetRenderState()->drawModeState.operation == DrawModeTriangles) 
 	{
 		d3dDevice->DrawPrimitiveUP(D3DPT_TRIANGLELIST, vertexCount / 3, &mesh->vertices[0], sizeof(MeshUtility::Vertex));
 	}
-	else if (RenderStateManager::GetRenderState()->drawModeState.operation == RenderStateManager::DrawModeLines) 
+	else if (m_renderStateManager->GetRenderState()->drawModeState.operation == DrawModeLines) 
 	{
 		d3dDevice->DrawPrimitiveUP(D3DPT_LINELIST, vertexCount / 3, &mesh->vertices[0], sizeof(MeshUtility::Vertex));
 	}

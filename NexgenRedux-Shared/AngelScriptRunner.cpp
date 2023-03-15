@@ -1,7 +1,6 @@
 #include "AngelScriptRunner.h"
 #include "AngelScriptMethods.h"
 #include "WindowManager.h"
-#include "JoystickManager.h"
 #include "MathUtility.h"
 
 #include <Gensys/DebugUtility.h>
@@ -23,6 +22,9 @@ using namespace AngelScript;
 
 namespace {
 
+
+	AngelScriptMethods* m_angelScriptMethods = NULL;
+
 	asIScriptEngine* m_engine = NULL;
 
 	asIScriptFunction *m_windowIconifyCallback = NULL;
@@ -38,6 +40,69 @@ namespace {
 	asIScriptFunction *m_windowDropCallback = NULL;
 
 	asIScriptFunction *m_joystickConnectCallback = NULL;
+}
+
+AngelScriptRunner::AngelScriptRunner(WindowManager *windowManager)
+{
+	m_windowManager = windowManager;
+	m_angelScriptMethods = new AngelScriptMethods(windowManager);
+}
+
+AngelScriptRunner::~AngelScriptRunner()
+{
+	delete m_angelScriptMethods;
+	if (m_windowIconifyCallback != NULL) 
+	{
+		m_windowIconifyCallback->Release();
+	}
+	if (m_windowMaximizeCallback != NULL) 
+	{
+		m_windowMaximizeCallback->Release();
+	}
+	if (m_windowSizeCallback != NULL) 
+	{
+		m_windowSizeCallback->Release();
+	}
+	if (m_windowFocusCallback != NULL) 
+	{
+		m_windowFocusCallback->Release();
+	}
+	if (m_windowKeyboardKeyCallback != NULL) 
+	{
+		m_windowKeyboardKeyCallback->Release();
+	}
+	if (m_windowKeyboardCharacterCallback != NULL) 
+	{
+		m_windowKeyboardCharacterCallback->Release();
+	}
+	if (m_windowMouseCursorPositionCallback != NULL) 
+	{
+		m_windowMouseCursorPositionCallback->Release();
+	}
+	if (m_windowMouseCursorEnterCallback != NULL) 
+	{
+		m_windowMouseCursorEnterCallback->Release();
+	}
+	if (m_windowMouseButtonCallback != NULL) 
+	{
+		m_windowMouseButtonCallback->Release();
+	}
+	if (m_windowMouseScrollCallback != NULL) 
+	{
+		m_windowMouseScrollCallback->Release();
+	}
+	if (m_windowDropCallback != NULL) 
+	{
+		m_windowDropCallback->Release();
+	}
+	if (m_joystickConnectCallback != NULL) 
+	{
+		m_joystickConnectCallback->Release();
+	}
+	if (m_engine != NULL) 
+	{
+		m_engine->ShutDownAndRelease();
+	}
 }
 
 void MessageCallback(asSMessageInfo* msg, void* param)
@@ -109,39 +174,39 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 
 	if (m_engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL) < 0) { return false; }
 
-	if (m_engine->RegisterObjectType("MonitorVideoMode", sizeof(WindowManager::MonitorVideoMode), asOBJ_VALUE | asOBJ_POD) < 0) { return false; }
-    if (m_engine->RegisterObjectProperty("MonitorVideoMode", "uint monitorIndex", asOFFSET(WindowManager::MonitorVideoMode, monitorIndex)) < 0) { return false; }
-    if (m_engine->RegisterObjectProperty("MonitorVideoMode", "uint width", asOFFSET(WindowManager::MonitorVideoMode, width)) < 0) { return false; }
-    if (m_engine->RegisterObjectProperty("MonitorVideoMode", "uint height", asOFFSET(WindowManager::MonitorVideoMode, height)) < 0) { return false; }
-    if (m_engine->RegisterObjectProperty("MonitorVideoMode", "uint redBits", asOFFSET(WindowManager::MonitorVideoMode, redBits)) < 0) { return false; }
-    if (m_engine->RegisterObjectProperty("MonitorVideoMode", "uint greenBits", asOFFSET(WindowManager::MonitorVideoMode, greenBits)) < 0) { return false; }
-    if (m_engine->RegisterObjectProperty("MonitorVideoMode", "uint blueBits", asOFFSET(WindowManager::MonitorVideoMode, blueBits)) < 0) { return false; }
-    if (m_engine->RegisterObjectProperty("MonitorVideoMode", "uint refreshRate", asOFFSET(WindowManager::MonitorVideoMode, refreshRate)) < 0) { return false; }
+	if (m_engine->RegisterObjectType("MonitorVideoMode", sizeof(MonitorVideoMode), asOBJ_VALUE | asOBJ_POD) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("MonitorVideoMode", "uint monitorIndex", asOFFSET(MonitorVideoMode, monitorIndex)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("MonitorVideoMode", "uint width", asOFFSET(MonitorVideoMode, width)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("MonitorVideoMode", "uint height", asOFFSET(MonitorVideoMode, height)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("MonitorVideoMode", "uint redBits", asOFFSET(MonitorVideoMode, redBits)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("MonitorVideoMode", "uint greenBits", asOFFSET(MonitorVideoMode, greenBits)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("MonitorVideoMode", "uint blueBits", asOFFSET(MonitorVideoMode, blueBits)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("MonitorVideoMode", "uint refreshRate", asOFFSET(MonitorVideoMode, refreshRate)) < 0) { return false; }
 
-	if (m_engine->RegisterObjectType("JoystickButtonStates", sizeof(JoystickManager::JoystickButtonStates), asOBJ_VALUE | asOBJ_POD) < 0) { return false; }
-    if (m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonA", asOFFSET(JoystickManager::JoystickButtonStates, buttonA)) < 0) { return false; }
-    if (m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonB", asOFFSET(JoystickManager::JoystickButtonStates, buttonB)) < 0) { return false; }
-    if (m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonX", asOFFSET(JoystickManager::JoystickButtonStates, buttonX)) < 0) { return false; }
-    if (m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonY", asOFFSET(JoystickManager::JoystickButtonStates, buttonY)) < 0) { return false; }
-    if (m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonLeftBumperOrWhite", asOFFSET(JoystickManager::JoystickButtonStates, buttonLeftBumperOrWhite)) < 0) { return false; }
-    if (m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonRightBumperOrBlack", asOFFSET(JoystickManager::JoystickButtonStates, buttonRightBumperOrBlack)) < 0) { return false; }
-    if (m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonBack", asOFFSET(JoystickManager::JoystickButtonStates, buttonBack)) < 0) { return false; }
-    if (m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonStart", asOFFSET(JoystickManager::JoystickButtonStates, buttonStart)) < 0) { return false; }
-    if (m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonGuide", asOFFSET(JoystickManager::JoystickButtonStates, buttonGuide)) < 0) { return false; }
-    if (m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonLeftThumb", asOFFSET(JoystickManager::JoystickButtonStates, buttonLeftThumb)) < 0) { return false; }
-    if (m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonRightThumb", asOFFSET(JoystickManager::JoystickButtonStates, buttonRightThumb)) < 0) { return false; }
-    if (m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonDpadUp", asOFFSET(JoystickManager::JoystickButtonStates, buttonDpadUp)) < 0) { return false; }
-	if (m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonDpadRight", asOFFSET(JoystickManager::JoystickButtonStates, buttonDpadRight)) < 0) { return false; }
-	if (m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonDpadDown", asOFFSET(JoystickManager::JoystickButtonStates, buttonDpadDown)) < 0) { return false; }
-	if (m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonDpadLeft", asOFFSET(JoystickManager::JoystickButtonStates, buttonDpadLeft)) < 0) { return false; }
+	if (m_engine->RegisterObjectType("JoystickButtonStates", sizeof(JoystickButtonStates), asOBJ_VALUE | asOBJ_POD) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonA", asOFFSET(JoystickButtonStates, buttonA)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonB", asOFFSET(JoystickButtonStates, buttonB)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonX", asOFFSET(JoystickButtonStates, buttonX)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonY", asOFFSET(JoystickButtonStates, buttonY)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonLeftBumperOrWhite", asOFFSET(JoystickButtonStates, buttonLeftBumperOrWhite)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonRightBumperOrBlack", asOFFSET(JoystickButtonStates, buttonRightBumperOrBlack)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonBack", asOFFSET(JoystickButtonStates, buttonBack)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonStart", asOFFSET(JoystickButtonStates, buttonStart)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonGuide", asOFFSET(JoystickButtonStates, buttonGuide)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonLeftThumb", asOFFSET(JoystickButtonStates, buttonLeftThumb)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonRightThumb", asOFFSET(JoystickButtonStates, buttonRightThumb)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonDpadUp", asOFFSET(JoystickButtonStates, buttonDpadUp)) < 0) { return false; }
+	if (m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonDpadRight", asOFFSET(JoystickButtonStates, buttonDpadRight)) < 0) { return false; }
+	if (m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonDpadDown", asOFFSET(JoystickButtonStates, buttonDpadDown)) < 0) { return false; }
+	if (m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonDpadLeft", asOFFSET(JoystickButtonStates, buttonDpadLeft)) < 0) { return false; }
 
-	if (m_engine->RegisterObjectType("JoystickAxisStates", sizeof(JoystickManager::JoystickAxisStates), asOBJ_VALUE | asOBJ_POD) < 0) { return false; }
-    if (m_engine->RegisterObjectProperty("JoystickAxisStates", "float axisLeftX", asOFFSET(JoystickManager::JoystickAxisStates, axisLeftX)) < 0) { return false; }
-	if (m_engine->RegisterObjectProperty("JoystickAxisStates", "float axisLeftY", asOFFSET(JoystickManager::JoystickAxisStates, axisLeftY)) < 0) { return false; }
-	if (m_engine->RegisterObjectProperty("JoystickAxisStates", "float axisRightX", asOFFSET(JoystickManager::JoystickAxisStates, axisRightX)) < 0) { return false; }
-	if (m_engine->RegisterObjectProperty("JoystickAxisStates", "float axisRightY", asOFFSET(JoystickManager::JoystickAxisStates, axisRightY)) < 0) { return false; }
-	if (m_engine->RegisterObjectProperty("JoystickAxisStates", "float axisLeftTrigger", asOFFSET(JoystickManager::JoystickAxisStates, axisLeftTrigger)) < 0) { return false; }
-	if (m_engine->RegisterObjectProperty("JoystickAxisStates", "float axisRightTrigger", asOFFSET(JoystickManager::JoystickAxisStates, axisRightTrigger)) < 0) { return false; }
+	if (m_engine->RegisterObjectType("JoystickAxisStates", sizeof(JoystickAxisStates), asOBJ_VALUE | asOBJ_POD) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("JoystickAxisStates", "float axisLeftX", asOFFSET(JoystickAxisStates, axisLeftX)) < 0) { return false; }
+	if (m_engine->RegisterObjectProperty("JoystickAxisStates", "float axisLeftY", asOFFSET(JoystickAxisStates, axisLeftY)) < 0) { return false; }
+	if (m_engine->RegisterObjectProperty("JoystickAxisStates", "float axisRightX", asOFFSET(JoystickAxisStates, axisRightX)) < 0) { return false; }
+	if (m_engine->RegisterObjectProperty("JoystickAxisStates", "float axisRightY", asOFFSET(JoystickAxisStates, axisRightY)) < 0) { return false; }
+	if (m_engine->RegisterObjectProperty("JoystickAxisStates", "float axisLeftTrigger", asOFFSET(JoystickAxisStates, axisLeftTrigger)) < 0) { return false; }
+	if (m_engine->RegisterObjectProperty("JoystickAxisStates", "float axisRightTrigger", asOFFSET(JoystickAxisStates, axisRightTrigger)) < 0) { return false; }
 
 	if (m_engine->RegisterObjectType("Time", sizeof(TimeUtility::Time), asOBJ_VALUE | asOBJ_POD) < 0) { return false; }
     if (m_engine->RegisterObjectProperty("Time", "uint16 month", asOFFSET(TimeUtility::Time, month)) < 0) { return false; }
@@ -635,62 +700,6 @@ bool AngelScriptRunner::ExecuteJoystickConnectCallback(uint32_t joystickID, uint
 	bool success = Execute(context);
 	context->Release();
 	return success;
-}
-
-void AngelScriptRunner::Close(void)
-{
-	if (m_windowIconifyCallback != NULL) 
-	{
-		m_windowIconifyCallback->Release();
-	}
-	if (m_windowMaximizeCallback != NULL) 
-	{
-		m_windowMaximizeCallback->Release();
-	}
-	if (m_windowSizeCallback != NULL) 
-	{
-		m_windowSizeCallback->Release();
-	}
-	if (m_windowFocusCallback != NULL) 
-	{
-		m_windowFocusCallback->Release();
-	}
-	if (m_windowKeyboardKeyCallback != NULL) 
-	{
-		m_windowKeyboardKeyCallback->Release();
-	}
-	if (m_windowKeyboardCharacterCallback != NULL) 
-	{
-		m_windowKeyboardCharacterCallback->Release();
-	}
-	if (m_windowMouseCursorPositionCallback != NULL) 
-	{
-		m_windowMouseCursorPositionCallback->Release();
-	}
-	if (m_windowMouseCursorEnterCallback != NULL) 
-	{
-		m_windowMouseCursorEnterCallback->Release();
-	}
-	if (m_windowMouseButtonCallback != NULL) 
-	{
-		m_windowMouseButtonCallback->Release();
-	}
-	if (m_windowMouseScrollCallback != NULL) 
-	{
-		m_windowMouseScrollCallback->Release();
-	}
-	if (m_windowDropCallback != NULL) 
-	{
-		m_windowDropCallback->Release();
-	}
-	if (m_joystickConnectCallback != NULL) 
-	{
-		m_joystickConnectCallback->Release();
-	}
-	if (m_engine != NULL) 
-	{
-		m_engine->ShutDownAndRelease();
-	}
 }
 
 // Privates

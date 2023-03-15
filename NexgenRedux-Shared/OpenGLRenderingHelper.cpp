@@ -383,7 +383,12 @@ namespace
 	std::map<uint32_t, OpenGLRenderingHelper::TextureContainer> m_textureContainerMap;
 }
 
-void OpenGLRenderingHelper::Close(void)
+OpenGLRenderingHelper::OpenGLRenderingHelper(RenderStateManager *renderStateManager)
+{
+	m_renderStateManager = renderStateManager;
+}
+
+OpenGLRenderingHelper::~OpenGLRenderingHelper()
 {
 	DeleteShaders();
 	DeleteTextures();
@@ -449,32 +454,32 @@ void OpenGLRenderingHelper::SetShader(std::string shaderName)
 void OpenGLRenderingHelper::SetModelMatrix(const MathUtility::Matrix4x4& matrix) 
 {
 	uint32_t value;
-	GetShaderLookupValue(RenderStateManager::GetRenderState()->shaderState.shader, "uModelMatrix", value);
+	GetShaderLookupValue(m_renderStateManager->GetRenderState()->shaderState.shader, "uModelMatrix", value);
 	glUniformMatrix4fv(value, 1, GL_FALSE, matrix.values);
 }
 
 void OpenGLRenderingHelper::SetViewMatrix(const MathUtility::Matrix4x4& matrix) 
 {
 	uint32_t value;
-	GetShaderLookupValue(RenderStateManager::GetRenderState()->shaderState.shader, "uViewMatrix", value);
+	GetShaderLookupValue(m_renderStateManager->GetRenderState()->shaderState.shader, "uViewMatrix", value);
 	glUniformMatrix4fv(value, 1, GL_FALSE, matrix.values);
 }
 
 void OpenGLRenderingHelper::SetProjectionMatrix(const MathUtility::Matrix4x4& matrix) 
 {
 	uint32_t value;
-	GetShaderLookupValue(RenderStateManager::GetRenderState()->shaderState.shader, "uProjectionMatrix", value);
+	GetShaderLookupValue(m_renderStateManager->GetRenderState()->shaderState.shader, "uProjectionMatrix", value);
 	glUniformMatrix4fv(value, 1, GL_FALSE, matrix.values);
 }
 
 void OpenGLRenderingHelper::SetAmbientLight(const MathUtility::Color3I& color) 
 {
 	uint32_t value;
-	GetShaderLookupValue(RenderStateManager::GetRenderState()->shaderState.shader, "uAmbientColor", value);
+	GetShaderLookupValue(m_renderStateManager->GetRenderState()->shaderState.shader, "uAmbientColor", value);
 	glUniform4f(value, color.r / 255.0f, color.g / 255.0f, color.b / 255.0f, 0);
 }
 
-void OpenGLRenderingHelper::SetTexture(const uint32_t& textureID, const RenderStateManager::TextureFilter& filter) 
+void OpenGLRenderingHelper::SetTexture(const uint32_t& textureID, const TextureFilter& filter) 
 {
 	TextureContainer* textureContainer = GetTextureContainer(textureID);
 	if (textureContainer == NULL)
@@ -485,12 +490,12 @@ void OpenGLRenderingHelper::SetTexture(const uint32_t& textureID, const RenderSt
 
 	glActiveTexture(GL_TEXTURE0 + 0);
 	glBindTexture(GL_TEXTURE_2D, textureContainer->texture);
-	if (filter == RenderStateManager::TextureFilterLinear)
+	if (filter == TextureFilterLinear)
 	{
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	}
-	else if (filter == RenderStateManager::TextureFilterNearest)
+	else if (filter == TextureFilterNearest)
 	{
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -500,155 +505,155 @@ void OpenGLRenderingHelper::SetTexture(const uint32_t& textureID, const RenderSt
 void OpenGLRenderingHelper::SetTint(const MathUtility::Color4I& color) 
 {
 	uint32_t value;
-	GetShaderLookupValue(RenderStateManager::GetRenderState()->shaderState.shader, "uTintColor", value);
+	GetShaderLookupValue(m_renderStateManager->GetRenderState()->shaderState.shader, "uTintColor", value);
 	glUniform4f(value, color.r / 255.0f, color.g / 255.0f, color.b / 255.0f, color.a / 255.0f);
 }
 
-void OpenGLRenderingHelper::SetBlend(const RenderStateManager::BlendOperation& operation) 
+void OpenGLRenderingHelper::SetBlend(const BlendOperation& operation) 
 {
-	if (operation == RenderStateManager::BlendOperationDisabled)
+	if (operation == BlendOperationDisabled)
 	{
 		glDisable(GL_BLEND);
 	}
-	else if (operation == RenderStateManager::BlendOperationAdd)
+	else if (operation == BlendOperationAdd)
 	{
 		glEnable(GL_BLEND);
 		glBlendEquation(GL_FUNC_ADD);
 	}
-	else if (operation == RenderStateManager::BlendOperationSubtract)
+	else if (operation == BlendOperationSubtract)
 	{
 		glEnable(GL_BLEND);
 		glBlendEquation(GL_FUNC_SUBTRACT);
 	}
-	else if (operation == RenderStateManager::BlendOperationReverseSubtract)
+	else if (operation == BlendOperationReverseSubtract)
 	{
 		glEnable(GL_BLEND);
 		glBlendEquation(GL_FUNC_REVERSE_SUBTRACT);
 	}
 }
 
-void OpenGLRenderingHelper::SetBlendFactors(const RenderStateManager::BlendFactor& srcFactor, const RenderStateManager::BlendFactor& dstFactor) 
+void OpenGLRenderingHelper::SetBlendFactors(const BlendFactor& srcFactor, const BlendFactor& dstFactor) 
 {
-	uint32_t srcFactorValue = RenderStateManager::BlendFactorZero;
-	if (srcFactor == RenderStateManager::BlendFactorZero) 
+	uint32_t srcFactorValue = BlendFactorZero;
+	if (srcFactor == BlendFactorZero) 
 	{
 		srcFactorValue = GL_ZERO;
 	}
-	else if (srcFactor == RenderStateManager::BlendFactorOne) 
+	else if (srcFactor == BlendFactorOne) 
 	{
 		srcFactorValue = GL_ONE;
 	}
-	else if (srcFactor == RenderStateManager::BlendFactorSrcColor) 
+	else if (srcFactor == BlendFactorSrcColor) 
 	{
 		srcFactorValue = GL_SRC_COLOR;
 	}
-	else if (srcFactor == RenderStateManager::BlendFactorOneMinusSrcColor) 
+	else if (srcFactor == BlendFactorOneMinusSrcColor) 
 	{
 		srcFactorValue = GL_ONE_MINUS_SRC_COLOR;
 	}
-	else if (srcFactor == RenderStateManager::BlendFactorDstColor) 
+	else if (srcFactor == BlendFactorDstColor) 
 	{
 		srcFactorValue = GL_DST_COLOR;
 	}
-	else if (srcFactor == RenderStateManager::BlendFactorOneMinusDstColor) 
+	else if (srcFactor == BlendFactorOneMinusDstColor) 
 	{
 		srcFactorValue = GL_ONE_MINUS_DST_COLOR;
 	}
-	else if (srcFactor == RenderStateManager::BlendFactorSrcAlpha) 
+	else if (srcFactor == BlendFactorSrcAlpha) 
 	{
 		srcFactorValue = GL_SRC_ALPHA;
 	}
-	else if (srcFactor == RenderStateManager::BlendFactorOneMinusSrcAlpha) 
+	else if (srcFactor == BlendFactorOneMinusSrcAlpha) 
 	{
 		srcFactorValue = GL_ONE_MINUS_SRC_ALPHA;
 	}
-	else if (srcFactor == RenderStateManager::BlendFactorDstAlpha) 
+	else if (srcFactor == BlendFactorDstAlpha) 
 	{
 		srcFactorValue = GL_DST_ALPHA;
 	}
-	else if (srcFactor == RenderStateManager::BlendFactorOneMinusDstAlpha) 
+	else if (srcFactor == BlendFactorOneMinusDstAlpha) 
 	{
 		srcFactorValue = GL_ONE_MINUS_DST_ALPHA;
 	}
-	else if (srcFactor == RenderStateManager::BlendFactorConstantColor) 
+	else if (srcFactor == BlendFactorConstantColor) 
 	{
 		srcFactorValue = GL_CONSTANT_COLOR;
 	}
-	else if (srcFactor == RenderStateManager::BlendFactorOneMinusConstantColor) 
+	else if (srcFactor == BlendFactorOneMinusConstantColor) 
 	{
 		srcFactorValue = GL_ONE_MINUS_CONSTANT_COLOR;
 	}
-	else if (srcFactor == RenderStateManager::BlendFactorConstantAlpha) 
+	else if (srcFactor == BlendFactorConstantAlpha) 
 	{
 		srcFactorValue = GL_CONSTANT_ALPHA;
 	}
-	else if (srcFactor == RenderStateManager::BlendFactorOneMinusConstantAlpha) 
+	else if (srcFactor == BlendFactorOneMinusConstantAlpha) 
 	{
 		srcFactorValue = GL_ONE_MINUS_CONSTANT_ALPHA;
 	}
-	else if (srcFactor == RenderStateManager::BlendFactorSrcAlphaSaturate) 
+	else if (srcFactor == BlendFactorSrcAlphaSaturate) 
 	{
 		srcFactorValue = GL_SRC_ALPHA_SATURATE;
 	}
 
-	uint32_t dstFactorValue = RenderStateManager::BlendFactorZero;
-	if (dstFactor == RenderStateManager::BlendFactorZero) 
+	uint32_t dstFactorValue = BlendFactorZero;
+	if (dstFactor == BlendFactorZero) 
 	{
 		dstFactorValue = GL_ZERO;
 	}
-	else if (dstFactor == RenderStateManager::BlendFactorOne) 
+	else if (dstFactor == BlendFactorOne) 
 	{
 		dstFactorValue = GL_ONE;
 	}
-	else if (dstFactor == RenderStateManager::BlendFactorSrcColor) 
+	else if (dstFactor == BlendFactorSrcColor) 
 	{
 		dstFactorValue = GL_SRC_COLOR;
 	}
-	else if (dstFactor == RenderStateManager::BlendFactorOneMinusSrcColor) 
+	else if (dstFactor == BlendFactorOneMinusSrcColor) 
 	{
 		dstFactorValue = GL_ONE_MINUS_SRC_COLOR;
 	}
-	else if (dstFactor == RenderStateManager::BlendFactorDstColor) 
+	else if (dstFactor == BlendFactorDstColor) 
 	{
 		dstFactorValue = GL_DST_COLOR;
 	}
-	else if (dstFactor == RenderStateManager::BlendFactorOneMinusDstColor) 
+	else if (dstFactor == BlendFactorOneMinusDstColor) 
 	{
 		dstFactorValue = GL_ONE_MINUS_DST_COLOR;
 	}
-	else if (dstFactor == RenderStateManager::BlendFactorSrcAlpha) 
+	else if (dstFactor == BlendFactorSrcAlpha) 
 	{
 		dstFactorValue = GL_SRC_ALPHA;
 	}
-	else if (dstFactor == RenderStateManager::BlendFactorOneMinusSrcAlpha) 
+	else if (dstFactor == BlendFactorOneMinusSrcAlpha) 
 	{
 		dstFactorValue = GL_ONE_MINUS_SRC_ALPHA;
 	}
-	else if (dstFactor == RenderStateManager::BlendFactorDstAlpha) 
+	else if (dstFactor == BlendFactorDstAlpha) 
 	{
 		dstFactorValue = GL_DST_ALPHA;
 	}
-	else if (dstFactor == RenderStateManager::BlendFactorOneMinusDstAlpha) 
+	else if (dstFactor == BlendFactorOneMinusDstAlpha) 
 	{
 		dstFactorValue = GL_ONE_MINUS_DST_ALPHA;
 	}
-	else if (dstFactor == RenderStateManager::BlendFactorConstantColor) 
+	else if (dstFactor == BlendFactorConstantColor) 
 	{
 		dstFactorValue = GL_CONSTANT_COLOR;
 	}
-	else if (dstFactor == RenderStateManager::BlendFactorOneMinusConstantColor) 
+	else if (dstFactor == BlendFactorOneMinusConstantColor) 
 	{
 		dstFactorValue = GL_ONE_MINUS_CONSTANT_COLOR;
 	}
-	else if (dstFactor == RenderStateManager::BlendFactorConstantAlpha) 
+	else if (dstFactor == BlendFactorConstantAlpha) 
 	{
 		dstFactorValue = GL_CONSTANT_ALPHA;
 	}
-	else if (dstFactor == RenderStateManager::BlendFactorOneMinusConstantAlpha) 
+	else if (dstFactor == BlendFactorOneMinusConstantAlpha) 
 	{
 		dstFactorValue = GL_ONE_MINUS_CONSTANT_ALPHA;
 	}
-	else if (dstFactor == RenderStateManager::BlendFactorSrcAlphaSaturate) 
+	else if (dstFactor == BlendFactorSrcAlphaSaturate) 
 	{
 		dstFactorValue = GL_SRC_ALPHA_SATURATE;
 	}
@@ -656,95 +661,95 @@ void OpenGLRenderingHelper::SetBlendFactors(const RenderStateManager::BlendFacto
 	glBlendFunc(srcFactorValue, dstFactorValue);
 }
 
-void OpenGLRenderingHelper::SetCulling(const RenderStateManager::CullingOperation& operation) 
+void OpenGLRenderingHelper::SetCulling(const CullingOperation& operation) 
 {
-	if (operation == RenderStateManager::CullingOperationDisabled) 
+	if (operation == CullingOperationDisabled) 
 	{
 		glDisable(GL_CULL_FACE);
 	}
-	else if (operation == RenderStateManager::CullingOperationFront) 
+	else if (operation == CullingOperationFront) 
 	{
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_FRONT);
 	}
-	else if (operation == RenderStateManager::CullingOperationBack) 
+	else if (operation == CullingOperationBack) 
 	{
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK);
 	}
 }
 
-void OpenGLRenderingHelper::SetDepth(const RenderStateManager::DepthOperation& operation) 
+void OpenGLRenderingHelper::SetDepth(const DepthOperation& operation) 
 {
-	if (operation == RenderStateManager::DepthOperationDisabled) 
+	if (operation == DepthOperationDisabled) 
 	{
 		glDisable(GL_DEPTH_TEST);
 	}
-	else if (operation == RenderStateManager::DepthOperationNever) 
+	else if (operation == DepthOperationNever) 
 	{
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_NEVER);
 	}
-	else if (operation == RenderStateManager::DepthOperationLess) 
+	else if (operation == DepthOperationLess) 
 	{
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LESS);
 	}
-	else if (operation == RenderStateManager::DepthOperationEqual) 
+	else if (operation == DepthOperationEqual) 
 	{
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_EQUAL);
 	}
-	else if (operation == RenderStateManager::DepthOperationGreater) 
+	else if (operation == DepthOperationGreater) 
 	{
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LEQUAL);
 	}
-	else if (operation == RenderStateManager::DepthOperationLessOrEqual) 
+	else if (operation == DepthOperationLessOrEqual) 
 	{
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_GREATER);
 	}
-	else if (operation == RenderStateManager::DepthOperationNotEqual) 
+	else if (operation == DepthOperationNotEqual) 
 	{
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_NOTEQUAL);
 	}
-	else if (operation == RenderStateManager::DepthOperationGreaterOrEqual) 
+	else if (operation == DepthOperationGreaterOrEqual) 
 	{
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_GEQUAL);
 	}
-	else if (operation == RenderStateManager::DepthOperationAlways) 
+	else if (operation == DepthOperationAlways) 
 	{
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_ALWAYS);
 	}
 }
 
-void OpenGLRenderingHelper::SetLights(const RenderStateManager::LightsOperation& operation) 
+void OpenGLRenderingHelper::SetLights(const LightsOperation& operation) 
 {
 	uint32_t value;
-	GetShaderLookupValue(RenderStateManager::GetRenderState()->shaderState.shader, "uLightsEnable", value);
-	if (operation == RenderStateManager::LightsOperationDisabled) 
+	GetShaderLookupValue(m_renderStateManager->GetRenderState()->shaderState.shader, "uLightsEnable", value);
+	if (operation == LightsOperationDisabled) 
 	{
 		glUniform1i(value, 0);
 	}
-	else if (operation == RenderStateManager::LightsOperationEnabled) 
+	else if (operation == LightsOperationEnabled) 
 	{
 		glUniform1i(value, 1);
 	}
 }
 
-void OpenGLRenderingHelper::SetLight1(const RenderStateManager::LightOperation& operation) 
+void OpenGLRenderingHelper::SetLight1(const LightOperation& operation) 
 {
 	uint32_t value;
-	GetShaderLookupValue(RenderStateManager::GetRenderState()->shaderState.shader, "uLightEnable0", value);
-	if (operation == RenderStateManager::LightOperationDisabled) 
+	GetShaderLookupValue(m_renderStateManager->GetRenderState()->shaderState.shader, "uLightEnable0", value);
+	if (operation == LightOperationDisabled) 
 	{
 		glUniform1i(value, 0);
 	}
-	else if (operation == RenderStateManager::LightOperationEnabled) 
+	else if (operation == LightOperationEnabled) 
 	{
 		glUniform1i(value, 1);
 	}
@@ -753,22 +758,22 @@ void OpenGLRenderingHelper::SetLight1(const RenderStateManager::LightOperation& 
 void OpenGLRenderingHelper::SetLightInstance1(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse) 
 {
 	uint32_t value;
-	GetShaderLookupValue(RenderStateManager::GetRenderState()->shaderState.shader, "uLightPosition0", value);
+	GetShaderLookupValue(m_renderStateManager->GetRenderState()->shaderState.shader, "uLightPosition0", value);
 	glUniform4f(value, position.values[0], position.values[1], position.values[2], distance);
-	GetShaderLookupValue(RenderStateManager::GetRenderState()->shaderState.shader, "uLightDiffuseColor0", value);
+	GetShaderLookupValue(m_renderStateManager->GetRenderState()->shaderState.shader, "uLightDiffuseColor0", value);
 	glUniform4f(value, diffuse.values[0], diffuse.values[1], diffuse.values[2], 0);
 
 }
 
-void OpenGLRenderingHelper::SetLight2(const RenderStateManager::LightOperation& operation) 
+void OpenGLRenderingHelper::SetLight2(const LightOperation& operation) 
 {
 	uint32_t value;
-	GetShaderLookupValue(RenderStateManager::GetRenderState()->shaderState.shader, "uLightEnable1", value);
-	if (operation == RenderStateManager::LightOperationDisabled) 
+	GetShaderLookupValue(m_renderStateManager->GetRenderState()->shaderState.shader, "uLightEnable1", value);
+	if (operation == LightOperationDisabled) 
 	{
 		glUniform1i(value, 0);
 	}
-	else if (operation == RenderStateManager::LightOperationEnabled) 
+	else if (operation == LightOperationEnabled) 
 	{
 		glUniform1i(value, 1);
 	}
@@ -777,21 +782,21 @@ void OpenGLRenderingHelper::SetLight2(const RenderStateManager::LightOperation& 
 void OpenGLRenderingHelper::SetLightInstance2(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse) 
 {
 	uint32_t value;
-	GetShaderLookupValue(RenderStateManager::GetRenderState()->shaderState.shader, "uLightPosition1", value);
+	GetShaderLookupValue(m_renderStateManager->GetRenderState()->shaderState.shader, "uLightPosition1", value);
 	glUniform4f(value, position.values[0], position.values[1], position.values[2], distance);
-	GetShaderLookupValue(RenderStateManager::GetRenderState()->shaderState.shader, "uLightDiffuseColor1", value);
+	GetShaderLookupValue(m_renderStateManager->GetRenderState()->shaderState.shader, "uLightDiffuseColor1", value);
 	glUniform4f(value, diffuse.values[0], diffuse.values[1], diffuse.values[2], 0);
 }
 
-void OpenGLRenderingHelper::SetLight3(const RenderStateManager::LightOperation& operation) 
+void OpenGLRenderingHelper::SetLight3(const LightOperation& operation) 
 {
 	uint32_t value;
-	GetShaderLookupValue(RenderStateManager::GetRenderState()->shaderState.shader, "uLightEnable2", value);
-	if (operation == RenderStateManager::LightOperationDisabled) 
+	GetShaderLookupValue(m_renderStateManager->GetRenderState()->shaderState.shader, "uLightEnable2", value);
+	if (operation == LightOperationDisabled) 
 	{
 		glUniform1i(value, 0);
 	}
-	else if (operation == RenderStateManager::LightOperationEnabled) 
+	else if (operation == LightOperationEnabled) 
 	{
 		glUniform1i(value, 1);
 	}
@@ -800,21 +805,21 @@ void OpenGLRenderingHelper::SetLight3(const RenderStateManager::LightOperation& 
 void OpenGLRenderingHelper::SetLightInstance3(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse) 
 {
 	uint32_t value;
-	GetShaderLookupValue(RenderStateManager::GetRenderState()->shaderState.shader, "uLightPosition2", value);
+	GetShaderLookupValue(m_renderStateManager->GetRenderState()->shaderState.shader, "uLightPosition2", value);
 	glUniform4f(value, position.values[0], position.values[1], position.values[2], distance);
-	GetShaderLookupValue(RenderStateManager::GetRenderState()->shaderState.shader, "uLightDiffuseColor2", value);
+	GetShaderLookupValue(m_renderStateManager->GetRenderState()->shaderState.shader, "uLightDiffuseColor2", value);
 	glUniform4f(value, diffuse.values[0], diffuse.values[1], diffuse.values[2], 0);
 }
 
-void OpenGLRenderingHelper::SetLight4(const RenderStateManager::LightOperation& operation) 
+void OpenGLRenderingHelper::SetLight4(const LightOperation& operation) 
 {
 	uint32_t value;
-	GetShaderLookupValue(RenderStateManager::GetRenderState()->shaderState.shader, "uLightEnable3", value);
-	if (operation == RenderStateManager::LightOperationDisabled) 
+	GetShaderLookupValue(m_renderStateManager->GetRenderState()->shaderState.shader, "uLightEnable3", value);
+	if (operation == LightOperationDisabled) 
 	{
 		glUniform1i(value, 0);
 	}
-	else if (operation == RenderStateManager::LightOperationEnabled) 
+	else if (operation == LightOperationEnabled) 
 	{
 		glUniform1i(value, 1);
 	}
@@ -823,29 +828,29 @@ void OpenGLRenderingHelper::SetLight4(const RenderStateManager::LightOperation& 
 void OpenGLRenderingHelper::SetLightInstance4(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse) 
 {
 	uint32_t value;
-	GetShaderLookupValue(RenderStateManager::GetRenderState()->shaderState.shader, "uLightPosition3", value);
+	GetShaderLookupValue(m_renderStateManager->GetRenderState()->shaderState.shader, "uLightPosition3", value);
 	glUniform4f(value, position.values[0], position.values[1], position.values[2], distance);
-	GetShaderLookupValue(RenderStateManager::GetRenderState()->shaderState.shader, "uLightDiffuseColor3", value);
+	GetShaderLookupValue(m_renderStateManager->GetRenderState()->shaderState.shader, "uLightDiffuseColor3", value);
 	glUniform4f(value, diffuse.values[0], diffuse.values[1], diffuse.values[2], 0);
 }
 
-void OpenGLRenderingHelper::SetFog(const RenderStateManager::FogOperation& operation) 
+void OpenGLRenderingHelper::SetFog(const FogOperation& operation) 
 {
 	uint32_t value;
-	GetShaderLookupValue(RenderStateManager::GetRenderState()->shaderState.shader, "uFogMode", value);
-	if (operation == RenderStateManager::FogOperationDisabled) 
+	GetShaderLookupValue(m_renderStateManager->GetRenderState()->shaderState.shader, "uFogMode", value);
+	if (operation == FogOperationDisabled) 
 	{
 		glUniform1i(value, 0);
 	}
-	else if (operation == RenderStateManager::FogOperationExponent) 
+	else if (operation == FogOperationExponent) 
 	{
 		glUniform1i(value, 1);
 	}
-	else if (operation == RenderStateManager::FogOperationExponent2) 
+	else if (operation == FogOperationExponent2) 
 	{
 		glUniform1i(value, 2);
 	}
-	else if (operation == RenderStateManager::FogOperationLinear) 
+	else if (operation == FogOperationLinear) 
 	{
 		glUniform1i(value, 3);
 	}
@@ -854,13 +859,13 @@ void OpenGLRenderingHelper::SetFog(const RenderStateManager::FogOperation& opera
 void OpenGLRenderingHelper::SetFogInstance(const MathUtility::Color3I& color, const float& start, const float& end, const float& density) 
 {
 	uint32_t value;
-	GetShaderLookupValue(RenderStateManager::GetRenderState()->shaderState.shader, "uFogColor", value);
+	GetShaderLookupValue(m_renderStateManager->GetRenderState()->shaderState.shader, "uFogColor", value);
 	glUniform4f(value, color.r / 255.0f, color.g / 255.0f, color.b / 255.0f, 0);
-	GetShaderLookupValue(RenderStateManager::GetRenderState()->shaderState.shader, "uFogStart", value);
+	GetShaderLookupValue(m_renderStateManager->GetRenderState()->shaderState.shader, "uFogStart", value);
 	glUniform1f(value, start);
-	GetShaderLookupValue(RenderStateManager::GetRenderState()->shaderState.shader, "uFogEnd", value);
+	GetShaderLookupValue(m_renderStateManager->GetRenderState()->shaderState.shader, "uFogEnd", value);
 	glUniform1f(value, end);
-	GetShaderLookupValue(RenderStateManager::GetRenderState()->shaderState.shader, "uFogDensity", value);
+	GetShaderLookupValue(m_renderStateManager->GetRenderState()->shaderState.shader, "uFogDensity", value);
 	glUniform1f(value, density);
 }
 
@@ -869,13 +874,13 @@ void OpenGLRenderingHelper::SetViewport(const MathUtility::RectI rect)
 	glViewport(rect.x, rect.y, rect.width, rect.height);
 }
 
-void OpenGLRenderingHelper::SetScissor(const RenderStateManager::ScissorOperation& operation, const MathUtility::RectI& rect) 
+void OpenGLRenderingHelper::SetScissor(const ScissorOperation& operation, const MathUtility::RectI& rect) 
 {
-	if (operation == RenderStateManager::ScissorOperationDisabled) 
+	if (operation == ScissorOperationDisabled) 
 	{
 		glDisable(GL_SCISSOR_TEST);
 	}
-	else if (operation == RenderStateManager::ScissorOperationEnabled) 
+	else if (operation == ScissorOperationEnabled) 
 	{
 		glEnable(GL_SCISSOR_TEST);
 		glScissor(rect.x, rect.y, rect.width, rect.height);
@@ -928,8 +933,8 @@ bool OpenGLRenderingHelper::RenderMesh(uint32_t meshID)
 		return false;
 	}
 
-	RenderStateManager::SetTexture(mesh->textureID, RenderStateManager::TextureFilterLinear);
-	RenderStateManager::ApplyChanges();
+	m_renderStateManager->SetTexture(mesh->textureID, TextureFilterLinear);
+	m_renderStateManager->ApplyChanges();
 
 	uint32_t requestedSize =  mesh->vertices.size() * sizeof(MeshUtility::Vertex);
 	ResizeDynamicBufferIfNeeded(requestedSize);
@@ -953,11 +958,11 @@ bool OpenGLRenderingHelper::RenderMesh(uint32_t meshID)
 	glVertexAttribPointer(aTexCoord, 2, GL_FLOAT, GL_FALSE, sizeof(MeshUtility::Vertex), (void*)offsetof(MeshUtility::Vertex, texcoord));
 
 	uint32_t vertexCount = mesh->vertices.size();
-	if (RenderStateManager::GetRenderState()->drawModeState.operation == RenderStateManager::DrawModeTriangles) 
+	if (m_renderStateManager->GetRenderState()->drawModeState.operation == DrawModeTriangles) 
 	{
 		glDrawArrays(GL_TRIANGLES, 0, (GLsizei)vertexCount);
 	}
-	else if (RenderStateManager::GetRenderState()->drawModeState.operation == RenderStateManager::DrawModeLines) 
+	else if (m_renderStateManager->GetRenderState()->drawModeState.operation == DrawModeLines) 
 	{
 		glDrawArrays(GL_LINES, 0, (GLsizei)vertexCount);
 	}

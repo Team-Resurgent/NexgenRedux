@@ -1,5 +1,9 @@
 #pragma once
 
+#include "RenderStateManager.h"
+#include "IWindowHelper.h"
+#include "AngelScriptRunner.h"
+
 #include <Gensys/Int.h>
 
 #include <string>
@@ -7,41 +11,38 @@
 
 namespace NexgenRedux
 {
+	class AngelScriptRunner;
 	class WindowManager
 	{		
 	public:
 
-		typedef struct MonitorVideoMode
-		{
-			uint32_t monitorIndex;
-			uint32_t width;
-			uint32_t height; 
-			uint32_t redBits;
-			uint32_t greenBits;
-			uint32_t blueBits;
-			uint32_t refreshRate;
-		} MonitorVideoMode;
+		WindowManager(RenderStateManager* renderStateManager);
+		~WindowManager();
 
-    	static void Close(void);
+		IWindowHelper* GetWindowHelper(void);
+		std::vector<uint32_t> GetWindowHandles(void);
+		bool GetAvailableMonitorCount(uint32_t& monitorCount);
+		bool GetMonitorVideoMode(uint32_t monitorIndex, MonitorVideoMode& monitorVideoMode);
+		bool GetMonitorVideoModes(uint32_t monitorIndex, std::vector<MonitorVideoMode>& monitorVideoModes);
+		bool WindowCreateWithVideoMode(MonitorVideoMode monitorVideoMode, std::string title, uint32_t& windowHandle);
+		bool WindowCreateWithSize(uint32_t width, uint32_t height, std::string title, uint32_t& windowHandle);
+		bool GetWindowSize(uint32_t windowHandle, uint32_t& width, uint32_t& height);
+		bool SetCursorMode(uint32_t windowHandle, uint32_t mode);
+        bool WindowClose(uint32_t windowHandle);
+		bool WindowPreRender(uint32_t& windowHandle, bool& exitRequested);
+		bool WindowPostRender(uint32_t& windowHandle);
+		void PollEvents(void);
+		bool RenderLoop(AngelScriptRunner* angelScriptRunner);
+		bool GetKeyPressed(uint32_t windowHandle, uint32_t key, uint32_t& pressed);
+		bool GetMouseButtonPressed(uint32_t windowHandle, uint32_t button, uint32_t& pressed);
+		bool GetMouseCursorPosition(uint32_t windowHandle, double& xPos, double& yPos);
+		bool SetMouseCursorPosition(uint32_t windowHandle, double xPos, double yPos);
+		bool GetClipboardString(std::string& value);
+		bool SetClipboardString(std::string value);
 
-		static std::vector<uint32_t> GetWindowHandles(void);
-		static bool GetAvailableMonitorCount(uint32_t& monitorCount);
-		static bool GetMonitorVideoMode(uint32_t monitorIndex, MonitorVideoMode& monitorVideoMode);
-		static bool GetMonitorVideoModes(uint32_t monitorIndex, std::vector<MonitorVideoMode>& monitorVideoModes);
-		static bool WindowCreateWithVideoMode(MonitorVideoMode monitorVideoMode, std::string title, uint32_t& windowHandle);
-		static bool WindowCreateWithSize(uint32_t width, uint32_t height, std::string title, uint32_t& windowHandle);
-		static bool GetWindowSize(uint32_t windowHandle, uint32_t& width, uint32_t& height);
-		static bool SetCursorMode(uint32_t windowHandle, uint32_t mode);
-        static bool WindowClose(uint32_t windowHandle);
-		static bool WindowPreRender(uint32_t& windowHandle, bool& exitRequested);
-		static bool WindowPostRender(uint32_t& windowHandle);
-		static void PollEvents(void);
-		static bool RenderLoop(void);
-		static bool GetKeyPressed(uint32_t windowHandle, uint32_t key, uint32_t& pressed);
-		static bool GetMouseButtonPressed(uint32_t windowHandle, uint32_t button, uint32_t& pressed);
-		static bool GetMouseCursorPosition(uint32_t windowHandle, double& xPos, double& yPos);
-		static bool SetMouseCursorPosition(uint32_t windowHandle, double xPos, double yPos);
-		static bool GetClipboardString(std::string& value);
-		static bool SetClipboardString(std::string value);
+	private:
+
+		RenderStateManager* m_renderStateManager;
+		IWindowHelper* m_windowHelper;
 	};
 }

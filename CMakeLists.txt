@@ -53,7 +53,6 @@ include_directories(${INCLUDE_DIRS})
 # Define source code files
 set(APP_SOURCE ${PROJECT_NAME})
 # Shared
-list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/JoystickManager.cpp")
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/AngelScriptRunner.cpp")
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/MathUtility.cpp")
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/MeshUtility.cpp")

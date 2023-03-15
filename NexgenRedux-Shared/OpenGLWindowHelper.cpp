@@ -34,7 +34,12 @@ namespace
 	std::map<uint32_t, OpenGLWindowHelper::WindowContainer> m_windowContainerMap;
 }
 
-void OpenGLWindowHelper::Close(void) 
+// OpenGLWindowHelper::OpenGLWindowHelper()
+// {
+
+// }
+
+void OpenGLWindowHelper::Close(void)
 {
     std::vector<uint32_t> windowHandles = GetWindowHandles();
     for (uint32_t i = 0; i < windowHandles.size(); i++)
@@ -57,7 +62,7 @@ bool OpenGLWindowHelper::GetAvailableMonitorCount(uint32_t& monitorCount)
 	return true;
 }
 
-bool OpenGLWindowHelper::GetMonitorVideoMode(uint32_t monitorIndex, WindowManager::MonitorVideoMode& monitorVideoMode)
+bool OpenGLWindowHelper::GetMonitorVideoMode(uint32_t monitorIndex, MonitorVideoMode& monitorVideoMode)
 {
 	if (Init() == false)
     {
@@ -82,7 +87,7 @@ bool OpenGLWindowHelper::GetMonitorVideoMode(uint32_t monitorIndex, WindowManage
     return true;
 }
 
-bool OpenGLWindowHelper::GetMonitorVideoModes(uint32_t monitorIndex, std::vector<WindowManager::MonitorVideoMode>& monitorVideoModes)
+bool OpenGLWindowHelper::GetMonitorVideoModes(uint32_t monitorIndex, std::vector<MonitorVideoMode>& monitorVideoModes)
 {
 	if (Init() == false)
     {
@@ -102,7 +107,7 @@ bool OpenGLWindowHelper::GetMonitorVideoModes(uint32_t monitorIndex, std::vector
     const GLFWvidmode* modes = glfwGetVideoModes(monitors[monitorIndex], &videoModesCount);
     for (uint32_t i = 0; i < videoModesCount; i++)
     {
-        WindowManager::MonitorVideoMode monitorVideoMode;
+        MonitorVideoMode monitorVideoMode;
         monitorVideoMode.monitorIndex = monitorIndex;
         monitorVideoMode.width = modes[i].width;
         monitorVideoMode.height = modes[i].height;
@@ -116,7 +121,7 @@ bool OpenGLWindowHelper::GetMonitorVideoModes(uint32_t monitorIndex, std::vector
     return true;
 }
 
-bool OpenGLWindowHelper::WindowCreateWithVideoMode(WindowManager::MonitorVideoMode monitorVideoMode, std::string title, uint32_t& windowHandle)
+bool OpenGLWindowHelper::WindowCreateWithVideoMode(MonitorVideoMode monitorVideoMode, std::string title, uint32_t& windowHandle)
 {
 	if (Init() == false)
     {
@@ -172,7 +177,7 @@ bool OpenGLWindowHelper::WindowCreateWithVideoMode(WindowManager::MonitorVideoMo
     m_windowContainerMap.insert(std::pair<uint32_t, WindowContainer>(windowContainerID, windowContainer));
     windowHandle = windowContainerID;
 
-	return OpenGLRenderingHelper::Init();
+	return Init();
 }
 
 bool OpenGLWindowHelper::WindowCreateWithSize(uint32_t width, uint32_t height, std::string title, uint32_t& windowHandle)
@@ -219,7 +224,7 @@ bool OpenGLWindowHelper::WindowCreateWithSize(uint32_t width, uint32_t height, s
     m_windowContainerMap.insert(std::pair<uint32_t, WindowContainer>(windowContainerID, windowContainer));
     windowHandle = windowContainerID;
 
-	return OpenGLRenderingHelper::Init();
+	return Init();
 }
 
 bool OpenGLWindowHelper::GetWindowSize(uint32_t windowHandle, uint32_t& width, uint32_t& height)
@@ -446,7 +451,7 @@ bool OpenGLWindowHelper::JoystickIsGamepad(uint32_t joystickID, uint32_t& gamepa
     return true;
 }
 
-bool OpenGLWindowHelper::GetJoystickButtonStates(uint32_t joystickID, JoystickManager::JoystickButtonStates& joystickButtonStates)
+bool OpenGLWindowHelper::GetJoystickButtonStates(uint32_t joystickID, JoystickButtonStates& joystickButtonStates)
 {
     if (Init() == false)
     {
@@ -477,7 +482,7 @@ bool OpenGLWindowHelper::GetJoystickButtonStates(uint32_t joystickID, JoystickMa
 	return true;
 }
 
-bool OpenGLWindowHelper::GetJoystickAxisStates(uint32_t joystickID, JoystickManager::JoystickAxisStates& joystickAxisStates)
+bool OpenGLWindowHelper::GetJoystickAxisStates(uint32_t joystickID, JoystickAxisStates& joystickAxisStates)
 {
     if (Init() == false)
     {

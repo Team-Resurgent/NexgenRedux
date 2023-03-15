@@ -3,7 +3,9 @@
 #pragma once
 
 #include "WindowManager.h"
-#include "JoystickManager.h"
+#include "IRenderingHelper.h"
+#include "IWindowHelper.h"
+#include "GlobalTypes.h"
 
 #include <Gensys/Int.h>
 
@@ -12,7 +14,7 @@
 
 namespace NexgenRedux
 {
-	class XboxOGWindowHelper
+	class XboxOGWindowHelper : public IWindowHelper
 	{		
 	public:
 
@@ -22,42 +24,46 @@ namespace NexgenRedux
 			uint32_t height;
 		} WindowContainer;
 
-		static void Close(void);
-		
-		static std::vector<uint32_t> GetWindowHandles(void);
-		static bool GetAvailableMonitorCount(uint32_t& monitorCount);
-		static bool GetMonitorVideoMode(uint32_t monitorIndex, WindowManager::MonitorVideoMode& monitorVideoMode);
-		static bool GetMonitorVideoModes(uint32_t monitorIndex, std::vector<WindowManager::MonitorVideoMode>& monitorVideoModes);
-		static bool WindowCreateWithVideoMode(WindowManager::MonitorVideoMode monitorVideoMode, uint32_t& windowHandle);
-		static bool WindowCreateWithSize(uint32_t width, uint32_t height, uint32_t& windowHandle);
-		static bool GetWindowSize(uint32_t windowHandle, uint32_t& width, uint32_t& height);
-		static bool SetCursorMode(uint32_t windowHandle, uint32_t mode);
-		static bool WindowPreRender(uint32_t& windowHandle, bool& exitRequested);
-		static bool WindowPostRender(uint32_t& windowHandle);
-		static void PollEvents(void);
-		static bool WindowClose(uint32_t windowHandle);
-		static bool GetKeyPressed(uint32_t windowHandle, uint32_t key, uint32_t& pressed);
-		static bool GetMouseButtonPressed(uint32_t windowHandle, uint32_t button, uint32_t& pressed);
-		static bool GetMouseCursorPosition(uint32_t windowHandle, double& xPos, double& yPos);
-		static bool SetMouseCursorPosition(uint32_t windowHandle, double xPos, double yPos);
-		static bool GetClipboardString(std::string& value);
-		static bool SetClipboardString(std::string value);
+		XboxOGWindowHelper();
+		~XboxOGWindowHelper();
 
-		static bool JoystickIsPresent(uint32_t joystickID, uint32_t& present);
-		static bool JoystickIsGamepad(uint32_t joystickID, uint32_t& gamepad);
-		static bool GetJoystickButtonStates(uint32_t joystickID, JoystickManager::JoystickButtonStates& joystickButtonStates);
-		static bool GetJoystickAxisStates(uint32_t joystickID, JoystickManager::JoystickAxisStates& joystickAxisStates);
-		static bool GetJoystickHatCount(uint32_t joystickID, uint32_t& count);
-		static bool GetJoystickHatDirection(uint32_t joystickID, uint32_t hatIndex, uint32_t& direction);
+		void Close(void);
+
+		std::vector<uint32_t> GetWindowHandles(void);
+		bool GetAvailableMonitorCount(uint32_t& monitorCount);
+		bool GetMonitorVideoMode(uint32_t monitorIndex, MonitorVideoMode& monitorVideoMode);
+		bool GetMonitorVideoModes(uint32_t monitorIndex, std::vector<MonitorVideoMode>& monitorVideoModes);
+		bool WindowCreateWithVideoMode(MonitorVideoMode monitorVideoMode, std::string title, uint32_t& windowHandle);
+		bool WindowCreateWithSize(uint32_t width, uint32_t height, std::string title, uint32_t& windowHandle);
+		bool GetWindowSize(uint32_t windowHandle, uint32_t& width, uint32_t& height);
+		bool WindowPreRender(uint32_t& windowHandle, bool& exitRequested);
+		bool WindowPostRender(uint32_t& windowHandle);
+		void PollEvents(void);
+		bool WindowClose(uint32_t windowHandle);
+		bool GetKeyPressed(uint32_t windowHandle, uint32_t key, uint32_t& pressed);
+		bool GetMouseButtonPressed(uint32_t windowHandle, uint32_t button, uint32_t& pressed);
+		bool GetMouseCursorPosition(uint32_t windowHandle, double& xPos, double& yPos);
+		bool SetMouseCursorPosition(uint32_t windowHandle, double xPos, double yPos);
+		bool GetClipboardString(std::string& value);
+		bool SetClipboardString(std::string value);
+
+		bool SetCursorMode(uint32_t windowHandle, uint32_t mode);
+		bool JoystickIsPresent(uint32_t joystickID, uint32_t& present);
+		bool JoystickIsGamepad(uint32_t joystickID, uint32_t& gamepad);
+		bool GetJoystickButtonStates(uint32_t joystickID, JoystickButtonStates& joystickButtonStates);
+		bool GetJoystickAxisStates(uint32_t joystickID, JoystickAxisStates& joystickAxisStates);
+		bool GetJoystickHatCount(uint32_t joystickID, uint32_t& count);
+		bool GetJoystickHatDirection(uint32_t joystickID, uint32_t hatIndex, uint32_t& direction);
+
 		static void* GetD3DDevice();
 
 	private:
-		static bool Init(void);
-		static bool InitKeyboard(void);
-		static bool InitMouse(void);
-		static void ProcessController();
-		static void ProcessKeyboard();
-		static void ProcessMouse();
+		bool Init(void);
+		bool InitKeyboard(void);
+		bool InitMouse(void);
+		void ProcessController();
+		void ProcessKeyboard();
+		void ProcessMouse();
 	};
 }
 

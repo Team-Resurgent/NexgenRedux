@@ -3,6 +3,7 @@
 #pragma once
 
 #include "MeshUtility.h"
+#include "IRenderingHelper.h"
 #include "RenderStateManager.h"
 
 #include <map>
@@ -10,7 +11,7 @@
 
 namespace NexgenRedux
 {
-	class OpenGLRenderingHelper
+	class OpenGLRenderingHelper : public IRenderingHelper
 	{		
 	public:
 
@@ -21,49 +22,52 @@ namespace NexgenRedux
 			uint32_t height;
 		} TextureContainer;
 
-		static void Close(void);
+		OpenGLRenderingHelper(RenderStateManager* renderStateManager);
+		~OpenGLRenderingHelper();
 
-		static bool Init();
-		static void SetShader(std::string shaderName);
-		static void SetModelMatrix(const MathUtility::Matrix4x4& matrix);
-		static void SetViewMatrix(const MathUtility::Matrix4x4& matrix);
-		static void SetProjectionMatrix(const MathUtility::Matrix4x4& matrix);
-		static void SetAmbientLight(const MathUtility::Color3I& color);
-		static void SetTexture(const uint32_t& textureID, const RenderStateManager::TextureFilter& filter);
-		static void SetTint(const MathUtility::Color4I& color);
-		static void SetBlend(const RenderStateManager::BlendOperation& operation);
-		static void SetBlendFactors(const RenderStateManager::BlendFactor& srcFactor, const RenderStateManager::BlendFactor& dstFactor);
-		static void SetCulling(const RenderStateManager::CullingOperation& operation);
-		static void SetDepth(const RenderStateManager::DepthOperation& operation);
-		static void SetLights(const RenderStateManager::LightsOperation& operation);
-		static void SetLight1(const RenderStateManager::LightOperation& operation);
-		static void SetLightInstance1(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse);
-		static void SetLight2(const RenderStateManager::LightOperation& operation);
-		static void SetLightInstance2(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse);
-		static void SetLight3(const RenderStateManager::LightOperation& operation);
-		static void SetLightInstance3(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse);
-		static void SetLight4(const RenderStateManager::LightOperation& operation);
-		static void SetLightInstance4(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse);
-		static void SetFog(const RenderStateManager::FogOperation& operation);
-		static void SetFogInstance(const MathUtility::Color3I& color, const float& start, const float& end, const float& density);
-		static void SetViewport(const MathUtility::RectI rect);
-		static void SetScissor(const RenderStateManager::ScissorOperation& operation, const MathUtility::RectI& rect);
+		bool Init() override;
+		void SetShader(std::string shaderName) override;
+		void SetModelMatrix(const MathUtility::Matrix4x4& matrix) override;
+		void SetViewMatrix(const MathUtility::Matrix4x4& matrix) override;
+		void SetProjectionMatrix(const MathUtility::Matrix4x4& matrix) override;
+		void SetAmbientLight(const MathUtility::Color3I& color) override;
+		void SetTexture(const uint32_t& textureID, const TextureFilter& filter) override;
+		void SetTint(const MathUtility::Color4I& color) override;
+		void SetBlend(const BlendOperation& operation) override;
+		void SetBlendFactors(const BlendFactor& srcFactor, const BlendFactor& dstFactor) override;
+		void SetCulling(const CullingOperation& operation) override;
+		void SetDepth(const DepthOperation& operation) override;
+		void SetLights(const LightsOperation& operation) override;
+		void SetLight1(const LightOperation& operation) override;
+		void SetLightInstance1(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse) override;
+		void SetLight2(const LightOperation& operation) override;
+		void SetLightInstance2(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse) override;
+		void SetLight3(const LightOperation& operation) override;
+		void SetLightInstance3(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse) override;
+		void SetLight4(const LightOperation& operation) override;
+		void SetLightInstance4(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse) override;
+		void SetFog(const FogOperation& operation) override;
+		void SetFogInstance(const MathUtility::Color3I& color, const float& start, const float& end, const float& density) override;
+		void SetViewport(const MathUtility::RectI rect) override;
+		void SetScissor(const ScissorOperation& operation, const MathUtility::RectI& rect) override;
 
-		static bool LoadTexture(std::wstring path, uint32_t& textureID);
-		static bool RenderMesh(uint32_t meshID);
+		bool LoadTexture(std::wstring path, uint32_t& textureID) override;
+		bool RenderMesh(uint32_t meshID) override;
 	private:
 
-		static void ResizeDynamicBufferIfNeeded(uint32_t requestedSize);
-		static void CreateDynamicBuffer();
-		static void DeleteDynamicBuffer();
+		RenderStateManager* m_renderStateManager;
 
-		static OpenGLRenderingHelper::TextureContainer* GetTextureContainer(uint32_t textureID);
-		static void DeleteTextures();
+		void ResizeDynamicBufferIfNeeded(uint32_t requestedSize);
+		void CreateDynamicBuffer();
+		void DeleteDynamicBuffer();
 
-		static void CreateShaderLookup(std::string shaderName);
-		static bool AddShaderLookupKeyValue(std::string shaderName, std::string key, uint32_t value);
-		static bool GetShaderLookupValue(std::string shaderName, std::string key, uint32_t& value);
-		static void DeleteShaders();
+		OpenGLRenderingHelper::TextureContainer* GetTextureContainer(uint32_t textureID);
+		void DeleteTextures();
+
+		void CreateShaderLookup(std::string shaderName);
+		bool AddShaderLookupKeyValue(std::string shaderName, std::string key, uint32_t value);
+		bool GetShaderLookupValue(std::string shaderName, std::string key, uint32_t& value);
+		void DeleteShaders();
 	};
 }
 

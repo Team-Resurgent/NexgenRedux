@@ -19,7 +19,13 @@ void __cdecl main(int, char **)
 {
 	//Gensys::Test::RunTests();
 
-    if (ConfigLoader::LoadConfig() == false) 
+    RenderStateManager *renderStateManager = new RenderStateManager();
+    WindowManager *windowManager = new WindowManager(renderStateManager);
+    AngelScriptRunner *angelScriptRunner = new AngelScriptRunner(windowManager);
+
+    //ECSManager::ECSManagerExample();
+
+	if (ConfigLoader::LoadConfig() == false) 
 	{
 		return;
 	}
@@ -34,12 +40,12 @@ void __cdecl main(int, char **)
         return;
     }
 
-    if (WindowManager::RenderLoop() == false)
+    if (windowManager->RenderLoop(angelScriptRunner) == false)
     {
         return;
     }
 
-	RenderStateManager::Close();
-    WindowManager::Close();
-    AngelScriptRunner::Close();
+    delete renderStateManager;
+    delete windowManager;
+    delete angelScriptRunner;
 }

@@ -32,7 +32,11 @@ int main(int argc, const char* argv[])
 {
 	//Gensys::Test::RunTests();
 
-    ECSManager::ECSManagerExample();
+    RenderStateManager *renderStateManager = new RenderStateManager();
+    WindowManager *windowManager = new WindowManager(renderStateManager);
+    AngelScriptRunner *angelScriptRunner = new AngelScriptRunner(windowManager);
+
+    //ECSManager::ECSManagerExample();
 
 	if (ConfigLoader::LoadConfig() == false) 
 	{
@@ -49,14 +53,14 @@ int main(int argc, const char* argv[])
         return 0;
     }
 
-    if (WindowManager::RenderLoop() == false)
+    if (windowManager->RenderLoop(angelScriptRunner) == false)
     {
         return 0;
     }
 
-    RenderStateManager::Close();
-    WindowManager::Close();
-    AngelScriptRunner::Close();
+    delete renderStateManager;
+    delete windowManager;
+    delete angelScriptRunner;
 
     return 0;
 }

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "RenderStateManager.h"
+#include "IRenderingHelper.h"
 
 #include <Gensys/Int.h>
 
@@ -11,7 +12,7 @@
 
 namespace NexgenRedux
 {
-	class XboxOGRenderingHelper
+	class XboxOGRenderingHelper : public IRenderingHelper
 	{		
 	public:
 
@@ -22,44 +23,47 @@ namespace NexgenRedux
 			uint32_t height;
 		} TextureContainer;
 
-		static void Close(void);
+		XboxOGRenderingHelper(RenderStateManager* renderStateManager);
+		~XboxOGRenderingHelper();
 
-		static bool Init();
-		static void SetShader(std::string shaderName);
-		static void SetModelMatrix(const MathUtility::Matrix4x4& matrix);
-		static void SetViewMatrix(const MathUtility::Matrix4x4& matrix);
-		static void SetProjectionMatrix(const MathUtility::Matrix4x4& matrix);
-		static void SetAmbientLight(const MathUtility::Color3I& color);
-		static void SetTexture(const uint32_t& textureID, const RenderStateManager::TextureFilter& filter);
-		static void SetTint(const MathUtility::Color4I& color);
-		static void SetBlend(const RenderStateManager::BlendOperation& operation);
-		static void SetBlendFactors(const RenderStateManager::BlendFactor& srcFactor, const RenderStateManager::BlendFactor& dstFactor);
-		static void SetCulling(const RenderStateManager::CullingOperation& operation);
-		static void SetDepth(const RenderStateManager::DepthOperation& operation);
-		static void SetLights(const RenderStateManager::LightsOperation& operation);
-		static void SetLight1(const RenderStateManager::LightOperation& operation);
-		static void SetLightInstance1(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse);
-		static void SetLight2(const RenderStateManager::LightOperation& operation);
-		static void SetLightInstance2(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse);
-		static void SetLight3(const RenderStateManager::LightOperation& operation);
-		static void SetLightInstance3(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse);
-		static void SetLight4(const RenderStateManager::LightOperation& operation);
-		static void SetLightInstance4(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse);
-		static void SetFog(const RenderStateManager::FogOperation& operation);
-		static void SetFogInstance(const MathUtility::Color3I& color, const float& start, const float& end, const float& density);
-		static void SetViewport(const MathUtility::RectI rect);
-		static void SetScissor(const RenderStateManager::ScissorOperation& operation, const MathUtility::RectI& rect);
+		bool Init();
+		void SetShader(std::string shaderName);
+		void SetModelMatrix(const MathUtility::Matrix4x4& matrix);
+		void SetViewMatrix(const MathUtility::Matrix4x4& matrix);
+		void SetProjectionMatrix(const MathUtility::Matrix4x4& matrix);
+		void SetAmbientLight(const MathUtility::Color3I& color);
+		void SetTexture(const uint32_t& textureID, const TextureFilter& filter);
+		void SetTint(const MathUtility::Color4I& color);
+		void SetBlend(const BlendOperation& operation);
+		void SetBlendFactors(const BlendFactor& srcFactor, const BlendFactor& dstFactor);
+		void SetCulling(const CullingOperation& operation);
+		void SetDepth(const DepthOperation& operation);
+		void SetLights(const LightsOperation& operation);
+		void SetLight1(const LightOperation& operation);
+		void SetLightInstance1(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse);
+		void SetLight2(const LightOperation& operation);
+		void SetLightInstance2(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse);
+		void SetLight3(const LightOperation& operation);
+		void SetLightInstance3(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse);
+		void SetLight4(const LightOperation& operation);
+		void SetLightInstance4(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse);
+		void SetFog(const FogOperation& operation);
+		void SetFogInstance(const MathUtility::Color3I& color, const float& start, const float& end, const float& density);
+		void SetViewport(const MathUtility::RectI rect);
+		void SetScissor(const ScissorOperation& operation, const MathUtility::RectI& rect);
 
-		static bool LoadTexture(std::wstring path, uint32_t& textureID);
-		static bool RenderMesh(uint32_t meshID);
+		bool LoadTexture(std::wstring path, uint32_t& textureID);
+		bool RenderMesh(uint32_t meshID);
 	private:
 
-		static void ResizeDynamicBufferIfNeeded(uint32_t requestedSize);
-		static void CreateDynamicBuffer();
-		static void DeleteDynamicBuffer();
+		RenderStateManager* m_renderStateManager;
 
-		static XboxOGRenderingHelper::TextureContainer* GetTextureContainer(uint32_t textureID);
-		static void DeleteTextures();
+		void ResizeDynamicBufferIfNeeded(uint32_t requestedSize);
+		void CreateDynamicBuffer();
+		void DeleteDynamicBuffer();
+
+		XboxOGRenderingHelper::TextureContainer* GetTextureContainer(uint32_t textureID);
+		void DeleteTextures();
 	};
 }
 

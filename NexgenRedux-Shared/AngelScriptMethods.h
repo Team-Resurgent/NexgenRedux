@@ -6,9 +6,13 @@ using namespace AngelScript;
 
 namespace NexgenRedux
 {
+	class WindowManager;
 	class AngelScriptMethods
 	{
 	public:
+
+		AngelScriptMethods(WindowManager* windowManager);
+
 		static void DebugPrint(asIScriptGeneric* gen);
 		static void DebugPrintIf(asIScriptGeneric* gen);
 

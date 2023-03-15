@@ -175,16 +175,19 @@
 				RelativePath="..\NexgenRedux-Shared\ECSManager.h">
 			</File>
 			<File
+				RelativePath="..\NexgenRedux-Shared\GlobalTypes.h">
+			</File>
+			<File
 				RelativePath="..\NexgenRedux-Shared\Icon.cpp">
 			</File>
 			<File
 				RelativePath="..\NexgenRedux-Shared\Icon.h">
 			</File>
 			<File
-				RelativePath="..\NexgenRedux-Shared\JoystickManager.cpp">
+				RelativePath="..\NexgenRedux-Shared\IRenderingHelper.h">
 			</File>
 			<File
-				RelativePath="..\NexgenRedux-Shared\JoystickManager.h">
+				RelativePath="..\NexgenRedux-Shared\IWindowHelper.h">
 			</File>
 			<File
 				RelativePath="..\NexgenRedux-Shared\MathUtility.cpp">

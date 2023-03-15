@@ -4,6 +4,7 @@
 #include "XboxOGRenderingHelper.h"
 #include "AngelScriptRunner.h"
 #include "WindowManager.h"
+#include "IWindowHelper.h"
 #include "MeshUtility.h"
 #include "MathUtility.h"
 #include "Constants.h"
@@ -59,6 +60,14 @@ namespace
 	uint32_t m_lastMousePacket[XGetPortCount() * 2];
 }
 
+XboxOGWindowHelper::XboxOGWindowHelper()
+{
+}
+
+XboxOGWindowHelper::~XboxOGWindowHelper()
+{
+}
+
 void XboxOGWindowHelper::Close(void) 
 {
     std::vector<uint32_t> windowHandles = GetWindowHandles();
@@ -82,7 +91,7 @@ bool XboxOGWindowHelper::GetAvailableMonitorCount(uint32_t& monitorCount)
 	return true;
 }
 
-bool XboxOGWindowHelper::GetMonitorVideoMode(uint32_t monitorIndex, WindowManager::MonitorVideoMode& monitorVideoMode)
+bool XboxOGWindowHelper::GetMonitorVideoMode(uint32_t monitorIndex, MonitorVideoMode& monitorVideoMode)
 {
 	uint32_t videoModesCount = IDirect3D8::GetAdapterModeCount(D3DADAPTER_DEFAULT);
 	for (uint32_t i = 0; i < videoModesCount; i++ )
@@ -130,14 +139,14 @@ bool XboxOGWindowHelper::GetMonitorVideoMode(uint32_t monitorIndex, WindowManage
 	return false;
 }
 
-bool XboxOGWindowHelper::GetMonitorVideoModes(uint32_t monitorIndex, std::vector<WindowManager::MonitorVideoMode>& monitorVideoModes)
+bool XboxOGWindowHelper::GetMonitorVideoModes(uint32_t monitorIndex, std::vector<MonitorVideoMode>& monitorVideoModes)
 {
 	uint32_t videoModesCount = IDirect3D8::GetAdapterModeCount(D3DADAPTER_DEFAULT);
 	for (uint32_t i = 0; i < videoModesCount; i++ )
 	{
 		D3DDISPLAYMODE displayMode;
 		IDirect3D8::EnumAdapterModes(D3DADAPTER_DEFAULT, i, &displayMode);
-		WindowManager::MonitorVideoMode monitorVideoMode;
+		MonitorVideoMode monitorVideoMode;
 		if ((displayMode.Flags & D3DPRESENTFLAG_10X11PIXELASPECTRATIO) == D3DPRESENTFLAG_10X11PIXELASPECTRATIO)
 		{
 			continue;
@@ -175,7 +184,7 @@ bool XboxOGWindowHelper::GetMonitorVideoModes(uint32_t monitorIndex, std::vector
 		bool found = false;
 		for (uint32_t i = 0; i < (uint32_t)monitorVideoModes.size(); i++)
 		{
-			WindowManager::MonitorVideoMode* currentMonitorVideoMode = &monitorVideoModes.at(i);
+			MonitorVideoMode* currentMonitorVideoMode = &monitorVideoModes.at(i);
 			if (currentMonitorVideoMode->redBits == monitorVideoMode.redBits &&
 				currentMonitorVideoMode->greenBits == monitorVideoMode.greenBits &&
 				currentMonitorVideoMode->blueBits == monitorVideoMode.blueBits &&
@@ -198,7 +207,7 @@ bool XboxOGWindowHelper::GetMonitorVideoModes(uint32_t monitorIndex, std::vector
 	return true;
 }
 
-bool XboxOGWindowHelper::WindowCreateWithVideoMode(WindowManager::MonitorVideoMode monitorVideoMode, uint32_t& windowHandle)
+bool XboxOGWindowHelper::WindowCreateWithVideoMode(MonitorVideoMode monitorVideoMode, std::string title, uint32_t& windowHandle)
 {
 	if (m_windowContainerMap.size() > 0)
 	{
@@ -295,10 +304,10 @@ bool XboxOGWindowHelper::WindowCreateWithVideoMode(WindowManager::MonitorVideoMo
     m_windowContainerMap.insert(std::pair<uint32_t, WindowContainer>(windowContainerID, windowContainer));
     windowHandle = windowContainerID;
 
-	return XboxOGRenderingHelper::Init();
+	return true;
 }
 
-bool XboxOGWindowHelper::WindowCreateWithSize(uint32_t width, uint32_t height, uint32_t& windowHandle)
+bool XboxOGWindowHelper::WindowCreateWithSize(uint32_t width, uint32_t height, std::string title, uint32_t& windowHandle)
 {
 	if (m_windowContainerMap.size() > 0)
 	{
@@ -375,7 +384,7 @@ bool XboxOGWindowHelper::WindowCreateWithSize(uint32_t width, uint32_t height, u
     m_windowContainerMap.insert(std::pair<uint32_t, WindowContainer>(windowContainerID, windowContainer));
     windowHandle = windowContainerID;
 
-	return XboxOGRenderingHelper::Init();
+	return true;
 }
 
 bool XboxOGWindowHelper::GetWindowSize(uint32_t windowHandle, uint32_t& width, uint32_t& height)
@@ -541,7 +550,7 @@ bool XboxOGWindowHelper::JoystickIsGamepad(uint32_t joystickID, uint32_t& gamepa
 	return true;
 }
 
-bool XboxOGWindowHelper::GetJoystickButtonStates(uint32_t joystickID, JoystickManager::JoystickButtonStates& joystickButtonStates)
+bool XboxOGWindowHelper::GetJoystickButtonStates(uint32_t joystickID, JoystickButtonStates& joystickButtonStates)
 {
     if (Init() == false)
     {
@@ -582,7 +591,7 @@ bool XboxOGWindowHelper::GetJoystickButtonStates(uint32_t joystickID, JoystickMa
 	return true;
 }
 
-bool XboxOGWindowHelper::GetJoystickAxisStates(uint32_t joystickID, JoystickManager::JoystickAxisStates& joystickAxisStates)
+bool XboxOGWindowHelper::GetJoystickAxisStates(uint32_t joystickID, JoystickAxisStates& joystickAxisStates)
 {
     if (Init() == false)
     {
@@ -989,7 +998,7 @@ void XboxOGWindowHelper::ProcessMouse()
 {
 	uint32_t windowWidth;
 	uint32_t windowHeight;
-	if (WindowManager::GetWindowSize(0, windowWidth, windowHeight) == false)
+	if (GetWindowSize(0, windowWidth, windowHeight) == false)
 	{
 		return;
 	}

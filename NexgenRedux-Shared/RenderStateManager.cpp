@@ -1,25 +1,25 @@
 #include "RenderStateManager.h"
 #include "OpenGLRenderingHelper.h"
 #include "XboxOGRenderingHelper.h"
+#include "IRenderingHelper.h"
 
 #include <string>
 
 using namespace NexgenRedux;
 
-namespace 
+RenderStateManager::RenderStateManager()
 {
-    bool m_initialized = false;
-    RenderStateManager::RenderState m_renderState;
+    m_initialized = false;
+ #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
+	m_renderingHelper = new OpenGLRenderingHelper(this);
+#else
+	m_renderingHelper = new XboxOGRenderingHelper(this);
+#endif
 }
 
-void RenderStateManager::Close(void)
+RenderStateManager::~RenderStateManager()
 {
-#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	OpenGLRenderingHelper::Close();
-#elif defined NEXGEN_OG
-	XboxOGRenderingHelper::Close();
-#elif defined NEXGEN_360
-#endif
+    delete m_renderingHelper;
 }
 
 void RenderStateManager::Init(void)
@@ -48,9 +48,11 @@ void RenderStateManager::Init(void)
     SetViewport(MathUtility::RectI(0, 0, 640, 480));
     SetScissor(ScissorOperationDisabled, MathUtility::RectI());
     SetDrawMode(DrawModeTriangles);
+
+    m_renderingHelper->Init();
 }
 
-RenderStateManager::RenderState* RenderStateManager::GetRenderState(void)
+RenderState* RenderStateManager::GetRenderState(void)
 {
     return &m_renderState;
 }
@@ -162,28 +164,12 @@ bool RenderStateManager::CanBatch(void)
 
 bool RenderStateManager::LoadTexture(std::wstring path, uint32_t& textureID)
 {
-#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	return OpenGLRenderingHelper::LoadTexture(path, textureID);
-#elif defined NEXGEN_OG
-	return XboxOGRenderingHelper::LoadTexture(path, textureID);
-#elif defined NEXGEN_360
-	return true;
-#else
-	return false;
-#endif
+    return m_renderingHelper->LoadTexture(path, textureID);
 }
 
 bool RenderStateManager::RenderMesh(uint32_t meshID)
 {
-#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	return OpenGLRenderingHelper::RenderMesh(meshID);
-#elif defined NEXGEN_OG
-	return XboxOGRenderingHelper::RenderMesh(meshID);
-#elif defined NEXGEN_360
-	return true;
-#else
-	return false;
-#endif
+	return m_renderingHelper->RenderMesh(meshID);
 }
 
 void RenderStateManager::SetShader(const std::string& shader)
@@ -535,242 +521,122 @@ void RenderStateManager::ApplyChanges(void)
 {
     if (m_renderState.shaderState.isDirty)
     {
-#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	    OpenGLRenderingHelper::SetShader(m_renderState.shaderState.shader);
-#elif defined NEXGEN_OG
-	    XboxOGRenderingHelper::SetShader(m_renderState.shaderState.shader);
-#elif defined NEXGEN_360
-#endif
+        m_renderingHelper->SetShader(m_renderState.shaderState.shader);
         m_renderState.shaderState.isDirty = false;
     }
     if (m_renderState.modelMatrixState.isDirty)
     {
-#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	    OpenGLRenderingHelper::SetModelMatrix(m_renderState.modelMatrixState.matrix);
-#elif defined NEXGEN_OG
-	    XboxOGRenderingHelper::SetModelMatrix(m_renderState.modelMatrixState.matrix);
-#elif defined NEXGEN_360
-#endif
+	    m_renderingHelper->SetModelMatrix(m_renderState.modelMatrixState.matrix);
         m_renderState.modelMatrixState.isDirty = false;
     }
     if (m_renderState.viewMatrixState.isDirty)
     {
-#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	    OpenGLRenderingHelper::SetViewMatrix(m_renderState.viewMatrixState.matrix);
-#elif defined NEXGEN_OG
-	    XboxOGRenderingHelper::SetViewMatrix(m_renderState.viewMatrixState.matrix);
-#elif defined NEXGEN_360
-#endif
+	    m_renderingHelper->SetViewMatrix(m_renderState.viewMatrixState.matrix);
         m_renderState.viewMatrixState.isDirty = false;
     }
     if (m_renderState.projectionMatrixState.isDirty)
     {
-#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	    OpenGLRenderingHelper::SetProjectionMatrix(m_renderState.projectionMatrixState.matrix);
-#elif defined NEXGEN_OG
-	    XboxOGRenderingHelper::SetProjectionMatrix(m_renderState.projectionMatrixState.matrix);
-#elif defined NEXGEN_360
-#endif
+        m_renderingHelper->SetProjectionMatrix(m_renderState.projectionMatrixState.matrix);
         m_renderState.projectionMatrixState.isDirty = false;
     }
     if (m_renderState.ambientLightState.isDirty)
     {
-#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	    OpenGLRenderingHelper::SetAmbientLight(m_renderState.ambientLightState.color);
-#elif defined NEXGEN_OG
-	    XboxOGRenderingHelper::SetAmbientLight(m_renderState.ambientLightState.color);
-#elif defined NEXGEN_360
-#endif
+	    m_renderingHelper->SetAmbientLight(m_renderState.ambientLightState.color);
         m_renderState.ambientLightState.isDirty = false;
     }
     if (m_renderState.textureState.isDirty)
     {
-#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	    OpenGLRenderingHelper::SetTexture(m_renderState.textureState.textureId, m_renderState.textureState.filter);
-#elif defined NEXGEN_OG
-	    XboxOGRenderingHelper::SetTexture(m_renderState.textureState.textureId, m_renderState.textureState.filter);
-#elif defined NEXGEN_360
-#endif
+	    m_renderingHelper->SetTexture(m_renderState.textureState.textureId, m_renderState.textureState.filter);
         m_renderState.textureState.isDirty = false;
     }
     if (m_renderState.tintState.isDirty)
     {
-#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	    OpenGLRenderingHelper::SetTint(m_renderState.tintState.color);
-#elif defined NEXGEN_OG
-	    XboxOGRenderingHelper::SetTint(m_renderState.tintState.color);
-#elif defined NEXGEN_360
-#endif
+	    m_renderingHelper->SetTint(m_renderState.tintState.color);
         m_renderState.tintState.isDirty = false;
     }
     if (m_renderState.blendState.isDirty)
     {
-#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	    OpenGLRenderingHelper::SetBlend(m_renderState.blendState.operation);
-#elif defined NEXGEN_OG
-	    XboxOGRenderingHelper::SetBlend(m_renderState.blendState.operation);
-#elif defined NEXGEN_360
-#endif
+	    m_renderingHelper->SetBlend(m_renderState.blendState.operation);
         m_renderState.blendState.isDirty = false;
     }
     if (m_renderState.blendFactorsState.isDirty)
     {
-#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	    OpenGLRenderingHelper::SetBlendFactors(m_renderState.blendFactorsState.srcFactor, m_renderState.blendFactorsState.dstFactor);
-#elif defined NEXGEN_OG
-	    XboxOGRenderingHelper::SetBlendFactors(m_renderState.blendFactorsState.srcFactor, m_renderState.blendFactorsState.dstFactor);
-#elif defined NEXGEN_360
-#endif
+	    m_renderingHelper->SetBlendFactors(m_renderState.blendFactorsState.srcFactor, m_renderState.blendFactorsState.dstFactor);
         m_renderState.blendFactorsState.isDirty = false;
     }
     if (m_renderState.cullingState.isDirty)
     {
-#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	    OpenGLRenderingHelper::SetCulling(m_renderState.cullingState.operation);
-#elif defined NEXGEN_OG
-	    XboxOGRenderingHelper::SetCulling(m_renderState.cullingState.operation);
-#elif defined NEXGEN_360
-#endif
+	    m_renderingHelper->SetCulling(m_renderState.cullingState.operation);
         m_renderState.cullingState.isDirty = false;
     }
     if (m_renderState.depthState.isDirty)
     {
-#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	    OpenGLRenderingHelper::SetDepth(m_renderState.depthState.operation);
-#elif defined NEXGEN_OG
-	    XboxOGRenderingHelper::SetDepth(m_renderState.depthState.operation);
-#elif defined NEXGEN_360
-#endif
+	    m_renderingHelper->SetDepth(m_renderState.depthState.operation);
         m_renderState.depthState.isDirty = false;
     }
     if (m_renderState.lightsState.isDirty)
     {
-#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	    OpenGLRenderingHelper::SetLights(m_renderState.lightsState.operation);
-#elif defined NEXGEN_OG
-	    XboxOGRenderingHelper::SetLights(m_renderState.lightsState.operation);
-#elif defined NEXGEN_360
-#endif
+	    m_renderingHelper->SetLights(m_renderState.lightsState.operation);
         m_renderState.lightsState.isDirty = false;
     }
     if (m_renderState.lightState1.isDirty)
     {
-#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	    OpenGLRenderingHelper::SetLight1(m_renderState.lightState1.operation);
-#elif defined NEXGEN_OG
-	    XboxOGRenderingHelper::SetLight1(m_renderState.lightState1.operation);
-#elif defined NEXGEN_360
-#endif
+        m_renderingHelper->SetLight1(m_renderState.lightState1.operation);
         m_renderState.lightState1.isDirty = false;
     }
     if (m_renderState.lightInstanceState1.isDirty)
     {
-#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	    OpenGLRenderingHelper::SetLightInstance1(m_renderState.lightInstanceState1.position, m_renderState.lightInstanceState1.distance, m_renderState.lightInstanceState1.diffuse);
-#elif defined NEXGEN_OG
-	    XboxOGRenderingHelper::SetLightInstance1(m_renderState.lightInstanceState1.position, m_renderState.lightInstanceState1.distance, m_renderState.lightInstanceState1.diffuse);
-#elif defined NEXGEN_360
-#endif
+	    m_renderingHelper->SetLightInstance1(m_renderState.lightInstanceState1.position, m_renderState.lightInstanceState1.distance, m_renderState.lightInstanceState1.diffuse);
         m_renderState.lightInstanceState1.isDirty = false;
     }
     if (m_renderState.lightState2.isDirty)
     {
-#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	    OpenGLRenderingHelper::SetLight2(m_renderState.lightState2.operation);
-#elif defined NEXGEN_OG
-	    XboxOGRenderingHelper::SetLight2(m_renderState.lightState2.operation);
-#elif defined NEXGEN_360
-#endif
+        m_renderingHelper->SetLight2(m_renderState.lightState2.operation);
         m_renderState.lightState2.isDirty = false;
     }
     if (m_renderState.lightInstanceState2.isDirty)
     {
-#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	    OpenGLRenderingHelper::SetLightInstance2(m_renderState.lightInstanceState2.position, m_renderState.lightInstanceState2.distance, m_renderState.lightInstanceState2.diffuse);
-#elif defined NEXGEN_OG
-	    XboxOGRenderingHelper::SetLightInstance2(m_renderState.lightInstanceState2.position, m_renderState.lightInstanceState2.distance, m_renderState.lightInstanceState2.diffuse);
-#elif defined NEXGEN_360
-#endif
+        m_renderingHelper->SetLightInstance2(m_renderState.lightInstanceState2.position, m_renderState.lightInstanceState2.distance, m_renderState.lightInstanceState2.diffuse);
         m_renderState.lightInstanceState2.isDirty = false;
     }
     if (m_renderState.lightState3.isDirty)
     {
-#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	    OpenGLRenderingHelper::SetLight3(m_renderState.lightState3.operation);
-#elif defined NEXGEN_OG
-	    XboxOGRenderingHelper::SetLight3(m_renderState.lightState3.operation);
-#elif defined NEXGEN_360
-#endif
+	    m_renderingHelper->SetLight3(m_renderState.lightState3.operation);
         m_renderState.lightState3.isDirty = false;
     }
     if (m_renderState.lightInstanceState3.isDirty)
     {
-#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	    OpenGLRenderingHelper::SetLightInstance3(m_renderState.lightInstanceState3.position, m_renderState.lightInstanceState3.distance, m_renderState.lightInstanceState3.diffuse);
-#elif defined NEXGEN_OG
-	    XboxOGRenderingHelper::SetLightInstance3(m_renderState.lightInstanceState3.position, m_renderState.lightInstanceState3.distance, m_renderState.lightInstanceState3.diffuse);
-#elif defined NEXGEN_360
-#endif
+	    m_renderingHelper->SetLightInstance3(m_renderState.lightInstanceState3.position, m_renderState.lightInstanceState3.distance, m_renderState.lightInstanceState3.diffuse);
         m_renderState.lightInstanceState3.isDirty = false;
     }
     if (m_renderState.lightState4.isDirty)
     {
-#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	    OpenGLRenderingHelper::SetLight4(m_renderState.lightState4.operation);
-#elif defined NEXGEN_OG
-	    XboxOGRenderingHelper::SetLight4(m_renderState.lightState4.operation);
-#elif defined NEXGEN_360
-#endif
+	    m_renderingHelper->SetLight4(m_renderState.lightState4.operation);
         m_renderState.lightState4.isDirty = false;
     }
     if (m_renderState.lightInstanceState4.isDirty)
     {
-#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	    OpenGLRenderingHelper::SetLightInstance4(m_renderState.lightInstanceState4.position, m_renderState.lightInstanceState4.distance, m_renderState.lightInstanceState4.diffuse);
-#elif defined NEXGEN_OG
-	    XboxOGRenderingHelper::SetLightInstance4(m_renderState.lightInstanceState4.position, m_renderState.lightInstanceState4.distance, m_renderState.lightInstanceState4.diffuse);
-#elif defined NEXGEN_360
-#endif
+	    m_renderingHelper->SetLightInstance4(m_renderState.lightInstanceState4.position, m_renderState.lightInstanceState4.distance, m_renderState.lightInstanceState4.diffuse);
         m_renderState.lightInstanceState4.isDirty = false;
     }
     if (m_renderState.fogState.isDirty)
     {
-#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	OpenGLRenderingHelper::SetFog(m_renderState.fogState.operation);
-#elif defined NEXGEN_OG
-	XboxOGRenderingHelper::SetFog(m_renderState.fogState.operation);
-#elif defined NEXGEN_360
-#endif
+	    m_renderingHelper->SetFog(m_renderState.fogState.operation);
         m_renderState.fogState.isDirty = false;
     }
     if (m_renderState.fogInstanceState.isDirty)
     {
-#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	    OpenGLRenderingHelper::SetFogInstance(m_renderState.fogInstanceState.color, m_renderState.fogInstanceState.start, m_renderState.fogInstanceState.end, m_renderState.fogInstanceState.density);
-#elif defined NEXGEN_OG
-	    XboxOGRenderingHelper::SetFogInstance(m_renderState.fogInstanceState.color, m_renderState.fogInstanceState.start, m_renderState.fogInstanceState.end, m_renderState.fogInstanceState.density);
-#elif defined NEXGEN_360
-#endif
+	    m_renderingHelper->SetFogInstance(m_renderState.fogInstanceState.color, m_renderState.fogInstanceState.start, m_renderState.fogInstanceState.end, m_renderState.fogInstanceState.density);
         m_renderState.fogInstanceState.isDirty = false;
     }
     if (m_renderState.viewportState.isDirty)
     {
-#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	    OpenGLRenderingHelper::SetViewport(m_renderState.viewportState.rect);
-#elif defined NEXGEN_OG
-	    XboxOGRenderingHelper::SetViewport(m_renderState.viewportState.rect);
-#elif defined NEXGEN_360
-#endif
+	    m_renderingHelper->SetViewport(m_renderState.viewportState.rect);
         m_renderState.viewportState.isDirty = false;
     }
     if (m_renderState.scissorState.isDirty)
     {
-#if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	    OpenGLRenderingHelper::SetScissor(m_renderState.scissorState.operation, m_renderState.scissorState.rect);
-#elif defined NEXGEN_OG
-	    XboxOGRenderingHelper::SetScissor(m_renderState.scissorState.operation, m_renderState.scissorState.rect);
-#elif defined NEXGEN_360
-#endif
+	    m_renderingHelper->SetScissor(m_renderState.scissorState.operation, m_renderState.scissorState.rect);
         m_renderState.scissorState.isDirty = false;
     }
     if (m_renderState.drawModeState.isDirty)

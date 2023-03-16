@@ -36,7 +36,7 @@ int main(int argc, const char* argv[])
     RenderStateManager *renderStateManager = new RenderStateManager(windowManager->GetWindowHelper());
     AngelScriptRunner *angelScriptRunner = new AngelScriptRunner(windowManager);
 
-    //ECSManager::ECSManagerExample();
+    ECSManager::ECSManagerExample();
 
 	if (ConfigLoader::LoadConfig() == false) 
 	{

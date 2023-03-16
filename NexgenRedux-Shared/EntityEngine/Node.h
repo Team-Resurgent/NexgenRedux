@@ -1,12 +1,23 @@
 #pragma once
 
 #include <vector>
+#include <string>
 
 class Node 
 {
 public:
-//     Node(int id);
+    Node(std::string tag);
+    Node(uint32_t parentID, std::string tag);
+    ~Node(void);
+    
+    const std::string& GetTag();
+    void MarkForDelete();
+    bool MarkedForDelete();
+    uint32_t GetParentID();
 
+    void AddChildNode(uint32_t nodeID);
+    const std::vector<uint32_t>& GetChildNodes();
+    void DeleteChild(uint32_t nodeID);
 //     virtual void Update(float dt);
 //     virtual void Draw();
 
@@ -36,4 +47,9 @@ public:
 //     float m_rotation;
 //     float m_scaleX;
 //     float m_scaleY;
+    private:
+        std::string m_nodeTag;
+        uint32_t m_parentID;
+        std::vector<uint32_t> m_childNodes;
+        bool m_deleteFlag;
 };

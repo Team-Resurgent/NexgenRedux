@@ -1,3 +1,69 @@
+#include "Node.h"
+
+#include <Gensys/DebugUtility.h>
+
+#include <string>
+
+using namespace Gensys;
+
+Node::Node(std::string nodeTag)
+{
+    m_parentID = 0;
+    m_nodeTag = nodeTag;
+    m_deleteFlag = false;
+}
+
+Node::Node(uint32_t parentID, std::string nodeTag)
+{
+    m_parentID = parentID;
+    m_nodeTag = nodeTag;
+    m_deleteFlag = false;
+}
+
+Node::~Node(void)
+{
+    DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, "Deleting node '%s'", m_nodeTag.c_str());
+}
+
+const std::string& Node::GetTag()
+{
+    return m_nodeTag;
+}
+
+void Node::MarkForDelete()
+{
+    m_deleteFlag = true;
+}
+
+bool Node::MarkedForDelete()
+{
+    return m_deleteFlag;
+}
+
+uint32_t Node::GetParentID()
+{
+    return m_parentID;
+}
+
+void Node::AddChildNode(uint32_t nodeID)
+{
+    m_childNodes.push_back(nodeID);
+}
+
+const std::vector<uint32_t>& Node::GetChildNodes()
+{
+    return m_childNodes;
+}
+
+void Node::DeleteChild(uint32_t nodeID)
+{
+    std::vector<uint32_t>::iterator it = std::find(m_childNodes.begin(), m_childNodes.end(), nodeID);
+    if (it != m_childNodes.end())
+    {
+        m_childNodes.erase(it);
+    }
+}
+
 // Node::Node(int id) {
 //     m_id = id;
 //     m_parentId = -1;

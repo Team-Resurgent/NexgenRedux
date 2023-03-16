@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Node.h"
+#include "NodeManager.h"
 
 #include <Gensys/Int.h>
 
@@ -10,16 +11,20 @@
 class Scene
 {
 public:
-    Scene(void);
+    Scene(std::string sceneTag);
     ~Scene(void);
 
-    uint32_t AddNode(Node* node);
-    void RemoveNode(uint32_t nodeID);
-    void Update(float dt);
-    void Render();
+    void MarkForDelete();
+    bool MarkedForDelete();
+
+    void AddNode(uint32_t nodeID);
+    void DeleteNode(uint32_t nodeID);
+    const std::vector<uint32_t>& GetNodes();
+    void Update(NodeManager *nodeManager, float dt);
+    void Render(NodeManager *nodeManager);
 private:
-    uint32_t m_maxNodeID;
-    std::vector<uint32_t> m_nodeOrder;
-    std::map<uint32_t, Node*> m_nodeMap;
+    std::vector<uint32_t> m_nodes;
+    std::string m_sceneTag;
+    bool m_deleteFlag;
 };
 

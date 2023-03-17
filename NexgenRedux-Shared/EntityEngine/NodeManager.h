@@ -1,35 +1,42 @@
 #pragma once
 
+#include "SceneManager.h"
 #include "Node.h"
 
 #include <Gensys/Int.h>
 
-#include <string>
 #include <map>
+
+class SceneManager;
 
 class NodeManager 
 {
 public:
 
-    NodeManager(void);
+    NodeManager(SceneManager* sceneManager);
     ~NodeManager(void);
 
-    const std::string* GetNodeTag(uint32_t nodeID);
-    void MarkForDelete(uint32_t nodeID);
-    uint32_t CreateNode(std::string nodeTag);
-    uint32_t CreateChildNode(uint32_t parentNodeID, std::string nodeTag);
+    uint32_t CreateSceneNode(uint32_t sceneID);
+    uint32_t CreateNode(uint32_t parentNodeID);
+    void DeleteNode(uint32_t nodeID);    
 
+    void PurgeNodes();
     void CheckForOrphans();
+
+    void Update(uint32_t nodeID, float dt);
+    void Render(uint32_t nodeID);
 
 private:
 
     friend class SceneManager;
-
     Node* GetNode(uint32_t nodeID);
-    void CleanNodes();
 
 private:
 
+    void MarkForDelete(uint32_t nodeID);
+
+private:
+    SceneManager* m_sceneManager;
     uint32_t m_maxNodeID;
     std::map<uint32_t, Node*> m_nodeMap;
 };

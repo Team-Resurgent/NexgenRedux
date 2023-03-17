@@ -1,7 +1,6 @@
 #include "ECSManager.h"
 #include "EntityEngine/SceneManager.h"
 #include "EntityEngine/NodeManager.h"
-#include "EntityEngine/Scene.h"
 
 #include <Gensys/DebugUtility.h>
 
@@ -38,26 +37,27 @@ void ECSManager::ECSManagerExample(void)
 	// // Clean up systems
 	// delete renderSystem;
 
-    NodeManager* nodeManager = new NodeManager();
-    SceneManager* sceneManager = new SceneManager(nodeManager);
-    uint32_t sceneID = sceneManager->CreateScene("myscene", true);
-    uint32_t nodeID1 = sceneManager->CreateSceneNode(sceneID, "mynode1");
-    uint32_t nodeID2 = sceneManager->CreateSceneNode(sceneID, "mynode2");
-    //uint32_t nodeID = nodeManager->CreateNode();
 
-    uint32_t nodeID3 = nodeManager->CreateNode("mynode3");
-    uint32_t nodeID4 = nodeManager->CreateChildNode(nodeID1, "mynode4");
-    uint32_t nodeID4a = nodeManager->CreateChildNode(nodeID4, "mynode4a");
-    uint32_t nodeID5 = nodeManager->CreateChildNode(nodeID4, "mynode5");
-   // nodeManager->MarkForDelete(nodeID3);
 
-    nodeManager->MarkForDelete(nodeID1);
 
-    sceneManager->Update(0.1f);
-    sceneManager->Render();
 
-    sceneManager->CleanUp();
+    SceneManager* sceneManager = new SceneManager();
+    uint32_t sceneID = sceneManager->CreateScene(true);
+    sceneManager->SetCurrentScene(sceneID);
 
+    NodeManager* nodeManager = new NodeManager(sceneManager);
+
+    uint32_t nodeID1 = nodeManager->CreateSceneNode(sceneID);
+    uint32_t nodeID2 = nodeManager->CreateNode(sceneID);
+    uint32_t nodeID3 = nodeManager->CreateNode(nodeID2);
+    uint32_t nodeID4 = nodeManager->CreateNode(nodeID3);
+
+    nodeManager->DeleteNode(nodeID3);
+    
+    sceneManager->Update(nodeManager, 0.1f);
+    sceneManager->Render(nodeManager);
+
+    nodeManager->PurgeNodes();
     nodeManager->CheckForOrphans();
 
     delete sceneManager;

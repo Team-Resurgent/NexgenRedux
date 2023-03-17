@@ -1,43 +1,50 @@
 #include "SceneManager.h"
-#include "Scene.h"
-#include "NodeManager.h"
 
 #include <Gensys/Int.h>
 
-#include <string>
+#include <vector>
 #include <map>
 
-SceneManager::SceneManager(NodeManager* nodeManager) : m_currentSceneID(0), m_maxSceneID(0)
+SceneManager::SceneManager() : m_currentSceneID(0), m_maxSceneID(0)
 {
-    m_nodeManager = nodeManager;
 }
 
-SceneManager::~SceneManager(void)
+void SceneManager::Update(NodeManager* nodeManager, float dt) 
 {
-	for (std::map<uint32_t, Scene*>::iterator it = m_sceneMap.begin(); it != m_sceneMap.end(); ++it)
+    std::map<uint32_t, std::vector<uint32_t>>::iterator itScene = m_sceneMap.find(m_currentSceneID);
+	if (itScene != m_sceneMap.end()) 
 	{
-        delete it->second;
+        std::vector<uint32_t>* sceneNodeLookup = &itScene->second;
+        for (uint32_t i = 0; i < sceneNodeLookup->size(); i++)
+        {
+            nodeManager->Update(sceneNodeLookup->at(i), dt);
+        }
 	}
 }
 
-uint32_t SceneManager::CreateScene(std::string sceneTag, bool setAsCurrent) 
+void SceneManager::Render(NodeManager* nodeManager) 
 {
-    uint32_t sceneID = ++m_maxSceneID;
-    m_sceneMap.insert(std::pair<uint32_t, Scene*>(sceneID, new Scene(sceneTag)));
-    if (setAsCurrent == true)
+    std::map<uint32_t, std::vector<uint32_t>>::iterator itScene = m_sceneMap.find(m_currentSceneID);
+	if (itScene != m_sceneMap.end()) 
     {
-        SetCurrentScene(sceneID);
+        std::vector<uint32_t>* sceneNodeLookup = &itScene->second;
+        for (uint32_t i = 0; i < sceneNodeLookup->size(); i++)
+        {
+            nodeManager->Render(sceneNodeLookup->at(i));
+        }
     }
-    return sceneID;
 }
 
-void SceneManager::MarkSceneForDelete(uint32_t sceneID) 
+uint32_t SceneManager::CreateScene(bool setAsCurrent)
 {
-    std::map<uint32_t, Scene*>::iterator it = m_sceneMap.find(m_currentSceneID);
-	if (it != m_sceneMap.end()) 
+    uint32_t sceneID = ++m_maxSceneID;
+    std::vector<uint32_t> childNodes;
+    m_sceneMap.insert(std::pair<uint32_t, std::vector<uint32_t>>(sceneID, childNodes));
+    if (setAsCurrent == true)
     {
-        it->second->MarkForDelete();
+        m_currentSceneID = sceneID;
     }
+    return sceneID;
 }
 
 void SceneManager::SetCurrentScene(uint32_t sceneID)
@@ -45,67 +52,44 @@ void SceneManager::SetCurrentScene(uint32_t sceneID)
     m_currentSceneID = sceneID;
 }
 
+// Privates
 
-void SceneManager::Update(float dt) 
+bool SceneManager::AddSceneNode(uint32_t sceneID, uint32_t nodeID)
 {
-    std::map<uint32_t, Scene*>::iterator it = m_sceneMap.find(m_currentSceneID);
-	if (it != m_sceneMap.end()) 
+    std::map<uint32_t, std::vector<uint32_t>>::iterator itScene = m_sceneMap.find(sceneID);
+	if (itScene == m_sceneMap.end()) 
 	{
-		it->second->Update(m_nodeManager, dt);
-	}
-}
-
-void SceneManager::Render() 
-{
-    std::map<uint32_t, Scene*>::iterator it = m_sceneMap.find(m_currentSceneID);
-	if (it != m_sceneMap.end()) 
-    {
-        it->second->Render(m_nodeManager);
+        return false;
     }
+    itScene->second.push_back(nodeID);
+    return true;
 }
 
-uint32_t SceneManager::CreateSceneNode(uint32_t sceneID, std::string nodeTag)
+bool SceneManager::DeleteSceneNode(uint32_t sceneID, uint32_t nodeID)
 {
-    std::map<uint32_t, Scene*>::iterator it = m_sceneMap.find(sceneID);
-	if (it != m_sceneMap.end()) 
+    std::map<uint32_t, std::vector<uint32_t>>::iterator itScene = m_sceneMap.find(sceneID);
+	if (itScene == m_sceneMap.end()) 
 	{
-        uint32_t nodeID = m_nodeManager->CreateNode(nodeTag);
-        it->second->AddNode(nodeID);
-        return nodeID;
+        return false;
     }
-    return 0;
+    std::vector<uint32_t>* sceneNodeLookup = &itScene->second;
+    std::vector<uint32_t>::iterator itSceneNode = std::find(sceneNodeLookup->begin(), sceneNodeLookup->end(), nodeID);
+    if (itSceneNode == sceneNodeLookup->end())
+    {
+        return false;
+    }
+    sceneNodeLookup->erase(itSceneNode);
+    return true;
 }
 
-void SceneManager::CleanUp()
+bool SceneManager::DeleteSceneNode(uint32_t nodeID)
 {
-    // Cleanup scenes
-    for (auto it = m_sceneMap.begin(); it != m_sceneMap.end(); )
+    for (auto it = m_sceneMap.begin(); it != m_sceneMap.end(); ++it)
     {
-        // Delete scenes marked for delete
-        if (it->second->MarkedForDelete() == true)
-        { 
-            std::map<uint32_t, Scene*>::iterator itErase = it;
-            ++it;
-            delete itErase->second;
-            m_sceneMap.erase(itErase);
-            continue;
-        }
-
-        // Delete from scene nodes marked for deletion
-        const std::vector<uint32_t> nodeIDs = it->second->GetNodes();
-        for (uint32_t i = 0; i < nodeIDs.size(); i++)
+        if (DeleteSceneNode(it->first, nodeID) == true)
         {
-            uint32_t nodeID = nodeIDs.at(i);
-            Node* node = m_nodeManager->GetNode(nodeID);
-            if (node != NULL && node->MarkedForDelete()) 
-            {
-                it->second->DeleteNode(nodeID);
-            }
+            return true;
         }
-
-        ++it;
     }
-
-    // Cleanup any nodes marked for delete
-    m_nodeManager->CleanNodes();
+    return false;
 }

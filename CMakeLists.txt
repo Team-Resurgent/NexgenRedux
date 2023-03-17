@@ -72,7 +72,6 @@ list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/ECS/ECSRenderSy
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/ECS/ECSTransformComponent.cpp")
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/EntityEngine/SceneManager.cpp")
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/EntityEngine/NodeManager.cpp")
-list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/EntityEngine/Scene.cpp")
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/EntityEngine/Node.cpp")
 
 # Gensys

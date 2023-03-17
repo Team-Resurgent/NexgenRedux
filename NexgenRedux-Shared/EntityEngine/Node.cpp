@@ -6,28 +6,23 @@
 
 using namespace Gensys;
 
-Node::Node(std::string nodeTag)
+Node::Node(uint32_t nodeID)
 {
-    m_parentID = 0;
-    m_nodeTag = nodeTag;
+    m_parentNodeID = 0;
+    m_nodeID = nodeID;
     m_deleteFlag = false;
 }
 
-Node::Node(uint32_t parentID, std::string nodeTag)
+Node::Node(uint32_t parentNodeID, uint32_t nodeID)
 {
-    m_parentID = parentID;
-    m_nodeTag = nodeTag;
+    m_parentNodeID = parentNodeID;
+    m_nodeID = nodeID;
     m_deleteFlag = false;
 }
 
 Node::~Node(void)
 {
-    DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, "Deleting node '%s'", m_nodeTag.c_str());
-}
-
-const std::string& Node::GetTag()
-{
-    return m_nodeTag;
+    DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, "Deleting node '%i'", m_nodeID);
 }
 
 void Node::MarkForDelete()
@@ -40,9 +35,9 @@ bool Node::MarkedForDelete()
     return m_deleteFlag;
 }
 
-uint32_t Node::GetParentID()
+uint32_t Node::GetParent()
 {
-    return m_parentID;
+    return m_parentNodeID;
 }
 
 void Node::AddChildNode(uint32_t nodeID)
@@ -55,7 +50,7 @@ const std::vector<uint32_t>& Node::GetChildNodes()
     return m_childNodes;
 }
 
-void Node::DeleteChild(uint32_t nodeID)
+void Node::EraseChild(uint32_t nodeID)
 {
     std::vector<uint32_t>::iterator it = std::find(m_childNodes.begin(), m_childNodes.end(), nodeID);
     if (it != m_childNodes.end())
@@ -63,6 +58,32 @@ void Node::DeleteChild(uint32_t nodeID)
         m_childNodes.erase(it);
     }
 }
+
+// void Scene::Update(NodeManager *nodeManager, float dt)
+// {
+//     for (uint32_t i = 0; i < m_nodes.size(); i++)
+//     {
+//         int nodeID = m_nodes.at(i);
+//         const std::string *nodeTag = nodeManager->GetNodeTag(nodeID);
+//         if (nodeTag != NULL) 
+//         {
+//             DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, "Updating nodeid = %i, tag = %s", nodeID, nodeTag->c_str());
+//         }
+//     }
+// }
+
+// void Scene::Render(NodeManager *nodeManager)
+// {
+//     for (uint32_t i = 0; i < m_nodes.size(); i++)
+//     {
+//         int nodeID = m_nodes.at(i);
+//         const std::string *nodeTag = nodeManager->GetNodeTag(nodeID);
+//         if (nodeTag != NULL) 
+//         {
+//             DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, "Rendering nodeid = %i, tag = %s", nodeID, nodeTag->c_str());
+//         }
+//     }
+// }
 
 // Node::Node(int id) {
 //     m_id = id;

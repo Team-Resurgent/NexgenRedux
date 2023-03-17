@@ -50,12 +50,15 @@ void ECSManager::ECSManagerExample(void)
     uint32_t nodeID1 = nodeManager->CreateSceneNode(sceneID);
     uint32_t nodeID2 = nodeManager->CreateNode(sceneID);
     uint32_t nodeID3 = nodeManager->CreateNode(nodeID2);
-    uint32_t nodeID4 = nodeManager->CreateNode(nodeID3);
+    uint32_t nodeID4 = nodeManager->CreateNode(nodeID2);
+     uint32_t nodeID5 = nodeManager->CreateNodeAt(nodeID2, nodeID4);
 
-    nodeManager->DeleteNode(nodeID3);
-    
     sceneManager->Update(nodeManager, 0.1f);
     sceneManager->Render(nodeManager);
+
+    // nodeManager->DeleteNode(nodeID3);
+    // sceneManager->Update(nodeManager, 0.1f);
+    // sceneManager->Render(nodeManager);
 
     nodeManager->PurgeNodes();
     nodeManager->CheckForOrphans();

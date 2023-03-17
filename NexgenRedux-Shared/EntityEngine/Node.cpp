@@ -40,9 +40,19 @@ uint32_t Node::GetParent()
     return m_parentNodeID;
 }
 
-void Node::AddChildNode(uint32_t nodeID)
+void Node::AddChildNode(uint32_t childNodeID)
 {
-    m_childNodes.push_back(nodeID);
+    m_childNodes.push_back(childNodeID);
+}
+
+void Node::AddChildNodeAt(uint32_t nodeID, uint32_t childNodeID)
+{
+    std::vector<uint32_t>::iterator it = std::find(m_childNodes.begin(), m_childNodes.end(), nodeID);
+    if (it == m_childNodes.end())
+    {
+        return;
+    }
+    m_childNodes.insert(it, childNodeID);
 }
 
 const std::vector<uint32_t>& Node::GetChildNodes()

@@ -14,7 +14,8 @@ public:
     bool MarkedForDelete();
     uint32_t GetParent();
 
-    void AddChildNode(uint32_t nodeID);
+    void AddChildNode(uint32_t childNodeID);
+    void AddChildNodeAt(uint32_t nodeID, uint32_t childNodeID);
     const std::vector<uint32_t>& GetChildNodes();
     void EraseChild(uint32_t nodeID);
 //     virtual void Update(float dt);

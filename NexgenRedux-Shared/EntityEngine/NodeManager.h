@@ -18,6 +18,7 @@ public:
 
     uint32_t CreateSceneNode(uint32_t sceneID);
     uint32_t CreateNode(uint32_t parentNodeID);
+    uint32_t CreateNodeAt(uint32_t parentNodeID, uint32_t nodeID);
     void DeleteNode(uint32_t nodeID);    
 
     void PurgeNodes();

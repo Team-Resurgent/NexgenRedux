@@ -41,11 +41,26 @@ uint32_t NodeManager::CreateNode(uint32_t parentNodeID)
         return 0;
     }
 
-    uint32_t nodeID = ++m_maxNodeID;
-    Node* node = new Node(parentNodeID, nodeID);
-    m_nodeMap.insert(std::pair<uint32_t, Node*>(nodeID, node));
-    parentNode->AddChildNode(nodeID);
-    return nodeID;
+    uint32_t newNodeID = ++m_maxNodeID;
+    Node* node = new Node(parentNodeID, newNodeID);
+    m_nodeMap.insert(std::pair<uint32_t, Node*>(newNodeID, node));
+    parentNode->AddChildNode(newNodeID);
+    return newNodeID;
+}
+
+uint32_t NodeManager::CreateNodeAt(uint32_t parentNodeID, uint32_t nodeID)
+{
+    Node* parentNode = GetNode(parentNodeID);
+    if (parentNode == NULL)
+    {
+        return 0;
+    }
+
+    uint32_t newNodeID = ++m_maxNodeID;
+    Node* node = new Node(parentNodeID, newNodeID);
+    m_nodeMap.insert(std::pair<uint32_t, Node*>(newNodeID, node));
+    parentNode->AddChildNodeAt(nodeID, newNodeID);
+    return newNodeID;
 }
 
 void NodeManager::DeleteNode(uint32_t nodeID)

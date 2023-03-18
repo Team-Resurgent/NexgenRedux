@@ -59,9 +59,11 @@ const MathUtility::Matrix4x4 PropertyTransform::GetTransform()
     {
         return m_matrix;
     }
-    MathUtility::Matrix4x4 matrix = MathUtility::Matrix4x4();
-
-    // TODO calculate new matrix
+    MathUtility::Matrix4x4 inverseAnchorMatrix = MathUtility::Matrix4x4::Translate(MathUtility::Vec3F() - m_anchor);
+    MathUtility::Matrix4x4 rotationMatrix = MathUtility::Matrix4x4::Rotation(m_rotation);
+    MathUtility::Matrix4x4 skewMatrix = MathUtility::Matrix4x4::Skew(m_skew);
+    MathUtility::Matrix4x4 anchorPositionMatrix = MathUtility::Matrix4x4::Translate(m_anchor + m_position);
+    m_matrix = inverseAnchorMatrix * rotationMatrix * skewMatrix * anchorPositionMatrix;
     m_matrixDirty = false;
     return m_matrix;
 }

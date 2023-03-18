@@ -4,9 +4,13 @@
 
 using namespace NexgenRedux;
 
-PropertyTransform::PropertyTransform() : m_matrixDirty(true)
+PropertyTransform::PropertyTransform() 
 {
-
+    m_matrixDirty = true;
+    m_position = MathUtility::Vec3F(0, 0, 0);
+    m_anchor = MathUtility::Vec3F(0, 0, 0);
+    m_rotation = MathUtility::Vec3F(0, 0, 0);
+    m_skew = MathUtility::Vec3F(0, 0, 0);
 }
 
 const MathUtility::Vec3F PropertyTransform::GetPosition()
@@ -22,12 +26,12 @@ void PropertyTransform::SetPosition(MathUtility::Vec3F value)
 
 const MathUtility::Vec3F PropertyTransform::GetAnchor() 
 {
-    return m_position;
+    return m_anchor;
 }
 
 void PropertyTransform::SetAnchor(MathUtility::Vec3F value) 
 {
-    m_position = value;
+    m_anchor = value;
     m_matrixDirty = true;
 }
 

@@ -8,6 +8,7 @@
 #include <map>
 
 using namespace Gensys;
+using namespace NexgenRedux;
 
 NodeManager::NodeManager(SceneManager* sceneManager) : m_sceneManager(sceneManager), m_maxNodeID(0)
 {
@@ -24,16 +25,16 @@ NodeManager::~NodeManager(void)
 	}
 }
 
-uint32_t NodeManager::CreateSceneNode(uint32_t sceneID) 
+uint32_t NodeManager::CreateSceneNode(NodeType nodeType, uint32_t sceneID) 
 {
     uint32_t nodeID = ++m_maxNodeID;
-    Node* node = new Node(nodeID);
+    Node* node = new Node(nodeType, nodeID);
     m_nodeMap.insert(std::pair<uint32_t, Node*>(nodeID, node));
     m_sceneManager->AddSceneNode(sceneID, nodeID);
     return nodeID;
 }
 
-uint32_t NodeManager::CreateNode(uint32_t parentNodeID)
+uint32_t NodeManager::CreateNode(NodeType nodeType, uint32_t parentNodeID)
 {
     Node* parentNode = GetNode(parentNodeID);
     if (parentNode == NULL)
@@ -42,13 +43,13 @@ uint32_t NodeManager::CreateNode(uint32_t parentNodeID)
     }
 
     uint32_t newNodeID = ++m_maxNodeID;
-    Node* node = new Node(parentNodeID, newNodeID);
+    Node* node = new Node(nodeType, parentNodeID, newNodeID);
     m_nodeMap.insert(std::pair<uint32_t, Node*>(newNodeID, node));
     parentNode->AddChildNode(newNodeID);
     return newNodeID;
 }
 
-uint32_t NodeManager::CreateNodeAt(uint32_t parentNodeID, uint32_t nodeID)
+uint32_t NodeManager::CreateNodeAt(NodeType nodeType, uint32_t parentNodeID, uint32_t nodeID)
 {
     Node* parentNode = GetNode(parentNodeID);
     if (parentNode == NULL)
@@ -57,7 +58,7 @@ uint32_t NodeManager::CreateNodeAt(uint32_t parentNodeID, uint32_t nodeID)
     }
 
     uint32_t newNodeID = ++m_maxNodeID;
-    Node* node = new Node(parentNodeID, newNodeID);
+    Node* node = new Node(nodeType, parentNodeID, newNodeID);
     m_nodeMap.insert(std::pair<uint32_t, Node*>(newNodeID, node));
     parentNode->AddChildNodeAt(nodeID, newNodeID);
     return newNodeID;

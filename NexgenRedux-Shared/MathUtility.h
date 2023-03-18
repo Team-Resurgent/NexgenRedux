@@ -530,7 +530,7 @@ namespace NexgenRedux
 
 			static Matrix4x4 Scale(const Vec3F& value)
 			{
-				Matrix4x4 result;
+				Matrix4x4 result = Matrix4x4();
 				result.values[0] = value.values[0];
 				result.values[5] = value.values[1];
 				result.values[10] = value.values[2];
@@ -539,7 +539,7 @@ namespace NexgenRedux
 
 			static Matrix4x4 RotateX(const float& degreesX)
 			{
-				Matrix4x4 result;
+				Matrix4x4 result = Matrix4x4();
 				result.values[5] = cosf(DegreesToRadians(degreesX));
 				result.values[6] = sinf(DegreesToRadians(degreesX));
 				result.values[9] = -result.values[6];
@@ -549,7 +549,7 @@ namespace NexgenRedux
 
 			static Matrix4x4 RotateY(const float& degreesY)
 			{
-				Matrix4x4 result;
+				Matrix4x4 result = Matrix4x4();
 				result.values[0] = cosf(DegreesToRadians(degreesY));
 				result.values[2] = -sinf(DegreesToRadians(degreesY));
 				result.values[8] = -result.values[2];
@@ -559,7 +559,7 @@ namespace NexgenRedux
 
 			static Matrix4x4 RotateZ(const float& degreesZ)
 			{
-				Matrix4x4 result;
+				Matrix4x4 result = Matrix4x4();
 				result.values[0] = cosf(DegreesToRadians(degreesZ));
 				result.values[1] = sinf(DegreesToRadians(degreesZ));
 				result.values[4] = -result.values[1];
@@ -567,25 +567,44 @@ namespace NexgenRedux
 				return result;
 			}
 
+			static Matrix4x4 Rotation(Vec3F rotation) 
+			{
+				float cosX = cos(DegreesToRadians(rotation.values[0]));
+				float sinX = sin(DegreesToRadians(rotation.values[0]));
+				float cosY = cos(DegreesToRadians(rotation.values[1]));
+				float sinY = sin(DegreesToRadians(rotation.values[1]));
+				float cosZ = cos(DegreesToRadians(rotation.values[2]));
+				float sinZ = sin(DegreesToRadians(rotation.values[2]));
+				
+				Matrix4x4 result = Matrix4x4();
+				result.values[0] = cosY * cosZ;
+				result.values[1] = cosX * sinZ + sinX * sinY * cosZ;
+				result.values[2] = sinX * sinZ - cosX * sinY * cosZ;
+				result.values[4] = -cosY * sinZ;
+				result.values[5] = cosX * cosZ - sinX * sinY * sinZ;
+				result.values[6] = sinX * cosZ + cosX * sinY * sinZ;
+				result.values[8] = sinY;
+				result.values[9] = -sinX * cosY;
+				result.values[10] = cosX * cosY;
+				return result;
+			}
+
+
 			static Matrix4x4 Translate(const Vec3F& value)
 			{
-				Matrix4x4 result;
-				result.values[0] = 1.0f;
-				result.values[1] = 0.0f;
-				result.values[2] = 0.0f;
-				result.values[3] = 0.0f;
-				result.values[4] = 0.0f;
-				result.values[5] = 1.0f;
-				result.values[6] = 0.0f;
-				result.values[7] = 0.0f;
-				result.values[8] = 0.0f;
-				result.values[9] = 0.0f;
-				result.values[10] = 1.0f;
-				result.values[11] = 0.0f;
+				Matrix4x4 result = Matrix4x4();
 				result.values[12] = value.values[0];
 				result.values[13] = value.values[1];
 				result.values[14] = value.values[2];
-				result.values[15] = 1.0f;
+				return result;
+			}
+
+			static Matrix4x4 Skew(const Vec3F& value)
+			{
+				Matrix4x4 result = Matrix4x4();
+				result.values[1] = value.values[0];
+				result.values[4] = value.values[1];
+				result.values[8] = value.values[2];
 				return result;
 			}
 

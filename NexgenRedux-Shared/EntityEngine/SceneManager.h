@@ -7,28 +7,31 @@
 #include <map>
 #include <vector>
 
-class NodeManager;
-
-class SceneManager 
+namespace NexgenRedux
 {
-public:
-    SceneManager(void);
+    class NodeManager;
 
-    uint32_t CreateScene(bool setAsCurrent);
-    void SetCurrentScene(uint32_t sceneID);
-    void Update(NodeManager* nodeManager, float dt);
-    void Render(NodeManager* nodeManager);
-    
-private:
+    class SceneManager 
+    {
+    public:
+        SceneManager(void);
 
-    friend class NodeManager;
-    bool AddSceneNode(uint32_t sceneID, uint32_t nodeID);
-    bool DeleteSceneNode(uint32_t sceneID, uint32_t nodeID);
-    bool DeleteSceneNode(uint32_t nodeID);
+        uint32_t CreateScene(bool setAsCurrent);
+        void SetCurrentScene(uint32_t sceneID);
+        void Update(NodeManager* nodeManager, float dt);
+        void Render(NodeManager* nodeManager);
+        
+    private:
 
-private:
+        friend class NodeManager;
+        bool AddSceneNode(uint32_t sceneID, uint32_t nodeID);
+        bool DeleteSceneNode(uint32_t sceneID, uint32_t nodeID);
+        bool DeleteSceneNode(uint32_t nodeID);
 
-    uint32_t m_currentSceneID;
-    uint32_t m_maxSceneID;
-    std::map<uint32_t, std::vector<uint32_t>> m_sceneMap;
-};
+    private:
+
+        uint32_t m_currentSceneID;
+        uint32_t m_maxSceneID;
+        std::map<uint32_t, std::vector<uint32_t>> m_sceneMap;
+    };
+}

@@ -7,37 +7,40 @@
 
 #include <map>
 
-class SceneManager;
-
-class NodeManager 
+namespace NexgenRedux
 {
-public:
+    class SceneManager;
 
-    NodeManager(SceneManager* sceneManager);
-    ~NodeManager(void);
+    class NodeManager 
+    {
+    public:
 
-    uint32_t CreateSceneNode(uint32_t sceneID);
-    uint32_t CreateNode(uint32_t parentNodeID);
-    uint32_t CreateNodeAt(uint32_t parentNodeID, uint32_t nodeID);
-    void DeleteNode(uint32_t nodeID);    
+        NodeManager(SceneManager* sceneManager);
+        ~NodeManager(void);
 
-    void PurgeNodes();
-    void CheckForOrphans();
+        uint32_t CreateSceneNode(NodeType nodeType, uint32_t sceneID);
+        uint32_t CreateNode(NodeType nodeType, uint32_t parentNodeID);
+        uint32_t CreateNodeAt(NodeType nodeType, uint32_t parentNodeID, uint32_t nodeID);
+        void DeleteNode(uint32_t nodeID);    
 
-    void Update(uint32_t nodeID, float dt);
-    void Render(uint32_t nodeID);
+        void PurgeNodes();
+        void CheckForOrphans();
 
-private:
+        void Update(uint32_t nodeID, float dt);
+        void Render(uint32_t nodeID);
 
-    friend class SceneManager;
-    Node* GetNode(uint32_t nodeID);
+    private:
 
-private:
+        friend class SceneManager;
+        Node* GetNode(uint32_t nodeID);
 
-    void MarkForDelete(uint32_t nodeID);
+    private:
 
-private:
-    SceneManager* m_sceneManager;
-    uint32_t m_maxNodeID;
-    std::map<uint32_t, Node*> m_nodeMap;
-};
+        void MarkForDelete(uint32_t nodeID);
+
+    private:
+        SceneManager* m_sceneManager;
+        uint32_t m_maxNodeID;
+        std::map<uint32_t, Node*> m_nodeMap;
+    };
+}

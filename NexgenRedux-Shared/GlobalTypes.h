@@ -269,5 +269,5 @@ namespace NexgenRedux
 		ViewportState viewportState;
 		ScissorState scissorState;
 		DrawModeState drawModeState;
-	} RenderState;    
+	} RenderState;  
 }

@@ -3,56 +3,38 @@
 #include <vector>
 #include <string>
 
-class Node 
+namespace NexgenRedux
 {
-public:
-    Node(uint32_t nodeID);
-    Node(uint32_t parentNodeID, uint32_t nodeID);
-    ~Node(void);
-    
-    void MarkForDelete();
-    bool MarkedForDelete();
-    uint32_t GetParent();
+	typedef enum NodeType {
+		NodeTypeCamera,
+		NodeTypeSprite
+	} NodeType;  
 
-    void AddChildNode(uint32_t childNodeID);
-    void AddChildNodeAt(uint32_t nodeID, uint32_t childNodeID);
-    const std::vector<uint32_t>& GetChildNodes();
-    void EraseChild(uint32_t nodeID);
-//     virtual void Update(float dt);
-//     virtual void Draw();
+    class Node 
+    {
+    public:
+        Node(NodeType nodeType, uint32_t nodeID);
+        Node(NodeType nodeType, uint32_t parentNodeID, uint32_t nodeID);
+        ~Node(void);
 
-//     void AddChild(int childId);
-//     void RemoveChild(int childId);
+        void MarkForDelete();
+        bool MarkedForDelete();
+        uint32_t GetID();
+        NodeType GetType();
+        uint32_t GetParent();
 
-//     void SetPosition(float x, float y);
-//     void SetRotation(float rotation);
-//     void SetScale(float scaleX, float scaleY);
+        void AddChildNode(uint32_t childNodeID);
+        void AddChildNodeAt(uint32_t nodeID, uint32_t childNodeID);
+        const std::vector<uint32_t>& GetChildNodes();
+        void EraseChild(uint32_t nodeID);
 
-//     float GgetPositionX() const;
-//     float GetPositionY() const;
-//     float GetRotation() const;
-//     float GetScaleX() const;
-//     float GetScaleY() const;
-//     int GetId() const;
-//     int GetParentId() const;
-
-// protected:
-//     int m_id;
-//     int m_parentId;
-
-// private:
-//     std::vector<int> m_childrenIds;
-//     float m_positionX;
-//     float m_positionY;
-//     float m_rotation;
-//     float m_scaleX;
-//     float m_scaleY;
     private:
 
         friend class Scene;
-
-        uint32_t m_nodeID;
+        NodeType m_nodeType;
         uint32_t m_parentNodeID;
+        uint32_t m_nodeID;
         std::vector<uint32_t> m_childNodes;
         bool m_deleteFlag;
-};
+    };
+}

@@ -5,6 +5,8 @@
 #include <vector>
 #include <map>
 
+using namespace NexgenRedux;
+
 SceneManager::SceneManager() : m_currentSceneID(0), m_maxSceneID(0)
 {
 }

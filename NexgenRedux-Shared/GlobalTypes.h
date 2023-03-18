@@ -1,5 +1,7 @@
 #pragma once
 
+#include "MathUtility.h"
+
 #include <Gensys/Int.h>
 #include <string>
 
@@ -270,4 +272,13 @@ namespace NexgenRedux
 		ScissorState scissorState;
 		DrawModeState drawModeState;
 	} RenderState;  
+
+	typedef enum NodeType {
+		NodeTypeCamera,
+		NodeTypeSprite
+	} NodeType;  
+
+	typedef enum PropertyType {
+		PropertyTypeTransform
+	} PropertyType;  
 }

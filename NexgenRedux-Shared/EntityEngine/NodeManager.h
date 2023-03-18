@@ -1,6 +1,7 @@
 #pragma once
 
 #include "SceneManager.h"
+#include "GlobalTypes.h"
 #include "Node.h"
 
 #include <Gensys/Int.h>
@@ -10,6 +11,7 @@
 namespace NexgenRedux
 {
     class SceneManager;
+    class Node;
 
     class NodeManager 
     {
@@ -32,6 +34,7 @@ namespace NexgenRedux
     private:
 
         friend class SceneManager;
+        friend class Node;
         Node* GetNode(uint32_t nodeID);
 
     private:

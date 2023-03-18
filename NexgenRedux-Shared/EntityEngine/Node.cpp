@@ -1,4 +1,5 @@
 #include "Node.h"
+#include "PropertyTransform.h"
 
 #include <Gensys/DebugUtility.h>
 
@@ -7,20 +8,26 @@
 using namespace Gensys;
 using namespace NexgenRedux;
 
-Node::Node(NodeType nodeType, uint32_t nodeID)
+Node::Node(NodeManager* nodeManager, NodeType nodeType, uint32_t nodeID)
 {
+    m_nodeManager = nodeManager;
     m_nodeType = nodeType;
     m_parentNodeID = 0;
     m_nodeID = nodeID;
     m_deleteFlag = false;
+
+    AddProperties();
 }
 
-Node::Node(NodeType nodeType, uint32_t parentNodeID, uint32_t nodeID)
+Node::Node(NodeManager* nodeManager, NodeType nodeType, uint32_t parentNodeID, uint32_t nodeID)
 {
+    m_nodeManager = nodeManager;
     m_nodeType = nodeType;
     m_parentNodeID = parentNodeID;
     m_nodeID = nodeID;
     m_deleteFlag = false;
+
+    AddProperties();
 }
 
 Node::~Node(void)
@@ -80,4 +87,39 @@ void Node::EraseChild(uint32_t nodeID)
     {
         m_childNodes.erase(it);
     }
+}
+
+bool Node::HasProperty(PropertyType propertyType)
+{
+    std::map<PropertyType, Property*>::iterator it = m_propertyMap.find(propertyType);
+	return it != m_propertyMap.end();
+}
+
+Property* Node::GetProperty(PropertyType propertyType)
+{
+    std::map<PropertyType, Property*>::iterator it = m_propertyMap.find(propertyType);
+	if (it == m_propertyMap.end()) 
+    {
+        return NULL;
+    }
+    return it->second;
+}
+
+// Private Friends
+
+Node* Node::GetParentNode()
+{
+    return m_nodeManager->GetNode(m_parentNodeID);
+}
+
+// Privates
+
+void Node::AddProperty(PropertyType propertyType, Property* property)
+{
+    m_propertyMap.insert(std::pair<PropertyType, Property*>(propertyType, property));
+}
+
+void Node::AddProperties()
+{
+    AddProperty(PropertyTypeTransform, new PropertyTransform(this));
 }

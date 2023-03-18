@@ -1,15 +1,18 @@
 #pragma once
 
 #include "Property.h"
+#include "Node.h"
 #include "MathUtility.h"
 
 namespace NexgenRedux
 {
+    class Node;
+    
     class PropertyTransform : public Property
     {
     public:
 
-        PropertyTransform();
+        PropertyTransform(Node* node);
 
         const MathUtility::Vec3F GetPosition();
         void SetPosition(MathUtility::Vec3F value);
@@ -26,6 +29,8 @@ namespace NexgenRedux
         const MathUtility::Matrix4x4 GetTransform();
 
     private:
+
+        Node* m_node;
 
         MathUtility::Vec3F m_position;
         MathUtility::Vec3F m_anchor;

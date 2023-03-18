@@ -28,7 +28,7 @@ NodeManager::~NodeManager(void)
 uint32_t NodeManager::CreateSceneNode(NodeType nodeType, uint32_t sceneID) 
 {
     uint32_t nodeID = ++m_maxNodeID;
-    Node* node = new Node(this, nodeType, nodeID);
+    Node* node = new Node(nodeType, nodeID);
     m_nodeMap.insert(std::pair<uint32_t, Node*>(nodeID, node));
     m_sceneManager->AddSceneNode(sceneID, nodeID);
     return nodeID;
@@ -43,7 +43,7 @@ uint32_t NodeManager::CreateNode(NodeType nodeType, uint32_t parentNodeID)
     }
 
     uint32_t newNodeID = ++m_maxNodeID;
-    Node* node = new Node(this, nodeType, parentNodeID, newNodeID);
+    Node* node = new Node(parentNode, nodeType, newNodeID);
     m_nodeMap.insert(std::pair<uint32_t, Node*>(newNodeID, node));
     parentNode->AddChildNode(newNodeID);
     return newNodeID;
@@ -58,7 +58,7 @@ uint32_t NodeManager::CreateNodeAt(NodeType nodeType, uint32_t parentNodeID, uin
     }
 
     uint32_t newNodeID = ++m_maxNodeID;
-    Node* node = new Node(this, nodeType, parentNodeID, newNodeID);
+    Node* node = new Node(parentNode, nodeType, newNodeID);
     m_nodeMap.insert(std::pair<uint32_t, Node*>(newNodeID, node));
     parentNode->AddChildNodeAt(nodeID, newNodeID);
     return newNodeID;
@@ -89,7 +89,7 @@ void NodeManager::PurgeNodes()
             ++it;
 
             // Delete this node from parent if exists
-            uint32_t parentNodeID = itErase->second->GetParent(); 
+            uint32_t parentNodeID = itErase->second->GetParentID(); 
             if (parentNodeID == 0)
             {
                 m_sceneManager->DeleteSceneNode(itErase->first);
@@ -116,7 +116,7 @@ void NodeManager::CheckForOrphans()
 {
     for (auto it = m_nodeMap.begin(); it != m_nodeMap.end(); ++it)
     {
-        uint32_t parentID = it->second->GetParent();
+        uint32_t parentID = it->second->GetParentID();
         if (parentID == 0)
         {
             continue;
@@ -138,7 +138,8 @@ void NodeManager::Update(uint32_t nodeID, float dt)
         return;
     }
 
-    DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, "Update node '%i'.", nodeID);
+    node->Update(dt);
+
     const std::vector<uint32_t>* childNodes = &node->GetChildNodes();
     for (uint32_t i = 0; i < childNodes->size(); i++)
     {
@@ -154,7 +155,8 @@ void NodeManager::Render(uint32_t nodeID)
         return;
     }
 
-    DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, "Render node '%i'.", nodeID);
+    node->Render();
+
     const std::vector<uint32_t>* childNodes = &node->GetChildNodes();
     for (uint32_t i = 0; i < childNodes->size(); i++)
     {

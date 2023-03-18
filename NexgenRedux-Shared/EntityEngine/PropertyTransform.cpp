@@ -22,8 +22,12 @@ const MathUtility::Vec3F PropertyTransform::GetPosition()
 
 void PropertyTransform::SetPosition(MathUtility::Vec3F value) 
 {
-    m_position = value;
-    m_matrixDirty = true;
+    bool isDirty = m_position != value;
+    if (isDirty) 
+    {
+        m_position = value;
+    }
+    m_matrixDirty = isDirty;
 }
 
 const MathUtility::Vec3F PropertyTransform::GetAnchor() 
@@ -33,8 +37,12 @@ const MathUtility::Vec3F PropertyTransform::GetAnchor()
 
 void PropertyTransform::SetAnchor(MathUtility::Vec3F value) 
 {
-    m_anchor = value;
-    m_matrixDirty = true;
+    bool isDirty = m_anchor != value;
+    if (isDirty) 
+    {
+        m_anchor = value;
+    }
+    m_matrixDirty = isDirty;
 }
 
 const MathUtility::Vec3F PropertyTransform::GetRotation()
@@ -44,8 +52,12 @@ const MathUtility::Vec3F PropertyTransform::GetRotation()
 
 void PropertyTransform::SetRotation(MathUtility::Vec3F value)
 {
-    m_rotation = value;
-    m_matrixDirty = true;
+    bool isDirty = m_rotation != value;
+    if (isDirty) 
+    {
+        m_rotation = value;
+    }
+    m_matrixDirty = isDirty;
 }
 
 const MathUtility::Vec3F PropertyTransform::GetSkew()
@@ -55,8 +67,12 @@ const MathUtility::Vec3F PropertyTransform::GetSkew()
 
 void PropertyTransform::SetSkew(MathUtility::Vec3F value)
 {
-    m_skew = value;
-    m_matrixDirty = true;
+    bool isDirty = m_skew != value;
+    if (isDirty) 
+    {
+        m_skew = value;
+    }
+    m_matrixDirty = isDirty;
 }
 
 const MathUtility::Matrix4x4 PropertyTransform::GetTransform() 
@@ -67,17 +83,13 @@ const MathUtility::Matrix4x4 PropertyTransform::GetTransform()
     }
 
     MathUtility::Matrix4x4 parentMatrix = MathUtility::Matrix4x4();
-    uint32_t parentNodeID = m_node->GetParent();
-    if (parentNodeID != 0)
+    Node* parentNode = m_node->GetParentNode();
+    if (parentNode != NULL && parentNode->HasProperty(PropertyTypeTransform))
     {
-        Node* parentNode = m_node->GetParentNode();
-        if (parentNode != NULL && parentNode->HasProperty(PropertyTypeTransform))
-        {
-            PropertyTransform* propertyTransform = (PropertyTransform*)parentNode->GetProperty(PropertyTypeTransform);
-            parentMatrix = propertyTransform->GetTransform();
-        }
+        PropertyTransform* propertyTransform = (PropertyTransform*)parentNode->GetProperty(PropertyTypeTransform);
+        parentMatrix = propertyTransform->GetTransform();
     }
-
+    
     MathUtility::Matrix4x4 inverseAnchorMatrix = MathUtility::Matrix4x4::Translate(MathUtility::Vec3F() - m_anchor);
     MathUtility::Matrix4x4 rotationMatrix = MathUtility::Matrix4x4::Rotation(m_rotation);
     MathUtility::Matrix4x4 skewMatrix = MathUtility::Matrix4x4::Skew(m_skew);
@@ -86,4 +98,3 @@ const MathUtility::Matrix4x4 PropertyTransform::GetTransform()
     m_matrixDirty = false;
     return m_matrix;
 }
-

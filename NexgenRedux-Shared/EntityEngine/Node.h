@@ -1,7 +1,7 @@
 #pragma once
 
-#include "NodeManager.h"
 #include "PropertyTransform.h"
+#include "GlobalTypes.h"
 
 #include <vector>
 #include <map>
@@ -14,15 +14,15 @@ namespace NexgenRedux
     class Node 
     {
     public:
-        Node(NodeManager* nodeManager, NodeType nodeType, uint32_t nodeID);
-        Node(NodeManager* nodeManager, NodeType nodeType, uint32_t parentNodeID, uint32_t nodeID);
+        Node(NodeType nodeType, uint32_t nodeID);
+        Node(Node* parentNode, NodeType nodeType, uint32_t nodeID);
         ~Node(void);
 
         void MarkForDelete();
         bool MarkedForDelete();
         uint32_t GetID();
         NodeType GetType();
-        uint32_t GetParent();
+        uint32_t GetParentID();
 
         void AddChildNode(uint32_t childNodeID);
         void AddChildNodeAt(uint32_t nodeID, uint32_t childNodeID);
@@ -30,7 +30,9 @@ namespace NexgenRedux
         void EraseChild(uint32_t nodeID);
 
         bool HasProperty(PropertyType propertyType);
-        Property* GetProperty(PropertyType propertyType);
+
+        void Update(float dt);
+        void Render();
 
     private:
 
@@ -40,14 +42,13 @@ namespace NexgenRedux
     private:
 
         void AddProperty(PropertyType propertyType, Property* property);
+        Property* GetProperty(PropertyType propertyType);
         void AddProperties();
 
     private:
 
-        friend class Scene;
-        NodeManager* m_nodeManager;
         NodeType m_nodeType;
-        uint32_t m_parentNodeID;
+        Node* m_parentNode;
         uint32_t m_nodeID;
         std::vector<uint32_t> m_childNodes;
         std::map<PropertyType, Property*> m_propertyMap;

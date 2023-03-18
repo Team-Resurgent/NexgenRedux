@@ -1,5 +1,6 @@
 #include "Node.h"
 #include "PropertyTransform.h"
+#include "GlobalTypes.h"
 
 #include <Gensys/DebugUtility.h>
 
@@ -8,22 +9,20 @@
 using namespace Gensys;
 using namespace NexgenRedux;
 
-Node::Node(NodeManager* nodeManager, NodeType nodeType, uint32_t nodeID)
+Node::Node(NodeType nodeType, uint32_t nodeID)
 {
-    m_nodeManager = nodeManager;
+    m_parentNode = NULL;
     m_nodeType = nodeType;
-    m_parentNodeID = 0;
     m_nodeID = nodeID;
     m_deleteFlag = false;
 
     AddProperties();
 }
 
-Node::Node(NodeManager* nodeManager, NodeType nodeType, uint32_t parentNodeID, uint32_t nodeID)
+Node::Node(Node* parentNode, NodeType nodeType, uint32_t nodeID)
 {
-    m_nodeManager = nodeManager;
+    m_parentNode = parentNode;
     m_nodeType = nodeType;
-    m_parentNodeID = parentNodeID;
     m_nodeID = nodeID;
     m_deleteFlag = false;
 
@@ -55,9 +54,9 @@ NodeType Node::GetType()
     return m_nodeType;
 }
 
-uint32_t Node::GetParent()
+uint32_t Node::GetParentID()
 {
-    return m_parentNodeID;
+    return m_parentNode == NULL ? 0 : m_parentNode->GetID();
 }
 
 void Node::AddChildNode(uint32_t childNodeID)
@@ -95,6 +94,35 @@ bool Node::HasProperty(PropertyType propertyType)
 	return it != m_propertyMap.end();
 }
 
+void Node::Update(float dt)
+{
+    if (HasProperty(PropertyTypeTransform))
+    {
+        PropertyTransform* propertyTransform = (PropertyTransform*)GetProperty(PropertyTypeTransform);
+        DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, "Calculated transfor for node '%i'", m_nodeID);
+    }
+    DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, "Updating node '%i'", m_nodeID);
+}
+
+void Node::Render()
+{
+    DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, "Rendering node '%i'", m_nodeID);
+}
+
+// Private Friends
+
+Node* Node::GetParentNode()
+{
+    return m_parentNode;
+}
+
+// Privates
+
+void Node::AddProperty(PropertyType propertyType, Property* property)
+{
+    m_propertyMap.insert(std::pair<PropertyType, Property*>(propertyType, property));
+}
+
 Property* Node::GetProperty(PropertyType propertyType)
 {
     std::map<PropertyType, Property*>::iterator it = m_propertyMap.find(propertyType);
@@ -103,20 +131,6 @@ Property* Node::GetProperty(PropertyType propertyType)
         return NULL;
     }
     return it->second;
-}
-
-// Private Friends
-
-Node* Node::GetParentNode()
-{
-    return m_nodeManager->GetNode(m_parentNodeID);
-}
-
-// Privates
-
-void Node::AddProperty(PropertyType propertyType, Property* property)
-{
-    m_propertyMap.insert(std::pair<PropertyType, Property*>(propertyType, property));
 }
 
 void Node::AddProperties()

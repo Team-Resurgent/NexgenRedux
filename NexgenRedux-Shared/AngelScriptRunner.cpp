@@ -2,6 +2,7 @@
 #include "AngelScriptMethods.h"
 #include "WindowManager.h"
 #include "MathUtility.h"
+#include "EntityEngine/NodeSprite.h"
 
 #include <Gensys/DebugUtility.h>
 #include <Gensys/FileSystem.h>
@@ -159,6 +160,11 @@ bool CompileScript(asIScriptEngine* engine, std::wstring launchFolder)
 	return true;
 }
 
+void AngelScriptRunner::NodeSpriteConstructor(NodeSprite* nodeSprite, uint32_t nodeID)
+{
+	new (nodeSprite)NodeSprite(nodeID);
+}
+
 bool AngelScriptRunner::Init(std::wstring launchFolder)
 {
 	m_engine = asCreateScriptEngine();
@@ -284,6 +290,11 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	if (m_engine->RegisterGlobalFunction("void SetWindowDropCallback(WindowDropCallback @windowDropCallback)", asFUNCTION(AngelScriptRunner::SetWindowDropCallback), asCALL_GENERIC) < 0) { return false; }
 	if (m_engine->RegisterFuncdef("void JoystickConnectCallback(uint joystickID, uint event)") < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void SetJoystickConnectCallback(JoystickConnectCallback @joystickConnectCallback)", asFUNCTION(AngelScriptRunner::SetJoystickConnectCallback), asCALL_GENERIC) < 0) { return false; }
+
+	if (m_engine->RegisterObjectType("NodeSprite", 0, asOBJ_REF) < 0) { return false; }
+
+	if (m_engine->RegisterObjectBehaviour("NodeSprite", asBEHAVE_CONSTRUCT, "void f(uint nodeID)", asFUNCTION(NodeSpriteConstructor), asCALL_CDECL_OBJLAST) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("NodeSprite", "void SetTexturePath(string value)", asMETHOD(NodeSprite, SetTexturePath), asCALL_THISCALL) < 0) { return false; }
 
 	if (CompileScript(m_engine, launchFolder) == false)
 	{

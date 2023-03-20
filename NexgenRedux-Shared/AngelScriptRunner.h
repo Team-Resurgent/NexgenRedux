@@ -1,6 +1,7 @@
 #pragma once
 
 #include "WindowManager.h"
+#include "EntityEngine/NodeSprite.h"
 
 #include <Gensys/Int.h>
 
@@ -94,6 +95,8 @@ namespace NexgenRedux
 		static void GetJoystickAxisStates(asIScriptGeneric* gen);
 		static void GetJoystickHatCount(asIScriptGeneric* gen);
 		static void GetJoystickHatDirection(asIScriptGeneric* gen);
+
+		static void NodeSpriteConstructor(NodeSprite* nodeSprite, uint32_t nodeID);
 	private:
 		WindowManager *m_windowManager;
 	};

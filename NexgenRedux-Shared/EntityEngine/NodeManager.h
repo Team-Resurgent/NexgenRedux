@@ -28,6 +28,11 @@ namespace NexgenRedux
         void PurgeNodes();
         void CheckForOrphans();
 
+        // bool SetNodePropertyAnchor(uint32_t nodeID, MathUtility::Vec3F anchor);
+        // bool SetNodePropertyRotation(uint32_t nodeID, MathUtility::Vec3F rotation);
+        // bool SetNodePropertySkew(uint32_t nodeID, MathUtility::Vec3F skew);
+        // bool SetNodePropertyPosition(uint32_t nodeID, MathUtility::Vec3F position);
+
         void Update(uint32_t nodeID, float dt);
         void Render(uint32_t nodeID);
 

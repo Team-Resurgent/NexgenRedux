@@ -1,5 +1,5 @@
 #include "NodeManager.h"
-#include "Node.h"
+#include "NodeSprite.h"
 
 #include <Gensys/DebugUtility.h>
 #include <Gensys/Int.h>
@@ -28,7 +28,11 @@ NodeManager::~NodeManager(void)
 uint32_t NodeManager::CreateSceneNode(NodeType nodeType, uint32_t sceneID) 
 {
     uint32_t nodeID = ++m_maxNodeID;
-    Node* node = new Node(nodeType, nodeID);
+    Node* node;
+    if (nodeType == NodeTypeSprite)
+    {
+        node  = new NodeSprite(nodeID);
+    }
     m_nodeMap.insert(std::pair<uint32_t, Node*>(nodeID, node));
     m_sceneManager->AddSceneNode(sceneID, nodeID);
     return nodeID;
@@ -43,7 +47,11 @@ uint32_t NodeManager::CreateNode(NodeType nodeType, uint32_t parentNodeID)
     }
 
     uint32_t newNodeID = ++m_maxNodeID;
-    Node* node = new Node(parentNode, nodeType, newNodeID);
+    Node* node;
+    if (nodeType == NodeTypeSprite)
+    {
+        node  = new NodeSprite(parentNode, newNodeID);
+    }
     m_nodeMap.insert(std::pair<uint32_t, Node*>(newNodeID, node));
     parentNode->AddChildNode(newNodeID);
     return newNodeID;
@@ -58,7 +66,11 @@ uint32_t NodeManager::CreateNodeAt(NodeType nodeType, uint32_t parentNodeID, uin
     }
 
     uint32_t newNodeID = ++m_maxNodeID;
-    Node* node = new Node(parentNode, nodeType, newNodeID);
+    Node* node;
+    if (nodeType == NodeTypeSprite)
+    {
+        node  = new NodeSprite(parentNode, newNodeID);
+    }
     m_nodeMap.insert(std::pair<uint32_t, Node*>(newNodeID, node));
     parentNode->AddChildNodeAt(nodeID, newNodeID);
     return newNodeID;
@@ -130,10 +142,82 @@ void NodeManager::CheckForOrphans()
     }
 }
 
+// bool NodeManager::SetNodePropertyAnchor(uint32_t nodeID, MathUtility::Vec3F anchor)
+// {
+//     Node* node = GetNode(nodeID);
+//     if (node == NULL)
+//     {
+//         return false;
+//     }
+
+//     if (node->HasProperty(PropertyTypeAnchor) == false)
+//     {
+//         return false;
+//     }
+
+//     PropertyAnchor* propertyAnchor = (PropertyAnchor*)node->GetProperty(PropertyTypeAnchor);
+//     propertyAnchor->SetAnchor(anchor);
+//     return true;
+// }
+
+// bool NodeManager::SetNodePropertyRotation(uint32_t nodeID, MathUtility::Vec3F rotation)
+// {
+//     Node* node = GetNode(nodeID);
+//     if (node == NULL)
+//     {
+//         return false;
+//     }
+
+//     if (node->HasProperty(PropertyTypeRotation) == false)
+//     {
+//         return false;
+//     }
+
+//     PropertyRotation* propertyRotation = (PropertyRotation*)node->GetProperty(PropertyTypeRotation);
+//     propertyRotation->SetRotation(rotation);
+//     return true;
+// }
+
+// bool NodeManager::SetNodePropertySkew(uint32_t nodeID, MathUtility::Vec3F skew)
+// {
+//     Node* node = GetNode(nodeID);
+//     if (node == NULL)
+//     {
+//         return false;
+//     }
+
+//     if (node->HasProperty(PropertyTypeSkew) == false)
+//     {
+//         return false;
+//     }
+
+//     PropertySkew* propertySkew = (PropertySkew*)node->GetProperty(PropertyTypeSkew);
+//     propertySkew->SetSkew(skew);
+//     return true;
+// }
+
+// bool NodeManager::SetNodePropertyPosition(uint32_t nodeID, MathUtility::Vec3F position)
+// {
+//     Node* node = GetNode(nodeID);
+//     if (node == NULL)
+//     {
+//         return false;
+//     }
+
+//     if (node->HasProperty(PropertyTypePosition) == false)
+//     {
+//         return false;
+//     }
+
+//     PropertyPosition* propertyposition = (PropertyPosition*)node->GetProperty(PropertyTypePosition);
+//     propertyposition->SetPosition(position);
+//     return true;
+// }
+
 void NodeManager::Update(uint32_t nodeID, float dt)
 {
     Node* node = GetNode(nodeID);
-    if (node->MarkedForDelete())
+    if (node == NULL || node->MarkedForDelete())
     {
         return;
     }

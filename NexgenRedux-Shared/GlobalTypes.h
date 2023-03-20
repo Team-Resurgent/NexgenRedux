@@ -279,6 +279,11 @@ namespace NexgenRedux
 	} NodeType;  
 
 	typedef enum PropertyType {
+		PropertyTypeAnchor,
+		PropertyTypeRotation,
+		PropertyTypeScale,
+		PropertyTypeSkew,
+		PropertyTypePosition,
 		PropertyTypeTransform
 	} PropertyType;  
 }

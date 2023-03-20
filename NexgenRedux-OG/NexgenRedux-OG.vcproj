@@ -249,34 +249,31 @@
 				</Filter>
 			</Filter>
 			<Filter
-				Name="ECS"
+				Name="EntityEngine"
 				Filter="">
 				<File
-					RelativePath="..\NexgenRedux-Shared\Ecs\ECSComponent.h">
+					RelativePath="..\NexgenRedux-Shared\EntityEngine\Node.cpp">
 				</File>
 				<File
-					RelativePath="..\NexgenRedux-Shared\Ecs\ECSEntity.cpp">
+					RelativePath="..\NexgenRedux-Shared\EntityEngine\Node.h">
 				</File>
 				<File
-					RelativePath="..\NexgenRedux-Shared\Ecs\ECSEntity.h">
+					RelativePath="..\NexgenRedux-Shared\EntityEngine\NodeManager.cpp">
 				</File>
 				<File
-					RelativePath="..\NexgenRedux-Shared\Ecs\ECSEntityManager.cpp">
+					RelativePath="..\NexgenRedux-Shared\EntityEngine\NodeManager.h">
 				</File>
 				<File
-					RelativePath="..\NexgenRedux-Shared\Ecs\ECSEntityManager.h">
+					RelativePath="..\NexgenRedux-Shared\EntityEngine\NodeSprite.cpp">
 				</File>
 				<File
-					RelativePath="..\NexgenRedux-Shared\Ecs\ECSRenderSystem.cpp">
+					RelativePath="..\NexgenRedux-Shared\EntityEngine\NodeSprite.h">
 				</File>
 				<File
-					RelativePath="..\NexgenRedux-Shared\Ecs\ECSRenderSystem.h">
+					RelativePath="..\NexgenRedux-Shared\EntityEngine\SceneManager.cpp">
 				</File>
 				<File
-					RelativePath="..\NexgenRedux-Shared\Ecs\ECSTransformComponent.cpp">
-				</File>
-				<File
-					RelativePath="..\NexgenRedux-Shared\Ecs\ECSTransformComponent.h">
+					RelativePath="..\NexgenRedux-Shared\EntityEngine\SceneManager.h">
 				</File>
 			</Filter>
 		</Filter>

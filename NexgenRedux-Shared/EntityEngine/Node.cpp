@@ -1,7 +1,8 @@
 #include "Node.h"
-#include "PropertyTransform.h"
+#include "MathUtility.h"
 #include "GlobalTypes.h"
 
+#include <Gensys/Int.h>
 #include <Gensys/DebugUtility.h>
 
 #include <string>
@@ -9,29 +10,32 @@
 using namespace Gensys;
 using namespace NexgenRedux;
 
-Node::Node(NodeType nodeType, uint32_t nodeID)
+Node::Node(uint32_t nodeID)
 {
     m_parentNode = NULL;
-    m_nodeType = nodeType;
     m_nodeID = nodeID;
     m_deleteFlag = false;
 
-    AddProperties();
+    m_anchor = MathUtility::Vec3F(0, 0, 0);
+    m_rotation = MathUtility::Vec3F(0, 0, 0);
+    m_skew = MathUtility::Vec3F(0, 0, 0);
+    m_scale = MathUtility::Vec3F(1, 1, 1);
+    m_position = MathUtility::Vec3F(0, 0, 0);
+    m_isDirty = true;
 }
 
-Node::Node(Node* parentNode, NodeType nodeType, uint32_t nodeID)
+Node::Node(Node* parentNode, uint32_t nodeID) 
 {
     m_parentNode = parentNode;
-    m_nodeType = nodeType;
     m_nodeID = nodeID;
     m_deleteFlag = false;
 
-    AddProperties();
-}
-
-Node::~Node(void)
-{
-    DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, "Deleting node '%i'", m_nodeID);
+    m_anchor = MathUtility::Vec3F(0, 0, 0);
+    m_rotation = MathUtility::Vec3F(0, 0, 0);
+    m_skew = MathUtility::Vec3F(0, 0, 0);
+    m_scale = MathUtility::Vec3F(1, 1, 1);
+    m_position = MathUtility::Vec3F(0, 0, 0);
+    m_isDirty = true;
 }
 
 void Node::MarkForDelete()
@@ -47,11 +51,6 @@ bool Node::MarkedForDelete()
 uint32_t Node::GetID()
 {
     return m_nodeID;
-}
-
-NodeType Node::GetType()
-{
-    return m_nodeType;
 }
 
 uint32_t Node::GetParentID()
@@ -88,52 +87,100 @@ void Node::EraseChild(uint32_t nodeID)
     }
 }
 
-bool Node::HasProperty(PropertyType propertyType)
+const MathUtility::Vec3F Node::GetAnchor()
 {
-    std::map<PropertyType, Property*>::iterator it = m_propertyMap.find(propertyType);
-	return it != m_propertyMap.end();
+    return m_anchor;
 }
 
-void Node::Update(float dt)
+void Node::SetAnchor(MathUtility::Vec3F value)
 {
-    if (HasProperty(PropertyTypeTransform))
+    if (m_anchor == value) 
     {
-        PropertyTransform* propertyTransform = (PropertyTransform*)GetProperty(PropertyTypeTransform);
-        DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, "Calculated transfor for node '%i'", m_nodeID);
+        return;
     }
-    DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, "Updating node '%i'", m_nodeID);
+    m_anchor = value;
+    m_isDirty = true;
 }
 
-void Node::Render()
+const MathUtility::Vec3F Node::GetRotation()
 {
-    DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, "Rendering node '%i'", m_nodeID);
+    return m_rotation;
 }
 
-// Private Friends
-
-Node* Node::GetParentNode()
+void Node::SetRotation(MathUtility::Vec3F value)
 {
-    return m_parentNode;
-}
-
-// Privates
-
-void Node::AddProperty(PropertyType propertyType, Property* property)
-{
-    m_propertyMap.insert(std::pair<PropertyType, Property*>(propertyType, property));
-}
-
-Property* Node::GetProperty(PropertyType propertyType)
-{
-    std::map<PropertyType, Property*>::iterator it = m_propertyMap.find(propertyType);
-	if (it == m_propertyMap.end()) 
+    if (m_rotation == value) 
     {
-        return NULL;
+        return;
     }
-    return it->second;
+    m_rotation = value;
+    m_isDirty = true;
 }
 
-void Node::AddProperties()
+const MathUtility::Vec3F Node::GetSkew()
 {
-    AddProperty(PropertyTypeTransform, new PropertyTransform(this));
+    return m_skew;
+}
+
+void Node::SetSkew(MathUtility::Vec3F value)
+{
+    if (m_skew == value) 
+    {
+        return;
+    }
+    m_skew = value;
+    m_isDirty = true;
+}
+
+const MathUtility::Vec3F Node::GetScale()
+{
+    return m_scale;
+}
+
+void Node::SetScale(MathUtility::Vec3F value)
+{
+    if (m_scale == value) 
+    {
+        return;
+    }
+    m_scale = value;
+    m_isDirty = true;
+}
+
+const MathUtility::Vec3F Node::GetPosition()
+{
+    return m_position;
+}
+
+void Node::SetPosition(MathUtility::Vec3F value)
+{
+    if (m_position == value) 
+    {
+        return;
+    }
+    m_position = value;
+    m_isDirty = true;
+}
+
+const MathUtility::Matrix4x4 Node::GetTransform() 
+{
+    if (m_isDirty == false)
+    {
+        return m_matrix;
+    }
+
+    MathUtility::Matrix4x4 parentMatrix = MathUtility::Matrix4x4();
+    if (m_parentNode != NULL)
+    {
+        parentMatrix = m_parentNode->GetTransform();
+    }
+    
+    MathUtility::Matrix4x4 inverseAnchorMatrix = MathUtility::Matrix4x4::Translate(MathUtility::Vec3F() - m_anchor);
+    MathUtility::Matrix4x4 rotationMatrix = MathUtility::Matrix4x4::Rotation(m_rotation);
+    MathUtility::Matrix4x4 scaleMatrix = MathUtility::Matrix4x4::Scale(m_scale);
+    MathUtility::Matrix4x4 skewMatrix = MathUtility::Matrix4x4::Skew(m_skew);
+    MathUtility::Matrix4x4 anchorPositionMatrix = MathUtility::Matrix4x4::Translate(m_anchor + m_position);
+    m_matrix = parentMatrix * inverseAnchorMatrix * rotationMatrix * scaleMatrix * skewMatrix * anchorPositionMatrix;
+    m_isDirty = false;
+    return m_matrix;
 }

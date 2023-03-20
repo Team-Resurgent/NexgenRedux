@@ -1,7 +1,7 @@
 #pragma once
 
-#include "PropertyTransform.h"
 #include "GlobalTypes.h"
+#include "MathUtility.h"
 
 #include <vector>
 #include <map>
@@ -14,14 +14,13 @@ namespace NexgenRedux
     class Node 
     {
     public:
-        Node(NodeType nodeType, uint32_t nodeID);
-        Node(Node* parentNode, NodeType nodeType, uint32_t nodeID);
-        ~Node(void);
+        Node(uint32_t nodeID);
+        Node(Node* parentNode, uint32_t nodeID);
+        virtual ~Node(void) {};
 
         void MarkForDelete();
         bool MarkedForDelete();
         uint32_t GetID();
-        NodeType GetType();
         uint32_t GetParentID();
 
         void AddChildNode(uint32_t childNodeID);
@@ -29,29 +28,37 @@ namespace NexgenRedux
         const std::vector<uint32_t>& GetChildNodes();
         void EraseChild(uint32_t nodeID);
 
-        bool HasProperty(PropertyType propertyType);
+        virtual void Update(float dt) = 0;
+        virtual void Render() = 0;
 
-        void Update(float dt);
-        void Render();
+        // Properties
+        const MathUtility::Vec3F GetAnchor();
+        void SetAnchor(MathUtility::Vec3F value);
+        const MathUtility::Vec3F GetRotation();
+        void SetRotation(MathUtility::Vec3F value);
+        const MathUtility::Vec3F GetSkew();
+        void SetSkew(MathUtility::Vec3F value);
+        const MathUtility::Vec3F GetScale();
+        void SetScale(MathUtility::Vec3F value);
+        const MathUtility::Vec3F GetPosition();
+        void SetPosition(MathUtility::Vec3F value);
+        const MathUtility::Matrix4x4 GetTransform();
 
     private:
 
-        friend class PropertyTransform;
-        Node* GetParentNode();
+        friend class  NodeSprite;
 
-    private:
-
-        void AddProperty(PropertyType propertyType, Property* property);
-        Property* GetProperty(PropertyType propertyType);
-        void AddProperties();
-
-    private:
-
-        NodeType m_nodeType;
         Node* m_parentNode;
         uint32_t m_nodeID;
         std::vector<uint32_t> m_childNodes;
-        std::map<PropertyType, Property*> m_propertyMap;
         bool m_deleteFlag;
+
+        bool m_isDirty;
+        MathUtility::Vec3F m_anchor;
+        MathUtility::Vec3F m_rotation;
+        MathUtility::Vec3F m_skew;
+        MathUtility::Vec3F m_scale;
+        MathUtility::Vec3F m_position;
+        MathUtility::Matrix4x4 m_matrix;
     };
 }

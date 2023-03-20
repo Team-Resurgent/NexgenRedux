@@ -70,6 +70,8 @@ uint frameCount;
 
 void Init()
 {
+    NodeSprite nodeSprite(432);
+
     DebugPrint(0, "Initializing...");
 
     DebugPrint(0, "Getting default video modes for each monitor...");

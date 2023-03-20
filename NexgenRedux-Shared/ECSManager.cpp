@@ -15,7 +15,7 @@ void ECSManager::ECSManagerExample(void)
 
     NodeManager* nodeManager = new NodeManager(sceneManager);
 
-    uint32_t nodeID1 = nodeManager->CreateSceneNode(NodeTypeCamera, sceneID);
+    uint32_t nodeID1 = nodeManager->CreateSceneNode(NodeTypeSprite, sceneID);
     uint32_t nodeID2 = nodeManager->CreateNode(NodeTypeSprite, sceneID);
     uint32_t nodeID3 = nodeManager->CreateNode(NodeTypeSprite, nodeID2);
     uint32_t nodeID4 = nodeManager->CreateNode(NodeTypeSprite, nodeID2);

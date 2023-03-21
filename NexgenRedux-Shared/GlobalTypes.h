@@ -148,7 +148,7 @@ namespace NexgenRedux
 
 	typedef struct AmbientLightState
 	{
-		MathUtility::Color3I color;
+		MathUtility::Color3F color;
 		bool isDirty;
 	} AmbientLightState;
 
@@ -161,7 +161,7 @@ namespace NexgenRedux
 
 	typedef struct TintState
 	{
-		MathUtility::Color4I color;
+		MathUtility::Color4F color;
 		bool isDirty;
 	} TintState;
 
@@ -206,7 +206,7 @@ namespace NexgenRedux
 	{
 		MathUtility::Vec3F position;
 		float distance;
-		MathUtility::Color4I diffuse;
+		MathUtility::Color4F diffuse;
 		bool isDirty;
 	} LightInstanceState;
 
@@ -218,7 +218,7 @@ namespace NexgenRedux
 
 	typedef struct FogInstanceState
 	{
-		MathUtility::Color3I color;
+		MathUtility::Color3F color;
 		float start;
 		float end;
 		float density;

@@ -98,6 +98,47 @@ namespace NexgenRedux
 
 		static void NodeSpriteConstructor(NodeSprite& nodeSprite);
 		static void NodeSpriteDestructor(NodeSprite& nodeSprite);
+
+		static void Vec2DConstructorDefault(MathUtility::Vec2D* Vec2D);
+        static void Vec2DConstructorValues(double x, double y, MathUtility::Vec2D* Vec2D);
+        static void Vec2DConstructorCopy(const MathUtility::Vec2D& other, MathUtility::Vec2D* Vec2D);
+
+		static void Vec2FConstructorDefault(MathUtility::Vec2F* vec2F);
+		static void Vec2FConstructorValues(float x, float y, MathUtility::Vec2F* vec2F);
+		static void Vec2FConstructorCopy(const MathUtility::Vec2F& other, MathUtility::Vec2F* vec2F);
+
+		static void Vec3FConstructorDefault(MathUtility::Vec3F* vec3F);
+		static void Vec3FConstructorValues(float x, float y, float z, MathUtility::Vec3F* vec3F);
+		static void Vec3FConstructorCopy(const MathUtility::Vec3F& other, MathUtility::Vec3F* vec3F);
+
+		static void Vec4FConstructorDefault(MathUtility::Vec4F* vec4F);
+		static void Vec4FConstructorValues(float x, float y, float z, float w, MathUtility::Vec4F* vec4F);
+		static void Vec4FConstructorCopy(const MathUtility::Vec4F& other, MathUtility::Vec4F* vec4F);
+
+		static void SizeIConstructorDefault(MathUtility::SizeI* sizeI);
+        static void SizeIConstructorValues(uint32_t x, uint32_t y, MathUtility::SizeI* sizeI);
+        static void SizeIConstructorCopy(const MathUtility::SizeI& other, MathUtility::SizeI* sizeI);
+
+		static void SizeFConstructorDefault(MathUtility::SizeF* sizeF);
+        static void SizeFConstructorValues(float x, float y, MathUtility::SizeF* sizeF);
+        static void SizeFConstructorCopy(const MathUtility::SizeF& other, MathUtility::SizeF* sizeF);
+
+		static void RectIConstructorDefault(MathUtility::RectI* rectI);
+		static void RectIConstructorValues(uint32_t x, uint32_t y, uint32_t width, uint32_t height, MathUtility::RectI* rectI);
+		static void RectIConstructorCopy(const MathUtility::RectI& other, MathUtility::RectI* rectI);
+
+		static void RectFConstructorDefault(MathUtility::RectF* rectF);
+		static void RectFConstructorValues(float x, float y, float width, float height, MathUtility::RectF* rectF);
+		static void RectFConstructorCopy(const MathUtility::RectF& other, MathUtility::RectF* rectF);
+
+		static void Color3FConstructorDefault(MathUtility::Color3F* color3F);
+        static void Color3FConstructorValues(float r, float g, float b, MathUtility::Color3F* color3F);
+        static void Color3FConstructorCopy(const MathUtility::Color3F& other, MathUtility::Color3F* color3F);
+
+        static void Color4FConstructorDefault(MathUtility::Color4F* color4F);
+        static void Color4FConstructorValues(float r, float g, float b, float a, MathUtility::Color4F* color4F);
+        static void Color4FConstructorCopy(const MathUtility::Color4F& other, MathUtility::Color4F* color4F);
+
 	private:
 		WindowManager *m_windowManager;
 	};

@@ -1,7 +1,7 @@
 #include "NodeSprite.h"
 
 #include <Gensys/DebugUtility.h>
-
+#include <stdexcept>
 #include <string>
 
 using namespace Gensys;

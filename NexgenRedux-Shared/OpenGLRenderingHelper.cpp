@@ -398,11 +398,11 @@ void OpenGLRenderingHelper::SetProjectionMatrix(const MathUtility::Matrix4x4& ma
 	glUniformMatrix4fv(value, 1, GL_FALSE, matrix.values);
 }
 
-void OpenGLRenderingHelper::SetAmbientLight(const MathUtility::Color3I& color) 
+void OpenGLRenderingHelper::SetAmbientLight(const MathUtility::Color3F& color) 
 {
 	uint32_t value;
 	GetShaderLookupValue(m_renderStateManager->GetRenderState()->shaderState.shader, "uAmbientColor", value);
-	glUniform4f(value, color.r / 255.0f, color.g / 255.0f, color.b / 255.0f, 0);
+	glUniform4f(value, color.r, color.g, color.b, 0);
 }
 
 void OpenGLRenderingHelper::SetTexture(const uint32_t& textureID, const TextureFilter& filter) 
@@ -428,11 +428,11 @@ void OpenGLRenderingHelper::SetTexture(const uint32_t& textureID, const TextureF
 	}
 }
 
-void OpenGLRenderingHelper::SetTint(const MathUtility::Color4I& color) 
+void OpenGLRenderingHelper::SetTint(const MathUtility::Color4F& color) 
 {
 	uint32_t value;
 	GetShaderLookupValue(m_renderStateManager->GetRenderState()->shaderState.shader, "uTintColor", value);
-	glUniform4f(value, color.r / 255.0f, color.g / 255.0f, color.b / 255.0f, color.a / 255.0f);
+	glUniform4f(value, color.r, color.g, color.b, color.a);
 }
 
 void OpenGLRenderingHelper::SetBlend(const BlendOperation& operation) 
@@ -681,7 +681,7 @@ void OpenGLRenderingHelper::SetLight1(const LightOperation& operation)
 	}
 }
 
-void OpenGLRenderingHelper::SetLightInstance1(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse) 
+void OpenGLRenderingHelper::SetLightInstance1(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4F& diffuse) 
 {
 	uint32_t value;
 	GetShaderLookupValue(m_renderStateManager->GetRenderState()->shaderState.shader, "uLightPosition0", value);
@@ -705,7 +705,7 @@ void OpenGLRenderingHelper::SetLight2(const LightOperation& operation)
 	}
 }
 
-void OpenGLRenderingHelper::SetLightInstance2(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse) 
+void OpenGLRenderingHelper::SetLightInstance2(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4F& diffuse) 
 {
 	uint32_t value;
 	GetShaderLookupValue(m_renderStateManager->GetRenderState()->shaderState.shader, "uLightPosition1", value);
@@ -728,7 +728,7 @@ void OpenGLRenderingHelper::SetLight3(const LightOperation& operation)
 	}
 }
 
-void OpenGLRenderingHelper::SetLightInstance3(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse) 
+void OpenGLRenderingHelper::SetLightInstance3(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4F& diffuse) 
 {
 	uint32_t value;
 	GetShaderLookupValue(m_renderStateManager->GetRenderState()->shaderState.shader, "uLightPosition2", value);
@@ -751,7 +751,7 @@ void OpenGLRenderingHelper::SetLight4(const LightOperation& operation)
 	}
 }
 
-void OpenGLRenderingHelper::SetLightInstance4(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse) 
+void OpenGLRenderingHelper::SetLightInstance4(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4F& diffuse) 
 {
 	uint32_t value;
 	GetShaderLookupValue(m_renderStateManager->GetRenderState()->shaderState.shader, "uLightPosition3", value);
@@ -782,11 +782,11 @@ void OpenGLRenderingHelper::SetFog(const FogOperation& operation)
 	}
 }
 
-void OpenGLRenderingHelper::SetFogInstance(const MathUtility::Color3I& color, const float& start, const float& end, const float& density) 
+void OpenGLRenderingHelper::SetFogInstance(const MathUtility::Color3F& color, const float& start, const float& end, const float& density) 
 {
 	uint32_t value;
 	GetShaderLookupValue(m_renderStateManager->GetRenderState()->shaderState.shader, "uFogColor", value);
-	glUniform4f(value, color.r / 255.0f, color.g / 255.0f, color.b / 255.0f, 0);
+	glUniform4f(value, color.r, color.g, color.b, 0);
 	GetShaderLookupValue(m_renderStateManager->GetRenderState()->shaderState.shader, "uFogStart", value);
 	glUniform1f(value, start);
 	GetShaderLookupValue(m_renderStateManager->GetRenderState()->shaderState.shader, "uFogEnd", value);

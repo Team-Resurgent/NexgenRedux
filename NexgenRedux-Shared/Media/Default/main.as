@@ -70,8 +70,14 @@ uint frameCount;
 
 void Init()
 {
-    uint test = 432;
-    NodeSprite nodeSprite(test);
+    NodeSprite nodeSprite();
+    Vec3F vec(1,2,3);
+    Vec3F other(4,5,6);
+    float x = vec.Dot(other);
+
+    //RectF newy(rectx);
+
+    //nodeSprite.SetUV(rect);
 
     DebugPrint(0, "Initializing...");
 

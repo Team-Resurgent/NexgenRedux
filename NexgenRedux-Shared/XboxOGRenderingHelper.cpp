@@ -153,11 +153,11 @@ void XboxOGRenderingHelper::SetProjectionMatrix(const MathUtility::Matrix4x4& ma
 	}
 }
 
-void XboxOGRenderingHelper::SetAmbientLight(const MathUtility::Color3I& color) 
+void XboxOGRenderingHelper::SetAmbientLight(const MathUtility::Color3F& color) 
 {
 	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)m_windowHelper)->GetD3DDevice();
 
-	D3DCOLOR tempColor = D3DCOLOR_XRGB(color.values[0], color.values[1], color.values[2]);
+	D3DCOLOR tempColor = D3DCOLOR_XRGB((int)(color.values[0] * 255), (int)(color.values[1] * 255), (int)(color.values[2] * 255));
 	if (FAILED(d3dDevice->SetRenderState(D3DRS_AMBIENT, tempColor)))
 	{
 		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "SetAmbientLight: Failed.");
@@ -204,11 +204,11 @@ void XboxOGRenderingHelper::SetTexture(const uint32_t& textureID, const TextureF
 	}
 }
 
-void XboxOGRenderingHelper::SetTint(const MathUtility::Color4I& color) 
+void XboxOGRenderingHelper::SetTint(const MathUtility::Color4F& color) 
 {
 	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)m_windowHelper)->GetD3DDevice();
 
-	D3DCOLOR tempColor = D3DCOLOR_RGBA(color.values[0], color.values[1], color.values[2], color.values[3]);
+	D3DCOLOR tempColor = D3DCOLOR_RGBA((int)(color.values[0] * 255), (int)(color.values[1] * 255), (int)(color.values[2] * 255), (int)(color.values[3] * 255));
 	if (FAILED(d3dDevice->SetRenderState(D3DRS_TEXTUREFACTOR, tempColor)))
 	{
 		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "SetTint: Failed.");
@@ -789,11 +789,11 @@ void XboxOGRenderingHelper::SetFog(const FogOperation& operation)
 	}
 }
 
-void XboxOGRenderingHelper::SetFogInstance(const MathUtility::Color3I& color, const float& start, const float& end, const float& density) 
+void XboxOGRenderingHelper::SetFogInstance(const MathUtility::Color3F& color, const float& start, const float& end, const float& density) 
 {
 	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)m_windowHelper)->GetD3DDevice();
 
-	D3DCOLOR tempColor = D3DCOLOR_RGBA(color.values[0], color.values[1], color.values[2], 255);
+	D3DCOLOR tempColor = D3DCOLOR_RGBA((int)(color.values[0] * 255), (int)(color.values[1] * 255), (int)(color.values[2] * 255), 255);
 	if (FAILED(d3dDevice->SetRenderState(D3DRS_FOGCOLOR, tempColor)))
 	{
 		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "SetFogInstance: Failed to set color.");

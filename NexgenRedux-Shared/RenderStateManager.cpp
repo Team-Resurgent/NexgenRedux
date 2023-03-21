@@ -29,23 +29,23 @@ void RenderStateManager::Init(void)
     SetModelMatrix(MathUtility::Matrix4x4());
     SetViewMatrix(MathUtility::Matrix4x4());
     SetProjectionMatrix(MathUtility::Matrix4x4());
-    SetAmbientLight(MathUtility::Color3I(25, 25, 25));
-    SetTint(MathUtility::Color4I(255, 255, 255, 255));
+    SetAmbientLight(MathUtility::Color3F(25 / 255.0f, 25 / 255.0f, 2 / 255.0f));
+    SetTint(MathUtility::Color4F(1, 1, 1, 1));
     SetBlend(BlendOperationDisabled);
     SetBlendFactors(BlendFactorOne, BlendFactorOne);
     SetCulling(CullingOperationDisabled);
     SetDepth(DepthOperationLess);
     SetLights(LightsOperationDisabled);
     SetLight1(LightOperationDisabled);
-    SetLightInstance1(MathUtility::Vec3F(0, 0, 0), 0, MathUtility::Color4I(0, 0, 0, 0));
+    SetLightInstance1(MathUtility::Vec3F(0, 0, 0), 0, MathUtility::Color4F(0, 0, 0, 0));
     SetLight2(LightOperationDisabled);
-    SetLightInstance2(MathUtility::Vec3F(0, 0, 0), 0, MathUtility::Color4I(0, 0, 0, 0));
+    SetLightInstance2(MathUtility::Vec3F(0, 0, 0), 0, MathUtility::Color4F(0, 0, 0, 0));
     SetLight3(LightOperationDisabled);
-    SetLightInstance3(MathUtility::Vec3F(0, 0, 0), 0, MathUtility::Color4I(0, 0, 0, 0));
+    SetLightInstance3(MathUtility::Vec3F(0, 0, 0), 0, MathUtility::Color4F(0, 0, 0, 0));
     SetLight4(LightOperationDisabled);
-    SetLightInstance4(MathUtility::Vec3F(0, 0, 0), 0, MathUtility::Color4I(0, 0, 0, 0));
+    SetLightInstance4(MathUtility::Vec3F(0, 0, 0), 0, MathUtility::Color4F(0, 0, 0, 0));
     SetFog(FogOperationDisabled);
-    SetFogInstance(MathUtility::Color3I(0, 0, 0), 0, 0, 0);
+    SetFogInstance(MathUtility::Color3F(0, 0, 0), 0, 0, 0);
     SetViewport(MathUtility::RectI(0, 0, 640, 480));
     SetScissor(ScissorOperationDisabled, MathUtility::RectI());
     SetDrawMode(DrawModeTriangles);
@@ -217,7 +217,7 @@ void RenderStateManager::SetProjectionMatrix(const MathUtility::Matrix4x4& matri
     m_renderState.projectionMatrixState.isDirty = isDirty;
 }
 
-void RenderStateManager::SetAmbientLight(const MathUtility::Color3I& color) 
+void RenderStateManager::SetAmbientLight(const MathUtility::Color3F& color) 
 { 
     bool isDirty = false;
     if (m_initialized == false || m_renderState.ambientLightState.color != color)
@@ -244,7 +244,7 @@ void RenderStateManager::SetTexture(const uint32_t& textureID, const TextureFilt
     m_renderState.textureState.isDirty = isDirty;
 }
 
-void RenderStateManager::SetTint(const MathUtility::Color4I& color)
+void RenderStateManager::SetTint(const MathUtility::Color4F& color)
 {
     bool isDirty = false;
     if (m_initialized == false || m_renderState.tintState.color != color)
@@ -326,7 +326,7 @@ void RenderStateManager::SetLight1(const LightOperation& operation)
     m_renderState.lightState1.isDirty = isDirty;
 }
 
-void RenderStateManager::SetLightInstance1(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse) 
+void RenderStateManager::SetLightInstance1(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4F& diffuse) 
 { 
     bool isDirty = false;
     if (m_initialized == false || m_renderState.lightInstanceState1.position != position)
@@ -358,7 +358,7 @@ void RenderStateManager::SetLight2(const LightOperation& operation)
     m_renderState.lightState2.isDirty = isDirty;
 }
 
-void RenderStateManager::SetLightInstance2(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse) 
+void RenderStateManager::SetLightInstance2(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4F& diffuse) 
 { 
     bool isDirty = false;
     if (m_initialized == false || m_renderState.lightInstanceState2.position != position)
@@ -390,7 +390,7 @@ void RenderStateManager::SetLight3(const LightOperation& operation)
     m_renderState.lightState3.isDirty = isDirty;
 }
 
-void RenderStateManager::SetLightInstance3(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse) 
+void RenderStateManager::SetLightInstance3(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4F& diffuse) 
 { 
     bool isDirty = false;
     if (m_initialized == false || m_renderState.lightInstanceState3.position != position)
@@ -422,7 +422,7 @@ void RenderStateManager::SetLight4(const LightOperation& operation)
     m_renderState.lightState4.isDirty = isDirty;
 }
 
-void RenderStateManager::SetLightInstance4(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse) 
+void RenderStateManager::SetLightInstance4(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4F& diffuse) 
 { 
     bool isDirty = false;
     if (m_initialized == false || m_renderState.lightInstanceState4.position != position)
@@ -454,7 +454,7 @@ void RenderStateManager::SetFog(const FogOperation& operation)
     m_renderState.fogState.isDirty = isDirty;
 }
 
-void RenderStateManager::SetFogInstance(const MathUtility::Color3I& color, const float& start, const float& end, const float& density) 
+void RenderStateManager::SetFogInstance(const MathUtility::Color3F& color, const float& start, const float& end, const float& density) 
 { 
     bool isDirty = false;
     if (m_initialized == false || m_renderState.fogInstanceState.color != color)

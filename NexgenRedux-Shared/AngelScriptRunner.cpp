@@ -170,6 +170,176 @@ void AngelScriptRunner::NodeSpriteDestructor(NodeSprite& nodeSprite)
 	nodeSprite.~NodeSprite();
 }
 
+// Vec2D
+
+void AngelScriptRunner::Vec2DConstructorDefault(MathUtility::Vec2D* Vec2D)
+{
+    new (Vec2D)MathUtility::Vec2D();
+}
+
+void AngelScriptRunner::Vec2DConstructorValues(double x, double y, MathUtility::Vec2D* Vec2D)
+{
+    new (Vec2D)MathUtility::Vec2D(x, y);
+}
+
+void AngelScriptRunner::Vec2DConstructorCopy(const MathUtility::Vec2D& other, MathUtility::Vec2D* Vec2D)
+{
+    new (Vec2D)MathUtility::Vec2D(other);
+}
+
+// Vec2F
+
+void AngelScriptRunner::Vec2FConstructorDefault(MathUtility::Vec2F* Vec2F)
+{
+    new (Vec2F)MathUtility::Vec2F();
+}
+
+void AngelScriptRunner::Vec2FConstructorValues(float x, float y, MathUtility::Vec2F* Vec2F)
+{
+    new (Vec2F)MathUtility::Vec2F(x, y);
+}
+
+void AngelScriptRunner::Vec2FConstructorCopy(const MathUtility::Vec2F& other, MathUtility::Vec2F* Vec2F)
+{
+    new (Vec2F)MathUtility::Vec2F(other);
+}
+
+// Vec3F
+
+void AngelScriptRunner::Vec3FConstructorDefault(MathUtility::Vec3F* vec3F)
+{
+	new (vec3F)MathUtility::Vec3F();
+}
+
+void AngelScriptRunner::Vec3FConstructorValues(float x, float y, float z, MathUtility::Vec3F* vec3F)
+{
+	new (vec3F)MathUtility::Vec3F(x, y, z);
+}
+
+void AngelScriptRunner::Vec3FConstructorCopy(const MathUtility::Vec3F& other, MathUtility::Vec3F* vec3F)
+{
+	new (vec3F)MathUtility::Vec3F(other);
+}
+
+// Vec4F
+
+void AngelScriptRunner::Vec4FConstructorDefault(MathUtility::Vec4F* vec4F)
+{
+	new (vec4F)MathUtility::Vec4F();
+}
+
+void AngelScriptRunner::Vec4FConstructorValues(float x, float y, float z, float w, MathUtility::Vec4F* vec4F)
+{
+	new (vec4F)MathUtility::Vec4F(x, y, z, w);
+}
+
+void AngelScriptRunner::Vec4FConstructorCopy(const MathUtility::Vec4F& other, MathUtility::Vec4F* vec4F)
+{
+	new (vec4F)MathUtility::Vec4F(other);
+}
+
+// SizeI
+
+void AngelScriptRunner::SizeIConstructorDefault(MathUtility::SizeI* sizeI)
+{
+    new (sizeI)MathUtility::SizeI();
+}
+
+void AngelScriptRunner::SizeIConstructorValues(uint32_t x, uint32_t y, MathUtility::SizeI* sizeI)
+{
+    new (sizeI)MathUtility::SizeI(x, y);
+}
+
+void AngelScriptRunner::SizeIConstructorCopy(const MathUtility::SizeI& other, MathUtility::SizeI* sizeI)
+{
+    new (sizeI)MathUtility::SizeI(other);
+}
+
+// SizeF
+
+void AngelScriptRunner::SizeFConstructorDefault(MathUtility::SizeF* sizeF)
+{
+    new (sizeF)MathUtility::SizeF();
+}
+
+void AngelScriptRunner::SizeFConstructorValues(float x, float y, MathUtility::SizeF* sizeF)
+{
+    new (sizeF)MathUtility::SizeF(x, y);
+}
+
+void AngelScriptRunner::SizeFConstructorCopy(const MathUtility::SizeF& other, MathUtility::SizeF* sizeF)
+{
+    new (sizeF)MathUtility::SizeF(other);
+}
+
+// RectI
+
+void AngelScriptRunner::RectIConstructorDefault(MathUtility::RectI* rectI)
+{
+	new (rectI)MathUtility::RectI();
+}
+
+void AngelScriptRunner::RectIConstructorValues(uint32_t x, uint32_t y, uint32_t width, uint32_t height, MathUtility::RectI* rectI)
+{
+	new (rectI)MathUtility::RectI(x, y, width, height);
+}
+
+void AngelScriptRunner::RectIConstructorCopy(const MathUtility::RectI& other, MathUtility::RectI* rectI)
+{
+	new (rectI)MathUtility::RectI(other);
+}
+
+// RectF
+
+void AngelScriptRunner::RectFConstructorDefault(MathUtility::RectF* rectF)
+{
+	new (rectF)MathUtility::RectF();
+}
+
+void AngelScriptRunner::RectFConstructorValues(float x, float y, float width, float height, MathUtility::RectF* rectF)
+{
+	new (rectF)MathUtility::RectF(x, y, width, height);
+}
+
+void AngelScriptRunner::RectFConstructorCopy(const MathUtility::RectF& other, MathUtility::RectF* rectF)
+{
+	new (rectF)MathUtility::RectF(other);
+}
+
+// Color3F
+
+void AngelScriptRunner::Color3FConstructorDefault(MathUtility::Color3F* color3F)
+{
+    new (color3F)MathUtility::Color3F();
+}
+
+void AngelScriptRunner::Color3FConstructorValues(float r, float g, float b, MathUtility::Color3F* color3F)
+{
+    new (color3F)MathUtility::Color3F(r, g, b);
+}
+
+void AngelScriptRunner::Color3FConstructorCopy(const MathUtility::Color3F& other, MathUtility::Color3F* color3F)
+{
+    new (color3F)MathUtility::Color3F(other);
+}
+
+// Color4F
+
+void AngelScriptRunner::Color4FConstructorDefault(MathUtility::Color4F* color4F)
+{
+    new (color4F)MathUtility::Color4F();
+}
+
+void AngelScriptRunner::Color4FConstructorValues(float r, float g, float b, float a, MathUtility::Color4F* color4F)
+{
+    new (color4F)MathUtility::Color4F(r, g, b, a);
+}
+
+void AngelScriptRunner::Color4FConstructorCopy(const MathUtility::Color4F& other, MathUtility::Color4F* color4F)
+{
+    new (color4F)MathUtility::Color4F(other);
+}
+
 bool AngelScriptRunner::Init(std::wstring launchFolder)
 {
 	m_engine = asCreateScriptEngine();
@@ -227,13 +397,156 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
     if (m_engine->RegisterObjectProperty("Time", "uint16 minute", asOFFSET(TimeUtility::Time, minute)) < 0) { return false; }
     if (m_engine->RegisterObjectProperty("Time", "uint16 second", asOFFSET(TimeUtility::Time, second)) < 0) { return false; }
 
-	if (m_engine->RegisterObjectType("Vec2D", sizeof(MathUtility::Vec2D), asOBJ_VALUE | asOBJ_POD) < 0) { return false; }
-    if (m_engine->RegisterObjectProperty("Vec2D", "double x", asOFFSET(MathUtility::Vec2D, x)) < 0) { return false; }
-    if (m_engine->RegisterObjectProperty("Vec2D", "double y", asOFFSET(MathUtility::Vec2D, y)) < 0) { return false; }
+    if (m_engine->RegisterObjectType("Vec2D", sizeof(MathUtility::Vec2D), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CAK) < 0) { return false; }
+    if (m_engine->RegisterObjectBehaviour("Vec2D", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Vec2DConstructorDefault), asCALL_CDECL_OBJLAST) < 0) { return false; }
+    if (m_engine->RegisterObjectBehaviour("Vec2D", asBEHAVE_CONSTRUCT, "void f(double, double)", asFUNCTION(Vec2DConstructorValues), asCALL_CDECL_OBJLAST) < 0) { return false; }
+    if (m_engine->RegisterObjectBehaviour("Vec2D", asBEHAVE_CONSTRUCT, "void f(Vec2D &in)", asFUNCTION(Vec2DConstructorCopy), asCALL_CDECL_OBJLAST) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("Vec2D", "float x", asOFFSET(MathUtility::Vec2D, x)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("Vec2D", "float y", asOFFSET(MathUtility::Vec2D, y)) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Vec2D", "Vec2D opDiv(const Vec2D &in) const", asMETHODPR(MathUtility::Vec2D, operator/, (const MathUtility::Vec2D &) const, MathUtility::Vec2D), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Vec2D", "Vec2D opMul(const Vec2D &in) const", asMETHODPR(MathUtility::Vec2D, operator*, (const MathUtility::Vec2D &) const, MathUtility::Vec2D), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Vec2D", "Vec2D opAdd(const Vec2D &in) const", asMETHODPR(MathUtility::Vec2D, operator+, (const MathUtility::Vec2D &) const, MathUtility::Vec2D), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Vec2D", "Vec2D opSub(const Vec2D &in) const", asMETHODPR(MathUtility::Vec2D, operator-, (const MathUtility::Vec2D &) const, MathUtility::Vec2D), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Vec2D", "Vec2D &opDivAssign(const Vec2D &in)", asMETHODPR(MathUtility::Vec2D, operator/=, (const MathUtility::Vec2D &), void), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Vec2D", "Vec2D& opMulAssign(const Vec2D &in)", asMETHODPR(MathUtility::Vec2D, operator*=, (const MathUtility::Vec2D &), void), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Vec2D", "Vec2D& opAddAssign(const Vec2D &in)", asMETHODPR(MathUtility::Vec2D, operator+=, (const MathUtility::Vec2D &), void), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Vec2D", "Vec2D& opSubAssign(const Vec2D &in)", asMETHODPR(MathUtility::Vec2D, operator-=, (const MathUtility::Vec2D &), void), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Vec2D", "bool opEq(const Vec2D &in) const", asMETHODPR(MathUtility::Vec2D, operator==, (const MathUtility::Vec2D &) const, bool), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Vec2D", "bool opNotEq(const Vec2D &in) const", asMETHODPR(MathUtility::Vec2D, operator!=, (const MathUtility::Vec2D &) const, bool), asCALL_THISCALL) < 0) { return false; }
 
-	if (m_engine->RegisterObjectType("SizeI", sizeof(MathUtility::SizeI), asOBJ_VALUE | asOBJ_POD) < 0) { return false; }
+	if (m_engine->RegisterObjectType("Vec2F", sizeof(MathUtility::Vec2F), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CAK) < 0) { return false; }
+    if (m_engine->RegisterObjectBehaviour("Vec2F", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Vec2FConstructorDefault), asCALL_CDECL_OBJLAST) < 0) { return false; }
+    if (m_engine->RegisterObjectBehaviour("Vec2F", asBEHAVE_CONSTRUCT, "void f(float, float)", asFUNCTION(Vec2FConstructorValues), asCALL_CDECL_OBJLAST) < 0) { return false; }
+    if (m_engine->RegisterObjectBehaviour("Vec2F", asBEHAVE_CONSTRUCT, "void f(Vec2F &in)", asFUNCTION(Vec2FConstructorCopy), asCALL_CDECL_OBJLAST) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("Vec2F", "float x", asOFFSET(MathUtility::Vec2F, x)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("Vec2F", "float y", asOFFSET(MathUtility::Vec2F, y)) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Vec2F", "Vec2F opDiv(const Vec2F &in) const", asMETHODPR(MathUtility::Vec2F, operator/, (const MathUtility::Vec2F &) const, MathUtility::Vec2F), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Vec2F", "Vec2F opMul(const Vec2F &in) const", asMETHODPR(MathUtility::Vec2F, operator*, (const MathUtility::Vec2F &) const, MathUtility::Vec2F), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Vec2F", "Vec2F opAdd(const Vec2F &in) const", asMETHODPR(MathUtility::Vec2F, operator+, (const MathUtility::Vec2F &) const, MathUtility::Vec2F), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Vec2F", "Vec2F opSub(const Vec2F &in) const", asMETHODPR(MathUtility::Vec2F, operator-, (const MathUtility::Vec2F &) const, MathUtility::Vec2F), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Vec2F", "Vec2F &opDivAssign(const Vec2F &in)", asMETHODPR(MathUtility::Vec2F, operator/=, (const MathUtility::Vec2F &), void), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Vec2F", "Vec2F& opMulAssign(const Vec2F &in)", asMETHODPR(MathUtility::Vec2F, operator*=, (const MathUtility::Vec2F &), void), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Vec2F", "Vec2F& opAddAssign(const Vec2F &in)", asMETHODPR(MathUtility::Vec2F, operator+=, (const MathUtility::Vec2F &), void), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Vec2F", "Vec2F& opSubAssign(const Vec2F &in)", asMETHODPR(MathUtility::Vec2F, operator-=, (const MathUtility::Vec2F &), void), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Vec2F", "bool opEq(const Vec2F &in) const", asMETHODPR(MathUtility::Vec2F, operator==, (const MathUtility::Vec2F &) const, bool), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Vec2F", "bool opNotEq(const Vec2F &in) const", asMETHODPR(MathUtility::Vec2F, operator!=, (const MathUtility::Vec2F &) const, bool), asCALL_THISCALL) < 0) { return false; }
+
+    if (m_engine->RegisterObjectType("Vec3F", sizeof(MathUtility::Vec3F), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CAK) < 0) { return false; }
+    if (m_engine->RegisterObjectBehaviour("Vec3F", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Vec3FConstructorDefault), asCALL_CDECL_OBJLAST) < 0) { return false; }
+    if (m_engine->RegisterObjectBehaviour("Vec3F", asBEHAVE_CONSTRUCT, "void f(float, float, float)", asFUNCTION(Vec3FConstructorValues), asCALL_CDECL_OBJLAST) < 0) { return false; }
+    if (m_engine->RegisterObjectBehaviour("Vec3F", asBEHAVE_CONSTRUCT, "void f(Vec3F &in)", asFUNCTION(Vec3FConstructorCopy), asCALL_CDECL_OBJLAST) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("Vec3F", "float x", asOFFSET(MathUtility::Vec3F, x)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("Vec3F", "float y", asOFFSET(MathUtility::Vec3F, y)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("Vec3F", "float z", asOFFSET(MathUtility::Vec3F, z)) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Vec3F", "Vec3F opDiv(const Vec3F &in) const", asMETHODPR(MathUtility::Vec3F, operator/, (const MathUtility::Vec3F &) const, MathUtility::Vec3F), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Vec3F", "Vec3F opMul(const Vec3F &in) const", asMETHODPR(MathUtility::Vec3F, operator*, (const MathUtility::Vec3F &) const, MathUtility::Vec3F), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Vec3F", "Vec3F opAdd(const Vec3F &in) const", asMETHODPR(MathUtility::Vec3F, operator+, (const MathUtility::Vec3F &) const, MathUtility::Vec3F), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Vec3F", "Vec3F opSub(const Vec3F &in) const", asMETHODPR(MathUtility::Vec3F, operator-, (const MathUtility::Vec3F &) const, MathUtility::Vec3F), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Vec3F", "Vec3F &opDivAssign(const Vec3F &in)", asMETHODPR(MathUtility::Vec3F, operator/=, (const MathUtility::Vec3F &), void), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Vec3F", "Vec3F& opMulAssign(const Vec3F &in)", asMETHODPR(MathUtility::Vec3F, operator*=, (const MathUtility::Vec3F &), void), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Vec3F", "Vec3F& opAddAssign(const Vec3F &in)", asMETHODPR(MathUtility::Vec3F, operator+=, (const MathUtility::Vec3F &), void), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Vec3F", "Vec3F& opSubAssign(const Vec3F &in)", asMETHODPR(MathUtility::Vec3F, operator-=, (const MathUtility::Vec3F &), void), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Vec3F", "bool opEq(const Vec3F &in) const", asMETHODPR(MathUtility::Vec3F, operator==, (const MathUtility::Vec3F &) const, bool), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Vec3F", "bool opNotEq(const Vec3F &in) const", asMETHODPR(MathUtility::Vec3F, operator!=, (const MathUtility::Vec3F &) const, bool), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Vec3F", "float Dot(const Vec3F &in)", asMETHOD(MathUtility::Vec3F, Dot), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Vec3F", "Vec3F Cross(const Vec3F &in)", asMETHOD(MathUtility::Vec3F, Cross), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Vec3F", "Vec3F Normal()", asMETHOD(MathUtility::Vec3F, Normal), asCALL_THISCALL) < 0) { return false; }
+
+    if (m_engine->RegisterObjectType("Vec4F", sizeof(MathUtility::Vec4F), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CAK) < 0) { return false; }
+    if (m_engine->RegisterObjectBehaviour("Vec4F", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Vec4FConstructorDefault), asCALL_CDECL_OBJLAST) < 0) { return false; }
+    if (m_engine->RegisterObjectBehaviour("Vec4F", asBEHAVE_CONSTRUCT, "void f(float, float, float, float)", asFUNCTION(Vec4FConstructorValues), asCALL_CDECL_OBJLAST) < 0) { return false; }
+    if (m_engine->RegisterObjectBehaviour("Vec4F", asBEHAVE_CONSTRUCT, "void f(Vec4F &in)", asFUNCTION(Vec4FConstructorCopy), asCALL_CDECL_OBJLAST) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("Vec4F", "float x", asOFFSET(MathUtility::Vec4F, x)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("Vec4F", "float y", asOFFSET(MathUtility::Vec4F, y)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("Vec4F", "float z", asOFFSET(MathUtility::Vec4F, z)) < 0) { return false; }
+	if (m_engine->RegisterObjectProperty("Vec4F", "float w", asOFFSET(MathUtility::Vec4F, w)) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Vec4F", "Vec4F opDiv(const Vec4F &in) const", asMETHODPR(MathUtility::Vec4F, operator/, (const MathUtility::Vec4F &) const, MathUtility::Vec4F), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Vec4F", "Vec4F opMul(const Vec4F &in) const", asMETHODPR(MathUtility::Vec4F, operator*, (const MathUtility::Vec4F &) const, MathUtility::Vec4F), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Vec4F", "Vec4F opAdd(const Vec4F &in) const", asMETHODPR(MathUtility::Vec4F, operator+, (const MathUtility::Vec4F &) const, MathUtility::Vec4F), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Vec4F", "Vec4F opSub(const Vec4F &in) const", asMETHODPR(MathUtility::Vec4F, operator-, (const MathUtility::Vec4F &) const, MathUtility::Vec4F), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Vec4F", "Vec4F &opDivAssign(const Vec4F &in)", asMETHODPR(MathUtility::Vec4F, operator/=, (const MathUtility::Vec4F &), void), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Vec4F", "Vec4F& opMulAssign(const Vec4F &in)", asMETHODPR(MathUtility::Vec4F, operator*=, (const MathUtility::Vec4F &), void), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Vec4F", "Vec4F& opAddAssign(const Vec4F &in)", asMETHODPR(MathUtility::Vec4F, operator+=, (const MathUtility::Vec4F &), void), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Vec4F", "Vec4F& opSubAssign(const Vec4F &in)", asMETHODPR(MathUtility::Vec4F, operator-=, (const MathUtility::Vec4F &), void), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Vec4F", "bool opEq(const Vec4F &in) const", asMETHODPR(MathUtility::Vec4F, operator==, (const MathUtility::Vec4F &) const, bool), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Vec4F", "bool opNotEq(const Vec4F &in) const", asMETHODPR(MathUtility::Vec4F, operator!=, (const MathUtility::Vec4F &) const, bool), asCALL_THISCALL) < 0) { return false; }
+
+    if (m_engine->RegisterObjectType("SizeI", sizeof(MathUtility::SizeI), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CAK | asOBJ_APP_CLASS_ALLFLOATS) < 0) { return false; }
+    if (m_engine->RegisterObjectBehaviour("SizeI", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(SizeIConstructorDefault), asCALL_CDECL_OBJLAST) < 0) { return false; }
+    if (m_engine->RegisterObjectBehaviour("SizeI", asBEHAVE_CONSTRUCT, "void f(int, int)", asFUNCTION(SizeIConstructorValues), asCALL_CDECL_OBJLAST) < 0) { return false; }
+    if (m_engine->RegisterObjectBehaviour("SizeI", asBEHAVE_CONSTRUCT, "void f(SizeI &in)", asFUNCTION(SizeIConstructorCopy), asCALL_CDECL_OBJLAST) < 0) { return false; }
     if (m_engine->RegisterObjectProperty("SizeI", "int width", asOFFSET(MathUtility::SizeI, width)) < 0) { return false; }
     if (m_engine->RegisterObjectProperty("SizeI", "int height", asOFFSET(MathUtility::SizeI, height)) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("SizeI", "bool opEq(const SizeI &in) const", asMETHODPR(MathUtility::SizeI, operator==, (const MathUtility::SizeI &) const, bool), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("SizeI", "bool opNotEq(const SizeI &in) const", asMETHODPR(MathUtility::SizeI, operator!=, (const MathUtility::SizeI &) const, bool), asCALL_THISCALL) < 0) { return false; }
+
+    if (m_engine->RegisterObjectType("SizeF", sizeof(MathUtility::SizeF), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CAK | asOBJ_APP_CLASS_ALLFLOATS) < 0) { return false; }
+    if (m_engine->RegisterObjectBehaviour("SizeF", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(SizeFConstructorDefault), asCALL_CDECL_OBJLAST) < 0) { return false; }
+    if (m_engine->RegisterObjectBehaviour("SizeF", asBEHAVE_CONSTRUCT, "void f(float, float)", asFUNCTION(SizeFConstructorValues), asCALL_CDECL_OBJLAST) < 0) { return false; }
+    if (m_engine->RegisterObjectBehaviour("SizeF", asBEHAVE_CONSTRUCT, "void f(SizeF &in)", asFUNCTION(SizeFConstructorCopy), asCALL_CDECL_OBJLAST) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("SizeF", "float width", asOFFSET(MathUtility::SizeF, width)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("SizeF", "float height", asOFFSET(MathUtility::SizeF, height)) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("SizeF", "bool opEq(const SizeF &in) const", asMETHODPR(MathUtility::SizeF, operator==, (const MathUtility::SizeF &) const, bool), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("SizeF", "bool opNotEq(const SizeF &in) const", asMETHODPR(MathUtility::SizeF, operator!=, (const MathUtility::SizeF &) const, bool), asCALL_THISCALL) < 0) { return false; }
+
+    if (m_engine->RegisterObjectType("RectI", sizeof(MathUtility::RectI), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CAK | asOBJ_APP_CLASS_ALLFLOATS) < 0) { return false; }
+    if (m_engine->RegisterObjectBehaviour("RectI", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(RectIConstructorDefault), asCALL_CDECL_OBJLAST) < 0) { return false; }
+    if (m_engine->RegisterObjectBehaviour("RectI", asBEHAVE_CONSTRUCT, "void f(int, int, int, int)", asFUNCTION(RectIConstructorValues), asCALL_CDECL_OBJLAST) < 0) { return false; }
+    if (m_engine->RegisterObjectBehaviour("RectI", asBEHAVE_CONSTRUCT, "void f(RectI &in)", asFUNCTION(RectIConstructorCopy), asCALL_CDECL_OBJLAST) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("RectI", "int x", asOFFSET(MathUtility::RectI, x)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("RectI", "int y", asOFFSET(MathUtility::RectI, y)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("RectI", "int width", asOFFSET(MathUtility::RectI, width)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("RectI", "int height", asOFFSET(MathUtility::RectI, height)) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("RectI", "bool opEq(const RectI &in) const", asMETHODPR(MathUtility::RectI, operator==, (const MathUtility::RectI &) const, bool), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("RectI", "bool opNotEq(const RectI &in) const", asMETHODPR(MathUtility::RectI, operator!=, (const MathUtility::RectI &) const, bool), asCALL_THISCALL) < 0) { return false; }
+
+	if (m_engine->RegisterObjectType("RectF", sizeof(MathUtility::RectF), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CAK | asOBJ_APP_CLASS_ALLFLOATS) < 0) { return false; }
+	if (m_engine->RegisterObjectBehaviour("RectF", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(RectFConstructorDefault), asCALL_CDECL_OBJLAST) < 0) { return false; }
+	if (m_engine->RegisterObjectBehaviour("RectF", asBEHAVE_CONSTRUCT, "void f(float, float, float, float)", asFUNCTION(RectFConstructorValues), asCALL_CDECL_OBJLAST) < 0) { return false; }
+	if (m_engine->RegisterObjectBehaviour("RectF", asBEHAVE_CONSTRUCT, "void f(RectF &in)", asFUNCTION(RectFConstructorCopy), asCALL_CDECL_OBJLAST) < 0) { return false; }
+	if (m_engine->RegisterObjectProperty("RectF", "float x", asOFFSET(MathUtility::RectF, x)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("RectF", "float y", asOFFSET(MathUtility::RectF, y)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("RectF", "float width", asOFFSET(MathUtility::RectF, width)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("RectF", "float height", asOFFSET(MathUtility::RectF, height)) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("RectF", "bool opEq(const RectF &in) const", asMETHODPR(MathUtility::RectF, operator==, (const MathUtility::RectF &) const, bool), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("RectF", "bool opNotEq(const RectF &in) const", asMETHODPR(MathUtility::RectF, operator!=, (const MathUtility::RectF &) const, bool), asCALL_THISCALL) < 0) { return false; }
+
+   if (m_engine->RegisterObjectType("Color3F", sizeof(MathUtility::Color3F), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CAK) < 0) { return false; }
+    if (m_engine->RegisterObjectBehaviour("Color3F", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Color3FConstructorDefault), asCALL_CDECL_OBJLAST) < 0) { return false; }
+    if (m_engine->RegisterObjectBehaviour("Color3F", asBEHAVE_CONSTRUCT, "void f(float, float, float)", asFUNCTION(Color3FConstructorValues), asCALL_CDECL_OBJLAST) < 0) { return false; }
+    if (m_engine->RegisterObjectBehaviour("Color3F", asBEHAVE_CONSTRUCT, "void f(Color3F &in)", asFUNCTION(Color3FConstructorCopy), asCALL_CDECL_OBJLAST) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("Color3F", "float r", asOFFSET(MathUtility::Color3F, r)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("Color3F", "float g", asOFFSET(MathUtility::Color3F, g)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("Color3F", "float b", asOFFSET(MathUtility::Color3F, b)) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Color3F", "Color3F opDiv(const Color3F &in) const", asMETHODPR(MathUtility::Color3F, operator/, (const MathUtility::Color3F &) const, MathUtility::Color3F), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Color3F", "Color3F opMul(const Color3F &in) const", asMETHODPR(MathUtility::Color3F, operator*, (const MathUtility::Color3F &) const, MathUtility::Color3F), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Color3F", "Color3F opAdd(const Color3F &in) const", asMETHODPR(MathUtility::Color3F, operator+, (const MathUtility::Color3F &) const, MathUtility::Color3F), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Color3F", "Color3F opSub(const Color3F &in) const", asMETHODPR(MathUtility::Color3F, operator-, (const MathUtility::Color3F &) const, MathUtility::Color3F), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Color3F", "Color3F &opDivAssign(const Color3F &in)", asMETHODPR(MathUtility::Color3F, operator/=, (const MathUtility::Color3F &), void), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Color3F", "Color3F& opMulAssign(const Color3F &in)", asMETHODPR(MathUtility::Color3F, operator*=, (const MathUtility::Color3F &), void), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Color3F", "Color3F& opAddAssign(const Color3F &in)", asMETHODPR(MathUtility::Color3F, operator+=, (const MathUtility::Color3F &), void), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Color3F", "Color3F& opSubAssign(const Color3F &in)", asMETHODPR(MathUtility::Color3F, operator-=, (const MathUtility::Color3F &), void), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Color3F", "bool opEq(const Color3F &in) const", asMETHODPR(MathUtility::Color3F, operator==, (const MathUtility::Color3F &) const, bool), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Color3F", "bool opNotEq(const Color3F &in) const", asMETHODPR(MathUtility::Color3F, operator!=, (const MathUtility::Color3F &) const, bool), asCALL_THISCALL) < 0) { return false; }
+
+    if (m_engine->RegisterObjectType("Color4F", sizeof(MathUtility::Color4F), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CAK) < 0) { return false; }
+    if (m_engine->RegisterObjectBehaviour("Color4F", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Color4FConstructorDefault), asCALL_CDECL_OBJLAST) < 0) { return false; }
+    if (m_engine->RegisterObjectBehaviour("Color4F", asBEHAVE_CONSTRUCT, "void f(float, float, float, float)", asFUNCTION(Color4FConstructorValues), asCALL_CDECL_OBJLAST) < 0) { return false; }
+    if (m_engine->RegisterObjectBehaviour("Color4F", asBEHAVE_CONSTRUCT, "void f(Color4F &in)", asFUNCTION(Color4FConstructorCopy), asCALL_CDECL_OBJLAST) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("Color4F", "float r", asOFFSET(MathUtility::Color4F, r)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("Color4F", "float g", asOFFSET(MathUtility::Color4F, g)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("Color4F", "float b", asOFFSET(MathUtility::Color4F, b)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("Color4F", "float a", asOFFSET(MathUtility::Color4F, a)) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Color4F", "Color4F opDiv(const Color4F &in) const", asMETHODPR(MathUtility::Color4F, operator/, (const MathUtility::Color4F &) const, MathUtility::Color4F), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Color4F", "Color4F opMul(const Color4F &in) const", asMETHODPR(MathUtility::Color4F, operator*, (const MathUtility::Color4F &) const, MathUtility::Color4F), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Color4F", "Color4F opAdd(const Color4F &in) const", asMETHODPR(MathUtility::Color4F, operator+, (const MathUtility::Color4F &) const, MathUtility::Color4F), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Color4F", "Color4F opSub(const Color4F &in) const", asMETHODPR(MathUtility::Color4F, operator-, (const MathUtility::Color4F &) const, MathUtility::Color4F), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Color4F", "Color4F &opDivAssign(const Color4F &in)", asMETHODPR(MathUtility::Color4F, operator/=, (const MathUtility::Color4F &), void), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Color4F", "Color4F& opMulAssign(const Color4F &in)", asMETHODPR(MathUtility::Color4F, operator*=, (const MathUtility::Color4F &), void), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Color4F", "Color4F& opAddAssign(const Color4F &in)", asMETHODPR(MathUtility::Color4F, operator+=, (const MathUtility::Color4F &), void), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Color4F", "Color4F& opSubAssign(const Color4F &in)", asMETHODPR(MathUtility::Color4F, operator-=, (const MathUtility::Color4F &), void), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Color4F", "bool opEq(const Color4F &in) const", asMETHODPR(MathUtility::Color4F, operator==, (const MathUtility::Color4F &) const, bool), asCALL_THISCALL) < 0) { return false; }
+    if (m_engine->RegisterObjectMethod("Color4F", "bool opNotEq(const Color4F &in) const", asMETHODPR(MathUtility::Color4F, operator!=, (const MathUtility::Color4F &) const, bool), asCALL_THISCALL) < 0) { return false; }
 
 	if (m_engine->RegisterGlobalFunction("void SeedRandom()", asFUNCTION(AngelScriptMethods::SeedRandom), asCALL_GENERIC) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void SeedRandomWithValue(int value)", asFUNCTION(AngelScriptMethods::SeedRandomWithValue), asCALL_GENERIC) < 0) { return false; }
@@ -297,11 +610,13 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	if (m_engine->RegisterGlobalFunction("void SetJoystickConnectCallback(JoystickConnectCallback @joystickConnectCallback)", asFUNCTION(AngelScriptRunner::SetJoystickConnectCallback), asCALL_GENERIC) < 0) { return false; }
 
 	if (m_engine->RegisterObjectType("NodeSprite", sizeof(NodeSprite), asOBJ_VALUE | asOBJ_APP_CLASS) < 0) { return false; }
-
-
 	if (m_engine->RegisterObjectBehaviour("NodeSprite", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(NodeSpriteConstructor), asCALL_CDECL_OBJLAST) < 0) { return false; }
 	if (m_engine->RegisterObjectBehaviour("NodeSprite", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(NodeSpriteDestructor), asCALL_CDECL_OBJLAST) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("NodeSprite", "void SetTexturePath(string value)", asMETHOD(NodeSprite, SetTexturePath), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("NodeSprite", "string GetTexturePath()", asMETHOD(NodeSprite, GetTexturePath), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("NodeSprite", "void SetUV(RectF &in)", asMETHOD(NodeSprite, SetUV), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("NodeSprite", "RectF& GetUV()", asMETHOD(NodeSprite, GetUV), asCALL_THISCALL) < 0) { return false; }
+
 
 
 	if (CompileScript(m_engine, launchFolder) == false)
@@ -747,7 +1062,7 @@ bool AngelScriptRunner::Execute(asIScriptContext *context)
 	}
 	else if (result == asEXECUTION_EXCEPTION)
 	{
-		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "AngelScript - Exception occured '%s'.", context->GetExceptionString());
+		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "AngelScript - Exception occured '%s' in function '%s'.", context->GetExceptionString(), context->GetExceptionFunction()->GetDeclaration()  );
 		return false;
 	}
 	

@@ -25,21 +25,30 @@ NodeManager::~NodeManager(void)
 	}
 }
 
-uint32_t NodeManager::CreateSceneNode(NodeType nodeType, uint32_t sceneID) 
+uint32_t NodeManager::AddSceneNode(Node* node, uint32_t sceneID) 
 {
-    uint32_t nodeID = ++m_maxNodeID;
-    Node* node;
-    if (nodeType == NodeTypeSprite)
+    // Check if node already added
+    if (node->GetID() != 0)
     {
-        node  = new NodeSprite(nodeID);
+        return 0;
     }
+
+    uint32_t nodeID = ++m_maxNodeID;
+    node->SetID(nodeID);
     m_nodeMap.insert(std::pair<uint32_t, Node*>(nodeID, node));
     m_sceneManager->AddSceneNode(sceneID, nodeID);
     return nodeID;
 }
 
-uint32_t NodeManager::CreateNode(NodeType nodeType, uint32_t parentNodeID)
+uint32_t NodeManager::AddNode(Node* node, uint32_t parentNodeID)
 {
+    // Check if node already added
+    if (node->GetID() != 0)
+    {
+        return 0;
+    }
+
+    // Check parent mpde exists
     Node* parentNode = GetNode(parentNodeID);
     if (parentNode == NULL)
     {
@@ -47,18 +56,22 @@ uint32_t NodeManager::CreateNode(NodeType nodeType, uint32_t parentNodeID)
     }
 
     uint32_t newNodeID = ++m_maxNodeID;
-    Node* node;
-    if (nodeType == NodeTypeSprite)
-    {
-        node  = new NodeSprite(parentNode, newNodeID);
-    }
+    node->SetID(newNodeID);
+    node->SetParent(parentNode);
     m_nodeMap.insert(std::pair<uint32_t, Node*>(newNodeID, node));
     parentNode->AddChildNode(newNodeID);
     return newNodeID;
 }
 
-uint32_t NodeManager::CreateNodeAt(NodeType nodeType, uint32_t parentNodeID, uint32_t nodeID)
+uint32_t NodeManager::AddNodeAt(Node* node, uint32_t parentNodeID, uint32_t nodeID)
 {
+    // Check if node already added
+    if (node->GetID() != 0)
+    {
+        return 0;
+    }
+
+    // Check parent mpde exists
     Node* parentNode = GetNode(parentNodeID);
     if (parentNode == NULL)
     {
@@ -66,11 +79,8 @@ uint32_t NodeManager::CreateNodeAt(NodeType nodeType, uint32_t parentNodeID, uin
     }
 
     uint32_t newNodeID = ++m_maxNodeID;
-    Node* node;
-    if (nodeType == NodeTypeSprite)
-    {
-        node  = new NodeSprite(parentNode, newNodeID);
-    }
+    node->SetID(newNodeID);
+    node->SetParent(parentNode);
     m_nodeMap.insert(std::pair<uint32_t, Node*>(newNodeID, node));
     parentNode->AddChildNodeAt(nodeID, newNodeID);
     return newNodeID;
@@ -92,7 +102,7 @@ void NodeManager::DeleteNode(uint32_t nodeID)
 
 void NodeManager::PurgeNodes() 
 {
-    for (auto it = m_nodeMap.begin(); it != m_nodeMap.end();)
+	for (std::map<uint32_t, Node*>::iterator it = m_nodeMap.begin(); it != m_nodeMap.end();)
     {
         // Delete nddes marked for delete
         if (it->second->MarkedForDelete() == true)
@@ -101,18 +111,14 @@ void NodeManager::PurgeNodes()
             ++it;
 
             // Delete this node from parent if exists
-            uint32_t parentNodeID = itErase->second->GetParentID(); 
-            if (parentNodeID == 0)
+            Node* parentNode = itErase->second->GetParent(); 
+            if (parentNode == NULL || parentNode->GetID() == 0)
             {
                 m_sceneManager->DeleteSceneNode(itErase->first);
             }
             else
             {
-                Node* parentNode = GetNode(parentNodeID);
-                if (parentNode != NULL)
-                {
-                    parentNode->EraseChild(itErase->first);
-                }
+                parentNode->EraseChild(itErase->first);
             }
 
             // Close and delete from node map
@@ -126,93 +132,16 @@ void NodeManager::PurgeNodes()
 
 void NodeManager::CheckForOrphans()
 {
-    for (auto it = m_nodeMap.begin(); it != m_nodeMap.end(); ++it)
+    for (std::map<uint32_t, Node*>::iterator it = m_nodeMap.begin(); it != m_nodeMap.end(); ++it)
     {
-        uint32_t parentID = it->second->GetParentID();
-        if (parentID == 0)
+        Node* parentNode = it->second->GetParent();
+        if (parentNode == NULL || parentNode->GetID() == 0)
         {
             continue;
         }
-
-        Node* parentNode = GetNode(parentID);
-        if (parentNode == NULL)
-        {
-            DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "Orphan node detected");
-        }
+        DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "Orphan node detected");
     }
 }
-
-// bool NodeManager::SetNodePropertyAnchor(uint32_t nodeID, MathUtility::Vec3F anchor)
-// {
-//     Node* node = GetNode(nodeID);
-//     if (node == NULL)
-//     {
-//         return false;
-//     }
-
-//     if (node->HasProperty(PropertyTypeAnchor) == false)
-//     {
-//         return false;
-//     }
-
-//     PropertyAnchor* propertyAnchor = (PropertyAnchor*)node->GetProperty(PropertyTypeAnchor);
-//     propertyAnchor->SetAnchor(anchor);
-//     return true;
-// }
-
-// bool NodeManager::SetNodePropertyRotation(uint32_t nodeID, MathUtility::Vec3F rotation)
-// {
-//     Node* node = GetNode(nodeID);
-//     if (node == NULL)
-//     {
-//         return false;
-//     }
-
-//     if (node->HasProperty(PropertyTypeRotation) == false)
-//     {
-//         return false;
-//     }
-
-//     PropertyRotation* propertyRotation = (PropertyRotation*)node->GetProperty(PropertyTypeRotation);
-//     propertyRotation->SetRotation(rotation);
-//     return true;
-// }
-
-// bool NodeManager::SetNodePropertySkew(uint32_t nodeID, MathUtility::Vec3F skew)
-// {
-//     Node* node = GetNode(nodeID);
-//     if (node == NULL)
-//     {
-//         return false;
-//     }
-
-//     if (node->HasProperty(PropertyTypeSkew) == false)
-//     {
-//         return false;
-//     }
-
-//     PropertySkew* propertySkew = (PropertySkew*)node->GetProperty(PropertyTypeSkew);
-//     propertySkew->SetSkew(skew);
-//     return true;
-// }
-
-// bool NodeManager::SetNodePropertyPosition(uint32_t nodeID, MathUtility::Vec3F position)
-// {
-//     Node* node = GetNode(nodeID);
-//     if (node == NULL)
-//     {
-//         return false;
-//     }
-
-//     if (node->HasProperty(PropertyTypePosition) == false)
-//     {
-//         return false;
-//     }
-
-//     PropertyPosition* propertyposition = (PropertyPosition*)node->GetProperty(PropertyTypePosition);
-//     propertyposition->SetPosition(position);
-//     return true;
-// }
 
 void NodeManager::Update(uint32_t nodeID, float dt)
 {

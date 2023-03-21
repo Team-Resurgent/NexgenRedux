@@ -160,9 +160,14 @@ bool CompileScript(asIScriptEngine* engine, std::wstring launchFolder)
 	return true;
 }
 
-void AngelScriptRunner::NodeSpriteConstructor(NodeSprite* nodeSprite, uint32_t nodeID)
+void AngelScriptRunner::NodeSpriteConstructor(NodeSprite& nodeSprite)
 {
-	new (nodeSprite)NodeSprite(nodeID);
+	new (&nodeSprite)NodeSprite();
+}
+
+void AngelScriptRunner::NodeSpriteDestructor(NodeSprite& nodeSprite)
+{
+	nodeSprite.~NodeSprite();
 }
 
 bool AngelScriptRunner::Init(std::wstring launchFolder)
@@ -291,10 +296,13 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	if (m_engine->RegisterFuncdef("void JoystickConnectCallback(uint joystickID, uint event)") < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void SetJoystickConnectCallback(JoystickConnectCallback @joystickConnectCallback)", asFUNCTION(AngelScriptRunner::SetJoystickConnectCallback), asCALL_GENERIC) < 0) { return false; }
 
-	if (m_engine->RegisterObjectType("NodeSprite", 0, asOBJ_REF) < 0) { return false; }
+	if (m_engine->RegisterObjectType("NodeSprite", sizeof(NodeSprite), asOBJ_VALUE | asOBJ_APP_CLASS) < 0) { return false; }
 
-	if (m_engine->RegisterObjectBehaviour("NodeSprite", asBEHAVE_CONSTRUCT, "void f(uint nodeID)", asFUNCTION(NodeSpriteConstructor), asCALL_CDECL_OBJLAST) < 0) { return false; }
+
+	if (m_engine->RegisterObjectBehaviour("NodeSprite", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(NodeSpriteConstructor), asCALL_CDECL_OBJLAST) < 0) { return false; }
+	if (m_engine->RegisterObjectBehaviour("NodeSprite", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(NodeSpriteDestructor), asCALL_CDECL_OBJLAST) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("NodeSprite", "void SetTexturePath(string value)", asMETHOD(NodeSprite, SetTexturePath), asCALL_THISCALL) < 0) { return false; }
+
 
 	if (CompileScript(m_engine, launchFolder) == false)
 	{

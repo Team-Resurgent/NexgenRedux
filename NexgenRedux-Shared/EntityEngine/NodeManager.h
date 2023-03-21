@@ -20,9 +20,9 @@ namespace NexgenRedux
         NodeManager(SceneManager* sceneManager);
         ~NodeManager(void);
 
-        uint32_t CreateSceneNode(NodeType nodeType, uint32_t sceneID);
-        uint32_t CreateNode(NodeType nodeType, uint32_t parentNodeID);
-        uint32_t CreateNodeAt(NodeType nodeType, uint32_t parentNodeID, uint32_t nodeID);
+        uint32_t AddSceneNode(Node* node, uint32_t sceneID);
+        uint32_t AddNode(Node* node, uint32_t parentNodeID);
+        uint32_t AddNodeAt(Node* node, uint32_t parentNodeID, uint32_t nodeID);
         void DeleteNode(uint32_t nodeID);    
 
         void PurgeNodes();

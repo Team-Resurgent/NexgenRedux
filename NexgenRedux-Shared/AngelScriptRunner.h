@@ -96,7 +96,8 @@ namespace NexgenRedux
 		static void GetJoystickHatCount(asIScriptGeneric* gen);
 		static void GetJoystickHatDirection(asIScriptGeneric* gen);
 
-		static void NodeSpriteConstructor(NodeSprite* nodeSprite, uint32_t nodeID);
+		static void NodeSpriteConstructor(NodeSprite& nodeSprite);
+		static void NodeSpriteDestructor(NodeSprite& nodeSprite);
 	private:
 		WindowManager *m_windowManager;
 	};

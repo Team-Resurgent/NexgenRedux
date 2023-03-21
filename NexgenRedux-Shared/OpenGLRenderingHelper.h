@@ -27,7 +27,7 @@ namespace NexgenRedux
 		IWindowHelper *m_windowHelper;
 
 		bool m_initialized;
-		std::map<std::string, std::map<std::string, uint32_t>> m_shaderValueMap;
+		std::map<std::string, std::map<std::string, uint32_t> > m_shaderValueMap;
 		uint32_t m_dynamicBuffer;
 		uint32_t m_dynamicBufferSize;
 		uint32_t m_maxTextureContainerID;

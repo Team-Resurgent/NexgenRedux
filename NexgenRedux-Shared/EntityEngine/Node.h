@@ -14,14 +14,11 @@ namespace NexgenRedux
     class Node 
     {
     public:
-        Node(uint32_t nodeID);
-        Node(Node* parentNode, uint32_t nodeID);
+        Node();
         virtual ~Node(void) {};
 
-        void MarkForDelete();
-        bool MarkedForDelete();
         uint32_t GetID();
-        uint32_t GetParentID();
+        Node* GetParent();
 
         void AddChildNode(uint32_t childNodeID);
         void AddChildNodeAt(uint32_t nodeID, uint32_t childNodeID);
@@ -43,6 +40,14 @@ namespace NexgenRedux
         const MathUtility::Vec3F GetPosition();
         void SetPosition(MathUtility::Vec3F value);
         const MathUtility::Matrix4x4 GetTransform();
+
+    private:
+
+        friend class NodeManager;
+        void MarkForDelete();
+        bool MarkedForDelete();
+        void SetID(uint32_t nodeID);
+        void SetParent(Node* parent);
 
     private:
 

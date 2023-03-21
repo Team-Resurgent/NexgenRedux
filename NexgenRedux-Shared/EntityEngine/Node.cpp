@@ -5,15 +5,16 @@
 #include <Gensys/Int.h>
 #include <Gensys/DebugUtility.h>
 
+#include <algorithm>
 #include <string>
 
 using namespace Gensys;
 using namespace NexgenRedux;
 
-Node::Node(uint32_t nodeID)
+Node::Node()
 {
     m_parentNode = NULL;
-    m_nodeID = nodeID;
+    m_nodeID = 0;
     m_deleteFlag = false;
 
     m_anchor = MathUtility::Vec3F(0, 0, 0);
@@ -22,30 +23,6 @@ Node::Node(uint32_t nodeID)
     m_scale = MathUtility::Vec3F(1, 1, 1);
     m_position = MathUtility::Vec3F(0, 0, 0);
     m_isDirty = true;
-}
-
-Node::Node(Node* parentNode, uint32_t nodeID) 
-{
-    m_parentNode = parentNode;
-    m_nodeID = nodeID;
-    m_deleteFlag = false;
-
-    m_anchor = MathUtility::Vec3F(0, 0, 0);
-    m_rotation = MathUtility::Vec3F(0, 0, 0);
-    m_skew = MathUtility::Vec3F(0, 0, 0);
-    m_scale = MathUtility::Vec3F(1, 1, 1);
-    m_position = MathUtility::Vec3F(0, 0, 0);
-    m_isDirty = true;
-}
-
-void Node::MarkForDelete()
-{
-    m_deleteFlag = true;
-}
-
-bool Node::MarkedForDelete()
-{
-    return m_deleteFlag;
 }
 
 uint32_t Node::GetID()
@@ -53,9 +30,9 @@ uint32_t Node::GetID()
     return m_nodeID;
 }
 
-uint32_t Node::GetParentID()
+Node* Node::GetParent()
 {
-    return m_parentNode == NULL ? 0 : m_parentNode->GetID();
+    return m_parentNode;
 }
 
 void Node::AddChildNode(uint32_t childNodeID)
@@ -183,4 +160,26 @@ const MathUtility::Matrix4x4 Node::GetTransform()
     m_matrix = parentMatrix * inverseAnchorMatrix * rotationMatrix * scaleMatrix * skewMatrix * anchorPositionMatrix;
     m_isDirty = false;
     return m_matrix;
+}
+
+// Private Friends
+
+void Node::MarkForDelete()
+{
+    m_deleteFlag = true;
+}
+
+bool Node::MarkedForDelete()
+{
+    return m_deleteFlag;
+}
+
+void Node::SetID(uint32_t nodeID)
+{
+    m_nodeID = nodeID;
+}
+
+void Node::SetParent(Node* parent)
+{
+    m_parentNode = parent;
 }

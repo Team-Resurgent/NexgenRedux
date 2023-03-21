@@ -1017,12 +1017,12 @@ uint32_t OpenGLRenderingHelper::CompileProgram(const std::string& vsSource, cons
 void OpenGLRenderingHelper::CreateShaderLookup(std::string shaderName)
 {
     std::map<std::string, uint32_t> lookupMap;
-    m_shaderValueMap.insert(std::pair<std::string, std::map<std::string, uint32_t>>(shaderName, lookupMap));
+    m_shaderValueMap.insert(std::pair<std::string, std::map<std::string, uint32_t> >(shaderName, lookupMap));
 }
 
 bool OpenGLRenderingHelper::AddShaderLookupKeyValue(std::string shaderName, std::string key, uint32_t value)
 {
-    std::map<std::string, std::map<std::string, uint32_t>>::iterator lookupIt = m_shaderValueMap.find(shaderName);
+    std::map<std::string, std::map<std::string, uint32_t> >::iterator lookupIt = m_shaderValueMap.find(shaderName);
 	if (lookupIt == m_shaderValueMap.end()) 
 	{
 		return false;
@@ -1035,7 +1035,7 @@ bool OpenGLRenderingHelper::AddShaderLookupKeyValue(std::string shaderName, std:
 
 bool OpenGLRenderingHelper::GetShaderLookupValue(std::string shaderName, std::string key, uint32_t& value)
 {
-    std::map<std::string, std::map<std::string, uint32_t>>::iterator lookupIt = m_shaderValueMap.find(shaderName);
+    std::map<std::string, std::map<std::string, uint32_t> >::iterator lookupIt = m_shaderValueMap.find(shaderName);
 	if (lookupIt == m_shaderValueMap.end()) 
 	{
 		return false;

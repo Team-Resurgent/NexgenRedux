@@ -2,6 +2,7 @@
 
 #include <Gensys/Int.h>
 
+#include <algorithm>
 #include <vector>
 #include <map>
 
@@ -13,7 +14,7 @@ SceneManager::SceneManager() : m_currentSceneID(0), m_maxSceneID(0)
 
 void SceneManager::Update(NodeManager* nodeManager, float dt) 
 {
-    std::map<uint32_t, std::vector<uint32_t>>::iterator itScene = m_sceneMap.find(m_currentSceneID);
+    std::map<uint32_t, std::vector<uint32_t> >::iterator itScene = m_sceneMap.find(m_currentSceneID);
 	if (itScene != m_sceneMap.end()) 
 	{
         std::vector<uint32_t>* sceneNodeLookup = &itScene->second;
@@ -26,7 +27,7 @@ void SceneManager::Update(NodeManager* nodeManager, float dt)
 
 void SceneManager::Render(NodeManager* nodeManager) 
 {
-    std::map<uint32_t, std::vector<uint32_t>>::iterator itScene = m_sceneMap.find(m_currentSceneID);
+    std::map<uint32_t, std::vector<uint32_t> >::iterator itScene = m_sceneMap.find(m_currentSceneID);
 	if (itScene != m_sceneMap.end()) 
     {
         std::vector<uint32_t>* sceneNodeLookup = &itScene->second;
@@ -41,7 +42,7 @@ uint32_t SceneManager::CreateScene(bool setAsCurrent)
 {
     uint32_t sceneID = ++m_maxSceneID;
     std::vector<uint32_t> childNodes;
-    m_sceneMap.insert(std::pair<uint32_t, std::vector<uint32_t>>(sceneID, childNodes));
+    m_sceneMap.insert(std::pair<uint32_t, std::vector<uint32_t> >(sceneID, childNodes));
     if (setAsCurrent == true)
     {
         m_currentSceneID = sceneID;
@@ -58,7 +59,7 @@ void SceneManager::SetCurrentScene(uint32_t sceneID)
 
 bool SceneManager::AddSceneNode(uint32_t sceneID, uint32_t nodeID)
 {
-    std::map<uint32_t, std::vector<uint32_t>>::iterator itScene = m_sceneMap.find(sceneID);
+    std::map<uint32_t, std::vector<uint32_t> >::iterator itScene = m_sceneMap.find(sceneID);
 	if (itScene == m_sceneMap.end()) 
 	{
         return false;
@@ -69,7 +70,7 @@ bool SceneManager::AddSceneNode(uint32_t sceneID, uint32_t nodeID)
 
 bool SceneManager::DeleteSceneNode(uint32_t sceneID, uint32_t nodeID)
 {
-    std::map<uint32_t, std::vector<uint32_t>>::iterator itScene = m_sceneMap.find(sceneID);
+    std::map<uint32_t, std::vector<uint32_t> >::iterator itScene = m_sceneMap.find(sceneID);
 	if (itScene == m_sceneMap.end()) 
 	{
         return false;
@@ -86,7 +87,7 @@ bool SceneManager::DeleteSceneNode(uint32_t sceneID, uint32_t nodeID)
 
 bool SceneManager::DeleteSceneNode(uint32_t nodeID)
 {
-    for (auto it = m_sceneMap.begin(); it != m_sceneMap.end(); ++it)
+	for (std::map<uint32_t, std::vector<uint32_t> >::iterator it = m_sceneMap.begin(); it != m_sceneMap.end(); ++it)
     {
         if (DeleteSceneNode(it->first, nodeID) == true)
         {

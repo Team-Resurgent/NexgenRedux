@@ -32,6 +32,6 @@ namespace NexgenRedux
 
         uint32_t m_currentSceneID;
         uint32_t m_maxSceneID;
-        std::map<uint32_t, std::vector<uint32_t>> m_sceneMap;
+        std::map<uint32_t, std::vector<uint32_t> > m_sceneMap;
     };
 }

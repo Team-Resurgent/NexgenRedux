@@ -12,8 +12,7 @@ namespace NexgenRedux
     class NodeSprite : public Node
     {
     public:
-        NodeSprite(uint32_t nodeID);
-        NodeSprite(Node* parentNode, uint32_t nodeID);
+        NodeSprite();
         ~NodeSprite(void);
 
         void Update(float dt);

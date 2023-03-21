@@ -1,6 +1,7 @@
 #include "ECSManager.h"
 #include "EntityEngine/SceneManager.h"
 #include "EntityEngine/NodeManager.h"
+#include "EntityEngine/NodeSprite.h"
 
 #include <Gensys/DebugUtility.h>
 
@@ -15,11 +16,16 @@ void ECSManager::ECSManagerExample(void)
 
     NodeManager* nodeManager = new NodeManager(sceneManager);
 
-    uint32_t nodeID1 = nodeManager->CreateSceneNode(NodeTypeSprite, sceneID);
-    uint32_t nodeID2 = nodeManager->CreateNode(NodeTypeSprite, sceneID);
-    uint32_t nodeID3 = nodeManager->CreateNode(NodeTypeSprite, nodeID2);
-    uint32_t nodeID4 = nodeManager->CreateNode(NodeTypeSprite, nodeID2);
-    uint32_t nodeID5 = nodeManager->CreateNodeAt(NodeTypeSprite, nodeID2, nodeID4);
+    NodeSprite* nodeSprite1 = new NodeSprite();
+    uint32_t nodeID1 = nodeManager->AddSceneNode(nodeSprite1, sceneID);
+    NodeSprite* nodeSprite2 = new NodeSprite();
+    uint32_t nodeID2 = nodeManager->AddNode(nodeSprite2, sceneID);
+    NodeSprite* nodeSprite3 = new NodeSprite();
+    uint32_t nodeID3 = nodeManager->AddNode(nodeSprite3, nodeID2);
+    NodeSprite* nodeSprite4 = new NodeSprite();
+    uint32_t nodeID4 = nodeManager->AddNode(nodeSprite4, nodeID2);
+    NodeSprite* nodeSprite5 = new NodeSprite();
+    uint32_t nodeID5 = nodeManager->AddNodeAt(nodeSprite5, nodeID2, nodeID4);
 
     sceneManager->Update(nodeManager, 0.1f);
     sceneManager->Render(nodeManager);

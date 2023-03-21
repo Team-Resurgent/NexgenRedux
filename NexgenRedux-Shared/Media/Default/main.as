@@ -70,7 +70,8 @@ uint frameCount;
 
 void Init()
 {
-    NodeSprite nodeSprite(432);
+    uint test = 432;
+    NodeSprite nodeSprite(test);
 
     DebugPrint(0, "Initializing...");
 

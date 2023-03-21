@@ -7,14 +7,7 @@
 using namespace Gensys;
 using namespace NexgenRedux;
 
-NodeSprite::NodeSprite(uint32_t nodeID) : Node(nodeID)
-{
-    m_isDirty = true;
-    m_texturePath = "";
-    m_uv = MathUtility::RectF(0, 0, 1, 1);
-}
-
-NodeSprite::NodeSprite(Node* parentNode, uint32_t nodeID) : Node(parentNode, nodeID)
+NodeSprite::NodeSprite() : Node()
 {
     m_isDirty = true;
     m_texturePath = "";
@@ -32,8 +25,8 @@ void NodeSprite::Update(float dt)
     {
         m_isDirty = false;
     }
-    //MathUtility::Matrix4x4 matrix = GetTransform();
-    //DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, "Updating, Calculated transfor for node '%i'", m_nodeID);
+    MathUtility::Matrix4x4 matrix = GetTransform();
+    DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, "Updating, Calculated transfor for node '%i'", m_nodeID);
 }
 
 void NodeSprite::Render()

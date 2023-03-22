@@ -164,38 +164,38 @@ bool CompileScript(asIScriptEngine* engine, std::wstring launchFolder)
 
 // SceneManager
 
-void AngelScriptRunner::SceneManagerConstructor(SceneManager& sceneManager)
+void AngelScriptRunner::SceneManagerConstructor(SceneManager* sceneManager)
 {
-	new (&sceneManager)SceneManager();
+	new (sceneManager)SceneManager();
 }
 
-void AngelScriptRunner::SceneManagerDestructor(SceneManager& sceneManager)
+void AngelScriptRunner::SceneManagerDestructor(SceneManager* sceneManager)
 {
-	sceneManager.~SceneManager();
+	sceneManager->~SceneManager();
 }
 
 // NodeManager
 
-void AngelScriptRunner::NodeManagerConstructor(SceneManager& sceneManager, NodeManager& nodeManager)
+void AngelScriptRunner::NodeManagerConstructor(SceneManager* sceneManager, NodeManager* nodeManager)
 {
-	//new (&nodeManager)NodeManager(&sceneManager);
+	new (nodeManager)NodeManager(sceneManager);
 }
 
-void AngelScriptRunner::NodeManagerDestructor(NodeManager& nodeManager)
+void AngelScriptRunner::NodeManagerDestructor(NodeManager* nodeManager)
 {
-	nodeManager.~NodeManager();
+	nodeManager->~NodeManager();
 }
 
 // NodeSprite
 
-void AngelScriptRunner::NodeSpriteConstructor(NodeSprite& nodeSprite)
+void AngelScriptRunner::NodeSpriteConstructor(NodeSprite* nodeSprite)
 {
-	new (&nodeSprite)NodeSprite();
+	new (nodeSprite)NodeSprite();
 }
 
-void AngelScriptRunner::NodeSpriteDestructor(NodeSprite& nodeSprite)
+void AngelScriptRunner::NodeSpriteDestructor(NodeSprite* nodeSprite)
 {
-	nodeSprite.~NodeSprite();
+	nodeSprite->~NodeSprite();
 }
 
 // Vec2D
@@ -637,17 +637,15 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	if (m_engine->RegisterFuncdef("void JoystickConnectCallback(uint joystickID, uint event)") < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void SetJoystickConnectCallback(JoystickConnectCallback @joystickConnectCallback)", asFUNCTION(AngelScriptRunner::SetJoystickConnectCallback), asCALL_GENERIC) < 0) { return false; }
 
-	if (m_engine->RegisterObjectType("SceneManager", sizeof(SceneManager), asOBJ_VALUE | asOBJ_APP_CLASS) < 0) { return false; }
+	if (m_engine->RegisterObjectType("SceneManager", sizeof(SceneManager), asOBJ_VALUE | asOBJ_APP_CLASS_C) < 0) { return false; }
 	if (m_engine->RegisterObjectBehaviour("SceneManager", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(SceneManagerConstructor), asCALL_CDECL_OBJLAST) < 0) { return false; }
 	if (m_engine->RegisterObjectBehaviour("SceneManager", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(SceneManagerDestructor), asCALL_CDECL_OBJLAST) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("SceneManager", "uint CreateScene(bool)", asMETHOD(SceneManager, CreateScene), asCALL_THISCALL) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("SceneManager", "void SetCurrentScene(uint)", asMETHOD(SceneManager, SetCurrentScene), asCALL_THISCALL) < 0) { return false; }
 
-	if (m_engine->RegisterObjectType("NodeManager", sizeof(NodeManager), asOBJ_VALUE | asOBJ_APP_CLASS) < 0) { return false; }
-	if (m_engine->RegisterObjectBehaviour("NodeManager", asBEHAVE_CONSTRUCT, "void f(SceneManager &in)", asFUNCTION(NodeManagerConstructor), asCALL_CDECL_OBJLAST) < 0) { return false; }
-	if (m_engine->RegisterObjectBehaviour("NodeManager", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(NodeManagerDestructor), asCALL_CDECL_OBJLAST) < 0) { return false; }
+//uint nodeID1 = nodeManager.AddSceneNode(nodeSprite1, sceneID);
 
-	if (m_engine->RegisterObjectType("NodeSprite", sizeof(NodeSprite), asOBJ_VALUE | asOBJ_APP_CLASS) < 0) { return false; }
+	if (m_engine->RegisterObjectType("NodeSprite", sizeof(NodeSprite), asOBJ_VALUE | asOBJ_APP_CLASS_C) < 0) { return false; }
 	if (m_engine->RegisterObjectBehaviour("NodeSprite", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(NodeSpriteConstructor), asCALL_CDECL_OBJLAST) < 0) { return false; }
 	if (m_engine->RegisterObjectBehaviour("NodeSprite", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(NodeSpriteDestructor), asCALL_CDECL_OBJLAST) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("NodeSprite", "Vec3F& GetAnchor()", asMETHOD(NodeSprite, GetAnchor), asCALL_THISCALL) < 0) { return false; }
@@ -664,6 +662,13 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	if (m_engine->RegisterObjectMethod("NodeSprite", "void SetTexturePath(string value)", asMETHOD(NodeSprite, SetTexturePath), asCALL_THISCALL) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("NodeSprite", "RectF& GetUV()", asMETHOD(NodeSprite, GetUV), asCALL_THISCALL) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("NodeSprite", "void SetUV(RectF &in)", asMETHOD(NodeSprite, SetUV), asCALL_THISCALL) < 0) { return false; }
+
+	if (m_engine->RegisterObjectType("NodeManager", sizeof(NodeManager), asOBJ_VALUE | asOBJ_APP_CLASS_C) < 0) { return false; }
+	if (m_engine->RegisterObjectBehaviour("NodeManager", asBEHAVE_CONSTRUCT, "void f(const SceneManager &in)", asFUNCTION(NodeManagerConstructor), asCALL_CDECL_OBJLAST) < 0) { return false; }
+	if (m_engine->RegisterObjectBehaviour("NodeManager", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(NodeManagerDestructor), asCALL_CDECL_OBJLAST) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("NodeManager", "uint AddSceneNode(const NodeSprite &in, uint)", asMETHOD(NodeManager, AddSceneNode), asCALL_THISCALL) < 0) { return false; }
+
+
 
 	if (CompileScript(m_engine, launchFolder) == false)
 	{

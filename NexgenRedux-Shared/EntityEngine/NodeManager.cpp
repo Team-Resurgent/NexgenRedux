@@ -12,7 +12,7 @@ using namespace NexgenRedux;
 
 NodeManager::NodeManager(SceneManager* sceneManager) : m_sceneManager(sceneManager), m_maxNodeID(0)
 {
-    
+
 }
 
 NodeManager::~NodeManager(void)

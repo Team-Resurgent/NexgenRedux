@@ -98,14 +98,14 @@ namespace NexgenRedux
 		static void GetJoystickHatCount(asIScriptGeneric* gen);
 		static void GetJoystickHatDirection(asIScriptGeneric* gen);
 
-		static void SceneManagerConstructor(SceneManager& sceneManager);
-		static void SceneManagerDestructor(SceneManager& sceneManager);
+		static void SceneManagerConstructor(SceneManager* sceneManager);
+		static void SceneManagerDestructor(SceneManager* sceneManager);
 
-		static void NodeManagerConstructor(SceneManager& sceneManager, NodeManager& nodeManager);
-		static void NodeManagerDestructor(NodeManager& nodeManager);
+		static void NodeManagerConstructor(SceneManager* sceneManager, NodeManager* nodeManager);
+		static void NodeManagerDestructor(NodeManager* nodeManager);
 
-		static void NodeSpriteConstructor(NodeSprite& nodeSprite);
-		static void NodeSpriteDestructor(NodeSprite& nodeSprite);
+		static void NodeSpriteConstructor(NodeSprite* nodeSprite);
+		static void NodeSpriteDestructor(NodeSprite* nodeSprite);
 
 		static void Vec2DConstructorDefault(MathUtility::Vec2D* Vec2D);
         static void Vec2DConstructorValues(double x, double y, MathUtility::Vec2D* Vec2D);

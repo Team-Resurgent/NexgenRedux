@@ -14,24 +14,18 @@ namespace NexgenRedux
     class SceneManager 
     {
     public:
-        SceneManager(void);
 
-        uint32_t CreateScene(bool setAsCurrent);
-        void SetCurrentScene(uint32_t sceneID);
-        void Update(NodeManager* nodeManager, float dt);
-        void Render(NodeManager* nodeManager);
+        static uint32_t CreateScene(bool setAsCurrent);
+        static void SetCurrentScene(uint32_t sceneID);
+        static void Update(float dt);
+        static void Render();
         
     private:
 
         friend class NodeManager;
-        bool AddSceneNode(uint32_t sceneID, uint32_t nodeID);
-        bool DeleteSceneNode(uint32_t sceneID, uint32_t nodeID);
-        bool DeleteSceneNode(uint32_t nodeID);
+        static bool AddSceneNode(uint32_t sceneID, uint32_t nodeID);
+        static bool DeleteSceneNode(uint32_t sceneID, uint32_t nodeID);
+        static bool DeleteSceneNode(uint32_t nodeID);
 
-    private:
-
-        uint32_t m_currentSceneID;
-        uint32_t m_maxSceneID;
-        std::map<uint32_t, std::vector<uint32_t> > m_sceneMap;
     };
 }

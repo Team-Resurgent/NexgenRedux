@@ -70,9 +70,8 @@ uint frameCount;
 
 void Init()
 {
-    // SceneManager sceneManager();
-    // uint sceneID = sceneManager.CreateScene(true);
-    // sceneManager.SetCurrentScene(sceneID);
+    uint sceneID = SceneManager::CreateScene(true);
+    SceneManager::SetCurrentScene(sceneID);
 
     // NodeManager nodeManager(sceneManager);
 

@@ -17,38 +17,32 @@ namespace NexgenRedux
     {
     public:
 
-        NodeManager(SceneManager* sceneManager);
-        ~NodeManager(void);
+        static void Close(void);
+        static uint32_t AddSceneNode(Node* node, uint32_t sceneID);
+        static uint32_t AddNode(Node* node, uint32_t parentNodeID);
+        static uint32_t AddNodeAt(Node* node, uint32_t parentNodeID, uint32_t nodeID);
+        static void DeleteNode(uint32_t nodeID);    
 
-        uint32_t AddSceneNode(Node* node, uint32_t sceneID);
-        uint32_t AddNode(Node* node, uint32_t parentNodeID);
-        uint32_t AddNodeAt(Node* node, uint32_t parentNodeID, uint32_t nodeID);
-        void DeleteNode(uint32_t nodeID);    
-
-        void PurgeNodes();
-        void CheckForOrphans();
+        static void PurgeNodes();
+        static void CheckForOrphans();
 
         // bool SetNodePropertyAnchor(uint32_t nodeID, MathUtility::Vec3F anchor);
         // bool SetNodePropertyRotation(uint32_t nodeID, MathUtility::Vec3F rotation);
         // bool SetNodePropertySkew(uint32_t nodeID, MathUtility::Vec3F skew);
         // bool SetNodePropertyPosition(uint32_t nodeID, MathUtility::Vec3F position);
 
-        void Update(uint32_t nodeID, float dt);
-        void Render(uint32_t nodeID);
+        static void Update(uint32_t nodeID, float dt);
+        static void Render(uint32_t nodeID);
 
     private:
 
         friend class SceneManager;
         friend class Node;
-        Node* GetNode(uint32_t nodeID);
+        static Node* GetNode(uint32_t nodeID);
 
     private:
 
-        void MarkForDelete(uint32_t nodeID);
+        static void MarkForDelete(uint32_t nodeID);
 
-    private:
-        SceneManager* m_sceneManager;
-        uint32_t m_maxNodeID;
-        std::map<uint32_t, Node*> m_nodeMap;
     };
 }

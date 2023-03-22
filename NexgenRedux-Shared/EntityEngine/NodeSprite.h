@@ -1,32 +1,32 @@
-#pragma once
+// #pragma once
 
-#include "Node.h"
-#include "GlobalTypes.h"
+// #include "Node.h"
+// #include "GlobalTypes.h"
 
-#include <vector>
-#include <map>
-#include <string>
+// #include <vector>
+// #include <map>
+// #include <string>
 
-namespace NexgenRedux
-{
-    class NodeSprite : public Node
-    {
-    public:
-        NodeSprite();
-        ~NodeSprite(void);
+// namespace NexgenRedux
+// {
+//     class NodeSprite : public Node
+//     {
+//     public:
+//         NodeSprite();
+//         ~NodeSprite(void);
 
-        void Update(float dt);
-        void Render();
+//         void Update(float dt);
+//         void Render();
 
-        const std::string GetTexturePath();
-        void SetTexturePath(std::string value);
-        const MathUtility::RectF GetUV();
-        void SetUV(MathUtility::RectF value);
+//         const std::string GetTexturePath();
+//         void SetTexturePath(std::string value);
+//         const MathUtility::RectF GetUV();
+//         void SetUV(MathUtility::RectF value);
 
-    private:
+//     private:
 
-        bool m_isDirty;
-        std::string m_texturePath;
-        MathUtility::RectF m_uv;
-    };
-}
+//         bool m_isDirty;
+//         std::string m_texturePath;
+//         MathUtility::RectF m_uv;
+//     };
+// }

@@ -8,11 +8,14 @@
 
 using namespace NexgenRedux;
 
-SceneManager::SceneManager() : m_currentSceneID(0), m_maxSceneID(0)
+namespace
 {
+    uint32_t m_currentSceneID = 0;
+    uint32_t m_maxSceneID = 0;
+    std::map<uint32_t, std::vector<uint32_t> > m_sceneMap;
 }
 
-void SceneManager::Update(NodeManager* nodeManager, float dt) 
+void SceneManager::Update(float dt) 
 {
     std::map<uint32_t, std::vector<uint32_t> >::iterator itScene = m_sceneMap.find(m_currentSceneID);
 	if (itScene != m_sceneMap.end()) 
@@ -20,12 +23,12 @@ void SceneManager::Update(NodeManager* nodeManager, float dt)
         std::vector<uint32_t>* sceneNodeLookup = &itScene->second;
         for (uint32_t i = 0; i < sceneNodeLookup->size(); i++)
         {
-            nodeManager->Update(sceneNodeLookup->at(i), dt);
+            NodeManager::Update(sceneNodeLookup->at(i), dt);
         }
 	}
 }
 
-void SceneManager::Render(NodeManager* nodeManager) 
+void SceneManager::Render() 
 {
     std::map<uint32_t, std::vector<uint32_t> >::iterator itScene = m_sceneMap.find(m_currentSceneID);
 	if (itScene != m_sceneMap.end()) 
@@ -33,7 +36,7 @@ void SceneManager::Render(NodeManager* nodeManager)
         std::vector<uint32_t>* sceneNodeLookup = &itScene->second;
         for (uint32_t i = 0; i < sceneNodeLookup->size(); i++)
         {
-            nodeManager->Render(sceneNodeLookup->at(i));
+            NodeManager::Render(sceneNodeLookup->at(i));
         }
     }
 }

@@ -34,7 +34,7 @@ void DebugUtility::DeleteLogFile()
     FileSystem::FileDelete(m_LogFile);
 }
 
-void DebugUtility::LogMessage(DebugUtility::LogLevel const logLevel, std::string const message)
+void DebugUtility::LogMessage(DebugUtility::LogLevel const logLevel, const std::string message)
 {
 	// char buffer[1024];
 	// vsprintf(buffer, format.c_str(), args);	
@@ -97,7 +97,7 @@ void DebugUtility::LogMessage(DebugUtility::LogLevel const logLevel, std::string
 // #endif
 }
 
-void DebugUtility::LogMessageIf(const bool condition, const LogLevel logLevel, std::string const message)
+void DebugUtility::LogMessageIf(const bool condition, const LogLevel logLevel, const std::string message)
 {
 	if (condition == false)
 	{

@@ -162,40 +162,40 @@ bool CompileScript(asIScriptEngine* engine, std::wstring launchFolder)
 	return true;
 }
 
-// SceneManager
+// // SceneManager
 
-void AngelScriptRunner::SceneManagerConstructor(SceneManager* sceneManager)
-{
-	new (sceneManager)SceneManager();
-}
+// void AngelScriptRunner::SceneManagerConstructor(SceneManager* sceneManager)
+// {
+// 	new (sceneManager)SceneManager();
+// }
 
-void AngelScriptRunner::SceneManagerDestructor(SceneManager* sceneManager)
-{
-	sceneManager->~SceneManager();
-}
+// void AngelScriptRunner::SceneManagerDestructor(SceneManager* sceneManager)
+// {
+// 	sceneManager->~SceneManager();
+// }
 
-// NodeManager
+// // NodeManager
 
-void AngelScriptRunner::NodeManagerConstructor(SceneManager* sceneManager, NodeManager* nodeManager)
-{
-	new (nodeManager)NodeManager(sceneManager);
-}
+// void AngelScriptRunner::NodeManagerConstructor(SceneManager* sceneManager, NodeManager* nodeManager)
+// {
+// 	new (nodeManager)NodeManager(sceneManager);
+// }
 
-void AngelScriptRunner::NodeManagerDestructor(NodeManager* nodeManager)
-{
-	nodeManager->~NodeManager();
-}
+// void AngelScriptRunner::NodeManagerDestructor(NodeManager* nodeManager)
+// {
+// 	nodeManager->~NodeManager();
+// }
 
 // NodeSprite
 
 void AngelScriptRunner::NodeSpriteConstructor(NodeSprite* nodeSprite)
 {
-	new (nodeSprite)NodeSprite();
+	//new (nodeSprite)NodeSprite();
 }
 
 void AngelScriptRunner::NodeSpriteDestructor(NodeSprite* nodeSprite)
 {
-	nodeSprite->~NodeSprite();
+	//nodeSprite->~NodeSprite();
 }
 
 // Vec2D
@@ -581,8 +581,8 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	if (m_engine->RegisterGlobalFunction("double GetRandomDouble()", asFUNCTION(MathUtility::GetRandomDouble), asCALL_CDECL) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("int GetRandomIntInRange(int start, int end)", asFUNCTION(MathUtility::GetRandomIntInRange), asCALL_CDECL) < 0) { return false; }
 
-	if (m_engine->RegisterGlobalFunction("void DebugPrintIf(const bool condition, const int logLevel, const string &in message)", asFUNCTIONPR(DebugUtility::LogMessageIf, (const bool, const DebugUtility::LogLevel, const std::string), void), asCALL_CDECL) < 0) { return false; }
-	if (m_engine->RegisterGlobalFunction("void DebugPrint(const int logLevel, const string &in message)", asFUNCTIONPR(DebugUtility::LogMessage, (const DebugUtility::LogLevel, const std::string), void), asCALL_CDECL) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("void DebugPrintIf(const bool condition, const int logLevel, const string message)", asFUNCTIONPR(DebugUtility::LogMessageIf, (const bool, const DebugUtility::LogLevel, const std::string), void), asCALL_CDECL) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("void DebugPrint(const int logLevel, const string message)", asFUNCTIONPR(DebugUtility::LogMessage, (const DebugUtility::LogLevel, const std::string), void), asCALL_CDECL) < 0) { return false; }
 
 	if (m_engine->RegisterGlobalFunction("uint GetAvailableMonitorCount(void)", asFUNCTION(AngelScriptMethods::GetAvailableMonitorCount), asCALL_GENERIC) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("MonitorVideoMode GetMonitorVideoMode(uint monitorIndex)", asFUNCTION(AngelScriptMethods::GetMonitorVideoMode), asCALL_GENERIC) < 0) { return false; }
@@ -637,38 +637,34 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	if (m_engine->RegisterFuncdef("void JoystickConnectCallback(uint joystickID, uint event)") < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void SetJoystickConnectCallback(JoystickConnectCallback @joystickConnectCallback)", asFUNCTION(AngelScriptRunner::SetJoystickConnectCallback), asCALL_GENERIC) < 0) { return false; }
 
-	if (m_engine->RegisterObjectType("SceneManager", sizeof(SceneManager), asOBJ_VALUE | asOBJ_APP_CLASS_C) < 0) { return false; }
-	if (m_engine->RegisterObjectBehaviour("SceneManager", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(SceneManagerConstructor), asCALL_CDECL_OBJLAST) < 0) { return false; }
-	if (m_engine->RegisterObjectBehaviour("SceneManager", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(SceneManagerDestructor), asCALL_CDECL_OBJLAST) < 0) { return false; }
-	if (m_engine->RegisterObjectMethod("SceneManager", "uint CreateScene(bool)", asMETHOD(SceneManager, CreateScene), asCALL_THISCALL) < 0) { return false; }
-	if (m_engine->RegisterObjectMethod("SceneManager", "void SetCurrentScene(uint)", asMETHOD(SceneManager, SetCurrentScene), asCALL_THISCALL) < 0) { return false; }
+
 
 //uint nodeID1 = nodeManager.AddSceneNode(nodeSprite1, sceneID);
 
-	if (m_engine->RegisterObjectType("NodeSprite", sizeof(NodeSprite), asOBJ_VALUE | asOBJ_APP_CLASS_C) < 0) { return false; }
-	if (m_engine->RegisterObjectBehaviour("NodeSprite", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(NodeSpriteConstructor), asCALL_CDECL_OBJLAST) < 0) { return false; }
-	if (m_engine->RegisterObjectBehaviour("NodeSprite", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(NodeSpriteDestructor), asCALL_CDECL_OBJLAST) < 0) { return false; }
-	if (m_engine->RegisterObjectMethod("NodeSprite", "Vec3F& GetAnchor()", asMETHOD(NodeSprite, GetAnchor), asCALL_THISCALL) < 0) { return false; }
-	if (m_engine->RegisterObjectMethod("NodeSprite", "void SetAnchor(Vec3F &in)", asMETHOD(NodeSprite, SetAnchor), asCALL_THISCALL) < 0) { return false; }
-	if (m_engine->RegisterObjectMethod("NodeSprite", "Vec3F& GetRotation()", asMETHOD(NodeSprite, GetRotation), asCALL_THISCALL) < 0) { return false; }
-	if (m_engine->RegisterObjectMethod("NodeSprite", "void SetRotation(Vec3F &in)", asMETHOD(NodeSprite, SetRotation), asCALL_THISCALL) < 0) { return false; }
-	if (m_engine->RegisterObjectMethod("NodeSprite", "Vec3F& GetSkew()", asMETHOD(NodeSprite, GetSkew), asCALL_THISCALL) < 0) { return false; }
-	if (m_engine->RegisterObjectMethod("NodeSprite", "void SetSkew(Vec3F &in)", asMETHOD(NodeSprite, SetSkew), asCALL_THISCALL) < 0) { return false; }
-	if (m_engine->RegisterObjectMethod("NodeSprite", "Vec3F& GetScale()", asMETHOD(NodeSprite, GetScale), asCALL_THISCALL) < 0) { return false; }
-	if (m_engine->RegisterObjectMethod("NodeSprite", "void SetScale(Vec3F &in)", asMETHOD(NodeSprite, SetScale), asCALL_THISCALL) < 0) { return false; }
-	if (m_engine->RegisterObjectMethod("NodeSprite", "Vec3F& GetPosition()", asMETHOD(NodeSprite, GetPosition), asCALL_THISCALL) < 0) { return false; }
-	if (m_engine->RegisterObjectMethod("NodeSprite", "void SetPosition(Vec3F &in)", asMETHOD(NodeSprite, SetPosition), asCALL_THISCALL) < 0) { return false; }
-	if (m_engine->RegisterObjectMethod("NodeSprite", "string GetTexturePath()", asMETHOD(NodeSprite, GetTexturePath), asCALL_THISCALL) < 0) { return false; }
-	if (m_engine->RegisterObjectMethod("NodeSprite", "void SetTexturePath(string value)", asMETHOD(NodeSprite, SetTexturePath), asCALL_THISCALL) < 0) { return false; }
-	if (m_engine->RegisterObjectMethod("NodeSprite", "RectF& GetUV()", asMETHOD(NodeSprite, GetUV), asCALL_THISCALL) < 0) { return false; }
-	if (m_engine->RegisterObjectMethod("NodeSprite", "void SetUV(RectF &in)", asMETHOD(NodeSprite, SetUV), asCALL_THISCALL) < 0) { return false; }
+	// if (m_engine->RegisterObjectType("NodeSprite", sizeof(NodeSprite), asOBJ_VALUE | asOBJ_APP_CLASS_C) < 0) { return false; }
+	// if (m_engine->RegisterObjectBehaviour("NodeSprite", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(NodeSpriteConstructor), asCALL_CDECL_OBJLAST) < 0) { return false; }
+	// if (m_engine->RegisterObjectBehaviour("NodeSprite", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(NodeSpriteDestructor), asCALL_CDECL_OBJLAST) < 0) { return false; }
+	// if (m_engine->RegisterObjectMethod("NodeSprite", "Vec3F& GetAnchor()", asMETHOD(NodeSprite, GetAnchor), asCALL_THISCALL) < 0) { return false; }
+	// if (m_engine->RegisterObjectMethod("NodeSprite", "void SetAnchor(Vec3F &in)", asMETHOD(NodeSprite, SetAnchor), asCALL_THISCALL) < 0) { return false; }
+	// if (m_engine->RegisterObjectMethod("NodeSprite", "Vec3F& GetRotation()", asMETHOD(NodeSprite, GetRotation), asCALL_THISCALL) < 0) { return false; }
+	// if (m_engine->RegisterObjectMethod("NodeSprite", "void SetRotation(Vec3F &in)", asMETHOD(NodeSprite, SetRotation), asCALL_THISCALL) < 0) { return false; }
+	// if (m_engine->RegisterObjectMethod("NodeSprite", "Vec3F& GetSkew()", asMETHOD(NodeSprite, GetSkew), asCALL_THISCALL) < 0) { return false; }
+	// if (m_engine->RegisterObjectMethod("NodeSprite", "void SetSkew(Vec3F &in)", asMETHOD(NodeSprite, SetSkew), asCALL_THISCALL) < 0) { return false; }
+	// if (m_engine->RegisterObjectMethod("NodeSprite", "Vec3F& GetScale()", asMETHOD(NodeSprite, GetScale), asCALL_THISCALL) < 0) { return false; }
+	// if (m_engine->RegisterObjectMethod("NodeSprite", "void SetScale(Vec3F &in)", asMETHOD(NodeSprite, SetScale), asCALL_THISCALL) < 0) { return false; }
+	// if (m_engine->RegisterObjectMethod("NodeSprite", "Vec3F& GetPosition()", asMETHOD(NodeSprite, GetPosition), asCALL_THISCALL) < 0) { return false; }
+	// if (m_engine->RegisterObjectMethod("NodeSprite", "void SetPosition(Vec3F &in)", asMETHOD(NodeSprite, SetPosition), asCALL_THISCALL) < 0) { return false; }
+	// if (m_engine->RegisterObjectMethod("NodeSprite", "string GetTexturePath()", asMETHOD(NodeSprite, GetTexturePath), asCALL_THISCALL) < 0) { return false; }
+	// if (m_engine->RegisterObjectMethod("NodeSprite", "void SetTexturePath(string value)", asMETHOD(NodeSprite, SetTexturePath), asCALL_THISCALL) < 0) { return false; }
+	// if (m_engine->RegisterObjectMethod("NodeSprite", "RectF& GetUV()", asMETHOD(NodeSprite, GetUV), asCALL_THISCALL) < 0) { return false; }
+	// if (m_engine->RegisterObjectMethod("NodeSprite", "void SetUV(RectF &in)", asMETHOD(NodeSprite, SetUV), asCALL_THISCALL) < 0) { return false; }
 
-	if (m_engine->RegisterObjectType("NodeManager", sizeof(NodeManager), asOBJ_VALUE | asOBJ_APP_CLASS_C) < 0) { return false; }
-	if (m_engine->RegisterObjectBehaviour("NodeManager", asBEHAVE_CONSTRUCT, "void f(const SceneManager &in)", asFUNCTION(NodeManagerConstructor), asCALL_CDECL_OBJLAST) < 0) { return false; }
-	if (m_engine->RegisterObjectBehaviour("NodeManager", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(NodeManagerDestructor), asCALL_CDECL_OBJLAST) < 0) { return false; }
-	if (m_engine->RegisterObjectMethod("NodeManager", "uint AddSceneNode(const NodeSprite &in, uint)", asMETHOD(NodeManager, AddSceneNode), asCALL_THISCALL) < 0) { return false; }
-
-
+	if (m_engine->SetDefaultNamespace("SceneManager") < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("uint SceneManager::CreateScene(bool)", asFUNCTION(SceneManager::CreateScene), asCALL_CDECL) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("void SceneManager::SetCurrentScene(uint)", asFUNCTION(SceneManager::SetCurrentScene), asCALL_CDECL) < 0) { return false; }
+	
+	if (m_engine->SetDefaultNamespace("NodeManager") < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("uint NodeManager::AddSceneNode(const NodeSprite &in, uint)", asFUNCTION(NodeManager::AddSceneNode), asCALL_CDECL) < 0) { return false; }
 
 	if (CompileScript(m_engine, launchFolder) == false)
 	{

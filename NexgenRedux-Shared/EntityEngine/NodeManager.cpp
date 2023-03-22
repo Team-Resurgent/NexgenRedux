@@ -10,12 +10,13 @@
 using namespace Gensys;
 using namespace NexgenRedux;
 
-NodeManager::NodeManager(SceneManager* sceneManager) : m_sceneManager(sceneManager), m_maxNodeID(0)
+namespace 
 {
-
+    uint32_t m_maxNodeID = 0;
+    std::map<uint32_t, Node*> m_nodeMap;
 }
 
-NodeManager::~NodeManager(void)
+void NodeManager::Close(void)
 {
     DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, "Deleting node manager");
 
@@ -36,7 +37,7 @@ uint32_t NodeManager::AddSceneNode(Node* node, uint32_t sceneID)
     uint32_t nodeID = ++m_maxNodeID;
     node->SetID(nodeID);
     m_nodeMap.insert(std::pair<uint32_t, Node*>(nodeID, node));
-    m_sceneManager->AddSceneNode(sceneID, nodeID);
+    SceneManager::AddSceneNode(sceneID, nodeID);
     return nodeID;
 }
 
@@ -114,7 +115,7 @@ void NodeManager::PurgeNodes()
             Node* parentNode = itErase->second->GetParent(); 
             if (parentNode == NULL || parentNode->GetID() == 0)
             {
-                m_sceneManager->DeleteSceneNode(itErase->first);
+                SceneManager::DeleteSceneNode(itErase->first);
             }
             else
             {

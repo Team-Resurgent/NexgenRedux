@@ -1,6 +1,8 @@
 #pragma once
 
 #include "WindowManager.h"
+#include "EntityEngine/SceneManager.h"
+#include "EntityEngine/NodeManager.h"
 #include "EntityEngine/NodeSprite.h"
 
 #include <Gensys/Int.h>
@@ -95,6 +97,12 @@ namespace NexgenRedux
 		static void GetJoystickAxisStates(asIScriptGeneric* gen);
 		static void GetJoystickHatCount(asIScriptGeneric* gen);
 		static void GetJoystickHatDirection(asIScriptGeneric* gen);
+
+		static void SceneManagerConstructor(SceneManager& sceneManager);
+		static void SceneManagerDestructor(SceneManager& sceneManager);
+
+		static void NodeManagerConstructor(SceneManager& sceneManager, NodeManager& nodeManager);
+		static void NodeManagerDestructor(NodeManager& nodeManager);
 
 		static void NodeSpriteConstructor(NodeSprite& nodeSprite);
 		static void NodeSpriteDestructor(NodeSprite& nodeSprite);

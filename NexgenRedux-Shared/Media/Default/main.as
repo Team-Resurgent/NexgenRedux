@@ -70,6 +70,12 @@ uint frameCount;
 
 void Init()
 {
+    SceneManager sceneManager();
+    uint sceneID = sceneManager.CreateScene(true);
+    sceneManager.SetCurrentScene(sceneID);
+
+    //NodeManager nodeManager(sceneManager);
+
     NodeSprite nodeSprite();
     nodeSprite.SetTexturePath("hello");
 

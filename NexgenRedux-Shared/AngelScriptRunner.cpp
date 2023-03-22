@@ -2,6 +2,8 @@
 #include "AngelScriptMethods.h"
 #include "WindowManager.h"
 #include "MathUtility.h"
+#include "EntityEngine/SceneManager.h"
+#include "EntityEngine/NodeManager.h"
 #include "EntityEngine/NodeSprite.h"
 
 #include <Gensys/DebugUtility.h>
@@ -159,6 +161,32 @@ bool CompileScript(asIScriptEngine* engine, std::wstring launchFolder)
 
 	return true;
 }
+
+// SceneManager
+
+void AngelScriptRunner::SceneManagerConstructor(SceneManager& sceneManager)
+{
+	new (&sceneManager)SceneManager();
+}
+
+void AngelScriptRunner::SceneManagerDestructor(SceneManager& sceneManager)
+{
+	sceneManager.~SceneManager();
+}
+
+// NodeManager
+
+void AngelScriptRunner::NodeManagerConstructor(SceneManager& sceneManager, NodeManager& nodeManager)
+{
+	//new (&nodeManager)NodeManager(&sceneManager);
+}
+
+void AngelScriptRunner::NodeManagerDestructor(NodeManager& nodeManager)
+{
+	nodeManager.~NodeManager();
+}
+
+// NodeSprite
 
 void AngelScriptRunner::NodeSpriteConstructor(NodeSprite& nodeSprite)
 {
@@ -609,6 +637,16 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	if (m_engine->RegisterFuncdef("void JoystickConnectCallback(uint joystickID, uint event)") < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void SetJoystickConnectCallback(JoystickConnectCallback @joystickConnectCallback)", asFUNCTION(AngelScriptRunner::SetJoystickConnectCallback), asCALL_GENERIC) < 0) { return false; }
 
+	if (m_engine->RegisterObjectType("SceneManager", sizeof(SceneManager), asOBJ_VALUE | asOBJ_APP_CLASS) < 0) { return false; }
+	if (m_engine->RegisterObjectBehaviour("SceneManager", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(SceneManagerConstructor), asCALL_CDECL_OBJLAST) < 0) { return false; }
+	if (m_engine->RegisterObjectBehaviour("SceneManager", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(SceneManagerDestructor), asCALL_CDECL_OBJLAST) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("SceneManager", "uint CreateScene(bool)", asMETHOD(SceneManager, CreateScene), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("SceneManager", "void SetCurrentScene(uint)", asMETHOD(SceneManager, SetCurrentScene), asCALL_THISCALL) < 0) { return false; }
+
+	if (m_engine->RegisterObjectType("NodeManager", sizeof(NodeManager), asOBJ_VALUE | asOBJ_APP_CLASS) < 0) { return false; }
+	if (m_engine->RegisterObjectBehaviour("NodeManager", asBEHAVE_CONSTRUCT, "void f(SceneManager &in)", asFUNCTION(NodeManagerConstructor), asCALL_CDECL_OBJLAST) < 0) { return false; }
+	if (m_engine->RegisterObjectBehaviour("NodeManager", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(NodeManagerDestructor), asCALL_CDECL_OBJLAST) < 0) { return false; }
+
 	if (m_engine->RegisterObjectType("NodeSprite", sizeof(NodeSprite), asOBJ_VALUE | asOBJ_APP_CLASS) < 0) { return false; }
 	if (m_engine->RegisterObjectBehaviour("NodeSprite", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(NodeSpriteConstructor), asCALL_CDECL_OBJLAST) < 0) { return false; }
 	if (m_engine->RegisterObjectBehaviour("NodeSprite", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(NodeSpriteDestructor), asCALL_CDECL_OBJLAST) < 0) { return false; }
@@ -626,8 +664,6 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	if (m_engine->RegisterObjectMethod("NodeSprite", "void SetTexturePath(string value)", asMETHOD(NodeSprite, SetTexturePath), asCALL_THISCALL) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("NodeSprite", "RectF& GetUV()", asMETHOD(NodeSprite, GetUV), asCALL_THISCALL) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("NodeSprite", "void SetUV(RectF &in)", asMETHOD(NodeSprite, SetUV), asCALL_THISCALL) < 0) { return false; }
-
-
 
 	if (CompileScript(m_engine, launchFolder) == false)
 	{

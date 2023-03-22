@@ -11,6 +11,7 @@ namespace Gensys
 	{
 	public:
 		static std::wstring FormatString(std::wstring const format, ...);
+		static std::string FormatString(std::string const format, ...);
 		static std::wstring LowerCase(std::wstring const value);
 		static std::wstring UpperCase(std::wstring const value);
 		static bool StartsWith(std::wstring const value, std::wstring const startWith, bool const caseInsensitive);
@@ -29,5 +30,8 @@ namespace Gensys
 		static uint32_t ToInt(std::wstring const value);
 		static std::vector<uint8_t> StringToByteArray(std::wstring value);
 		static uint32_t FNVHashString(std::wstring value);
+
+
+
 	};
 }

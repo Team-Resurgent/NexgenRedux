@@ -56,7 +56,7 @@ void XboxOGRenderingHelper::SetShader(std::string shaderName)
 {
 	if (shaderName != "Default")
 	{
-		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "SetShader: Shader '%s' not recognized.", shaderName.c_str());
+		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("SetShader: Shader '%s' not recognized.", shaderName.c_str()));
 		return;
 	}
 
@@ -64,55 +64,55 @@ void XboxOGRenderingHelper::SetShader(std::string shaderName)
 
 	if (FAILED(d3dDevice->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE)))
 	{
-		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "SetShader: Shader '%s' init failed.", shaderName.c_str());
+		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("SetShader: Shader '%s' init failed.", shaderName.c_str()));
 		return;
 	}
 
 	if (FAILED(d3dDevice->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE)))
 	{
-		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "SetShader: Shader '%s' init failed.", shaderName.c_str());
+		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("SetShader: Shader '%s' init failed.", shaderName.c_str()));
 		return;
 	}
 
 	if (FAILED(d3dDevice->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_CURRENT)))
 	{
-		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "SetShader: Shader '%s' init failed.", shaderName.c_str());
+		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("SetShader: Shader '%s' init failed.", shaderName.c_str()));
 		return;
 	}
 
 	if (FAILED(d3dDevice->SetTextureStageState(1, D3DTSS_COLOROP, D3DTOP_MODULATE)))
 	{
-		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "SetShader: Shader '%s' init failed.", shaderName.c_str());
+		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("SetShader: Shader '%s' init failed.", shaderName.c_str()));
 		return;
 	}
 
 	if (FAILED(d3dDevice->SetTextureStageState(1, D3DTSS_COLORARG1, D3DTA_CURRENT)))
 	{
-		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "SetShader: Shader '%s' init failed.", shaderName.c_str());
+		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("SetShader: Shader '%s' init failed.", shaderName.c_str()));
 		return;
 	}
 	
 	if (FAILED(d3dDevice->SetTextureStageState(1, D3DTSS_COLORARG2, D3DTA_TFACTOR)))
 	{
-		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "SetShader: Shader '%s' init failed.", shaderName.c_str());
+		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("SetShader: Shader '%s' init failed.", shaderName.c_str()));
 		return;
 	}
 
 	if (FAILED(d3dDevice->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1)))
 	{
-		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "SetShader: Shader '%s' init failed.", shaderName.c_str());
+		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("SetShader: Shader '%s' init failed.", shaderName.c_str()));
 		return;
 	}
 
 	if (FAILED(d3dDevice->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE)))
 	{
-		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "SetShader: Shader '%s' init failed.", shaderName.c_str());
+		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("SetShader: Shader '%s' init failed.", shaderName.c_str()));
 		return;
 	}
 	
 	if (FAILED(d3dDevice->SetVertexShader(D3DFVF_XYZ | D3DFVF_NORMAL| D3DFVF_TEX1)))
 	{
-		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "SetShader: Shader '%s' init failed.", shaderName.c_str());
+		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("SetShader: Shader '%s' init failed.", shaderName.c_str()));
 		return;
 	}
 }
@@ -169,7 +169,7 @@ void XboxOGRenderingHelper::SetTexture(const uint32_t& textureID, const TextureF
 	TextureContainer* textureContainer = GetTextureContainer(textureID);
 	if (textureContainer == NULL)
 	{
-		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "SetTexture: Texture with ID '%s' not found.", textureID);
+		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("SetTexture: Texture with ID '%s' not found.", textureID));
 		return;
 	}
 
@@ -567,16 +567,16 @@ void XboxOGRenderingHelper::SetLight1(const LightOperation& operation)
 	}
 }
 
-void XboxOGRenderingHelper::SetLightInstance1(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse) 
+void XboxOGRenderingHelper::SetLightInstance1(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4F& diffuse) 
 {
 	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)m_windowHelper)->GetD3DDevice();
 
 	D3DLIGHT8 light;
 	memset(&light, 0, sizeof(light));
 	light.Type = D3DLIGHT_POINT;
-	light.Diffuse.r = diffuse.r / 255.0f;
-	light.Diffuse.g = diffuse.g / 255.0f;
-	light.Diffuse.b = diffuse.b / 255.0f;
+	light.Diffuse.r = diffuse.r;
+	light.Diffuse.g = diffuse.g;
+	light.Diffuse.b = diffuse.b;
 	light.Diffuse.a = 1.0;
 	light.Range = distance;
 	light.Position = D3DXVECTOR3(position.values[0], position.values[1], position.values[2]);
@@ -616,16 +616,16 @@ void XboxOGRenderingHelper::SetLight2(const LightOperation& operation)
 	}
 }
 
-void XboxOGRenderingHelper::SetLightInstance2(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse) 
+void XboxOGRenderingHelper::SetLightInstance2(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4F& diffuse) 
 {
 	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)m_windowHelper)->GetD3DDevice();
 
 	D3DLIGHT8 light;
 	memset(&light, 0, sizeof(light));
 	light.Type = D3DLIGHT_POINT;
-	light.Diffuse.r = diffuse.r / 255.0f;
-	light.Diffuse.g = diffuse.g / 255.0f;
-	light.Diffuse.b = diffuse.b / 255.0f;
+	light.Diffuse.r = diffuse.r;
+	light.Diffuse.g = diffuse.g;
+	light.Diffuse.b = diffuse.b;
 	light.Diffuse.a = 1.0;
 	light.Range = distance;
 	light.Position = D3DXVECTOR3(position.values[0], position.values[1], position.values[2]);
@@ -665,16 +665,16 @@ void XboxOGRenderingHelper::SetLight3(const LightOperation& operation)
 	}
 }
 
-void XboxOGRenderingHelper::SetLightInstance3(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse) 
+void XboxOGRenderingHelper::SetLightInstance3(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4F& diffuse) 
 {
 	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)m_windowHelper)->GetD3DDevice();
 
 	D3DLIGHT8 light;
 	memset(&light, 0, sizeof(light));
 	light.Type = D3DLIGHT_POINT;
-	light.Diffuse.r = diffuse.r / 255.0f;
-	light.Diffuse.g = diffuse.g / 255.0f;
-	light.Diffuse.b = diffuse.b / 255.0f;
+	light.Diffuse.r = diffuse.r;
+	light.Diffuse.g = diffuse.g;
+	light.Diffuse.b = diffuse.b;
 	light.Diffuse.a = 1.0;
 	light.Range = distance;
 	light.Position = D3DXVECTOR3(position.values[0], position.values[1], position.values[2]);
@@ -714,16 +714,16 @@ void XboxOGRenderingHelper::SetLight4(const LightOperation& operation)
 	}
 }
 
-void XboxOGRenderingHelper::SetLightInstance4(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4I& diffuse) 
+void XboxOGRenderingHelper::SetLightInstance4(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4F& diffuse) 
 {
 	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)m_windowHelper)->GetD3DDevice();
 
 	D3DLIGHT8 light;
 	memset(&light, 0, sizeof(light));
 	light.Type = D3DLIGHT_POINT;
-	light.Diffuse.r = diffuse.r / 255.0f;
-	light.Diffuse.g = diffuse.g / 255.0f;
-	light.Diffuse.b = diffuse.b / 255.0f;
+	light.Diffuse.r = diffuse.r;
+	light.Diffuse.g = diffuse.g;
+	light.Diffuse.b = diffuse.b;
 	light.Diffuse.a = 1.0;
 	light.Range = distance;
 	light.Position = D3DXVECTOR3(position.values[0], position.values[1], position.values[2]);

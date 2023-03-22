@@ -13,9 +13,6 @@ namespace NexgenRedux
 
 		AngelScriptMethods(WindowManager* windowManager);
 
-		static void DebugPrint(asIScriptGeneric* gen);
-		static void DebugPrintIf(asIScriptGeneric* gen);
-
 		static void GetAvailableMonitorCount(asIScriptGeneric* gen);
 		static void GetMonitorVideoMode(asIScriptGeneric* gen);
 		static void GetMonitorVideoModes(asIScriptGeneric* gen);
@@ -30,17 +27,6 @@ namespace NexgenRedux
 		static void SetMouseCursorPosition(asIScriptGeneric* gen);
 		static void GetClipboardString(asIScriptGeneric* gen);
 		static void SetClipboardString(asIScriptGeneric* gen);
-
-		static void GetTimeNow(asIScriptGeneric* gen);
-		static void GetMillisecondsNow(asIScriptGeneric* gen);
-		static void GetDurationSeconds(asIScriptGeneric* gen);
-		static void CalculateFramesPerSecond(asIScriptGeneric* gen);
-		static void SleepMilliseconds(asIScriptGeneric* gen);
-
-		static void SeedRandom(asIScriptGeneric* gen);
-		static void SeedRandomWithValue(asIScriptGeneric* gen);
-		static void GetRandomDouble(asIScriptGeneric* gen);
-		static void GetRandomIntInRange(asIScriptGeneric* gen);
 
 		static void JoystickIsPresent(asIScriptGeneric* gen);
 		static void JoystickIsGamepad(asIScriptGeneric* gen);

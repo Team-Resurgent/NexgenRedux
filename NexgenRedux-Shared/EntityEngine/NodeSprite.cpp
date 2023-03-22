@@ -1,6 +1,7 @@
 #include "NodeSprite.h"
 
 #include <Gensys/DebugUtility.h>
+#include <Gensys/StringUtility.h>
 #include <stdexcept>
 #include <string>
 
@@ -16,7 +17,7 @@ NodeSprite::NodeSprite() : Node()
 
 NodeSprite::~NodeSprite(void)
 {
-    DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, "Deleting node '%i'", m_nodeID);
+    DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, StringUtility::FormatString("Deleting node '%i'", m_nodeID));
 }
 
 void NodeSprite::Update(float dt)
@@ -26,12 +27,12 @@ void NodeSprite::Update(float dt)
         m_isDirty = false;
     }
     MathUtility::Matrix4x4 matrix = GetTransform();
-    DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, "Updating, Calculated transfor for node '%i'", m_nodeID);
+    DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, StringUtility::FormatString("Updating, Calculated transfor for node '%i'", m_nodeID));
 }
 
 void NodeSprite::Render()
 {
-    DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, "Rendering node '%i'", m_nodeID);
+    DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, StringUtility::FormatString("Rendering node '%i'", m_nodeID));
 }
 
 const std::string NodeSprite::GetTexturePath()

@@ -28,24 +28,6 @@ AngelScriptMethods::AngelScriptMethods(WindowManager* windowManager)
 	m_windowManager = windowManager;
 }
 
-void AngelScriptMethods::DebugPrint(asIScriptGeneric* gen)
-{
-	DebugUtility::LogLevel logLevel = (DebugUtility::LogLevel)gen->GetArgDWord(0);
-	std::string *message = (std::string*)gen->GetArgAddress(1);
-	DebugUtility::LogMessage(logLevel, *message);
-}
-
-void AngelScriptMethods::DebugPrintIf(asIScriptGeneric* gen)
-{
-	bool condition = gen->GetArgByte(0) == 1;
-	if (condition == true) 
-	{
-		DebugUtility::LogLevel logLevel = (DebugUtility::LogLevel)gen->GetArgDWord(1);
-		std::string *message = (std::string*)gen->GetArgAddress(2);
-		DebugUtility::LogMessage(logLevel, *message);
-	}
-}
-
 void AngelScriptMethods::GetAvailableMonitorCount(asIScriptGeneric* gen)
 {
 	uint32_t monitorCount;
@@ -288,65 +270,6 @@ void AngelScriptMethods::SetClipboardString(asIScriptGeneric* gen)
 			return;
 		}
 	}
-}
-
-void AngelScriptMethods::GetTimeNow(asIScriptGeneric* gen)
-{
-	TimeUtility::Time time = TimeUtility::GetTimeNow();
-	gen->SetReturnObject(&time);
-}
-
-void AngelScriptMethods::GetMillisecondsNow(asIScriptGeneric* gen)
-{
-	uint64_t millisecondsNow = TimeUtility::GetMillisecondsNow();
-	*(uint64_t*)gen->GetAddressOfReturnLocation() = millisecondsNow;
-}
-
-void AngelScriptMethods::GetDurationSeconds(asIScriptGeneric* gen)
-{
-	uint64_t start = gen->GetArgQWord(0);
-	uint64_t end = gen->GetArgQWord(1);
-	double durationSeconds = TimeUtility::GetDurationSeconds(start, end);
-	*(double*)gen->GetAddressOfReturnLocation() = durationSeconds;
-}
-
-void AngelScriptMethods::CalculateFramesPerSecond(asIScriptGeneric* gen)
-{
-	uint32_t frameCount = gen->GetArgDWord(0);
-	double duration = gen->GetArgDouble(1);
-	double fps = TimeUtility::CalculateFramesPerSecond(frameCount, duration);
-	*(double*)gen->GetAddressOfReturnLocation() = fps;
-}
-
-void AngelScriptMethods::SleepMilliseconds(asIScriptGeneric* gen)
-{
-	uint32_t milliseconds = gen->GetArgDWord(0);
-	TimeUtility::SleepMilliseconds(milliseconds);
-}
-
-void AngelScriptMethods::SeedRandom(asIScriptGeneric* gen)
-{
-	MathUtility::SeedRandom();
-}
-
-void AngelScriptMethods::SeedRandomWithValue(asIScriptGeneric* gen)
-{
-	uint32_t value = gen->GetArgDWord(0);
-	MathUtility::SeedRandomWithValue(value);
-}
-
-void AngelScriptMethods::GetRandomDouble(asIScriptGeneric* gen)
-{
-	double value = MathUtility::GetRandomDouble();
-	*(double*)gen->GetAddressOfReturnLocation() = value;
-}
-
-void AngelScriptMethods::GetRandomIntInRange(asIScriptGeneric* gen)
-{
-	int32_t start = gen->GetArgDWord(0);
-	int32_t end = gen->GetArgDWord(1);
-	int32_t value = MathUtility::GetRandomIntInRange(start, end);
-	*(int32_t*)gen->GetAddressOfReturnLocation() = value;
 }
 
 void AngelScriptMethods::JoystickIsPresent(asIScriptGeneric* gen)

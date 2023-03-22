@@ -34,25 +34,23 @@ void DebugUtility::DeleteLogFile()
     FileSystem::FileDelete(m_LogFile);
 }
 
-void DebugUtility::LogMessage(LogLevel const logLevel, std::string const format, ...)
+void DebugUtility::LogMessage(DebugUtility::LogLevel const logLevel, std::string const message)
 {
-	va_list args;
-	va_start(args, format);	
-	char buffer[1024];
-	vsprintf(buffer, format.c_str(), args);	
-	va_end(args);
+	// char buffer[1024];
+	// vsprintf(buffer, format.c_str(), args);	
+	// va_end(args);
 
-	std::string message = std::string(buffer);
+	// std::string message = std::string(buffer);
 		
-	if (logLevel < MIN_LOGLEVEL)
+	if (logLevel < DebugUtility::MIN_LOGLEVEL)
 	{
 		return;
 	}
 
 	std::string level;
-	if (logLevel == LOGLEVEL_INFO) {
+	if (logLevel == DebugUtility::LOGLEVEL_INFO) {
 		level = "INFO";
-	} else if (logLevel == LOGLEVEL_WARNING) {
+	} else if (logLevel == DebugUtility::LOGLEVEL_WARNING) {
 		level = "WARNING";
 	} else {
 		level = "ERROR";
@@ -99,3 +97,11 @@ void DebugUtility::LogMessage(LogLevel const logLevel, std::string const format,
 // #endif
 }
 
+void DebugUtility::LogMessageIf(const bool condition, const LogLevel logLevel, std::string const message)
+{
+	if (condition == false)
+	{
+		return;
+	}
+	LogMessage(logLevel, message);
+}

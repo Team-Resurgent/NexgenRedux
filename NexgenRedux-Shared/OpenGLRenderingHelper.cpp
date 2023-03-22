@@ -371,7 +371,7 @@ void OpenGLRenderingHelper::SetShader(std::string shaderName)
 	uint32_t program;
 	if (GetShaderLookupValue(shaderName, "Program", program) == false)
 	{
-		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "SetShader: Shader '%s' not recognized.", shaderName.c_str());
+		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("SetShader: Shader '%s' not recognized.", shaderName.c_str()));
 		return;
 	}
 	glUseProgram(program);
@@ -410,7 +410,7 @@ void OpenGLRenderingHelper::SetTexture(const uint32_t& textureID, const TextureF
 	TextureContainer* textureContainer = GetTextureContainer(textureID);
 	if (textureContainer == NULL)
 	{
-		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "SetTexture: Texture with ID '%s' not found.", textureID);
+		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("SetTexture: Texture with ID '%s' not found.", textureID));
 		return;
 	}
 
@@ -958,7 +958,7 @@ uint32_t OpenGLRenderingHelper::CompileShader(uint32_t type, const std::string& 
 		glGetShaderInfoLog(shader, (GLsizei)infoLog.size(), NULL, infoLog.data());
 		std::string errorMessage = std::string("Shader compilation failed: ");
 		errorMessage += std::string(infoLog.begin(), infoLog.end());
-		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "Shader compiled failed: %s", errorMessage.c_str());
+		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("Shader compiled failed: %s", errorMessage.c_str()));
 		return 0;
 	}
 	return shader;
@@ -969,7 +969,7 @@ uint32_t OpenGLRenderingHelper::CompileProgram(const std::string& vsSource, cons
 	uint32_t program = glCreateProgram();
 	if (program == 0)
 	{
-		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "Create program failed: %i", glGetError());
+		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("Create program failed: %i", glGetError()));
 		return 0;
 	}
 
@@ -1007,7 +1007,7 @@ uint32_t OpenGLRenderingHelper::CompileProgram(const std::string& vsSource, cons
 		glGetProgramInfoLog(program, (GLsizei)infoLog.size(), NULL, infoLog.data());
 		std::string errorMessage = "Program link failed: ";
 		errorMessage += std::string(infoLog.begin(), infoLog.end());
-		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "Program link failed '%s'.", errorMessage.c_str());
+		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("Program link failed '%s'.", errorMessage.c_str()));
 		return 0;
 	}
 

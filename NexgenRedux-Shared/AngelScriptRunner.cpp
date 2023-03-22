@@ -119,11 +119,11 @@ void MessageCallback(asSMessageInfo* msg, void* param)
 	}
 	if (strlen(msg->section) > 0)
 	{
-		DebugUtility::LogMessage(logLevel, "%s (%d, %d) : %s", msg->section, msg->row, msg->col, msg->message);
+		DebugUtility::LogMessage(logLevel, StringUtility::FormatString("%s (%d, %d) : %s", msg->section, msg->row, msg->col, msg->message));
 	} 
 	else 
 	{
-		DebugUtility::LogMessage(logLevel, "(%d, %d) : %s", msg->row, msg->col, msg->message);
+		DebugUtility::LogMessage(logLevel, StringUtility::FormatString("(%d, %d) : %s", msg->row, msg->col, msg->message));
 	}
 }
 
@@ -355,7 +355,7 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 
 	if (m_engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL) < 0) { return false; }
 
-	if (m_engine->RegisterObjectType("MonitorVideoMode", sizeof(MonitorVideoMode), asOBJ_VALUE | asOBJ_POD) < 0) { return false; }
+	if (m_engine->RegisterObjectType("MonitorVideoMode", sizeof(MonitorVideoMode), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CAK) < 0) { return false; }
     if (m_engine->RegisterObjectProperty("MonitorVideoMode", "uint monitorIndex", asOFFSET(MonitorVideoMode, monitorIndex)) < 0) { return false; }
     if (m_engine->RegisterObjectProperty("MonitorVideoMode", "uint width", asOFFSET(MonitorVideoMode, width)) < 0) { return false; }
     if (m_engine->RegisterObjectProperty("MonitorVideoMode", "uint height", asOFFSET(MonitorVideoMode, height)) < 0) { return false; }
@@ -364,7 +364,7 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
     if (m_engine->RegisterObjectProperty("MonitorVideoMode", "uint blueBits", asOFFSET(MonitorVideoMode, blueBits)) < 0) { return false; }
     if (m_engine->RegisterObjectProperty("MonitorVideoMode", "uint refreshRate", asOFFSET(MonitorVideoMode, refreshRate)) < 0) { return false; }
 
-	if (m_engine->RegisterObjectType("JoystickButtonStates", sizeof(JoystickButtonStates), asOBJ_VALUE | asOBJ_POD) < 0) { return false; }
+	if (m_engine->RegisterObjectType("JoystickButtonStates", sizeof(JoystickButtonStates), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CAK) < 0) { return false; }
     if (m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonA", asOFFSET(JoystickButtonStates, buttonA)) < 0) { return false; }
     if (m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonB", asOFFSET(JoystickButtonStates, buttonB)) < 0) { return false; }
     if (m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonX", asOFFSET(JoystickButtonStates, buttonX)) < 0) { return false; }
@@ -381,7 +381,7 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	if (m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonDpadDown", asOFFSET(JoystickButtonStates, buttonDpadDown)) < 0) { return false; }
 	if (m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonDpadLeft", asOFFSET(JoystickButtonStates, buttonDpadLeft)) < 0) { return false; }
 
-	if (m_engine->RegisterObjectType("JoystickAxisStates", sizeof(JoystickAxisStates), asOBJ_VALUE | asOBJ_POD) < 0) { return false; }
+	if (m_engine->RegisterObjectType("JoystickAxisStates", sizeof(JoystickAxisStates), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CAK) < 0) { return false; }
     if (m_engine->RegisterObjectProperty("JoystickAxisStates", "float axisLeftX", asOFFSET(JoystickAxisStates, axisLeftX)) < 0) { return false; }
 	if (m_engine->RegisterObjectProperty("JoystickAxisStates", "float axisLeftY", asOFFSET(JoystickAxisStates, axisLeftY)) < 0) { return false; }
 	if (m_engine->RegisterObjectProperty("JoystickAxisStates", "float axisRightX", asOFFSET(JoystickAxisStates, axisRightX)) < 0) { return false; }
@@ -389,7 +389,7 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	if (m_engine->RegisterObjectProperty("JoystickAxisStates", "float axisLeftTrigger", asOFFSET(JoystickAxisStates, axisLeftTrigger)) < 0) { return false; }
 	if (m_engine->RegisterObjectProperty("JoystickAxisStates", "float axisRightTrigger", asOFFSET(JoystickAxisStates, axisRightTrigger)) < 0) { return false; }
 
-	if (m_engine->RegisterObjectType("Time", sizeof(TimeUtility::Time), asOBJ_VALUE | asOBJ_POD) < 0) { return false; }
+	if (m_engine->RegisterObjectType("Time", sizeof(TimeUtility::Time), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CAK) < 0) { return false; }
     if (m_engine->RegisterObjectProperty("Time", "uint16 month", asOFFSET(TimeUtility::Time, month)) < 0) { return false; }
     if (m_engine->RegisterObjectProperty("Time", "uint16 day", asOFFSET(TimeUtility::Time, day)) < 0) { return false; }
     if (m_engine->RegisterObjectProperty("Time", "uint16 year", asOFFSET(TimeUtility::Time, year)) < 0) { return false; }
@@ -548,13 +548,13 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
     if (m_engine->RegisterObjectMethod("Color4F", "bool opEq(const Color4F &in) const", asMETHODPR(MathUtility::Color4F, operator==, (const MathUtility::Color4F &) const, bool), asCALL_THISCALL) < 0) { return false; }
     if (m_engine->RegisterObjectMethod("Color4F", "bool opNotEq(const Color4F &in) const", asMETHODPR(MathUtility::Color4F, operator!=, (const MathUtility::Color4F &) const, bool), asCALL_THISCALL) < 0) { return false; }
 
-	if (m_engine->RegisterGlobalFunction("void SeedRandom()", asFUNCTION(AngelScriptMethods::SeedRandom), asCALL_GENERIC) < 0) { return false; }
-	if (m_engine->RegisterGlobalFunction("void SeedRandomWithValue(int value)", asFUNCTION(AngelScriptMethods::SeedRandomWithValue), asCALL_GENERIC) < 0) { return false; }
-	if (m_engine->RegisterGlobalFunction("double GetRandomDouble()", asFUNCTION(AngelScriptMethods::GetRandomDouble), asCALL_GENERIC) < 0) { return false; }
-	if (m_engine->RegisterGlobalFunction("int GetRandomIntInRange(int start, int end)", asFUNCTION(AngelScriptMethods::GetRandomIntInRange), asCALL_GENERIC) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("void SeedRandom()", asFUNCTION(MathUtility::SeedRandom), asCALL_CDECL) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("void SeedRandomWithValue(int value)", asFUNCTION(MathUtility::SeedRandomWithValue), asCALL_CDECL) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("double GetRandomDouble()", asFUNCTION(MathUtility::GetRandomDouble), asCALL_CDECL) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("int GetRandomIntInRange(int start, int end)", asFUNCTION(MathUtility::GetRandomIntInRange), asCALL_CDECL) < 0) { return false; }
 
-	if (m_engine->RegisterGlobalFunction("void DebugPrint(int logLevel, string &in message)", asFUNCTION(AngelScriptMethods::DebugPrint), asCALL_GENERIC) < 0) { return false; }
-	if (m_engine->RegisterGlobalFunction("void DebugPrintIf(bool condition, int logLevel, string &in message)", asFUNCTION(AngelScriptMethods::DebugPrintIf), asCALL_GENERIC) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("void DebugPrintIf(const bool condition, const int logLevel, const string &in message)", asFUNCTIONPR(DebugUtility::LogMessageIf, (const bool, const DebugUtility::LogLevel, const std::string), void), asCALL_CDECL) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("void DebugPrint(const int logLevel, const string &in message)", asFUNCTIONPR(DebugUtility::LogMessage, (const DebugUtility::LogLevel, const std::string), void), asCALL_CDECL) < 0) { return false; }
 
 	if (m_engine->RegisterGlobalFunction("uint GetAvailableMonitorCount(void)", asFUNCTION(AngelScriptMethods::GetAvailableMonitorCount), asCALL_GENERIC) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("MonitorVideoMode GetMonitorVideoMode(uint monitorIndex)", asFUNCTION(AngelScriptMethods::GetMonitorVideoMode), asCALL_GENERIC) < 0) { return false; }
@@ -571,11 +571,11 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	if (m_engine->RegisterGlobalFunction("string GetClipboardString(void)", asFUNCTION(AngelScriptMethods::GetClipboardString), asCALL_GENERIC) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void SetClipboardString(string)", asFUNCTION(AngelScriptMethods::SetClipboardString), asCALL_GENERIC) < 0) { return false; }
 
-	if (m_engine->RegisterGlobalFunction("Time GetTimeNow()", asFUNCTION(AngelScriptMethods::GetTimeNow), asCALL_GENERIC) < 0) { return false; }
-	if (m_engine->RegisterGlobalFunction("uint64 GetMillisecondsNow()", asFUNCTION(AngelScriptMethods::GetMillisecondsNow), asCALL_GENERIC) < 0) { return false; }
-	if (m_engine->RegisterGlobalFunction("double GetDurationSeconds(uint64 start, uint64 end)", asFUNCTION(AngelScriptMethods::GetDurationSeconds), asCALL_GENERIC) < 0) { return false; }
-	if (m_engine->RegisterGlobalFunction("double CalculateFramesPerSecond(uint frameCount, double duration)", asFUNCTION(AngelScriptMethods::CalculateFramesPerSecond), asCALL_GENERIC) < 0) { return false; }
-	if (m_engine->RegisterGlobalFunction("void SleepMilliseconds(uint milliseconds)", asFUNCTION(AngelScriptMethods::SleepMilliseconds), asCALL_GENERIC) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("Time GetTimeNow()", asFUNCTION(TimeUtility::GetTimeNow), asCALL_CDECL) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("uint64 GetMillisecondsNow()", asFUNCTION(TimeUtility::GetMillisecondsNow), asCALL_CDECL) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("double GetDurationSeconds(uint64 start, uint64 end)", asFUNCTION(TimeUtility::GetDurationSeconds), asCALL_CDECL) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("double CalculateFramesPerSecond(uint frameCount, double duration)", asFUNCTION(TimeUtility::CalculateFramesPerSecond), asCALL_CDECL) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("void SleepMilliseconds(uint milliseconds)", asFUNCTION(TimeUtility::SleepMilliseconds), asCALL_CDECL) < 0) { return false; }
 
 	if (m_engine->RegisterGlobalFunction("bool JoystickIsPresent(uint joystickID)", asFUNCTION(AngelScriptMethods::JoystickIsPresent), asCALL_GENERIC) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("bool JoystickIsGamepad(uint joystickID)", asFUNCTION(AngelScriptMethods::JoystickIsGamepad), asCALL_GENERIC) < 0) { return false; }
@@ -612,10 +612,20 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	if (m_engine->RegisterObjectType("NodeSprite", sizeof(NodeSprite), asOBJ_VALUE | asOBJ_APP_CLASS) < 0) { return false; }
 	if (m_engine->RegisterObjectBehaviour("NodeSprite", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(NodeSpriteConstructor), asCALL_CDECL_OBJLAST) < 0) { return false; }
 	if (m_engine->RegisterObjectBehaviour("NodeSprite", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(NodeSpriteDestructor), asCALL_CDECL_OBJLAST) < 0) { return false; }
-	if (m_engine->RegisterObjectMethod("NodeSprite", "void SetTexturePath(string value)", asMETHOD(NodeSprite, SetTexturePath), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("NodeSprite", "Vec3F& GetAnchor()", asMETHOD(NodeSprite, GetAnchor), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("NodeSprite", "void SetAnchor(Vec3F &in)", asMETHOD(NodeSprite, SetAnchor), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("NodeSprite", "Vec3F& GetRotation()", asMETHOD(NodeSprite, GetRotation), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("NodeSprite", "void SetRotation(Vec3F &in)", asMETHOD(NodeSprite, SetRotation), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("NodeSprite", "Vec3F& GetSkew()", asMETHOD(NodeSprite, GetSkew), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("NodeSprite", "void SetSkew(Vec3F &in)", asMETHOD(NodeSprite, SetSkew), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("NodeSprite", "Vec3F& GetScale()", asMETHOD(NodeSprite, GetScale), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("NodeSprite", "void SetScale(Vec3F &in)", asMETHOD(NodeSprite, SetScale), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("NodeSprite", "Vec3F& GetPosition()", asMETHOD(NodeSprite, GetPosition), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("NodeSprite", "void SetPosition(Vec3F &in)", asMETHOD(NodeSprite, SetPosition), asCALL_THISCALL) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("NodeSprite", "string GetTexturePath()", asMETHOD(NodeSprite, GetTexturePath), asCALL_THISCALL) < 0) { return false; }
-	if (m_engine->RegisterObjectMethod("NodeSprite", "void SetUV(RectF &in)", asMETHOD(NodeSprite, SetUV), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("NodeSprite", "void SetTexturePath(string value)", asMETHOD(NodeSprite, SetTexturePath), asCALL_THISCALL) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("NodeSprite", "RectF& GetUV()", asMETHOD(NodeSprite, GetUV), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("NodeSprite", "void SetUV(RectF &in)", asMETHOD(NodeSprite, SetUV), asCALL_THISCALL) < 0) { return false; }
 
 
 
@@ -1062,11 +1072,11 @@ bool AngelScriptRunner::Execute(asIScriptContext *context)
 	}
 	else if (result == asEXECUTION_EXCEPTION)
 	{
-		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "AngelScript - Exception occured '%s' in function '%s'.", context->GetExceptionString(), context->GetExceptionFunction()->GetDeclaration()  );
+		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("AngelScript - Exception occured '%s' in function '%s'.", context->GetExceptionString(), context->GetExceptionFunction()->GetDeclaration()));
 		return false;
 	}
 	
-	DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "AngelScript - Unknown error occured '%i'.", result);
+	DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("AngelScript - Unknown error occured '%i'.", result));
 	return false;
 }
 

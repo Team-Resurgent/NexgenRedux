@@ -426,7 +426,7 @@ bool MathUtility::SizeI::operator==(const MathUtility::SizeI& other) const
 { 
     for (uint32_t i = 0; i < 2; i++) 
     {
-        if (fabs(values[i] - other.values[i]) > 0) 
+        if (abs(values[i] - other.values[i]) > 0) 
         {
             return false;
         }
@@ -500,7 +500,7 @@ bool MathUtility::RectI::operator==(const MathUtility::RectI& other) const
 { 
     for (uint32_t i = 0; i < 4; i++) 
     {
-        if (fabs(values[i] - other.values[i]) > 0) 
+        if (abs(values[i] - other.values[i]) > 0) 
         {
             return false;
         }

@@ -71,9 +71,7 @@ uint frameCount;
 void Init()
 {
     NodeSprite nodeSprite();
-    Vec3F vec(1,2,3);
-    Vec3F other(4,5,6);
-    float x = vec.Dot(other);
+    nodeSprite.SetTexturePath("hello");
 
     //RectF newy(rectx);
 

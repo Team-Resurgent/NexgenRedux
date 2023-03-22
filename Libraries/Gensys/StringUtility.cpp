@@ -18,6 +18,16 @@ std::wstring StringUtility::FormatString(std::wstring const format, ...)
 	return ToWideString(std::string(buffer));
 }
 
+std::string StringUtility::FormatString(std::string const format, ...)
+{
+	va_list va;
+	va_start(va, format);
+	char buffer[1024];
+	vsprintf(buffer, format.c_str(), va);	
+	va_end(va);
+	return std::string(buffer);
+}
+
 std::wstring StringUtility::LowerCase(std::wstring const value)
 {
 	std::wstring result = std::wstring(value);

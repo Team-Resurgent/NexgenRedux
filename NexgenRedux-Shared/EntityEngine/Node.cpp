@@ -1,5 +1,6 @@
 #include "Node.h"
 #include "MathUtility.h"
+#include "NodeManager.h"
 #include "GlobalTypes.h"
 
 #include <Gensys/Int.h>
@@ -13,8 +14,8 @@ using namespace NexgenRedux;
 
 Node::Node()
 {
-    m_parentNode = NULL;
     m_nodeID = 0;
+    m_parentNodeID = 0;
     m_deleteFlag = false;
 
     m_anchor = MathUtility::Vec3F(0, 0, 0);
@@ -30,9 +31,9 @@ uint32_t Node::GetID()
     return m_nodeID;
 }
 
-Node* Node::GetParent()
+uint32_t Node::GetParentID()
 {
-    return m_parentNode;
+    return m_parentNodeID;
 }
 
 void Node::AddChildNode(uint32_t childNodeID)
@@ -147,9 +148,10 @@ const MathUtility::Matrix4x4 Node::GetTransform()
     }
 
     MathUtility::Matrix4x4 parentMatrix = MathUtility::Matrix4x4();
-    if (m_parentNode != NULL)
+    if (m_parentNodeID != 0)
     {
-        parentMatrix = m_parentNode->GetTransform();
+        Node* parentNode = NodeManager::GetNode(m_parentNodeID);
+        parentMatrix = parentNode->GetTransform();
     }
     
     MathUtility::Matrix4x4 inverseAnchorMatrix = MathUtility::Matrix4x4::Translate(MathUtility::Vec3F() - m_anchor);
@@ -179,7 +181,7 @@ void Node::SetID(uint32_t nodeID)
     m_nodeID = nodeID;
 }
 
-void Node::SetParent(Node* parent)
+void Node::SetParentID(uint32_t parentNodeID)
 {
-    m_parentNode = parent;
+    m_parentNodeID = parentNodeID;
 }

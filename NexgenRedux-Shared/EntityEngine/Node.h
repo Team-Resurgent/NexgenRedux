@@ -9,6 +9,19 @@
 
 namespace NexgenRedux
 {
+    // struct NodeX
+    // {
+    // private:
+    //     uint32_t m_nodeID;
+    //     uint32_t m_parentNodeID;
+    //     MathUtility::Vec3F m_anchor;
+    //     MathUtility::Vec3F m_rotation;
+    //     MathUtility::Vec3F m_skew;
+    //     MathUtility::Vec3F m_scale;
+    //     MathUtility::Vec3F m_position;
+    //     MathUtility::Matrix4x4 m_matrix;
+    // };
+
     class NodeManager;
 
     class Node 
@@ -18,7 +31,7 @@ namespace NexgenRedux
         virtual ~Node(void) {};
 
         uint32_t GetID();
-        Node* GetParent();
+        uint32_t GetParentID();
 
         void AddChildNode(uint32_t childNodeID);
         void AddChildNodeAt(uint32_t nodeID, uint32_t childNodeID);
@@ -47,14 +60,14 @@ namespace NexgenRedux
         void MarkForDelete();
         bool MarkedForDelete();
         void SetID(uint32_t nodeID);
-        void SetParent(Node* parent);
+        void SetParentID(uint32_t parentNodeID);
 
     private:
 
         friend class  NodeSprite;
 
-        Node* m_parentNode;
         uint32_t m_nodeID;
+        uint32_t m_parentNodeID;
         std::vector<uint32_t> m_childNodes;
         bool m_deleteFlag;
 

@@ -58,7 +58,7 @@ uint32_t NodeManager::AddNode(Node* node, uint32_t parentNodeID)
 
     uint32_t newNodeID = ++m_maxNodeID;
     node->SetID(newNodeID);
-    node->SetParent(parentNode);
+    node->SetParentID(parentNode->GetID());
     m_nodeMap.insert(std::pair<uint32_t, Node*>(newNodeID, node));
     parentNode->AddChildNode(newNodeID);
     return newNodeID;
@@ -81,7 +81,7 @@ uint32_t NodeManager::AddNodeAt(Node* node, uint32_t parentNodeID, uint32_t node
 
     uint32_t newNodeID = ++m_maxNodeID;
     node->SetID(newNodeID);
-    node->SetParent(parentNode);
+    node->SetParentID(parentNode->GetID());
     m_nodeMap.insert(std::pair<uint32_t, Node*>(newNodeID, node));
     parentNode->AddChildNodeAt(nodeID, newNodeID);
     return newNodeID;
@@ -112,13 +112,14 @@ void NodeManager::PurgeNodes()
             ++it;
 
             // Delete this node from parent if exists
-            Node* parentNode = itErase->second->GetParent(); 
-            if (parentNode == NULL || parentNode->GetID() == 0)
+            uint32_t parentNodeID = itErase->second->GetParentID(); 
+            if (parentNodeID == 0)
             {
                 SceneManager::DeleteSceneNode(itErase->first);
             }
             else
             {
+                Node* parentNode = GetNode(parentNodeID);
                 parentNode->EraseChild(itErase->first);
             }
 
@@ -135,8 +136,8 @@ void NodeManager::CheckForOrphans()
 {
     for (std::map<uint32_t, Node*>::iterator it = m_nodeMap.begin(); it != m_nodeMap.end(); ++it)
     {
-        Node* parentNode = it->second->GetParent();
-        if (parentNode == NULL || parentNode->GetID() == 0)
+        uint32_t parentNodeID = it->second->GetParentID(); 
+        if (parentNodeID == 0)
         {
             continue;
         }

@@ -9,11 +9,11 @@
 
 namespace NexgenRedux
 {
-    class NodeSprite : public Node
+    class Sprite : public Node
     {
     public:
-        NodeSprite(uint32_t nodeID);
-        ~NodeSprite(void);
+        Sprite(uint32_t nodeID);
+        ~Sprite(void);
 
         void Update(float dt);
         void Render();

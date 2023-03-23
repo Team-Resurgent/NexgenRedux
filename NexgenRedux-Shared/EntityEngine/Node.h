@@ -66,7 +66,7 @@ namespace NexgenRedux
 
     private:
 
-        friend class  NodeSprite;
+        friend class  Sprite;
 
         uint32_t m_nodeID;
         uint32_t m_parentNodeID;

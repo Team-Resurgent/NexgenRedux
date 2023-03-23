@@ -1,4 +1,4 @@
-#include "NodeSprite.h"
+#include "Sprite.h"
 
 #include <Gensys/DebugUtility.h>
 #include <Gensys/StringUtility.h>
@@ -8,19 +8,19 @@
 using namespace Gensys;
 using namespace NexgenRedux;
 
-NodeSprite::NodeSprite(uint32_t nodeID) : Node(nodeID)
+Sprite::Sprite(uint32_t nodeID) : Node(nodeID)
 {
     m_isDirty = true;
     m_texturePath = "";
     m_uv = MathUtility::RectF(0, 0, 1, 1);
 }
 
-NodeSprite::~NodeSprite(void)
+Sprite::~Sprite(void)
 {
     DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, StringUtility::FormatString("Deleting node '%i'", m_nodeID));
 }
 
-void NodeSprite::Update(float dt)
+void Sprite::Update(float dt)
 {
     if (m_isDirty == true)
     {
@@ -30,17 +30,17 @@ void NodeSprite::Update(float dt)
     DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, StringUtility::FormatString("Updating, Calculated transfor for node '%i'", m_nodeID));
 }
 
-void NodeSprite::Render()
+void Sprite::Render()
 {
     DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, StringUtility::FormatString("Rendering node '%i'", m_nodeID));
 }
 
-const std::string NodeSprite::GetTexturePath()
+const std::string Sprite::GetTexturePath()
 {
     return m_texturePath;
 }
 
-void NodeSprite::SetTexturePath(std::string value)
+void Sprite::SetTexturePath(std::string value)
 {
     if (m_texturePath == value) 
     {
@@ -50,12 +50,12 @@ void NodeSprite::SetTexturePath(std::string value)
     m_isDirty = true;
 }
 
-const MathUtility::RectF NodeSprite::GetUV()
+const MathUtility::RectF Sprite::GetUV()
 {
     return m_uv;
 }
 
-void NodeSprite::SetUV(MathUtility::RectF value)
+void Sprite::SetUV(MathUtility::RectF value)
 {
     if (m_uv == value) 
     {

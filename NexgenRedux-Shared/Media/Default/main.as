@@ -75,32 +75,35 @@ void Init()
     uint sceneID = SceneManager::CreateScene(true);
     SceneManager::SetCurrentScene(sceneID);
 
-    NodeSprite@ nodeSprite1 = NodeManager::CreateSprite();
-    nodeSprite1.SetTexturePath("hello1");
+    Sprite@ sprite1 = NodeManager::CreateSprite();
+    sprite1.SetTexturePath("hello1");
 
-    NodeSprite@ nodeSprite2 = NodeManager::CreateSprite();
-    nodeSprite2.SetTexturePath("hello2");
+    Sprite@ sprite2 = NodeManager::CreateSprite();
+    sprite2.SetTexturePath("hello2");
 
-    NodeSprite@ nodeSprite3 = NodeManager::CreateSprite();
-    nodeSprite3.SetTexturePath("hello2");
+    Sprite@ sprite3 = NodeManager::CreateSprite();
+    sprite3.SetTexturePath("hello2");
 
-    SceneManager::AssignNode(nodeSprite1, sceneID);
-    nodeSprite1.SetTexturePath("helloxxx");
-    NodeManager::AssignNode(nodeSprite2, nodeSprite1.GetID());
-    NodeManager::AssignNodeAt(nodeSprite3, nodeSprite1.GetID(), nodeSprite2.GetID());
+    SceneManager::AssignNode(sprite1, sceneID);
+    sprite1.SetTexturePath("helloxxx");
+    NodeManager::AssignNode(sprite2, sprite1.GetID());
+    NodeManager::AssignNodeAt(sprite3, sprite1.GetID(), sprite2.GetID());
+
+    Sprite@ sprite1copy = NodeManager::GetNode(sprite1.GetID());
+    sprite1copy.SetTexturePath("helloxxx-copy");
 
     SceneManager::Update(0.5);
     SceneManager::Render();
 
-    NodeManager::DeleteNode(nodeSprite2.GetID());
+    NodeManager::DeleteNode(sprite2.GetID());
     NodeManager::PurgeNodes();
     NodeManager::CheckForOrphans();
 
-    // uint nodeID1 = nodeManager.AddSceneNode(nodeSprite1, sceneID);
+    // uint nodeID1 = nodeManager.AddSceneNode(sprite1, sceneID);
 
     //RectF newy(rectx);
 
-    //nodeSprite.SetUV(rect);
+    //sprite.SetUV(rect);
 
     DebugPrint(0, "Initializing...");
 

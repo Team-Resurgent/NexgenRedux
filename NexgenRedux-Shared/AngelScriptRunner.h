@@ -3,7 +3,7 @@
 #include "WindowManager.h"
 #include "EntityEngine/SceneManager.h"
 #include "EntityEngine/NodeManager.h"
-#include "EntityEngine/NodeSprite.h"
+#include "EntityEngine/Sprite.h"
 
 #include <Gensys/Int.h>
 

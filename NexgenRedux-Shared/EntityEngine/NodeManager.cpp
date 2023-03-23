@@ -1,5 +1,5 @@
 #include "NodeManager.h"
-#include "NodeSprite.h"
+#include "Sprite.h"
 
 #include <Gensys/DebugUtility.h>
 #include <Gensys/StringUtility.h>
@@ -27,10 +27,10 @@ void NodeManager::Close(void)
 	}
 }
 
-NodeSprite* NodeManager::CreateSprite()
+Sprite* NodeManager::CreateSprite()
 {
     uint32_t nodeID = ++m_maxNodeID;
-    NodeSprite* node = new NodeSprite(nodeID);
+    Sprite* node = new Sprite(nodeID);
     m_nodeMap.insert(std::pair<uint32_t, Node*>(nodeID, node));
     return node;
 }
@@ -93,6 +93,16 @@ void NodeManager::DeleteNode(uint32_t nodeID)
     }
 }
 
+Node* NodeManager::GetNode(uint32_t nodeID)
+{
+    std::map<uint32_t, Node*>::iterator it = m_nodeMap.find(nodeID);
+	if (it != m_nodeMap.end()) 
+    {
+        return it->second;
+    }
+    return NULL;
+} 
+
 void NodeManager::PurgeNodes() 
 {
 	for (std::map<uint32_t, Node*>::iterator it = m_nodeMap.begin(); it != m_nodeMap.end();)
@@ -144,16 +154,6 @@ void NodeManager::CheckForOrphans()
 }
 
 // Private Friends
-
-Node* NodeManager::GetNode(uint32_t nodeID)
-{
-    std::map<uint32_t, Node*>::iterator it = m_nodeMap.find(nodeID);
-	if (it != m_nodeMap.end()) 
-    {
-        return it->second;
-    }
-    return NULL;
-} 
 
 void NodeManager::Update(uint32_t nodeID, float dt)
 {

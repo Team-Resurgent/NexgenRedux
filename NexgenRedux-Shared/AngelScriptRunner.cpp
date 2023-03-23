@@ -4,7 +4,7 @@
 #include "MathUtility.h"
 #include "EntityEngine/SceneManager.h"
 #include "EntityEngine/NodeManager.h"
-#include "EntityEngine/NodeSprite.h"
+#include "EntityEngine/Sprite.h"
 
 #include <Gensys/DebugUtility.h>
 #include <Gensys/FileSystem.h>
@@ -614,22 +614,22 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 
 	if (m_engine->RegisterObjectType("Node", sizeof(Node), asOBJ_REF | asOBJ_NOCOUNT) < 0) { return false; }
 	
-	if (m_engine->RegisterObjectType("NodeSprite", sizeof(0), asOBJ_REF | asOBJ_NOCOUNT) < 0) { return false; }
-	if (m_engine->RegisterObjectMethod("NodeSprite", "uint GetID()", asMETHOD(NodeSprite, GetID), asCALL_THISCALL) < 0) { return false; }
-	if (m_engine->RegisterObjectMethod("NodeSprite", "Vec3F& GetAnchor()", asMETHOD(NodeSprite, GetAnchor), asCALL_THISCALL) < 0) { return false; }
-	if (m_engine->RegisterObjectMethod("NodeSprite", "void SetAnchor(Vec3F &in)", asMETHOD(NodeSprite, SetAnchor), asCALL_THISCALL) < 0) { return false; }
-	if (m_engine->RegisterObjectMethod("NodeSprite", "Vec3F& GetRotation()", asMETHOD(NodeSprite, GetRotation), asCALL_THISCALL) < 0) { return false; }
-	if (m_engine->RegisterObjectMethod("NodeSprite", "void SetRotation(Vec3F &in)", asMETHOD(NodeSprite, SetRotation), asCALL_THISCALL) < 0) { return false; }
-	if (m_engine->RegisterObjectMethod("NodeSprite", "Vec3F& GetSkew()", asMETHOD(NodeSprite, GetSkew), asCALL_THISCALL) < 0) { return false; }
-	if (m_engine->RegisterObjectMethod("NodeSprite", "void SetSkew(Vec3F &in)", asMETHOD(NodeSprite, SetSkew), asCALL_THISCALL) < 0) { return false; }
-	if (m_engine->RegisterObjectMethod("NodeSprite", "Vec3F& GetScale()", asMETHOD(NodeSprite, GetScale), asCALL_THISCALL) < 0) { return false; }
-	if (m_engine->RegisterObjectMethod("NodeSprite", "void SetScale(Vec3F &in)", asMETHOD(NodeSprite, SetScale), asCALL_THISCALL) < 0) { return false; }
-	if (m_engine->RegisterObjectMethod("NodeSprite", "Vec3F& GetPosition()", asMETHOD(NodeSprite, GetPosition), asCALL_THISCALL) < 0) { return false; }
-	if (m_engine->RegisterObjectMethod("NodeSprite", "void SetPosition(Vec3F &in)", asMETHOD(NodeSprite, SetPosition), asCALL_THISCALL) < 0) { return false; }
-	if (m_engine->RegisterObjectMethod("NodeSprite", "string GetTexturePath()", asMETHOD(NodeSprite, GetTexturePath), asCALL_THISCALL) < 0) { return false; }
-	if (m_engine->RegisterObjectMethod("NodeSprite", "void SetTexturePath(string value)", asMETHOD(NodeSprite, SetTexturePath), asCALL_THISCALL) < 0) { return false; }
-	if (m_engine->RegisterObjectMethod("NodeSprite", "RectF& GetUV()", asMETHOD(NodeSprite, GetUV), asCALL_THISCALL) < 0) { return false; }
-	if (m_engine->RegisterObjectMethod("NodeSprite", "void SetUV(RectF &in)", asMETHOD(NodeSprite, SetUV), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectType("Sprite", sizeof(0), asOBJ_REF | asOBJ_NOCOUNT) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Sprite", "uint GetID()", asMETHOD(Sprite, GetID), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Sprite", "Vec3F& GetAnchor()", asMETHOD(Sprite, GetAnchor), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Sprite", "void SetAnchor(Vec3F &in)", asMETHOD(Sprite, SetAnchor), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Sprite", "Vec3F& GetRotation()", asMETHOD(Sprite, GetRotation), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Sprite", "void SetRotation(Vec3F &in)", asMETHOD(Sprite, SetRotation), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Sprite", "Vec3F& GetSkew()", asMETHOD(Sprite, GetSkew), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Sprite", "void SetSkew(Vec3F &in)", asMETHOD(Sprite, SetSkew), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Sprite", "Vec3F& GetScale()", asMETHOD(Sprite, GetScale), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Sprite", "void SetScale(Vec3F &in)", asMETHOD(Sprite, SetScale), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Sprite", "Vec3F& GetPosition()", asMETHOD(Sprite, GetPosition), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Sprite", "void SetPosition(Vec3F &in)", asMETHOD(Sprite, SetPosition), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Sprite", "string GetTexturePath()", asMETHOD(Sprite, GetTexturePath), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Sprite", "void SetTexturePath(string value)", asMETHOD(Sprite, SetTexturePath), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Sprite", "RectF& GetUV()", asMETHOD(Sprite, GetUV), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Sprite", "void SetUV(RectF &in)", asMETHOD(Sprite, SetUV), asCALL_THISCALL) < 0) { return false; }
 
 	if (m_engine->SetDefaultNamespace("SceneManager") < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("uint SceneManager::CreateScene(bool)", asFUNCTION(SceneManager::CreateScene), asCALL_CDECL) < 0) { return false; }
@@ -639,17 +639,18 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	if (m_engine->RegisterGlobalFunction("bool SceneManager::Render()", asFUNCTION(SceneManager::Render), asCALL_CDECL) < 0) { return false; }
 
 	if (m_engine->SetDefaultNamespace("NodeManager") < 0) { return false; }
-	if (m_engine->RegisterGlobalFunction("NodeSprite& NodeManager::CreateSprite()", asFUNCTION(NodeManager::CreateSprite), asCALL_CDECL) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("Sprite& NodeManager::CreateSprite()", asFUNCTION(NodeManager::CreateSprite), asCALL_CDECL) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("bool NodeManager::AssignNode(Node@, uint)", asFUNCTION(NodeManager::AssignNode), asCALL_CDECL) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("bool NodeManager::AssignNodeAt(Node@, uint, uint)", asFUNCTION(NodeManager::AssignNodeAt), asCALL_CDECL) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void NodeManager::DeleteNode(uint)", asFUNCTION(NodeManager::DeleteNode), asCALL_CDECL) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("Node@ NodeManager::GetNode(uint)", asFUNCTION(NodeManager::GetNode), asCALL_CDECL) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void NodeManager::PurgeNodes()", asFUNCTION(NodeManager::PurgeNodes), asCALL_CDECL) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void NodeManager::CheckForOrphans()", asFUNCTION(NodeManager::CheckForOrphans), asCALL_CDECL) < 0) { return false; }
 
-	m_engine->RegisterObjectMethod("Node", "NodeSprite@ opCast()", asFUNCTION((refCast<Node,NodeSprite>)), asCALL_CDECL_OBJLAST); 
-	m_engine->RegisterObjectMethod("NodeSprite", "Node@ opImplCast()", asFUNCTION((refCast<NodeSprite,Node>)), asCALL_CDECL_OBJLAST); 
+	if (m_engine->RegisterObjectMethod("Node", "Sprite@ opCast()", asFUNCTION((refCast<Node,Sprite>)), asCALL_CDECL_OBJLAST) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Node", "Sprite@ opImplCast()", asFUNCTION((refCast<Node,Sprite>)), asCALL_CDECL_OBJLAST) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Sprite", "Node@ opImplCast()", asFUNCTION((refCast<Sprite,Node>)), asCALL_CDECL_OBJLAST) < 0) { return false; }
 	
-
 	if (CompileScript(m_engine, launchFolder) == false)
 	{
 		m_engine->Release();

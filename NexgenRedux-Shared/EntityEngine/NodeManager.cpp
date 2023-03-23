@@ -133,10 +133,27 @@ void NodeManager::CheckForOrphans()
         {
             continue;
         }
+        Node* parentNode = GetNode(parentNodeID);
+        if (parentNode != NULL)
+        {
+            continue;
+        }
         DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "Orphan node detected.");
     }
     DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "Orphan check completed.");
 }
+
+// Private Friends
+
+Node* NodeManager::GetNode(uint32_t nodeID)
+{
+    std::map<uint32_t, Node*>::iterator it = m_nodeMap.find(nodeID);
+	if (it != m_nodeMap.end()) 
+    {
+        return it->second;
+    }
+    return NULL;
+} 
 
 void NodeManager::Update(uint32_t nodeID, float dt)
 {
@@ -171,18 +188,6 @@ void NodeManager::Render(uint32_t nodeID)
         Render(childNodes->at(i));
     }
 }
-
-// Private Friends
-
-Node* NodeManager::GetNode(uint32_t nodeID)
-{
-    std::map<uint32_t, Node*>::iterator it = m_nodeMap.find(nodeID);
-	if (it != m_nodeMap.end()) 
-    {
-        return it->second;
-    }
-    return NULL;
-} 
 
 // Privates
 

@@ -635,6 +635,8 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	if (m_engine->RegisterGlobalFunction("uint SceneManager::CreateScene(bool)", asFUNCTION(SceneManager::CreateScene), asCALL_CDECL) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void SceneManager::SetCurrentScene(uint)", asFUNCTION(SceneManager::SetCurrentScene), asCALL_CDECL) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("bool SceneManager::AssignNode(Node@, uint)", asFUNCTION(SceneManager::AssignNode), asCALL_CDECL) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("bool SceneManager::Update(float)", asFUNCTION(SceneManager::Update), asCALL_CDECL) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("bool SceneManager::Render()", asFUNCTION(SceneManager::Render), asCALL_CDECL) < 0) { return false; }
 
 	if (m_engine->SetDefaultNamespace("NodeManager") < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("NodeSprite& NodeManager::CreateSprite()", asFUNCTION(NodeManager::CreateSprite), asCALL_CDECL) < 0) { return false; }

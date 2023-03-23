@@ -31,14 +31,13 @@ namespace NexgenRedux
         // bool SetNodePropertySkew(uint32_t nodeID, MathUtility::Vec3F skew);
         // bool SetNodePropertyPosition(uint32_t nodeID, MathUtility::Vec3F position);
 
-        static void Update(uint32_t nodeID, float dt);
-        static void Render(uint32_t nodeID);
-
     private:
 
         friend class SceneManager;
         friend class Node;
         static Node* GetNode(uint32_t nodeID);
+        static void Update(uint32_t nodeID, float dt);
+        static void Render(uint32_t nodeID);
 
     private:
 

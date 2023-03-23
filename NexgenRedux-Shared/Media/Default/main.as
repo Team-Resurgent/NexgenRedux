@@ -89,6 +89,9 @@ void Init()
     NodeManager::AssignNode(nodeSprite2, nodeSprite1.GetID());
     NodeManager::AssignNodeAt(nodeSprite3, nodeSprite1.GetID(), nodeSprite2.GetID());
 
+    SceneManager::Update(0.5);
+    SceneManager::Render();
+
     NodeManager::DeleteNode(nodeSprite2.GetID());
     NodeManager::PurgeNodes();
     NodeManager::CheckForOrphans();

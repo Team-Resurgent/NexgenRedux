@@ -70,6 +70,8 @@ uint frameCount;
 
 void Init()
 {
+
+
     uint sceneID = SceneManager::CreateScene(true);
     SceneManager::SetCurrentScene(sceneID);
 
@@ -84,8 +86,12 @@ void Init()
 
     SceneManager::AssignNode(nodeSprite1.ToNode(), sceneID);
     NodeManager::AssignNode(nodeSprite2.ToNode(), nodeSprite1.GetID());
-    //NodeManager::AssignNode(nodeSprite3.ToNode(), nodeSprite1.GetID());
     NodeManager::AssignNodeAt(nodeSprite3.ToNode(), nodeSprite1.GetID(), nodeSprite2.GetID());
+
+    NodeManager::DeleteNode(nodeSprite2.GetID());
+    NodeManager::PurgeNodes();
+
+
     // uint nodeID1 = nodeManager.AddSceneNode(nodeSprite1, sceneID);
 
     //RectF newy(rectx);

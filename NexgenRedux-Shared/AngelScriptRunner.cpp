@@ -686,6 +686,9 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	if (m_engine->RegisterGlobalFunction("NodeSprite& NodeManager::CreateSprite()", asFUNCTION(NodeManager::CreateSprite), asCALL_CDECL) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("bool NodeManager::AssignNode(Node, uint)", asFUNCTION(NodeManager::AssignNode), asCALL_CDECL) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("bool NodeManager::AssignNodeAt(Node, uint, uint)", asFUNCTION(NodeManager::AssignNodeAt), asCALL_CDECL) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("bool NodeManager::DeleteNode(uint)", asFUNCTION(NodeManager::DeleteNode), asCALL_CDECL) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("bool NodeManager::PurgeNodes()", asFUNCTION(NodeManager::PurgeNodes), asCALL_CDECL) < 0) { return false; }
+
 
 
 	if (CompileScript(m_engine, launchFolder) == false)

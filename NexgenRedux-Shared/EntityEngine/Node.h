@@ -27,14 +27,14 @@ namespace NexgenRedux
     class Node 
     {
     public:
-        Node();
+        Node(uint32_t nodeID);
         virtual ~Node(void) {};
 
         uint32_t GetID();
         uint32_t GetParentID();
 
         void AddChildNode(uint32_t childNodeID);
-        void AddChildNodeAt(uint32_t nodeID, uint32_t childNodeID);
+        void AddChildNodeAt(uint32_t childNodeID, uint32_t insertNodeID);
         const std::vector<uint32_t>& GetChildNodes();
         void EraseChild(uint32_t nodeID);
 
@@ -57,10 +57,12 @@ namespace NexgenRedux
     private:
 
         friend class NodeManager;
+        friend class SceneManager;
         void MarkForDelete();
         bool MarkedForDelete();
-        void SetID(uint32_t nodeID);
         void SetParentID(uint32_t parentNodeID);
+        bool GetAssigned();
+        void SetAssigned();
 
     private:
 
@@ -68,6 +70,7 @@ namespace NexgenRedux
 
         uint32_t m_nodeID;
         uint32_t m_parentNodeID;
+        bool m_assigned;
         std::vector<uint32_t> m_childNodes;
         bool m_deleteFlag;
 

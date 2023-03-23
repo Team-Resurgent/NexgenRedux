@@ -1,11 +1,15 @@
 #include "SceneManager.h"
+#include "Node.h"
 
+#include <Gensys/DebugUtility.h>
+#include <Gensys/StringUtility.h>
 #include <Gensys/Int.h>
 
 #include <algorithm>
 #include <vector>
 #include <map>
 
+using namespace Gensys;
 using namespace NexgenRedux;
 
 namespace
@@ -58,18 +62,28 @@ void SceneManager::SetCurrentScene(uint32_t sceneID)
     m_currentSceneID = sceneID;
 }
 
-// Privates
-
-bool SceneManager::AddSceneNode(uint32_t sceneID, uint32_t nodeID)
+bool SceneManager::AssignNode(Node* node, uint32_t sceneID)
 {
+    // Check if node already added
+    if (node != NULL && node->GetAssigned() == true)
+    {
+        DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("Node '%i' already assigned.", node->GetID()));
+        return false;
+    }
+
+    // Check scene exists
     std::map<uint32_t, std::vector<uint32_t> >::iterator itScene = m_sceneMap.find(sceneID);
 	if (itScene == m_sceneMap.end()) 
 	{
         return false;
     }
-    itScene->second.push_back(nodeID);
+
+    itScene->second.push_back(node->GetID());
+    node->SetAssigned();
     return true;
 }
+
+// Privates
 
 bool SceneManager::DeleteSceneNode(uint32_t sceneID, uint32_t nodeID)
 {

@@ -2,6 +2,7 @@
 #include "NodeSprite.h"
 
 #include <Gensys/DebugUtility.h>
+#include <Gensys/StringUtility.h>
 #include <Gensys/Int.h>
 
 #include <string>
@@ -26,65 +27,56 @@ void NodeManager::Close(void)
 	}
 }
 
-uint32_t NodeManager::AddSceneNode(Node* node, uint32_t sceneID) 
+NodeSprite* NodeManager::CreateSprite()
 {
-    // Check if node already added
-    if (node->GetID() != 0)
-    {
-        return 0;
-    }
-
     uint32_t nodeID = ++m_maxNodeID;
-    node->SetID(nodeID);
+    NodeSprite* node = new NodeSprite(nodeID);
     m_nodeMap.insert(std::pair<uint32_t, Node*>(nodeID, node));
-    SceneManager::AddSceneNode(sceneID, nodeID);
-    return nodeID;
+    return node;
 }
 
-uint32_t NodeManager::AddNode(Node* node, uint32_t parentNodeID)
+bool NodeManager::AssignNode(Node* node, uint32_t parentNodeID)
 {
     // Check if node already added
-    if (node->GetID() != 0)
+    if (node->GetAssigned() == true)
     {
-        return 0;
+        DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("AssignNode: Node '%i' already assigned.", node->GetID()));
+        return false;
     }
 
-    // Check parent mpde exists
-    Node* parentNode = GetNode(parentNodeID);
+    Node* parentNode = NodeManager::GetNode(parentNodeID);
     if (parentNode == NULL)
     {
-        return 0;
+        DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("AssignNode: Parent node '%i' not found.", parentNodeID));
+        return false;
     }
 
-    uint32_t newNodeID = ++m_maxNodeID;
-    node->SetID(newNodeID);
     node->SetParentID(parentNode->GetID());
-    m_nodeMap.insert(std::pair<uint32_t, Node*>(newNodeID, node));
-    parentNode->AddChildNode(newNodeID);
-    return newNodeID;
+    parentNode->AddChildNode(node->GetID());
+    node->SetAssigned();
+    return true;
 }
 
-uint32_t NodeManager::AddNodeAt(Node* node, uint32_t parentNodeID, uint32_t nodeID)
+bool NodeManager::AssignNodeAt(Node* node, uint32_t parentNodeID, uint32_t insertNodeID)
 {
     // Check if node already added
-    if (node->GetID() != 0)
+    if (node->GetAssigned() == true)
     {
-        return 0;
+        DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("AssignNodeAt: Node '%i' already assigned.", node->GetID()));
+        return false;
     }
 
-    // Check parent mpde exists
-    Node* parentNode = GetNode(parentNodeID);
+    Node* parentNode = NodeManager::GetNode(parentNodeID);
     if (parentNode == NULL)
     {
-        return 0;
+        DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("AssignNodeAt: Parent node '%i' not found.", parentNodeID));
+        return false;
     }
 
-    uint32_t newNodeID = ++m_maxNodeID;
-    node->SetID(newNodeID);
-    node->SetParentID(parentNode->GetID());
-    m_nodeMap.insert(std::pair<uint32_t, Node*>(newNodeID, node));
-    parentNode->AddChildNodeAt(nodeID, newNodeID);
-    return newNodeID;
+    node->SetParentID(parentNodeID);
+    parentNode->AddChildNodeAt(node->GetID(), insertNodeID);
+    node->SetAssigned();
+    return true;
 }
 
 void NodeManager::DeleteNode(uint32_t nodeID)

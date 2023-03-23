@@ -18,9 +18,9 @@ namespace NexgenRedux
     public:
 
         static void Close(void);
-        static uint32_t AddSceneNode(Node* node, uint32_t sceneID);
-        static uint32_t AddNode(Node* node, uint32_t parentNodeID);
-        static uint32_t AddNodeAt(Node* node, uint32_t parentNodeID, uint32_t nodeID);
+        static NodeSprite* CreateSprite();
+        static bool AssignNode(Node* node, uint32_t parentNodeID);
+        static bool AssignNodeAt(Node* node, uint32_t parentNodeID, uint32_t insertNodeID);
         static void DeleteNode(uint32_t nodeID);    
 
         static void PurgeNodes();

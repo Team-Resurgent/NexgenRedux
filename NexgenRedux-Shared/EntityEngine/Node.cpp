@@ -12,10 +12,11 @@
 using namespace Gensys;
 using namespace NexgenRedux;
 
-Node::Node()
+Node::Node(uint32_t nodeID)
 {
-    m_nodeID = 0;
+    m_nodeID = nodeID;
     m_parentNodeID = 0;
+    m_assigned = false;
     m_deleteFlag = false;
 
     m_anchor = MathUtility::Vec3F(0, 0, 0);
@@ -41,9 +42,9 @@ void Node::AddChildNode(uint32_t childNodeID)
     m_childNodes.push_back(childNodeID);
 }
 
-void Node::AddChildNodeAt(uint32_t nodeID, uint32_t childNodeID)
+void Node::AddChildNodeAt(uint32_t childNodeID, uint32_t insertNodeID)
 {
-    std::vector<uint32_t>::iterator it = std::find(m_childNodes.begin(), m_childNodes.end(), nodeID);
+    std::vector<uint32_t>::iterator it = std::find(m_childNodes.begin(), m_childNodes.end(), insertNodeID);
     if (it == m_childNodes.end())
     {
         return;
@@ -176,12 +177,17 @@ bool Node::MarkedForDelete()
     return m_deleteFlag;
 }
 
-void Node::SetID(uint32_t nodeID)
-{
-    m_nodeID = nodeID;
-}
-
 void Node::SetParentID(uint32_t parentNodeID)
 {
     m_parentNodeID = parentNodeID;
+}
+
+bool Node::GetAssigned()
+{
+    return m_assigned;
+}
+
+void Node::SetAssigned()
+{
+    m_assigned = true;
 }

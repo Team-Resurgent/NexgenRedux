@@ -58,6 +58,8 @@ int main(int argc, const char* argv[])
         return 0;
     }
 
+    NodeManager::Close();
+
     delete renderStateManager;
     delete windowManager;
     delete angelScriptRunner;

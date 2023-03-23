@@ -15,8 +15,6 @@ namespace NexgenRedux
         NodeSprite(uint32_t nodeID);
         ~NodeSprite(void);
 
-        Node* ToNode();
-
         void Update(float dt);
         void Render();
 

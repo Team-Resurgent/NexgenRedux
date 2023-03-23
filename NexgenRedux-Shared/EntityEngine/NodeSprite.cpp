@@ -20,11 +20,6 @@ NodeSprite::~NodeSprite(void)
     DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, StringUtility::FormatString("Deleting node '%i'", m_nodeID));
 }
 
-Node* NodeSprite::ToNode()
-{
-    return this;
-}
-
 void NodeSprite::Update(float dt)
 {
     if (m_isDirty == true)

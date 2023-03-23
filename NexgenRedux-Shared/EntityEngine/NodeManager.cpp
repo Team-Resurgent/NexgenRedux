@@ -133,8 +133,9 @@ void NodeManager::CheckForOrphans()
         {
             continue;
         }
-        DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "Orphan node detected");
+        DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "Orphan node detected.");
     }
+    DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "Orphan check completed.");
 }
 
 void NodeManager::Update(uint32_t nodeID, float dt)

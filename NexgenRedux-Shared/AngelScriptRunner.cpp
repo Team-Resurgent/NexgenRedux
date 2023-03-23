@@ -162,42 +162,6 @@ bool CompileScript(asIScriptEngine* engine, std::wstring launchFolder)
 	return true;
 }
 
-// // SceneManager
-
-// void AngelScriptRunner::SceneManagerConstructor(SceneManager* sceneManager)
-// {
-// 	new (sceneManager)SceneManager();
-// }
-
-// void AngelScriptRunner::SceneManagerDestructor(SceneManager* sceneManager)
-// {
-// 	sceneManager->~SceneManager();
-// }
-
-// // NodeManager
-
-// void AngelScriptRunner::NodeManagerConstructor(SceneManager* sceneManager, NodeManager* nodeManager)
-// {
-// 	new (nodeManager)NodeManager(sceneManager);
-// }
-
-// void AngelScriptRunner::NodeManagerDestructor(NodeManager* nodeManager)
-// {
-// 	nodeManager->~NodeManager();
-// }
-
-// NodeSprite
-
-void AngelScriptRunner::NodeSpriteConstructor(NodeSprite* nodeSprite)
-{
-	//new (nodeSprite)NodeSprite();
-}
-
-void AngelScriptRunner::NodeSpriteDestructor(NodeSprite* nodeSprite)
-{
-	//nodeSprite->~NodeSprite();
-}
-
 // Vec2D
 
 void AngelScriptRunner::Vec2DConstructorDefault(MathUtility::Vec2D* Vec2D)
@@ -366,22 +330,6 @@ void AngelScriptRunner::Color4FConstructorValues(float r, float g, float b, floa
 void AngelScriptRunner::Color4FConstructorCopy(const MathUtility::Color4F& other, MathUtility::Color4F* color4F)
 {
     new (color4F)MathUtility::Color4F(other);
-}
-
-template<class A, class B>
-B* refCast(A* a)
-{
-    // If the handle already is a null handle, then just return the null handle
-    if( !a ) return 0;
- 
-    // Now try to dynamically cast the pointer to the wanted type
-    B* b = dynamic_cast<B*>(a);
-    if( b != 0 )
-    {
-        // Since the cast was made, we need to increase the ref counter for the returned handle
-        //b->addref();
-    }
-    return b;
 }
 
 bool AngelScriptRunner::Init(std::wstring launchFolder)
@@ -555,7 +503,7 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	if (m_engine->RegisterObjectMethod("RectF", "bool opEq(const RectF &in) const", asMETHODPR(MathUtility::RectF, operator==, (const MathUtility::RectF &) const, bool), asCALL_THISCALL) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("RectF", "bool opNotEq(const RectF &in) const", asMETHODPR(MathUtility::RectF, operator!=, (const MathUtility::RectF &) const, bool), asCALL_THISCALL) < 0) { return false; }
 
-   if (m_engine->RegisterObjectType("Color3F", sizeof(MathUtility::Color3F), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CAK) < 0) { return false; }
+    if (m_engine->RegisterObjectType("Color3F", sizeof(MathUtility::Color3F), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CAK) < 0) { return false; }
     if (m_engine->RegisterObjectBehaviour("Color3F", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Color3FConstructorDefault), asCALL_CDECL_OBJLAST) < 0) { return false; }
     if (m_engine->RegisterObjectBehaviour("Color3F", asBEHAVE_CONSTRUCT, "void f(float, float, float)", asFUNCTION(Color3FConstructorValues), asCALL_CDECL_OBJLAST) < 0) { return false; }
     if (m_engine->RegisterObjectBehaviour("Color3F", asBEHAVE_CONSTRUCT, "void f(Color3F &in)", asFUNCTION(Color3FConstructorCopy), asCALL_CDECL_OBJLAST) < 0) { return false; }
@@ -673,10 +621,6 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	if (m_engine->RegisterObjectMethod("NodeSprite", "RectF& GetUV()", asMETHOD(NodeSprite, GetUV), asCALL_THISCALL) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("NodeSprite", "void SetUV(RectF &in)", asMETHOD(NodeSprite, SetUV), asCALL_THISCALL) < 0) { return false; }
 
-// m_engine->RegisterObjectMethod("Node", "NodeSprite@ opCast()", asFUNCTION((refCast<Node,NodeSprite>)), asCALL_CDECL_OBJLAST);
-// m_engine->RegisterObjectMethod("NodeSprite", "Node@ opImplCast()", asFUNCTION((refCast<NodeSprite,Node>)), asCALL_CDECL_OBJLAST);
- 
-
 	if (m_engine->SetDefaultNamespace("SceneManager") < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("uint SceneManager::CreateScene(bool)", asFUNCTION(SceneManager::CreateScene), asCALL_CDECL) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void SceneManager::SetCurrentScene(uint)", asFUNCTION(SceneManager::SetCurrentScene), asCALL_CDECL) < 0) { return false; }
@@ -686,10 +630,9 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	if (m_engine->RegisterGlobalFunction("NodeSprite& NodeManager::CreateSprite()", asFUNCTION(NodeManager::CreateSprite), asCALL_CDECL) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("bool NodeManager::AssignNode(Node, uint)", asFUNCTION(NodeManager::AssignNode), asCALL_CDECL) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("bool NodeManager::AssignNodeAt(Node, uint, uint)", asFUNCTION(NodeManager::AssignNodeAt), asCALL_CDECL) < 0) { return false; }
-	if (m_engine->RegisterGlobalFunction("bool NodeManager::DeleteNode(uint)", asFUNCTION(NodeManager::DeleteNode), asCALL_CDECL) < 0) { return false; }
-	if (m_engine->RegisterGlobalFunction("bool NodeManager::PurgeNodes()", asFUNCTION(NodeManager::PurgeNodes), asCALL_CDECL) < 0) { return false; }
-
-
+	if (m_engine->RegisterGlobalFunction("void NodeManager::DeleteNode(uint)", asFUNCTION(NodeManager::DeleteNode), asCALL_CDECL) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("void NodeManager::PurgeNodes()", asFUNCTION(NodeManager::PurgeNodes), asCALL_CDECL) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("void NodeManager::CheckForOrphans()", asFUNCTION(NodeManager::CheckForOrphans), asCALL_CDECL) < 0) { return false; }
 
 	if (CompileScript(m_engine, launchFolder) == false)
 	{

@@ -90,7 +90,7 @@ void Init()
 
     NodeManager::DeleteNode(nodeSprite2.GetID());
     NodeManager::PurgeNodes();
-
+    NodeManager::CheckForOrphans();
 
     // uint nodeID1 = nodeManager.AddSceneNode(nodeSprite1, sceneID);
 

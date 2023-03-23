@@ -601,10 +601,10 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	if (m_engine->RegisterFuncdef("void JoystickConnectCallback(uint joystickID, uint event)") < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void SetJoystickConnectCallback(JoystickConnectCallback @joystickConnectCallback)", asFUNCTION(AngelScriptRunner::SetJoystickConnectCallback), asCALL_GENERIC) < 0) { return false; }
 
-	if (m_engine->RegisterObjectType("Node", sizeof(Node), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CAK) < 0) { return false; }
+	if (m_engine->RegisterObjectType("Node", sizeof(Node), asOBJ_REF | asOBJ_NOCOUNT) < 0) { return false; }
 	
-	if (m_engine->RegisterObjectType("NodeSprite", sizeof(NodeSprite), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CAK) < 0) { return false; }
-	if (m_engine->RegisterObjectMethod("NodeSprite", "Node& ToNode()", asMETHOD(NodeSprite, ToNode), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectType("NodeSprite", sizeof(0), asOBJ_REF | asOBJ_NOCOUNT) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("NodeSprite", "Node@ ToNode()", asMETHOD(NodeSprite, ToNode), asCALL_THISCALL) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("NodeSprite", "uint GetID()", asMETHOD(NodeSprite, GetID), asCALL_THISCALL) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("NodeSprite", "Vec3F& GetAnchor()", asMETHOD(NodeSprite, GetAnchor), asCALL_THISCALL) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("NodeSprite", "void SetAnchor(Vec3F &in)", asMETHOD(NodeSprite, SetAnchor), asCALL_THISCALL) < 0) { return false; }
@@ -624,12 +624,12 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	if (m_engine->SetDefaultNamespace("SceneManager") < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("uint SceneManager::CreateScene(bool)", asFUNCTION(SceneManager::CreateScene), asCALL_CDECL) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void SceneManager::SetCurrentScene(uint)", asFUNCTION(SceneManager::SetCurrentScene), asCALL_CDECL) < 0) { return false; }
-	if (m_engine->RegisterGlobalFunction("bool SceneManager::AssignNode(Node, uint)", asFUNCTION(SceneManager::AssignNode), asCALL_CDECL) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("bool SceneManager::AssignNode(Node &in, uint)", asFUNCTION(SceneManager::AssignNode), asCALL_CDECL) < 0) { return false; }
 
 	if (m_engine->SetDefaultNamespace("NodeManager") < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("NodeSprite& NodeManager::CreateSprite()", asFUNCTION(NodeManager::CreateSprite), asCALL_CDECL) < 0) { return false; }
-	if (m_engine->RegisterGlobalFunction("bool NodeManager::AssignNode(Node, uint)", asFUNCTION(NodeManager::AssignNode), asCALL_CDECL) < 0) { return false; }
-	if (m_engine->RegisterGlobalFunction("bool NodeManager::AssignNodeAt(Node, uint, uint)", asFUNCTION(NodeManager::AssignNodeAt), asCALL_CDECL) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("bool NodeManager::AssignNode(Node &in, uint)", asFUNCTION(NodeManager::AssignNode), asCALL_CDECL) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("bool NodeManager::AssignNodeAt(Node &in, uint, uint)", asFUNCTION(NodeManager::AssignNodeAt), asCALL_CDECL) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void NodeManager::DeleteNode(uint)", asFUNCTION(NodeManager::DeleteNode), asCALL_CDECL) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void NodeManager::PurgeNodes()", asFUNCTION(NodeManager::PurgeNodes), asCALL_CDECL) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void NodeManager::CheckForOrphans()", asFUNCTION(NodeManager::CheckForOrphans), asCALL_CDECL) < 0) { return false; }

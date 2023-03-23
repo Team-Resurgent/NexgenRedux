@@ -75,16 +75,17 @@ void Init()
     uint sceneID = SceneManager::CreateScene(true);
     SceneManager::SetCurrentScene(sceneID);
 
-    NodeSprite nodeSprite1 = NodeManager::CreateSprite();
+    NodeSprite@ nodeSprite1 = NodeManager::CreateSprite();
     nodeSprite1.SetTexturePath("hello1");
 
-    NodeSprite nodeSprite2 = NodeManager::CreateSprite();
+    NodeSprite@ nodeSprite2 = NodeManager::CreateSprite();
     nodeSprite2.SetTexturePath("hello2");
 
-    NodeSprite nodeSprite3 = NodeManager::CreateSprite();
+    NodeSprite@ nodeSprite3 = NodeManager::CreateSprite();
     nodeSprite3.SetTexturePath("hello2");
 
     SceneManager::AssignNode(nodeSprite1.ToNode(), sceneID);
+    nodeSprite1.SetTexturePath("helloxxx");
     NodeManager::AssignNode(nodeSprite2.ToNode(), nodeSprite1.GetID());
     NodeManager::AssignNodeAt(nodeSprite3.ToNode(), nodeSprite1.GetID(), nodeSprite2.GetID());
 

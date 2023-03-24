@@ -22,6 +22,22 @@ namespace
     const std::string defaultVertexShader =
 
 		"precision mediump float;\n"
+		
+		"struct pixel_shader_input {\n"
+		"    vec4 position;\n"
+		"    vec3 w_position;\n"
+		"    vec3 normal;\n"
+		"    vec3 w_normal;\n"
+		"    vec2 uv;\n"
+		"    float fog;\n"
+		"};\n"
+
+		"struct vertex_shader_input {\n"
+		"    vec3 cameraPosition;\n"
+		"    vec3 position;\n"
+		"    vec3 normal;\n"
+		"    vec2 uv;\n"
+		"};\n"
 
 		"uniform sampler2D uTextureDiffuse;\n"
 		"uniform mat4 uModelMatrix;\n"
@@ -51,22 +67,6 @@ namespace
 		"attribute vec3 aPosition;\n"
 		"attribute vec3 aNormal;\n"
 		"attribute vec2 aTexCoord;\n"
-
-		"struct pixel_shader_input {\n"
-		"    vec4 position;\n"
-		"    vec3 w_position;\n"
-		"    vec3 normal;\n"
-		"    vec3 w_normal;\n"
-		"    vec2 uv;\n"
-		"    float fog;\n"
-		"};\n"
-
-		"struct vertex_shader_input {\n"
-		"    vec3 cameraPosition;\n"
-		"    vec3 position;\n"
-		"    vec3 normal;\n"
-		"    vec2 uv;\n"
-		"};\n"
 
 		"pixel_shader_input process(in vertex_shader_input IN)\n"
 		"{\n"

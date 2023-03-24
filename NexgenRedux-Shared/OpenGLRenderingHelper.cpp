@@ -112,6 +112,14 @@ namespace
 	const std::string defaultFragmentShader =
 
 		"precision mediump float;\n"
+
+		"struct pixel_shader_input {\n"
+		"    vec3 w_position;\n"
+		"    vec3 w_normal;\n"
+		"    vec3 normal;\n"
+		"    vec2 uv;\n"
+		"    float fog;\n"
+		"};\n"
 	
 		"uniform sampler2D uTextureDiffuse;\n"
 		"uniform mat4 uModelMatrix;\n"
@@ -172,14 +180,6 @@ namespace
 		"mat4 saturate_mf4x4(mat4 m) {\n"
 		"  return mat4(clamp(m[0], 0.0, 1.0), clamp(m[1], 0.0, 1.0), clamp(m[2], 0.0, 1.0), clamp(m[3], 0.0, 1.0));\n"
 		"}\n"
-
-		"struct pixel_shader_input {\n"
-		"    vec3 w_position;\n"
-		"    vec3 w_normal;\n"
-		"    vec3 normal;\n"
-		"    vec2 uv;\n"
-		"    float fog;\n"
-		"};\n"
 
 		"vec4 process(const pixel_shader_input IN ) {\n"
 		

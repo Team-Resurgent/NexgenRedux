@@ -10,6 +10,8 @@
 #include <vector>
 #include <cstring>
 
+#include <RenderDoc/renderdoc_app.h>>
+
 #include <Gensys/DebugUtility.h>
 #include <Gensys/StringUtility.h>
 #include <Gensys/FileSystem.h>
@@ -22,6 +24,8 @@
 
 #include "ECSManager.h"
 
+#include "Windows.h"
+
 using namespace NexgenRedux;
 using namespace Gensys;
 using namespace AngelScript;
@@ -30,11 +34,20 @@ using namespace AngelScript;
 
 int main(int argc, const char* argv[])
 {
+//     RENDERDOC_API_1_1_2 *rdoc_api = NULL;
+//     HMODULE mod = GetModuleHandleA("C:\\Program Files\\RenderDoc\\renderdoc.dll");
+//     if(mod)
+//     {
+//         pRENDERDOC_GetAPI RENDERDOC_GetAPI =
+//             (pRENDERDOC_GetAPI)GetProcAddress(mod, "RENDERDOC_GetAPI");
+//         int ret = RENDERDOC_GetAPI(eRENDERDOC_API_Version_1_1_2, (void **)&rdoc_api);
+//     }
+//     if(rdoc_api) rdoc_api->StartFrameCapture(NULL, NULL);
+
 	//Gensys::Test::RunTests();
 
-    WindowManager *windowManager = new WindowManager();
-    RenderStateManager *renderStateManager = new RenderStateManager(windowManager->GetWindowHelper());
-    AngelScriptRunner *angelScriptRunner = new AngelScriptRunner(windowManager);
+    WindowManager *windowManager = WindowManager::GetInstance();
+    RenderStateManager *renderStateManager = RenderStateManager::GetInstance();
 
     //ECSManager::ECSManagerExample();
 
@@ -53,16 +66,16 @@ int main(int argc, const char* argv[])
         return 0;
     }
 
-    if (windowManager->RenderLoop(angelScriptRunner, renderStateManager) == false)
+    if (windowManager->RenderLoop() == false)
     {
         return 0;
     }
 
     NodeManager::Close();
 
-    delete renderStateManager;
-    delete windowManager;
-    delete angelScriptRunner;
+    RenderStateManager::Close();
+    WindowManager::Close();
+    AngelScriptRunner::Close();
 
     return 0;
 }

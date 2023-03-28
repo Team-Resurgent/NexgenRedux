@@ -41,6 +41,8 @@ namespace NexgenRedux
 		virtual void SetViewport(const MathUtility::RectI rect) = 0;
 		virtual void SetScissor(const ScissorOperation& operation, const MathUtility::RectI& rect) = 0;
 		virtual bool LoadTexture(std::wstring path, uint32_t& textureID) = 0;
+		virtual void DeleteTexture(const uint32_t& textureID) = 0;
 		virtual bool RenderMesh(uint32_t meshID) = 0;
+		virtual void Clear(const MathUtility::Color4F& color) = 0;
 	};
 }

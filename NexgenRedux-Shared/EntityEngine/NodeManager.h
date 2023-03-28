@@ -19,6 +19,7 @@ namespace NexgenRedux
 
         static void Close(void);
         static Sprite* CreateSprite();
+        static OrthoCamera* CreateOrthoCamera();
         static bool AssignNode(Node* node, uint32_t parentNodeID);
         static bool AssignNodeAt(Node* node, uint32_t parentNodeID, uint32_t insertNodeID);
         static void DeleteNode(uint32_t nodeID);    

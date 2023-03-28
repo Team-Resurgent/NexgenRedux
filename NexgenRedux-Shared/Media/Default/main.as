@@ -70,34 +70,45 @@ uint frameCount;
 
 void Init()
 {
-
-
     uint sceneID = SceneManager::CreateScene(true);
     SceneManager::SetCurrentScene(sceneID);
 
+    OrthoCamera@ orthoCamera = NodeManager::CreateOrthoCamera();
+    orthoCamera.SetClearColor(Color4F(1, 1, 0, 1));
+    orthoCamera.SetEye(Vec3F(0, 0, 2));
+    orthoCamera.SetTarget(Vec3F(0, 0, 0));
+    orthoCamera.SetUp(Vec3F(0, 1, 0));
+    orthoCamera.SetLeft(0);
+    orthoCamera.SetRight(640);
+    orthoCamera.SetBottom(0);
+    orthoCamera.SetTop(480);
+    orthoCamera.SetZNear(1);
+    orthoCamera.SetZFar(100);
+
+    SceneManager::AssignNode(orthoCamera, sceneID);
+
     Sprite@ sprite1 = NodeManager::CreateSprite();
-    sprite1.SetTexturePath("hello1");
+    sprite1.SetTexturePath("skin:background.png");
+    NodeManager::AssignNode(sprite1, orthoCamera.GetID());
 
-    Sprite@ sprite2 = NodeManager::CreateSprite();
-    sprite2.SetTexturePath("hello2");
+    // Sprite@ sprite2 = NodeManager::CreateSprite();
+    // sprite2.SetTexturePath("hello2");
 
-    Sprite@ sprite3 = NodeManager::CreateSprite();
-    sprite3.SetTexturePath("hello2");
+    // Sprite@ sprite3 = NodeManager::CreateSprite();
+    // sprite3.SetTexturePath("hello2");
 
-    SceneManager::AssignNode(sprite1, sceneID);
-    sprite1.SetTexturePath("helloxxx");
-    NodeManager::AssignNode(sprite2, sprite1.GetID());
-    NodeManager::AssignNodeAt(sprite3, sprite1.GetID(), sprite2.GetID());
+    // SceneManager::AssignNode(sprite1, sceneID);
+    // sprite1.SetTexturePath("helloxxx");
+    // NodeManager::AssignNode(sprite2, sprite1.GetID());
+    // NodeManager::AssignNodeAt(sprite3, sprite1.GetID(), sprite2.GetID());
 
-    Sprite@ sprite1copy = NodeManager::GetNode(sprite1.GetID());
-    sprite1copy.SetTexturePath("helloxxx-copy");
+    // Sprite@ sprite1copy = NodeManager::GetNode(sprite1.GetID());
+    // sprite1copy.SetTexturePath("helloxxx-copy");
 
-    SceneManager::Update(0.5);
-    SceneManager::Render();
 
-    NodeManager::DeleteNode(sprite2.GetID());
-    NodeManager::PurgeNodes();
-    NodeManager::CheckForOrphans();
+    // NodeManager::DeleteNode(sprite2.GetID());
+    // NodeManager::PurgeNodes();
+    // NodeManager::CheckForOrphans();
 
     // uint nodeID1 = nodeManager.AddSceneNode(sprite1, sceneID);
 

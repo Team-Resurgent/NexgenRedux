@@ -4,6 +4,7 @@
 #include "MathUtility.h"
 #include "EntityEngine/SceneManager.h"
 #include "EntityEngine/NodeManager.h"
+#include "EntityEngine/OrthoCamera.h"
 #include "EntityEngine/Sprite.h"
 
 #include <Gensys/DebugUtility.h>
@@ -25,9 +26,6 @@ using namespace AngelScript;
 
 namespace {
 
-
-	AngelScriptMethods* m_angelScriptMethods = NULL;
-
 	asIScriptEngine* m_engine = NULL;
 
 	asIScriptFunction *m_windowIconifyCallback = NULL;
@@ -43,17 +41,11 @@ namespace {
 	asIScriptFunction *m_windowDropCallback = NULL;
 
 	asIScriptFunction *m_joystickConnectCallback = NULL;
+
 }
 
-AngelScriptRunner::AngelScriptRunner(WindowManager *windowManager)
+void AngelScriptRunner::Close()
 {
-	m_windowManager = windowManager;
-	m_angelScriptMethods = new AngelScriptMethods(windowManager);
-}
-
-AngelScriptRunner::~AngelScriptRunner()
-{
-	delete m_angelScriptMethods;
 	if (m_windowIconifyCallback != NULL) 
 	{
 		m_windowIconifyCallback->Release();
@@ -613,6 +605,39 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	if (m_engine->RegisterGlobalFunction("void SetJoystickConnectCallback(JoystickConnectCallback @joystickConnectCallback)", asFUNCTION(AngelScriptRunner::SetJoystickConnectCallback), asCALL_GENERIC) < 0) { return false; }
 
 	if (m_engine->RegisterObjectType("Node", sizeof(Node), asOBJ_REF | asOBJ_NOCOUNT) < 0) { return false; }
+
+	if (m_engine->RegisterObjectType("OrthoCamera", sizeof(0), asOBJ_REF | asOBJ_NOCOUNT) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("OrthoCamera", "uint GetID()", asMETHOD(OrthoCamera, GetID), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("OrthoCamera", "Vec3F& GetAnchor()", asMETHOD(OrthoCamera, GetAnchor), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("OrthoCamera", "void SetAnchor(Vec3F &in)", asMETHOD(OrthoCamera, SetAnchor), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("OrthoCamera", "Vec3F& GetRotation()", asMETHOD(OrthoCamera, GetRotation), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("OrthoCamera", "void SetRotation(Vec3F &in)", asMETHOD(OrthoCamera, SetRotation), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("OrthoCamera", "Vec3F& GetSkew()", asMETHOD(OrthoCamera, GetSkew), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("OrthoCamera", "void SetSkew(Vec3F &in)", asMETHOD(OrthoCamera, SetSkew), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("OrthoCamera", "Vec3F& GetScale()", asMETHOD(OrthoCamera, GetScale), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("OrthoCamera", "void SetScale(Vec3F &in)", asMETHOD(OrthoCamera, SetScale), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("OrthoCamera", "Vec3F& GetPosition()", asMETHOD(OrthoCamera, GetPosition), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("OrthoCamera", "void SetPosition(Vec3F &in)", asMETHOD(OrthoCamera, SetPosition), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("OrthoCamera", "Color4F& GetClearColor()", asMETHOD(OrthoCamera, GetClearColor), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("OrthoCamera", "void SetClearColor(Color4F &in)", asMETHOD(OrthoCamera, SetClearColor), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("OrthoCamera", "Vec3F& GetEye()", asMETHOD(OrthoCamera, GetEye), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("OrthoCamera", "void SetEye(Vec3F &in)", asMETHOD(OrthoCamera, SetEye), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("OrthoCamera", "Vec3F& GetTarget()", asMETHOD(OrthoCamera, GetTarget), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("OrthoCamera", "void SetTarget(Vec3F &in)", asMETHOD(OrthoCamera, SetTarget), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("OrthoCamera", "Vec3F& GetUp()", asMETHOD(OrthoCamera, GetUp), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("OrthoCamera", "void SetUp(Vec3F &in)", asMETHOD(OrthoCamera, SetUp), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("OrthoCamera", "float GetLeft()", asMETHOD(OrthoCamera, GetLeft), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("OrthoCamera", "void SetLeft(float)", asMETHOD(OrthoCamera, SetLeft), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("OrthoCamera", "float GetRight()", asMETHOD(OrthoCamera, GetRight), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("OrthoCamera", "void SetRight(float)", asMETHOD(OrthoCamera, SetRight), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("OrthoCamera", "float GetBottom()", asMETHOD(OrthoCamera, GetBottom), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("OrthoCamera", "void SetBottom(float)", asMETHOD(OrthoCamera, SetBottom), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("OrthoCamera", "float GetTop()", asMETHOD(OrthoCamera, GetTop), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("OrthoCamera", "void SetTop(float)", asMETHOD(OrthoCamera, SetTop), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("OrthoCamera", "float GetZNear()", asMETHOD(OrthoCamera, GetZNear), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("OrthoCamera", "void SetZNear(float)", asMETHOD(OrthoCamera, SetZNear), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("OrthoCamera", "float GetZFar()", asMETHOD(OrthoCamera, GetZFar), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("OrthoCamera", "void SetZFar(float)", asMETHOD(OrthoCamera, SetZFar), asCALL_THISCALL) < 0) { return false; }
 	
 	if (m_engine->RegisterObjectType("Sprite", sizeof(0), asOBJ_REF | asOBJ_NOCOUNT) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("Sprite", "uint GetID()", asMETHOD(Sprite, GetID), asCALL_THISCALL) < 0) { return false; }
@@ -640,6 +665,7 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 
 	if (m_engine->SetDefaultNamespace("NodeManager") < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("Sprite& NodeManager::CreateSprite()", asFUNCTION(NodeManager::CreateSprite), asCALL_CDECL) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("OrthoCamera& NodeManager::CreateOrthoCamera()", asFUNCTION(NodeManager::CreateOrthoCamera), asCALL_CDECL) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("bool NodeManager::AssignNode(Node@, uint)", asFUNCTION(NodeManager::AssignNode), asCALL_CDECL) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("bool NodeManager::AssignNodeAt(Node@, uint, uint)", asFUNCTION(NodeManager::AssignNodeAt), asCALL_CDECL) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void NodeManager::DeleteNode(uint)", asFUNCTION(NodeManager::DeleteNode), asCALL_CDECL) < 0) { return false; }
@@ -647,7 +673,12 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	if (m_engine->RegisterGlobalFunction("void NodeManager::PurgeNodes()", asFUNCTION(NodeManager::PurgeNodes), asCALL_CDECL) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void NodeManager::CheckForOrphans()", asFUNCTION(NodeManager::CheckForOrphans), asCALL_CDECL) < 0) { return false; }
 
+	if (m_engine->RegisterObjectMethod("Node", "OrthoCamera@ opCast()", asFUNCTION((refCast<Node,OrthoCamera>)), asCALL_CDECL_OBJLAST) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("Node", "Sprite@ opCast()", asFUNCTION((refCast<Node,Sprite>)), asCALL_CDECL_OBJLAST) < 0) { return false; }
+
+	if (m_engine->RegisterObjectMethod("Node", "OrthoCamera@ opImplCast()", asFUNCTION((refCast<Node,OrthoCamera>)), asCALL_CDECL_OBJLAST) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("OrthoCamera", "Node@ opImplCast()", asFUNCTION((refCast<OrthoCamera,Node>)), asCALL_CDECL_OBJLAST) < 0) { return false; }
+
 	if (m_engine->RegisterObjectMethod("Node", "Sprite@ opImplCast()", asFUNCTION((refCast<Node,Sprite>)), asCALL_CDECL_OBJLAST) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("Sprite", "Node@ opImplCast()", asFUNCTION((refCast<Sprite,Node>)), asCALL_CDECL_OBJLAST) < 0) { return false; }
 	

@@ -19,9 +19,8 @@ void __cdecl main(int, char **)
 {
 	//Gensys::Test::RunTests();
 
-    WindowManager *windowManager = new WindowManager();
-    RenderStateManager *renderStateManager = new RenderStateManager(windowManager->GetWindowHelper());
-    AngelScriptRunner *angelScriptRunner = new AngelScriptRunner(windowManager);
+	WindowManager *windowManager = WindowManager::GetInstance();
+    RenderStateManager *renderStateManager = new RenderStateManager();
 
     //ECSManager::ECSManagerExample();
 
@@ -40,12 +39,14 @@ void __cdecl main(int, char **)
         return;
     }
 
-    if (windowManager->RenderLoop(angelScriptRunner, renderStateManager) == false)
+    if (windowManager->RenderLoop() == false)
     {
         return;
     }
 
+    NodeManager::Close();
+
     delete renderStateManager;
-    delete windowManager;
-    delete angelScriptRunner;
+    WindowManager::Close();
+    AngelScriptRunner::Close();
 }

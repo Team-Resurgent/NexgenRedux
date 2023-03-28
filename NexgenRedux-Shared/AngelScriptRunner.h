@@ -16,7 +16,6 @@ using namespace AngelScript;
 
 namespace NexgenRedux
 {
-	class WindowManager;
 	class AngelScriptRunner
 	{
 	public:
@@ -27,8 +26,7 @@ namespace NexgenRedux
 			float y;
 		} Vec2;
 
-		AngelScriptRunner(WindowManager *windowManager);
-		~AngelScriptRunner();
+		static void Close();
 
 		static bool Init(std::wstring launchFolder);
 		static bool ExecuteInit(void);
@@ -60,7 +58,6 @@ namespace NexgenRedux
 		static void SetWindowMouseScrollCallback(asIScriptGeneric* gen);
 		static void SetWindowDropCallback(asIScriptGeneric* gen);
 		static void SetJoystickConnectCallback(asIScriptGeneric* gen);
-
 
 		static void DebugPrint(asIScriptGeneric* gen);
 		static void DebugPrintIf(asIScriptGeneric* gen);
@@ -137,8 +134,5 @@ namespace NexgenRedux
         static void Color4FConstructorDefault(MathUtility::Color4F* color4F);
         static void Color4FConstructorValues(float r, float g, float b, float a, MathUtility::Color4F* color4F);
         static void Color4FConstructorCopy(const MathUtility::Color4F& other, MathUtility::Color4F* color4F);
-
-	private:
-		WindowManager *m_windowManager;
 	};
 }

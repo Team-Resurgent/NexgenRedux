@@ -16,16 +16,18 @@ namespace NexgenRedux
 	class RenderStateManager
 	{		
 	public:
-
-		RenderStateManager(IWindowHelper *windowHelper);
-		~RenderStateManager();
+		
+		static RenderStateManager* GetInstance();
+		static void Close();
 
 		void Init(void);
 
 		RenderState* GetRenderState(void);
 		bool CanBatch(void);
 		bool LoadTexture(std::wstring path, uint32_t& textureID);
+		void DeleteTexture(const uint32_t& textureID);
 		bool RenderMesh(uint32_t meshID);
+		void Clear(const MathUtility::Color4F color);
 
 		void SetShader(const std::string& shader);
 		void SetModelMatrix(const MathUtility::Matrix4x4& matrix);
@@ -54,6 +56,12 @@ namespace NexgenRedux
 		void SetDrawMode(const DrawModeOperation& operation);
 
 		void ApplyChanges(void);
+
+	private:
+
+		RenderStateManager();
+		~RenderStateManager();
+
 	private:
 
 		IRenderingHelper* m_renderingHelper;

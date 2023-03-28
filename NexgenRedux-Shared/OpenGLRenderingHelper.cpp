@@ -303,10 +303,9 @@ namespace
 
 }
 
-OpenGLRenderingHelper::OpenGLRenderingHelper(RenderStateManager *renderStateManager, IWindowHelper *windowHelper)
+OpenGLRenderingHelper::OpenGLRenderingHelper(RenderStateManager *renderStateManager)
 {
 	m_renderStateManager = renderStateManager;
-	m_windowHelper = windowHelper;
 
 	m_initialized = false;
  	m_dynamicBuffer = 0;
@@ -851,6 +850,19 @@ bool OpenGLRenderingHelper::LoadTexture(std::wstring path, uint32_t& textureID)
 	return true;
 }
 
+void OpenGLRenderingHelper::DeleteTexture(const uint32_t& textureID)
+{
+    std::map<uint32_t, TextureContainer>::iterator it = m_textureContainerMap.find(textureID);
+	if (it == m_textureContainerMap.end()) 
+	{
+		return;
+	}
+	TextureContainer* textureContainer = (TextureContainer*)&it->second;
+	uint32_t texture = it->second.texture;
+	glDeleteTextures(1, &texture);
+	m_textureContainerMap.erase(it);
+}
+
 bool OpenGLRenderingHelper::RenderMesh(uint32_t meshID)
 {
 	MeshUtility::Mesh* mesh = MeshUtility::GetMesh(meshID);
@@ -859,10 +871,7 @@ bool OpenGLRenderingHelper::RenderMesh(uint32_t meshID)
 		return false;
 	}
 
-	m_renderStateManager->SetTexture(mesh->textureID, TextureFilterLinear);
-	m_renderStateManager->ApplyChanges();
-
-	uint32_t requestedSize =  mesh->vertices.size() * sizeof(MeshUtility::Vertex);
+	uint32_t requestedSize =  (uint32_t)(mesh->vertices.size() * sizeof(MeshUtility::Vertex));
 	ResizeDynamicBufferIfNeeded(requestedSize);
 
 	uint32_t aPosition;
@@ -883,7 +892,7 @@ bool OpenGLRenderingHelper::RenderMesh(uint32_t meshID)
 	glEnableVertexAttribArray(aTexCoord);
 	glVertexAttribPointer(aTexCoord, 2, GL_FLOAT, GL_FALSE, sizeof(MeshUtility::Vertex), (void*)offsetof(MeshUtility::Vertex, texcoord));
 
-	uint32_t vertexCount = mesh->vertices.size();
+	uint32_t vertexCount = (uint32_t)mesh->vertices.size();
 	if (m_renderStateManager->GetRenderState()->drawModeState.operation == DrawModeTriangles) 
 	{
 		glDrawArrays(GL_TRIANGLES, 0, (GLsizei)vertexCount);
@@ -893,6 +902,13 @@ bool OpenGLRenderingHelper::RenderMesh(uint32_t meshID)
 		glDrawArrays(GL_LINES, 0, (GLsizei)vertexCount);
 	}
 	return true;
+}
+
+void OpenGLRenderingHelper::Clear(const MathUtility::Color4F& color) 
+{
+    glClearColor(color.r, color.g, color.b, color.a);
+    glClearDepthf(1);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 // Privates 

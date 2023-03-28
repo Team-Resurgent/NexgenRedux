@@ -8,19 +8,39 @@
 
 using namespace NexgenRedux;
 
-RenderStateManager::RenderStateManager(IWindowHelper *windowHelper)
+namespace
+{
+    RenderStateManager* m_instance = NULL;
+}
+
+RenderStateManager::RenderStateManager()
 {
     m_initialized = false;
  #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
-	m_renderingHelper = new OpenGLRenderingHelper(this, windowHelper);
+	m_renderingHelper = new OpenGLRenderingHelper(this);
 #else
-	m_renderingHelper = new XboxOGRenderingHelper(this, windowHelper);
+	m_renderingHelper = new XboxOGRenderingHelper(this);
 #endif
 }
 
 RenderStateManager::~RenderStateManager()
 {
     delete m_renderingHelper;
+}
+
+RenderStateManager* RenderStateManager::GetInstance()
+{
+	if (m_instance == NULL) 
+	{
+    	m_instance = new RenderStateManager();
+    }
+    return m_instance;
+}
+
+void RenderStateManager::Close()
+{
+	delete m_instance;
+	m_instance = NULL;
 }
 
 void RenderStateManager::Init(void)
@@ -168,9 +188,19 @@ bool RenderStateManager::LoadTexture(std::wstring path, uint32_t& textureID)
     return m_renderingHelper->LoadTexture(path, textureID);
 }
 
+void RenderStateManager::DeleteTexture(const uint32_t& textureID)
+{
+    m_renderingHelper->DeleteTexture(textureID);
+}
+
 bool RenderStateManager::RenderMesh(uint32_t meshID)
 {
 	return m_renderingHelper->RenderMesh(meshID);
+}
+
+void RenderStateManager::Clear(const MathUtility::Color4F color)
+{
+    m_renderingHelper->Clear(color);
 }
 
 void RenderStateManager::SetShader(const std::string& shader)

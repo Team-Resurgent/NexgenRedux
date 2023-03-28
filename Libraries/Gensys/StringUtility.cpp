@@ -187,7 +187,7 @@ uint32_t StringUtility::ToInt(std::wstring const value)
 std::vector<uint8_t> StringUtility::StringToByteArray(std::wstring value) 
 {
 	const uint8_t* data = (const uint8_t*)(value.c_str());
-	const uint32_t size = value.size() * sizeof(wchar_t);
+	const uint32_t size = (uint32_t)(value.size() * sizeof(wchar_t));
 	return std::vector<uint8_t>(data, data + size);
 }
 

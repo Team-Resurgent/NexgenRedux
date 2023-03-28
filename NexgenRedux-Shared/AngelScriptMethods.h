@@ -6,12 +6,9 @@ using namespace AngelScript;
 
 namespace NexgenRedux
 {
-	class WindowManager;
 	class AngelScriptMethods
 	{
 	public:
-
-		AngelScriptMethods(WindowManager* windowManager);
 
 		static void GetAvailableMonitorCount(asIScriptGeneric* gen);
 		static void GetMonitorVideoMode(asIScriptGeneric* gen);

@@ -24,7 +24,6 @@ namespace NexgenRedux
 		} TextureContainer;
 
 		RenderStateManager* m_renderStateManager;
-		IWindowHelper *m_windowHelper;
 
 		bool m_initialized;
 		std::map<std::string, std::map<std::string, uint32_t> > m_shaderValueMap;
@@ -35,7 +34,7 @@ namespace NexgenRedux
 
 	public:
 
-		OpenGLRenderingHelper(RenderStateManager* renderStateManager, IWindowHelper *windowHelper);
+		OpenGLRenderingHelper(RenderStateManager* renderStateManager);
 		~OpenGLRenderingHelper();
 
 		bool Init() override;
@@ -65,7 +64,9 @@ namespace NexgenRedux
 		void SetScissor(const ScissorOperation& operation, const MathUtility::RectI& rect) override;
 
 		bool LoadTexture(std::wstring path, uint32_t& textureID) override;
+		void DeleteTexture(const uint32_t& textureID) override;
 		bool RenderMesh(uint32_t meshID) override;
+		void Clear(const MathUtility::Color4F& color) override;
 		
 	private:
 

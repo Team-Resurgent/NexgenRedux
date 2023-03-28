@@ -74,7 +74,7 @@ bool OpenGLWindowHelper::GetMonitorVideoMode(uint32_t monitorIndex, MonitorVideo
 
 	int monitorCount;
     GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
-    if (monitorIndex >= monitorCount)
+    if (monitorIndex >= (uint32_t)monitorCount)
     {
         return false;
     }
@@ -99,7 +99,7 @@ bool OpenGLWindowHelper::GetMonitorVideoModes(uint32_t monitorIndex, std::vector
 
 	int monitorCount;
     GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
-    if (monitorIndex >= monitorCount)
+    if (monitorIndex >= (uint32_t)monitorCount)
     {
         return false;
     }
@@ -108,7 +108,7 @@ bool OpenGLWindowHelper::GetMonitorVideoModes(uint32_t monitorIndex, std::vector
 
     int videoModesCount;
     const GLFWvidmode* modes = glfwGetVideoModes(monitors[monitorIndex], &videoModesCount);
-    for (uint32_t i = 0; i < videoModesCount; i++)
+    for (uint32_t i = 0; i < (uint32_t)videoModesCount; i++)
     {
         MonitorVideoMode monitorVideoMode;
         monitorVideoMode.monitorIndex = monitorIndex;
@@ -133,7 +133,7 @@ bool OpenGLWindowHelper::WindowCreateWithVideoMode(MonitorVideoMode monitorVideo
 
 	int monitorCount;
     GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
-    if (monitorVideoMode.monitorIndex >= monitorCount)
+    if (monitorVideoMode.monitorIndex >= (uint32_t)monitorCount)
     {
         return false;
     }
@@ -300,14 +300,6 @@ bool OpenGLWindowHelper::WindowPreRender(uint32_t& windowHandle, bool& exitReque
 	}
 
 	glfwMakeContextCurrent(window);
-
-    glClearColor(1.0f, .1f, .1f, .1f);
-    glClearDepthf(1);
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_CULL_FACE);
-
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 	return true;
 }
 
@@ -439,7 +431,7 @@ bool OpenGLWindowHelper::JoystickIsPresent(uint32_t joystickID, uint32_t& presen
         return false;
     }
 
-    present = glfwJoystickPresent(joystickID) == true ? 1 : 0;
+    present = glfwJoystickPresent(joystickID) == 1 ? 1 : 0;
     return true;
 }
 
@@ -450,7 +442,7 @@ bool OpenGLWindowHelper::JoystickIsGamepad(uint32_t joystickID, uint32_t& gamepa
         return false;
     }
 
-	gamepad = glfwJoystickIsGamepad(joystickID) == true ? 1 : 0;
+	gamepad = glfwJoystickIsGamepad(joystickID) == 1 ? 1 : 0;
     return true;
 }
 
@@ -535,7 +527,7 @@ bool OpenGLWindowHelper::GetJoystickHatDirection(uint32_t joystickID, uint32_t h
     int hatCount;
     const unsigned char *hatStates = glfwGetJoystickHats(joystickID, &hatCount);
 
-    if (hatStates == NULL || hatIndex >= hatCount)
+    if (hatStates == NULL || hatIndex >= (uint32_t)hatCount)
 	{
 		direction = 0;
 		return true;

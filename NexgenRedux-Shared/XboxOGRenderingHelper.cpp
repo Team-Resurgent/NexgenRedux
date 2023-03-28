@@ -22,10 +22,9 @@
 using namespace Gensys;
 using namespace NexgenRedux;
 
-XboxOGRenderingHelper::XboxOGRenderingHelper(RenderStateManager *renderStateManager, IWindowHelper *windowHelper)
+XboxOGRenderingHelper::XboxOGRenderingHelper(RenderStateManager *renderStateManager)
 {
 	m_renderStateManager = renderStateManager;
-	m_windowHelper = windowHelper;
 
 	m_initialized = false;
 	m_dynamicBuffer = NULL;
@@ -60,7 +59,7 @@ void XboxOGRenderingHelper::SetShader(std::string shaderName)
 		return;
 	}
 
-	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)m_windowHelper)->GetD3DDevice();
+	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)WindowManager::GetInstance()->GetWindowHelper())->GetD3DDevice();
 
 	if (FAILED(d3dDevice->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE)))
 	{
@@ -119,7 +118,7 @@ void XboxOGRenderingHelper::SetShader(std::string shaderName)
 
 void XboxOGRenderingHelper::SetModelMatrix(const MathUtility::Matrix4x4& matrix) 
 {
-	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)m_windowHelper)->GetD3DDevice();
+	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)WindowManager::GetInstance()->GetWindowHelper())->GetD3DDevice();
 
 	D3DXMATRIX tempMatrix = D3DXMATRIX(matrix.values);
 	if (FAILED(d3dDevice->SetTransform(D3DTS_WORLD, &tempMatrix)))
@@ -130,7 +129,7 @@ void XboxOGRenderingHelper::SetModelMatrix(const MathUtility::Matrix4x4& matrix)
 
 void XboxOGRenderingHelper::SetViewMatrix(const MathUtility::Matrix4x4& matrix) 
 {
-	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)m_windowHelper)->GetD3DDevice();
+	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)WindowManager::GetInstance()->GetWindowHelper())->GetD3DDevice();
 
 	MathUtility::Vec3F scale = MathUtility::Vec3F(-1.0f, 1.0f, 1.0f);
 	MathUtility::Matrix4x4 scaleMatrix = MathUtility::Matrix4x4::Scale(scale);
@@ -144,7 +143,7 @@ void XboxOGRenderingHelper::SetViewMatrix(const MathUtility::Matrix4x4& matrix)
 
 void XboxOGRenderingHelper::SetProjectionMatrix(const MathUtility::Matrix4x4& matrix) 
 {
-	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)m_windowHelper)->GetD3DDevice();
+	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)WindowManager::GetInstance()->GetWindowHelper())->GetD3DDevice();
 
 	D3DXMATRIX tempMatrix = D3DXMATRIX(matrix.values);
 	if (FAILED(d3dDevice->SetTransform(D3DTS_PROJECTION, &tempMatrix)))
@@ -155,7 +154,7 @@ void XboxOGRenderingHelper::SetProjectionMatrix(const MathUtility::Matrix4x4& ma
 
 void XboxOGRenderingHelper::SetAmbientLight(const MathUtility::Color3F& color) 
 {
-	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)m_windowHelper)->GetD3DDevice();
+	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)WindowManager::GetInstance()->GetWindowHelper())->GetD3DDevice();
 
 	D3DCOLOR tempColor = D3DCOLOR_XRGB((int)(color.values[0] * 255), (int)(color.values[1] * 255), (int)(color.values[2] * 255));
 	if (FAILED(d3dDevice->SetRenderState(D3DRS_AMBIENT, tempColor)))
@@ -173,7 +172,7 @@ void XboxOGRenderingHelper::SetTexture(const uint32_t& textureID, const TextureF
 		return;
 	}
 
-	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)m_windowHelper)->GetD3DDevice();
+	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)WindowManager::GetInstance()->GetWindowHelper())->GetD3DDevice();
 
 	if (FAILED(d3dDevice->SetTexture(0, textureContainer->texture)))
 	{
@@ -206,7 +205,7 @@ void XboxOGRenderingHelper::SetTexture(const uint32_t& textureID, const TextureF
 
 void XboxOGRenderingHelper::SetTint(const MathUtility::Color4F& color) 
 {
-	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)m_windowHelper)->GetD3DDevice();
+	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)WindowManager::GetInstance()->GetWindowHelper())->GetD3DDevice();
 
 	D3DCOLOR tempColor = D3DCOLOR_RGBA((int)(color.values[0] * 255), (int)(color.values[1] * 255), (int)(color.values[2] * 255), (int)(color.values[3] * 255));
 	if (FAILED(d3dDevice->SetRenderState(D3DRS_TEXTUREFACTOR, tempColor)))
@@ -217,7 +216,7 @@ void XboxOGRenderingHelper::SetTint(const MathUtility::Color4F& color)
 
 void XboxOGRenderingHelper::SetBlend(const BlendOperation& operation) 
 {
-	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)m_windowHelper)->GetD3DDevice();
+	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)WindowManager::GetInstance()->GetWindowHelper())->GetD3DDevice();
 
 	if (operation == BlendOperationDisabled)
 	{
@@ -387,7 +386,7 @@ void XboxOGRenderingHelper::SetBlendFactors(const BlendFactor& srcFactor, const 
 		dstFactorValue = D3DBLEND_SRCALPHASAT;
 	}
 
-	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)m_windowHelper)->GetD3DDevice();
+	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)WindowManager::GetInstance()->GetWindowHelper())->GetD3DDevice();
 
 	if (FAILED(d3dDevice->SetRenderState(D3DRS_SRCBLEND, srcFactorValue)))
 	{
@@ -401,7 +400,7 @@ void XboxOGRenderingHelper::SetBlendFactors(const BlendFactor& srcFactor, const 
 
 void XboxOGRenderingHelper::SetCulling(const CullingOperation& operation) 
 {
-	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)m_windowHelper)->GetD3DDevice();
+	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)WindowManager::GetInstance()->GetWindowHelper())->GetD3DDevice();
 
 	if (operation == CullingOperationDisabled) 
 	{
@@ -428,7 +427,7 @@ void XboxOGRenderingHelper::SetCulling(const CullingOperation& operation)
 
 void XboxOGRenderingHelper::SetDepth(const DepthOperation& operation) 
 {
-	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)m_windowHelper)->GetD3DDevice();
+	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)WindowManager::GetInstance()->GetWindowHelper())->GetD3DDevice();
 
 	if (operation == DepthOperationDisabled) 
 	{
@@ -529,7 +528,7 @@ void XboxOGRenderingHelper::SetDepth(const DepthOperation& operation)
 
 void XboxOGRenderingHelper::SetLights(const LightsOperation& operation) 
 {
-	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)m_windowHelper)->GetD3DDevice();
+	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)WindowManager::GetInstance()->GetWindowHelper())->GetD3DDevice();
 
 	if (operation == LightsOperationDisabled) 
 	{
@@ -549,7 +548,7 @@ void XboxOGRenderingHelper::SetLights(const LightsOperation& operation)
 
 void XboxOGRenderingHelper::SetLight1(const LightOperation& operation) 
 {
-	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)m_windowHelper)->GetD3DDevice();
+	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)WindowManager::GetInstance()->GetWindowHelper())->GetD3DDevice();
 
 	if (operation == LightOperationDisabled) 
 	{
@@ -569,7 +568,7 @@ void XboxOGRenderingHelper::SetLight1(const LightOperation& operation)
 
 void XboxOGRenderingHelper::SetLightInstance1(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4F& diffuse) 
 {
-	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)m_windowHelper)->GetD3DDevice();
+	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)WindowManager::GetInstance()->GetWindowHelper())->GetD3DDevice();
 
 	D3DLIGHT8 light;
 	memset(&light, 0, sizeof(light));
@@ -598,7 +597,7 @@ void XboxOGRenderingHelper::SetLightInstance1(const MathUtility::Vec3F& position
 
 void XboxOGRenderingHelper::SetLight2(const LightOperation& operation) 
 {
-	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)m_windowHelper)->GetD3DDevice();
+	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)WindowManager::GetInstance()->GetWindowHelper())->GetD3DDevice();
 
 	if (operation == LightOperationDisabled) 
 	{
@@ -618,7 +617,7 @@ void XboxOGRenderingHelper::SetLight2(const LightOperation& operation)
 
 void XboxOGRenderingHelper::SetLightInstance2(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4F& diffuse) 
 {
-	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)m_windowHelper)->GetD3DDevice();
+	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)WindowManager::GetInstance()->GetWindowHelper())->GetD3DDevice();
 
 	D3DLIGHT8 light;
 	memset(&light, 0, sizeof(light));
@@ -647,7 +646,7 @@ void XboxOGRenderingHelper::SetLightInstance2(const MathUtility::Vec3F& position
 
 void XboxOGRenderingHelper::SetLight3(const LightOperation& operation) 
 {
-	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)m_windowHelper)->GetD3DDevice();
+	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)WindowManager::GetInstance()->GetWindowHelper())->GetD3DDevice();
 
 	if (operation == LightOperationDisabled) 
 	{
@@ -667,7 +666,7 @@ void XboxOGRenderingHelper::SetLight3(const LightOperation& operation)
 
 void XboxOGRenderingHelper::SetLightInstance3(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4F& diffuse) 
 {
-	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)m_windowHelper)->GetD3DDevice();
+	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)WindowManager::GetInstance()->GetWindowHelper())->GetD3DDevice();
 
 	D3DLIGHT8 light;
 	memset(&light, 0, sizeof(light));
@@ -696,7 +695,7 @@ void XboxOGRenderingHelper::SetLightInstance3(const MathUtility::Vec3F& position
 
 void XboxOGRenderingHelper::SetLight4(const LightOperation& operation) 
 {
-	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)m_windowHelper)->GetD3DDevice();
+	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)WindowManager::GetInstance()->GetWindowHelper())->GetD3DDevice();
 
 	if (operation == LightOperationDisabled) 
 	{
@@ -716,7 +715,7 @@ void XboxOGRenderingHelper::SetLight4(const LightOperation& operation)
 
 void XboxOGRenderingHelper::SetLightInstance4(const MathUtility::Vec3F& position, const float& distance, const MathUtility::Color4F& diffuse) 
 {
-	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)m_windowHelper)->GetD3DDevice();
+	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)WindowManager::GetInstance()->GetWindowHelper())->GetD3DDevice();
 
 	D3DLIGHT8 light;
 	memset(&light, 0, sizeof(light));
@@ -745,7 +744,7 @@ void XboxOGRenderingHelper::SetLightInstance4(const MathUtility::Vec3F& position
 
 void XboxOGRenderingHelper::SetFog(const FogOperation& operation) 
 {
-	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)m_windowHelper)->GetD3DDevice();
+	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)WindowManager::GetInstance()->GetWindowHelper())->GetD3DDevice();
 
 	if (operation == FogOperationDisabled) 
 	{
@@ -791,7 +790,7 @@ void XboxOGRenderingHelper::SetFog(const FogOperation& operation)
 
 void XboxOGRenderingHelper::SetFogInstance(const MathUtility::Color3F& color, const float& start, const float& end, const float& density) 
 {
-	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)m_windowHelper)->GetD3DDevice();
+	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)WindowManager::GetInstance()->GetWindowHelper())->GetD3DDevice();
 
 	D3DCOLOR tempColor = D3DCOLOR_RGBA((int)(color.values[0] * 255), (int)(color.values[1] * 255), (int)(color.values[2] * 255), 255);
 	if (FAILED(d3dDevice->SetRenderState(D3DRS_FOGCOLOR, tempColor)))
@@ -817,7 +816,7 @@ void XboxOGRenderingHelper::SetFogInstance(const MathUtility::Color3F& color, co
 
 void XboxOGRenderingHelper::SetViewport(const MathUtility::RectI rect) 
 {
-	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)m_windowHelper)->GetD3DDevice();
+	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)WindowManager::GetInstance()->GetWindowHelper())->GetD3DDevice();
 
 	D3DVIEWPORT8 viewport;
 	memset(&viewport, 0, sizeof(viewport));
@@ -836,7 +835,7 @@ void XboxOGRenderingHelper::SetViewport(const MathUtility::RectI rect)
 
 void XboxOGRenderingHelper::SetScissor(const ScissorOperation& operation, const MathUtility::RectI& rect) 
 {
-	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)m_windowHelper)->GetD3DDevice();
+	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)WindowManager::GetInstance()->GetWindowHelper())->GetD3DDevice();
 
 	if (operation == ScissorOperationDisabled) 
 	{
@@ -869,7 +868,7 @@ bool XboxOGRenderingHelper::LoadTexture(std::wstring path, uint32_t& textureID)
 		return false;
 	}
 
-	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)m_windowHelper)->GetD3DDevice();
+	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)WindowManager::GetInstance()->GetWindowHelper())->GetD3DDevice();
 
 	IDirect3DTexture8 *texture;
 	if (FAILED(D3DXCreateTextureFromFileA(d3dDevice, StringUtility::ToString(mappedPath).c_str(), &texture)))
@@ -890,6 +889,19 @@ bool XboxOGRenderingHelper::LoadTexture(std::wstring path, uint32_t& textureID)
 	return true;
 }
 
+void XboxOGRenderingHelper::DeleteTexture(const uint32_t& textureID)
+{
+    std::map<uint32_t, TextureContainer>::iterator it = m_textureContainerMap.find(textureID);
+	if (it == m_textureContainerMap.end()) 
+	{
+		return;
+	}
+	TextureContainer* textureContainer = (TextureContainer*)&it->second;
+	IDirect3DTexture8* texture = textureContainer->texture;
+	texture->Release();
+	m_textureContainerMap.erase(it);
+}
+
 bool XboxOGRenderingHelper::RenderMesh(uint32_t meshID)
 {
 	MeshUtility::Mesh* mesh = MeshUtility::GetMesh(meshID);
@@ -898,13 +910,10 @@ bool XboxOGRenderingHelper::RenderMesh(uint32_t meshID)
 		return false;
 	}
 
-	m_renderStateManager->SetTexture(mesh->textureID, TextureFilterLinear);
-	m_renderStateManager->ApplyChanges();
-
 	uint32_t requestedSize =  mesh->vertices.size() * sizeof(MeshUtility::Vertex);
 	ResizeDynamicBufferIfNeeded(requestedSize);
 
-	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)m_windowHelper)->GetD3DDevice();
+	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)WindowManager::GetInstance()->GetWindowHelper())->GetD3DDevice();
 
 	uint32_t vertexCount = mesh->vertices.size();
 	if (m_renderStateManager->GetRenderState()->drawModeState.operation == DrawModeTriangles) 
@@ -918,6 +927,17 @@ bool XboxOGRenderingHelper::RenderMesh(uint32_t meshID)
 	return true;
 }
 
+void XboxOGRenderingHelper::Clear(const MathUtility::Color4F& color) 
+{
+	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)WindowManager::GetInstance()->GetWindowHelper())->GetD3DDevice();
+
+	D3DCOLOR tempColor = D3DCOLOR_RGBA((uint8_t)(color.r * 255), (uint8_t)(color.g * 255), (uint8_t)(color.b * 255), (uint8_t)(color.a * 255));
+	if (FAILED(d3dDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, tempColor, 1, 0)))
+	{
+		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "Clear: Failed.");
+	}
+}
+
 // Privates 
 
 void XboxOGRenderingHelper::ResizeDynamicBufferIfNeeded(uint32_t requestedSize)
@@ -927,7 +947,7 @@ void XboxOGRenderingHelper::ResizeDynamicBufferIfNeeded(uint32_t requestedSize)
 		return;
 	}
 
-	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)m_windowHelper)->GetD3DDevice();
+	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)WindowManager::GetInstance()->GetWindowHelper())->GetD3DDevice();
 
 	if (m_dynamicBuffer != NULL)
 	{

@@ -353,12 +353,12 @@ namespace NexgenRedux
 
 			static Matrix4x4 Rotation(Vec3F rotation) 
 			{
-				float cosX = cos(DegreesToRadians(rotation.values[0]));
-				float sinX = sin(DegreesToRadians(rotation.values[0]));
-				float cosY = cos(DegreesToRadians(rotation.values[1]));
-				float sinY = sin(DegreesToRadians(rotation.values[1]));
-				float cosZ = cos(DegreesToRadians(rotation.values[2]));
-				float sinZ = sin(DegreesToRadians(rotation.values[2]));
+				float cosX = cosf(DegreesToRadians(rotation.values[0]));
+				float sinX = sinf(DegreesToRadians(rotation.values[0]));
+				float cosY = cosf(DegreesToRadians(rotation.values[1]));
+				float sinY = sinf(DegreesToRadians(rotation.values[1]));
+				float cosZ = cosf(DegreesToRadians(rotation.values[2]));
+				float sinZ = sinf(DegreesToRadians(rotation.values[2]));
 				
 				Matrix4x4 result = Matrix4x4();
 				result.values[0] = cosY * cosZ;

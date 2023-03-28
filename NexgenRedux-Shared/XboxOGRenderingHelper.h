@@ -24,7 +24,6 @@ namespace NexgenRedux
 		} TextureContainer;
 
 		RenderStateManager* m_renderStateManager;
-		IWindowHelper *m_windowHelper;
 
 		bool m_initialized;
 		D3DVertexBuffer* m_dynamicBuffer;
@@ -35,7 +34,7 @@ namespace NexgenRedux
 
 	public:
 
-		XboxOGRenderingHelper(RenderStateManager* renderStateManager, IWindowHelper *windowHelper);
+		XboxOGRenderingHelper(RenderStateManager* renderStateManager);
 		~XboxOGRenderingHelper();
 
 		bool Init();
@@ -65,7 +64,9 @@ namespace NexgenRedux
 		void SetScissor(const ScissorOperation& operation, const MathUtility::RectI& rect);
 
 		bool LoadTexture(std::wstring path, uint32_t& textureID);
+		void DeleteTexture(const uint32_t& textureID);
 		bool RenderMesh(uint32_t meshID);
+		void Clear(const MathUtility::Color4F& color);
 
 	private:
 

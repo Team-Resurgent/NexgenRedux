@@ -10,7 +10,7 @@ namespace
     std::map<uint32_t, MeshUtility::Mesh> m_meshMap;
 }
 
-MeshUtility::Mesh* MeshUtility::GetMesh(uint32_t meshID)
+MeshUtility::Mesh* MeshUtility::GetMesh(const uint32_t& meshID)
 {
     std::map<uint32_t, MeshUtility::Mesh>::iterator it = m_meshMap.find(meshID);
 	if (it == m_meshMap.end()) 
@@ -20,22 +20,30 @@ MeshUtility::Mesh* MeshUtility::GetMesh(uint32_t meshID)
 	return (MeshUtility::Mesh*)&it->second;
 }
 
-uint32_t MeshUtility::CreateMeshFromVertices(const std::vector<Vertex>& vertices, const uint32_t& textureID)
+void MeshUtility::DeleteMesh(const uint32_t& meshID)
+{
+    std::map<uint32_t, MeshUtility::Mesh>::iterator it = m_meshMap.find(meshID);
+	if (it == m_meshMap.end()) 
+	{
+		return;
+	}
+    m_meshMap.erase(it);
+}
+
+uint32_t MeshUtility::CreateMeshFromVertices(const std::vector<Vertex>& vertices)
 {
     uint32_t meshID = ++m_maxMeshID;
 
     Mesh mesh;
     mesh.meshID = meshID;
-    mesh.textureID = textureID;
     mesh.vertices = vertices;
-    mesh.meshInstance = NULL;
     mesh.isDirty = true;
 
     m_meshMap.insert(std::pair<uint32_t, Mesh>(meshID, mesh));
     return meshID;
 }
 
-uint32_t MeshUtility::CreateQuadXY(const MathUtility::Vec3F& position, const MathUtility::SizeF& size, const MathUtility::RectF& uvRect, const uint32_t& textureID)
+uint32_t MeshUtility::CreateQuadXY(const MathUtility::Vec3F& position, const MathUtility::SizeF& size, const MathUtility::RectF& uvRect)
 {
     std::vector<Vertex> vertices;
 
@@ -62,5 +70,5 @@ uint32_t MeshUtility::CreateQuadXY(const MathUtility::Vec3F& position, const Mat
     vertices.push_back(v1);
     vertices.push_back(v3);
 
-    return CreateMeshFromVertices(vertices, textureID);
+    return CreateMeshFromVertices(vertices);
 }

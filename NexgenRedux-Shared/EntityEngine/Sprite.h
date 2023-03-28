@@ -25,8 +25,12 @@ namespace NexgenRedux
 
     private:
 
-        bool m_isDirty;
+        bool m_textureIsDirty;
         std::string m_texturePath;
+        uint32_t m_textureID;
+
+        bool m_meshIsDirty;
         MathUtility::RectF m_uv;
+        uint32_t m_meshID;
     };
 }

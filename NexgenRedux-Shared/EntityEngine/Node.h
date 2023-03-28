@@ -66,6 +66,7 @@ namespace NexgenRedux
 
     private:
 
+        friend class  OrthoCamera;
         friend class  Sprite;
 
         uint32_t m_nodeID;

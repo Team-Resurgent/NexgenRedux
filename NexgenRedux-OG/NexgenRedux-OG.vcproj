@@ -264,16 +264,22 @@
 					RelativePath="..\NexgenRedux-Shared\EntityEngine\NodeManager.h">
 				</File>
 				<File
-					RelativePath="..\NexgenRedux-Shared\EntityEngine\NodeSprite.cpp">
+					RelativePath="..\NexgenRedux-Shared\EntityEngine\OrthoCamera.cpp">
 				</File>
 				<File
-					RelativePath="..\NexgenRedux-Shared\EntityEngine\NodeSprite.h">
+					RelativePath="..\NexgenRedux-Shared\EntityEngine\OrthoCamera.h">
 				</File>
 				<File
 					RelativePath="..\NexgenRedux-Shared\EntityEngine\SceneManager.cpp">
 				</File>
 				<File
 					RelativePath="..\NexgenRedux-Shared\EntityEngine\SceneManager.h">
+				</File>
+				<File
+					RelativePath="..\NexgenRedux-Shared\EntityEngine\Sprite.cpp">
+				</File>
+				<File
+					RelativePath="..\NexgenRedux-Shared\EntityEngine\Sprite.h">
 				</File>
 			</Filter>
 		</Filter>

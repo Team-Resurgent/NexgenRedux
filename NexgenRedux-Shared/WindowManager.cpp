@@ -21,6 +21,11 @@
 using namespace Gensys;
 using namespace NexgenRedux;
 
+namespace 
+{
+	WindowManager* m_instance = NULL;
+}
+
 WindowManager::WindowManager()
 {
 #if defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX 
@@ -33,6 +38,21 @@ WindowManager::WindowManager()
 WindowManager::~WindowManager()
 {
 	delete m_windowHelper;
+}
+
+WindowManager* WindowManager::GetInstance()
+{
+	if (m_instance == NULL) 
+	{
+    	m_instance = new WindowManager();
+    }
+    return m_instance;
+}
+
+void WindowManager::Close()
+{
+	delete m_instance;
+	m_instance = NULL;
 }
 
 IWindowHelper* WindowManager::GetWindowHelper(void)
@@ -100,8 +120,10 @@ void WindowManager::PollEvents(void)
 	m_windowHelper->PollEvents();
 }
 
-bool WindowManager::RenderLoop(AngelScriptRunner* angelScriptRunner, RenderStateManager* renderStateManager)
+bool WindowManager::RenderLoop()
 {
+	RenderStateManager* renderStateManager = RenderStateManager::GetInstance();
+
     uint32_t textureID;
     if (renderStateManager->LoadTexture(L"skin:background.png", textureID) == false)
     {
@@ -110,7 +132,7 @@ bool WindowManager::RenderLoop(AngelScriptRunner* angelScriptRunner, RenderState
 
 	renderStateManager->Init();
 
-    uint32_t meshID = MeshUtility::CreateQuadXY(MathUtility::Vec3F(0, 0, 0), MathUtility::SizeF(640, 480), MathUtility::RectF(0, 0, 1, 1), textureID);
+    uint32_t meshID = MeshUtility::CreateQuadXY(MathUtility::Vec3F(0, 0, 0), MathUtility::SizeF(640, 480), MathUtility::RectF(0, 0, 1, 1));
 
 	std::vector<uint32_t> windowHandles = GetWindowHandles();
 
@@ -168,19 +190,27 @@ bool WindowManager::RenderLoop(AngelScriptRunner* angelScriptRunner, RenderState
 					return false;
 				}
 
-				modelMatrix = MathUtility::Matrix4x4::Translate(MathUtility::Vec3F(-320, -240, 0));
-				modelMatrix *= MathUtility::Matrix4x4::RotateZ(f);
-				modelMatrix *= MathUtility::Matrix4x4::Translate(MathUtility::Vec3F(320, 240, 0));
-				renderStateManager->SetModelMatrix(modelMatrix);
-				f+=0.5;
 
-                renderStateManager->RenderMesh(meshID);
+				SceneManager::Update((float)dt);
+				SceneManager::Render();
 
-				if (angelScriptRunner->ExecuteRender(windowHandle, dt) == false)
-				{
-					DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteRender failed.");
-					return false;
-				}
+
+				// renderStateManager->Clear(MathUtility::Color4F(1,0,1,1));
+
+				// modelMatrix = MathUtility::Matrix4x4::Translate(MathUtility::Vec3F(-320, -240, 0));
+				// modelMatrix *= MathUtility::Matrix4x4::RotateZ(f);
+				// modelMatrix *= MathUtility::Matrix4x4::Translate(MathUtility::Vec3F(320, 240, 0));
+				// renderStateManager->SetModelMatrix(modelMatrix);
+				// f+=0.5;
+
+                //renderStateManager->RenderMesh(meshID);
+
+				// if (AngelScriptRunner::ExecuteRender(windowHandle, dt) == false)
+				// {
+				// 	DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteRender failed.");
+				// 	return false;
+				// }
+
 				if (WindowPostRender(windowHandle) == false)
 				{
 					DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "WindowPostRender failed.");

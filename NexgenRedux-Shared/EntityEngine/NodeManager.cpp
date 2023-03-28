@@ -1,4 +1,5 @@
 #include "NodeManager.h"
+#include "OrthoCamera.h"
 #include "Sprite.h"
 
 #include <Gensys/DebugUtility.h>
@@ -31,6 +32,14 @@ Sprite* NodeManager::CreateSprite()
 {
     uint32_t nodeID = ++m_maxNodeID;
     Sprite* node = new Sprite(nodeID);
+    m_nodeMap.insert(std::pair<uint32_t, Node*>(nodeID, node));
+    return node;
+}
+
+OrthoCamera* NodeManager::CreateOrthoCamera()
+{
+    uint32_t nodeID = ++m_maxNodeID;
+    OrthoCamera* node = new OrthoCamera(nodeID);
     m_nodeMap.insert(std::pair<uint32_t, Node*>(nodeID, node));
     return node;
 }

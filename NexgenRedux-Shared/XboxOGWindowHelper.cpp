@@ -406,12 +406,6 @@ bool XboxOGWindowHelper::WindowPreRender(uint32_t& windowHandle, bool& exitReque
 		return false;
 	}
 
-	D3DCOLOR color = D3DCOLOR_RGBA(255, 0, 0, 255);
-	if (FAILED(m_d3dDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, color, 1, 0)))
-	{
-		return false;
-	}
-
 	return true;
 }
 

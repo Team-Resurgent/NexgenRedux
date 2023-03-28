@@ -18,20 +18,10 @@ using namespace Gensys;
 using namespace NexgenRedux;
 using namespace AngelScript;
 
-namespace
-{
-	WindowManager* m_windowManager;
-}
-
-AngelScriptMethods::AngelScriptMethods(WindowManager* windowManager)
-{
-	m_windowManager = windowManager;
-}
-
 void AngelScriptMethods::GetAvailableMonitorCount(asIScriptGeneric* gen)
 {
 	uint32_t monitorCount;
-	if (m_windowManager->GetAvailableMonitorCount(monitorCount) == false)
+	if (WindowManager::GetInstance()->GetAvailableMonitorCount(monitorCount) == false)
 	{
 		asIScriptContext *context = asGetActiveContext();
 		if (context) 
@@ -47,7 +37,7 @@ void AngelScriptMethods::GetMonitorVideoMode(asIScriptGeneric* gen)
 {
 	uint32_t monitorIndex = gen->GetArgDWord(0);
 	MonitorVideoMode monitorVideoMode;
-	if (m_windowManager->GetMonitorVideoMode(monitorIndex, monitorVideoMode) == false)
+	if (WindowManager::GetInstance()->GetMonitorVideoMode(monitorIndex, monitorVideoMode) == false)
 	{
 		asIScriptContext *context = asGetActiveContext();
 		if (context) 
@@ -63,7 +53,7 @@ void AngelScriptMethods::GetMonitorVideoModes(asIScriptGeneric* gen)
 {
 	uint32_t monitorIndex = gen->GetArgDWord(0);
 	std::vector<MonitorVideoMode> monitorVideoModes;
-	if (m_windowManager->GetMonitorVideoModes(monitorIndex, monitorVideoModes) == false)
+	if (WindowManager::GetInstance()->GetMonitorVideoModes(monitorIndex, monitorVideoModes) == false)
 	{
 		asIScriptContext *context = asGetActiveContext();
 		if (context) 
@@ -90,7 +80,7 @@ void AngelScriptMethods::WindowCreateWithSize(asIScriptGeneric* gen)
 	uint32_t height = gen->GetArgDWord(1);
 	std::string* title = (std::string*)gen->GetArgAddress(2);
 	uint32_t windowHandle;
-	if (m_windowManager->WindowCreateWithSize(width, height, *title, windowHandle) == false) 
+	if (WindowManager::GetInstance()->WindowCreateWithSize(width, height, *title, windowHandle) == false) 
 	{
 		asIScriptContext *context = asGetActiveContext();
 		if (context) 
@@ -108,7 +98,7 @@ void AngelScriptMethods::GetWindowSize(asIScriptGeneric* gen)
 	
 	uint32_t width;
 	uint32_t height;
-	if (m_windowManager->GetWindowSize(windowHandle, width, height) == false) 
+	if (WindowManager::GetInstance()->GetWindowSize(windowHandle, width, height) == false) 
 	{
 		asIScriptContext *context = asGetActiveContext();
 		if (context) 
@@ -128,7 +118,7 @@ void AngelScriptMethods::WindowCreateWithVideoMode(asIScriptGeneric* gen)
 	MonitorVideoMode* monitorVideoMode = (MonitorVideoMode*)gen->GetArgObject(0);
 	std::string* title = (std::string*)gen->GetArgAddress(1);
 	uint32_t windowHandle;
-	if (m_windowManager->WindowCreateWithVideoMode(*monitorVideoMode, *title, windowHandle) == false) 
+	if (WindowManager::GetInstance()->WindowCreateWithVideoMode(*monitorVideoMode, *title, windowHandle) == false) 
 	{
 		asIScriptContext *context = asGetActiveContext();
 		if (context) 
@@ -144,7 +134,7 @@ void AngelScriptMethods::SetCursorMode(asIScriptGeneric* gen)
 {
 	uint32_t windowHandle = gen->GetArgDWord(0);
 	uint32_t mode = gen->GetArgDWord(1);
-	if (m_windowManager->SetCursorMode(windowHandle, mode) == false) 
+	if (WindowManager::GetInstance()->SetCursorMode(windowHandle, mode) == false) 
 	{
 		asIScriptContext *context = asGetActiveContext();
 		if (context) 
@@ -158,7 +148,7 @@ void AngelScriptMethods::SetCursorMode(asIScriptGeneric* gen)
 void AngelScriptMethods::WindowClose(asIScriptGeneric* gen)
 {
 	uint32_t windowHandle = gen->GetArgDWord(0);
-	if (m_windowManager->WindowClose(windowHandle) == false) 
+	if (WindowManager::GetInstance()->WindowClose(windowHandle) == false) 
 	{
 		asIScriptContext *context = asGetActiveContext();
 		if (context) 
@@ -172,7 +162,7 @@ void AngelScriptMethods::WindowClose(asIScriptGeneric* gen)
 void AngelScriptMethods::GetClipboardString(asIScriptGeneric* gen)
 {
 	std::string value;
-	if (m_windowManager->GetClipboardString(value) == false) 
+	if (WindowManager::GetInstance()->GetClipboardString(value) == false) 
 	{
 		asIScriptContext *context = asGetActiveContext();
 		if (context) 
@@ -190,7 +180,7 @@ void AngelScriptMethods::GetKeyPressed(asIScriptGeneric* gen)
 	uint32_t key = gen->GetArgDWord(1);
 
 	uint32_t pressed;
-	if (m_windowManager->GetKeyPressed(windowHandle, key, pressed) == false) 
+	if (WindowManager::GetInstance()->GetKeyPressed(windowHandle, key, pressed) == false) 
 	{
 		asIScriptContext *context = asGetActiveContext();
 		if (context) 
@@ -208,7 +198,7 @@ void AngelScriptMethods::GetMouseButtonPressed(asIScriptGeneric* gen)
 	uint32_t button = gen->GetArgDWord(1);
 
 	uint32_t pressed;
-	if (m_windowManager->GetMouseButtonPressed(windowHandle, button, pressed) == false) 
+	if (WindowManager::GetInstance()->GetMouseButtonPressed(windowHandle, button, pressed) == false) 
 	{
 		asIScriptContext *context = asGetActiveContext();
 		if (context) 
@@ -226,7 +216,7 @@ void AngelScriptMethods::GetMouseCursorPosition(asIScriptGeneric* gen)
 
 	double xPos;
 	double yPos;
-	if (m_windowManager->GetWindowHelper()->GetMouseCursorPosition(windowHandle, xPos, yPos) == false) 
+	if (WindowManager::GetInstance()->GetWindowHelper()->GetMouseCursorPosition(windowHandle, xPos, yPos) == false) 
 	{
 		asIScriptContext *context = asGetActiveContext();
 		if (context) 
@@ -247,7 +237,7 @@ void AngelScriptMethods::SetMouseCursorPosition(asIScriptGeneric* gen)
 	double yPos = gen->GetArgDouble(2);
 
 	std::string value;
-	if (m_windowManager->SetMouseCursorPosition(windowHandle, xPos, yPos) == false) 
+	if (WindowManager::GetInstance()->SetMouseCursorPosition(windowHandle, xPos, yPos) == false) 
 	{
 		asIScriptContext *context = asGetActiveContext();
 		if (context) 
@@ -261,7 +251,7 @@ void AngelScriptMethods::SetMouseCursorPosition(asIScriptGeneric* gen)
 void AngelScriptMethods::SetClipboardString(asIScriptGeneric* gen)
 {
 	std::string* value = (std::string*)gen->GetArgObject(0);
-	if (m_windowManager->SetClipboardString(*value) == false) 
+	if (WindowManager::GetInstance()->SetClipboardString(*value) == false) 
 	{
 		asIScriptContext *context = asGetActiveContext();
 		if (context) 
@@ -277,7 +267,7 @@ void AngelScriptMethods::JoystickIsPresent(asIScriptGeneric* gen)
 	uint32_t joystickID = gen->GetArgDWord(0);
 
 	uint32_t present;
-	if (m_windowManager->GetWindowHelper()->JoystickIsPresent(joystickID, present) == false) 
+	if (WindowManager::GetInstance()->GetWindowHelper()->JoystickIsPresent(joystickID, present) == false) 
 	{
 		asIScriptContext *context = asGetActiveContext();
 		if (context) 
@@ -294,7 +284,7 @@ void AngelScriptMethods::JoystickIsGamepad(asIScriptGeneric* gen)
 	uint32_t joystickID = gen->GetArgDWord(0);
 
 	uint32_t gamepad;
-	if (m_windowManager->GetWindowHelper()->JoystickIsGamepad(joystickID, gamepad) == false) 
+	if (WindowManager::GetInstance()->GetWindowHelper()->JoystickIsGamepad(joystickID, gamepad) == false) 
 	{
 		asIScriptContext *context = asGetActiveContext();
 		if (context) 
@@ -311,7 +301,7 @@ void AngelScriptMethods::GetJoystickButtonStates(asIScriptGeneric* gen)
 	uint32_t joystickID = gen->GetArgDWord(0);
 
 	JoystickButtonStates joystickButtonStates;
-	if (m_windowManager->GetWindowHelper()->GetJoystickButtonStates(joystickID, joystickButtonStates) == false)
+	if (WindowManager::GetInstance()->GetWindowHelper()->GetJoystickButtonStates(joystickID, joystickButtonStates) == false)
 	{
 		asIScriptContext *context = asGetActiveContext();
 		if (context) 
@@ -328,7 +318,7 @@ void AngelScriptMethods::GetJoystickAxisStates(asIScriptGeneric* gen)
 	uint32_t joystickID = gen->GetArgDWord(0);
 
 	JoystickAxisStates joystickAxisStates;
-	if (m_windowManager->GetWindowHelper()->GetJoystickAxisStates(joystickID, joystickAxisStates) == false)
+	if (WindowManager::GetInstance()->GetWindowHelper()->GetJoystickAxisStates(joystickID, joystickAxisStates) == false)
 	{
 		asIScriptContext *context = asGetActiveContext();
 		if (context) 
@@ -345,7 +335,7 @@ void AngelScriptMethods::GetJoystickHatCount(asIScriptGeneric* gen)
 	uint32_t joystickID = gen->GetArgDWord(0);
 
 	uint32_t count;
-	if (m_windowManager->GetWindowHelper()->GetJoystickHatCount(joystickID, count) == false)
+	if (WindowManager::GetInstance()->GetWindowHelper()->GetJoystickHatCount(joystickID, count) == false)
 	{
 		asIScriptContext *context = asGetActiveContext();
 		if (context) 
@@ -363,7 +353,7 @@ void AngelScriptMethods::GetJoystickHatDirection(asIScriptGeneric* gen)
 	uint32_t hatIndex = gen->GetArgDWord(1);
 
 	uint32_t direction;
-	if (m_windowManager->GetWindowHelper()->GetJoystickHatDirection(joystickID, hatIndex, direction) == false)
+	if (WindowManager::GetInstance()->GetWindowHelper()->GetJoystickHatDirection(joystickID, hatIndex, direction) == false)
 	{
 		asIScriptContext *context = asGetActiveContext();
 		if (context) 

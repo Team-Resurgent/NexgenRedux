@@ -863,15 +863,9 @@ void OpenGLRenderingHelper::DeleteTexture(const uint32_t& textureID)
 	m_textureContainerMap.erase(it);
 }
 
-bool OpenGLRenderingHelper::RenderMesh(uint32_t meshID)
+bool OpenGLRenderingHelper::RenderMesh(const std::vector<MeshUtility::Vertex>& mesh)
 {
-	MeshUtility::Mesh* mesh = MeshUtility::GetMesh(meshID);
-	if (mesh == NULL)
-	{
-		return false;
-	}
-
-	uint32_t requestedSize =  (uint32_t)(mesh->vertices.size() * sizeof(MeshUtility::Vertex));
+	uint32_t requestedSize =  (uint32_t)(mesh.size() * sizeof(MeshUtility::Vertex));
 	ResizeDynamicBufferIfNeeded(requestedSize);
 
 	uint32_t aPosition;
@@ -882,7 +876,7 @@ bool OpenGLRenderingHelper::RenderMesh(uint32_t meshID)
 	GetShaderLookupValue("Default", "aTexCoord", aTexCoord);
 
 	glBindBuffer(GL_ARRAY_BUFFER, m_dynamicBuffer);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, mesh->vertices.size() * sizeof(MeshUtility::Vertex), mesh->vertices.data());
+	glBufferSubData(GL_ARRAY_BUFFER, 0, mesh.size() * sizeof(MeshUtility::Vertex), mesh.data());
 
 	glBindBuffer(GL_ARRAY_BUFFER, m_dynamicBuffer);
 	glEnableVertexAttribArray(aPosition);
@@ -892,7 +886,7 @@ bool OpenGLRenderingHelper::RenderMesh(uint32_t meshID)
 	glEnableVertexAttribArray(aTexCoord);
 	glVertexAttribPointer(aTexCoord, 2, GL_FLOAT, GL_FALSE, sizeof(MeshUtility::Vertex), (void*)offsetof(MeshUtility::Vertex, texcoord));
 
-	uint32_t vertexCount = (uint32_t)mesh->vertices.size();
+	uint32_t vertexCount = (uint32_t)mesh.size();
 	if (m_renderStateManager->GetRenderState()->drawModeState.operation == DrawModeTriangles) 
 	{
 		glDrawArrays(GL_TRIANGLES, 0, (GLsizei)vertexCount);

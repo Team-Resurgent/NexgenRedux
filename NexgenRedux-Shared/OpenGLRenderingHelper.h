@@ -65,7 +65,7 @@ namespace NexgenRedux
 
 		bool LoadTexture(std::wstring path, uint32_t& textureID) override;
 		void DeleteTexture(const uint32_t& textureID) override;
-		bool RenderMesh(uint32_t meshID) override;
+		bool RenderMesh(const std::vector<MeshUtility::Vertex>& mesh) override;
 		void Clear(const MathUtility::Color4F& color) override;
 		
 	private:

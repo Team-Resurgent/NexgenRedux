@@ -193,12 +193,12 @@ void RenderStateManager::DeleteTexture(const uint32_t& textureID)
     m_renderingHelper->DeleteTexture(textureID);
 }
 
-bool RenderStateManager::RenderMesh(uint32_t meshID)
+bool RenderStateManager::RenderMesh(const std::vector<MeshUtility::Vertex>& mesh)
 {
-	return m_renderingHelper->RenderMesh(meshID);
+	return m_renderingHelper->RenderMesh(mesh);
 }
 
-void RenderStateManager::Clear(const MathUtility::Color4F color)
+void RenderStateManager::Clear(const MathUtility::Color4F& color)
 {
     m_renderingHelper->Clear(color);
 }

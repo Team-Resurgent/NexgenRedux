@@ -17,7 +17,8 @@ Sprite::Sprite(uint32_t nodeID) : Node(nodeID)
 
     m_meshIsDirty = true;
     m_uv = MathUtility::RectF(0, 0, 1, 1);
-    m_meshID = 0;
+    m_position = MathUtility::Vec3F(0, 0, 0);
+    m_size = MathUtility::SizeF(1, 1);
 }
 
 Sprite::~Sprite(void)
@@ -27,11 +28,6 @@ Sprite::~Sprite(void)
     if (m_textureID != 0)
     {
         renderStateManager->DeleteTexture(m_textureID);
-    }
-
-    if (m_meshID != 0)
-    {
-        MeshUtility::DeleteMesh(m_meshID);
     }
 
     DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, StringUtility::FormatString("Deleting node '%i'", GetID()));
@@ -55,11 +51,7 @@ void Sprite::Update(float dt)
 
     if (m_meshIsDirty == true)
     {
-        if (m_meshID != 0)
-        {
-            MeshUtility::DeleteMesh(m_meshID);
-        }
-        m_meshID = MeshUtility::CreateQuadXY(MathUtility::Vec3F(0, 0, 0), MathUtility::SizeF(640, 480), MathUtility::RectF(0, 0, 1, 1));
+        m_mesh = MeshUtility::CreateQuadXY(MathUtility::Vec3F(0, 0, 0), MathUtility::SizeF(640, 480), MathUtility::RectF(0, 0, 1, 1));
         m_meshIsDirty = false;
     }
 
@@ -69,7 +61,7 @@ void Sprite::Update(float dt)
 
 void Sprite::Render()
 {
-    if (m_textureID == 0 || m_meshID == 0) 
+    if (m_textureID == 0 || m_mesh.size() == 0) 
     {
         return;
     }
@@ -88,7 +80,7 @@ void Sprite::Render()
 
 	renderStateManager->SetTexture(m_textureID, TextureFilterLinear);
 	renderStateManager->ApplyChanges();
-    renderStateManager->RenderMesh(m_meshID);
+    renderStateManager->RenderMesh(m_mesh);
 
     DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, StringUtility::FormatString("Rendering node '%i'", GetID()));
 }

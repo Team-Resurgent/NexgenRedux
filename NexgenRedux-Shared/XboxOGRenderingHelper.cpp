@@ -902,27 +902,21 @@ void XboxOGRenderingHelper::DeleteTexture(const uint32_t& textureID)
 	m_textureContainerMap.erase(it);
 }
 
-bool XboxOGRenderingHelper::RenderMesh(uint32_t meshID)
+bool XboxOGRenderingHelper::RenderMesh(const std::vector<MeshUtility::Vertex>& mesh)
 {
-	MeshUtility::Mesh* mesh = MeshUtility::GetMesh(meshID);
-	if (mesh == NULL)
-	{
-		return false;
-	}
-
-	uint32_t requestedSize =  mesh->vertices.size() * sizeof(MeshUtility::Vertex);
+	uint32_t requestedSize =  mesh.size() * sizeof(MeshUtility::Vertex);
 	ResizeDynamicBufferIfNeeded(requestedSize);
 
 	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)WindowManager::GetInstance()->GetWindowHelper())->GetD3DDevice();
 
-	uint32_t vertexCount = mesh->vertices.size();
+	uint32_t vertexCount = mesh.size();
 	if (m_renderStateManager->GetRenderState()->drawModeState.operation == DrawModeTriangles) 
 	{
-		d3dDevice->DrawPrimitiveUP(D3DPT_TRIANGLELIST, vertexCount / 3, &mesh->vertices[0], sizeof(MeshUtility::Vertex));
+		d3dDevice->DrawPrimitiveUP(D3DPT_TRIANGLELIST, vertexCount / 3, &mesh[0], sizeof(MeshUtility::Vertex));
 	}
 	else if (m_renderStateManager->GetRenderState()->drawModeState.operation == DrawModeLines) 
 	{
-		d3dDevice->DrawPrimitiveUP(D3DPT_LINELIST, vertexCount / 3, &mesh->vertices[0], sizeof(MeshUtility::Vertex));
+		d3dDevice->DrawPrimitiveUP(D3DPT_LINELIST, vertexCount / 3, &mesh[0], sizeof(MeshUtility::Vertex));
 	}
 	return true;
 }

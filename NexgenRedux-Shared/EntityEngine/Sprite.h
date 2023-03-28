@@ -2,6 +2,7 @@
 
 #include "Node.h"
 #include "GlobalTypes.h"
+#include "MeshUtility.h"
 
 #include <vector>
 #include <map>
@@ -37,6 +38,6 @@ namespace NexgenRedux
         MathUtility::RectF m_uv;
         MathUtility::Vec3F m_position;
         MathUtility::SizeF m_size;
-        uint32_t m_meshID;
+        std::vector<MeshUtility::Vertex> m_mesh;
     };
 }

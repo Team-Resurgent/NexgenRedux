@@ -132,8 +132,6 @@ bool WindowManager::RenderLoop()
 
 	renderStateManager->Init();
 
-    uint32_t meshID = MeshUtility::CreateQuadXY(MathUtility::Vec3F(0, 0, 0), MathUtility::SizeF(640, 480), MathUtility::RectF(0, 0, 1, 1));
-
 	std::vector<uint32_t> windowHandles = GetWindowHandles();
 
 	float f = 0;
@@ -203,8 +201,7 @@ bool WindowManager::RenderLoop()
 				// renderStateManager->SetModelMatrix(modelMatrix);
 				// f+=0.5;
 
-                //renderStateManager->RenderMesh(meshID);
-
+    
 				// if (AngelScriptRunner::ExecuteRender(windowHandle, dt) == false)
 				// {
 				// 	DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteRender failed.");

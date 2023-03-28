@@ -31,17 +31,6 @@ namespace NexgenRedux
 
 		} Vertex;	
 
-		typedef struct Mesh
-		{
-			uint32_t meshID;
-			std::vector<Vertex> vertices;
-			bool isDirty;
-		} Mesh;	
-
-		static MeshUtility::Mesh* GetMesh(const uint32_t& meshID);
-		static void DeleteMesh(const uint32_t& meshID);
-		static uint32_t CreateMeshFromVertices(const std::vector<Vertex>& vertices);
-		static uint32_t CreateQuadXY(const MathUtility::Vec3F& position, const MathUtility::SizeF& size, const MathUtility::RectF& uvRect);
-
+		static const std::vector<Vertex> CreateQuadXY(const MathUtility::Vec3F& position, const MathUtility::SizeF& size, const MathUtility::RectF& uvRect);
 	};
 }

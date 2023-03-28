@@ -1,49 +1,10 @@
 #include "MeshUtility.h"
 
-#include <map>
+#include <vector>
 
 using namespace NexgenRedux;
 
-namespace 
-{
-    uint32_t m_maxMeshID = 0;
-    std::map<uint32_t, MeshUtility::Mesh> m_meshMap;
-}
-
-MeshUtility::Mesh* MeshUtility::GetMesh(const uint32_t& meshID)
-{
-    std::map<uint32_t, MeshUtility::Mesh>::iterator it = m_meshMap.find(meshID);
-	if (it == m_meshMap.end()) 
-	{
-		return NULL;
-	}
-	return (MeshUtility::Mesh*)&it->second;
-}
-
-void MeshUtility::DeleteMesh(const uint32_t& meshID)
-{
-    std::map<uint32_t, MeshUtility::Mesh>::iterator it = m_meshMap.find(meshID);
-	if (it == m_meshMap.end()) 
-	{
-		return;
-	}
-    m_meshMap.erase(it);
-}
-
-uint32_t MeshUtility::CreateMeshFromVertices(const std::vector<Vertex>& vertices)
-{
-    uint32_t meshID = ++m_maxMeshID;
-
-    Mesh mesh;
-    mesh.meshID = meshID;
-    mesh.vertices = vertices;
-    mesh.isDirty = true;
-
-    m_meshMap.insert(std::pair<uint32_t, Mesh>(meshID, mesh));
-    return meshID;
-}
-
-uint32_t MeshUtility::CreateQuadXY(const MathUtility::Vec3F& position, const MathUtility::SizeF& size, const MathUtility::RectF& uvRect)
+const std::vector<MeshUtility::Vertex> MeshUtility::CreateQuadXY(const MathUtility::Vec3F& position, const MathUtility::SizeF& size, const MathUtility::RectF& uvRect)
 {
     std::vector<Vertex> vertices;
 
@@ -70,5 +31,5 @@ uint32_t MeshUtility::CreateQuadXY(const MathUtility::Vec3F& position, const Mat
     vertices.push_back(v1);
     vertices.push_back(v3);
 
-    return CreateMeshFromVertices(vertices);
+    return vertices;
 }

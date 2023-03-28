@@ -93,6 +93,13 @@ void Init()
     sprite1.SetPosition(Vec3F(0, 0, 0));
     sprite1.SetSize(SizeF(640, 480));
     NodeManager::AssignNode(sprite1, orthoCamera.GetID());
+    
+    Sprite@ sprite2 = NodeManager::CreateSprite();
+    sprite2.SetTexturePath("skin:background.png");
+    sprite2.SetUV(RectF(0, 0, 1, 1));
+    sprite2.SetPosition(Vec3F(300, 100, 10));
+    sprite2.SetSize(SizeF(640, 480));
+    NodeManager::AssignNode(sprite2, orthoCamera.GetID());
 
     // Sprite@ sprite2 = NodeManager::CreateSprite();
     // sprite2.SetTexturePath("hello2");

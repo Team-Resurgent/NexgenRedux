@@ -51,7 +51,7 @@ void Sprite::Update(float dt)
 
     if (m_meshIsDirty == true)
     {
-        m_mesh = MeshUtility::CreateQuadXY(MathUtility::Vec3F(0, 0, 0), MathUtility::SizeF(640, 480), MathUtility::RectF(0, 0, 1, 1));
+        m_mesh = MeshUtility::CreateQuadXY(m_position, m_size, m_uv);
         m_meshIsDirty = false;
     }
 

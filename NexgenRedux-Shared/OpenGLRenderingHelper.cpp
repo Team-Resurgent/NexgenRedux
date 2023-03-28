@@ -819,6 +819,17 @@ bool OpenGLRenderingHelper::LoadTexture(std::wstring path, uint32_t& textureID)
 	{
 		return false;
 	}
+
+	for (std::map<uint32_t, TextureContainer>::iterator it = m_textureContainerMap.begin(); it != m_textureContainerMap.end(); ++it)
+	{
+		if (it->second.path != path)
+		{
+			continue;
+		}
+		it->second.refCount++;
+		textureID = it->first;
+		return true;
+	}
 	
 	int width;
 	int height;
@@ -845,6 +856,8 @@ bool OpenGLRenderingHelper::LoadTexture(std::wstring path, uint32_t& textureID)
 	textureContainer.texture = textureId;
 	textureContainer.width = width;
 	textureContainer.height = height;
+	textureContainer.path = path;
+	textureContainer.refCount = 1;
 	m_textureContainerMap.insert(std::pair<int, TextureContainer>(textureContainerID, textureContainer));
 	textureID = textureContainerID;
 	return true;
@@ -857,6 +870,13 @@ void OpenGLRenderingHelper::DeleteTexture(const uint32_t& textureID)
 	{
 		return;
 	}
+
+	it->second.refCount--;
+	if (it->second.refCount > 0)
+	{
+		return;
+	}
+	
 	TextureContainer* textureContainer = (TextureContainer*)&it->second;
 	uint32_t texture = it->second.texture;
 	glDeleteTextures(1, &texture);

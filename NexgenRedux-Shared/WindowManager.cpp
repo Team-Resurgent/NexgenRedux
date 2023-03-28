@@ -124,12 +124,6 @@ bool WindowManager::RenderLoop()
 {
 	RenderStateManager* renderStateManager = RenderStateManager::GetInstance();
 
-    uint32_t textureID;
-    if (renderStateManager->LoadTexture(L"skin:background.png", textureID) == false)
-    {
-        return false;
-    }
-
 	renderStateManager->Init();
 
 	std::vector<uint32_t> windowHandles = GetWindowHandles();

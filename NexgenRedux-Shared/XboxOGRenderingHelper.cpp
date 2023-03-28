@@ -868,6 +868,17 @@ bool XboxOGRenderingHelper::LoadTexture(std::wstring path, uint32_t& textureID)
 		return false;
 	}
 
+	for (std::map<uint32_t, TextureContainer>::iterator it = m_textureContainerMap.begin(); it != m_textureContainerMap.end(); ++it)
+	{
+		if (it->second.path != path)
+		{
+			continue;
+		}
+		it->second.refCount++;
+		textureID = it->first;
+		return true;
+	}
+
 	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)WindowManager::GetInstance()->GetWindowHelper())->GetD3DDevice();
 
 	IDirect3DTexture8 *texture;
@@ -884,6 +895,8 @@ bool XboxOGRenderingHelper::LoadTexture(std::wstring path, uint32_t& textureID)
 	textureContainer.texture = texture;
 	textureContainer.width = surfaceDesc.Width;
 	textureContainer.height = surfaceDesc.Height;
+	textureContainer.path = path;
+	textureContainer.refCount = 1;
 	m_textureContainerMap.insert(std::pair<int, TextureContainer>(textureContainerID, textureContainer));
 	textureID = textureContainerID;
 	return true;
@@ -896,6 +909,13 @@ void XboxOGRenderingHelper::DeleteTexture(const uint32_t& textureID)
 	{
 		return;
 	}
+
+	it->second.refCount--;
+	if (it->second.refCount > 0)
+	{
+		return;
+	}
+	
 	TextureContainer* textureContainer = (TextureContainer*)&it->second;
 	IDirect3DTexture8* texture = textureContainer->texture;
 	texture->Release();

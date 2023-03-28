@@ -21,6 +21,8 @@ namespace NexgenRedux
 			uint32_t texture;
 			uint32_t width;
 			uint32_t height;
+			std::wstring path;
+			uint32_t refCount;
 		} TextureContainer;
 
 		RenderStateManager* m_renderStateManager;

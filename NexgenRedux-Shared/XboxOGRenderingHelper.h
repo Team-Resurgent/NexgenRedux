@@ -21,6 +21,8 @@ namespace NexgenRedux
 			IDirect3DTexture8* texture;
 			uint32_t width;
 			uint32_t height;
+			std::wstring path;
+			uint32_t refCount;
 		} TextureContainer;
 
 		RenderStateManager* m_renderStateManager;

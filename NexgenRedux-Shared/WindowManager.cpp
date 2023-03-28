@@ -148,37 +148,37 @@ bool WindowManager::RenderLoop()
 
 			windowHandles = GetWindowHandles();
 
-            MathUtility::Vec3F eye = MathUtility::Vec3F(0, 0, 2);
-			MathUtility::Vec3F target = MathUtility::Vec3F(0, 0, 0);
-			MathUtility::Vec3F up = MathUtility::Vec3F(0, 1, 0);
-            MathUtility::Matrix4x4 modelMatrix = MathUtility::Matrix4x4();
-			MathUtility::Matrix4x4 viewMatrix = MathUtility::Matrix4x4::LookAt(eye, target, up);
-			MathUtility::Matrix4x4 projectionMatrix = MathUtility::Matrix4x4::OrthoOffCenter(0, 640, 0, 480, 1, 100);
+            // MathUtility::Vec3F eye = MathUtility::Vec3F(0, 0, 2);
+			// MathUtility::Vec3F target = MathUtility::Vec3F(0, 0, 0);
+			// MathUtility::Vec3F up = MathUtility::Vec3F(0, 1, 0);
+            // MathUtility::Matrix4x4 modelMatrix = MathUtility::Matrix4x4();
+			// MathUtility::Matrix4x4 viewMatrix = MathUtility::Matrix4x4::LookAt(eye, target, up);
+			// MathUtility::Matrix4x4 projectionMatrix = MathUtility::Matrix4x4::OrthoOffCenter(0, 640, 0, 480, 1, 100);
 
-			renderStateManager->SetShader("Default");
-            renderStateManager->SetModelMatrix(modelMatrix);
-            renderStateManager->SetViewMatrix(viewMatrix);
-            renderStateManager->SetProjectionMatrix(projectionMatrix);
-            renderStateManager->SetAmbientLight(MathUtility::Color3F(25 / 255.0f, 25 / 255.0f, 25 / 255.0f));
-            renderStateManager->SetTint(MathUtility::Color4F(1, 1, 1, 1));
-            renderStateManager->SetBlend(BlendOperationDisabled);
-            renderStateManager->SetBlendFactors(BlendFactorOne, BlendFactorOne);
-            renderStateManager->SetCulling(CullingOperationDisabled);
-            renderStateManager->SetDepth(DepthOperationLess);
-            renderStateManager->SetLights(LightsOperationDisabled);
-            renderStateManager->SetLight1(LightOperationDisabled);
-            renderStateManager->SetLightInstance1(MathUtility::Vec3F(0, 0, 0), 0, MathUtility::Color4F(0, 0, 0, 0));
-            renderStateManager->SetLight2(LightOperationDisabled);
-            renderStateManager->SetLightInstance2(MathUtility::Vec3F(0, 0, 0), 0, MathUtility::Color4F(0, 0, 0, 0));
-            renderStateManager->SetLight3(LightOperationDisabled);
-            renderStateManager->SetLightInstance3(MathUtility::Vec3F(0, 0, 0), 0, MathUtility::Color4F(0, 0, 0, 0));
-            renderStateManager->SetLight4(LightOperationDisabled);
-            renderStateManager->SetLightInstance4(MathUtility::Vec3F(0, 0, 0), 0, MathUtility::Color4F(0, 0, 0, 0));
-            renderStateManager->SetFog(FogOperationDisabled);
-            renderStateManager->SetFogInstance(MathUtility::Color3F(0, 0, 0), 0, 0, 0);
-            renderStateManager->SetViewport(MathUtility::RectI(0, 0, 640, 480));
-            renderStateManager->SetScissor(ScissorOperationDisabled, MathUtility::RectI());
-            renderStateManager->SetDrawMode(DrawModeTriangles);
+			// renderStateManager->SetShader("Default");
+            // renderStateManager->SetModelMatrix(modelMatrix);
+            // renderStateManager->SetViewMatrix(viewMatrix);
+            // renderStateManager->SetProjectionMatrix(projectionMatrix);
+            // renderStateManager->SetAmbientLight(MathUtility::Color3F(25 / 255.0f, 25 / 255.0f, 25 / 255.0f));
+            // renderStateManager->SetTint(MathUtility::Color4F(1, 1, 1, 1));
+            // renderStateManager->SetBlend(BlendOperationDisabled);
+            // renderStateManager->SetBlendFactors(BlendFactorOne, BlendFactorOne);
+            // renderStateManager->SetCulling(CullingOperationDisabled);
+            // renderStateManager->SetDepth(DepthOperationLess);
+            // renderStateManager->SetLights(LightsOperationDisabled);
+            // renderStateManager->SetLight1(LightOperationDisabled);
+            // renderStateManager->SetLightInstance1(MathUtility::Vec3F(0, 0, 0), 0, MathUtility::Color4F(0, 0, 0, 0));
+            // renderStateManager->SetLight2(LightOperationDisabled);
+            // renderStateManager->SetLightInstance2(MathUtility::Vec3F(0, 0, 0), 0, MathUtility::Color4F(0, 0, 0, 0));
+            // renderStateManager->SetLight3(LightOperationDisabled);
+            // renderStateManager->SetLightInstance3(MathUtility::Vec3F(0, 0, 0), 0, MathUtility::Color4F(0, 0, 0, 0));
+            // renderStateManager->SetLight4(LightOperationDisabled);
+            // renderStateManager->SetLightInstance4(MathUtility::Vec3F(0, 0, 0), 0, MathUtility::Color4F(0, 0, 0, 0));
+            // renderStateManager->SetFog(FogOperationDisabled);
+            // renderStateManager->SetFogInstance(MathUtility::Color3F(0, 0, 0), 0, 0, 0);
+            // renderStateManager->SetViewport(MathUtility::RectI(0, 0, 640, 480));
+            // renderStateManager->SetScissor(ScissorOperationDisabled, MathUtility::RectI());
+            // renderStateManager->SetDrawMode(DrawModeTriangles);
 
 			for (uint32_t i = 0; i < windowHandles.size(); i++)
 			{

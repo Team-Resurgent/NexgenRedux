@@ -9,19 +9,6 @@
 
 namespace NexgenRedux
 {
-    // struct NodeX
-    // {
-    // private:
-    //     uint32_t m_nodeID;
-    //     uint32_t m_parentNodeID;
-    //     MathUtility::Vec3F m_anchor;
-    //     MathUtility::Vec3F m_rotation;
-    //     MathUtility::Vec3F m_skew;
-    //     MathUtility::Vec3F m_scale;
-    //     MathUtility::Vec3F m_position;
-    //     MathUtility::Matrix4x4 m_matrix;
-    // };
-
     class NodeManager;
 
     class Node 
@@ -50,8 +37,8 @@ namespace NexgenRedux
         void SetSkew(MathUtility::Vec3F value);
         const MathUtility::Vec3F GetScale();
         void SetScale(MathUtility::Vec3F value);
-        const MathUtility::Vec3F GetPosition();
-        void SetPosition(MathUtility::Vec3F value);
+        const MathUtility::Vec3F GetTranslation();
+        void SetTranslation(MathUtility::Vec3F value);
         const MathUtility::Matrix4x4 GetTransform();
 
     private:
@@ -66,9 +53,6 @@ namespace NexgenRedux
 
     private:
 
-        friend class  OrthoCamera;
-        friend class  Sprite;
-
         uint32_t m_nodeID;
         uint32_t m_parentNodeID;
         bool m_assigned;
@@ -80,7 +64,7 @@ namespace NexgenRedux
         MathUtility::Vec3F m_rotation;
         MathUtility::Vec3F m_skew;
         MathUtility::Vec3F m_scale;
-        MathUtility::Vec3F m_position;
+        MathUtility::Vec3F m_translation;
         MathUtility::Matrix4x4 m_matrix;
     };
 }

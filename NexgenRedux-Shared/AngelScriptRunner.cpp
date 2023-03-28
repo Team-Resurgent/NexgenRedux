@@ -616,8 +616,8 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	if (m_engine->RegisterObjectMethod("OrthoCamera", "void SetSkew(Vec3F &in)", asMETHOD(OrthoCamera, SetSkew), asCALL_THISCALL) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("OrthoCamera", "Vec3F& GetScale()", asMETHOD(OrthoCamera, GetScale), asCALL_THISCALL) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("OrthoCamera", "void SetScale(Vec3F &in)", asMETHOD(OrthoCamera, SetScale), asCALL_THISCALL) < 0) { return false; }
-	if (m_engine->RegisterObjectMethod("OrthoCamera", "Vec3F& GetPosition()", asMETHOD(OrthoCamera, GetPosition), asCALL_THISCALL) < 0) { return false; }
-	if (m_engine->RegisterObjectMethod("OrthoCamera", "void SetPosition(Vec3F &in)", asMETHOD(OrthoCamera, SetPosition), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("OrthoCamera", "Vec3F& GetTranslation()", asMETHOD(OrthoCamera, GetTranslation), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("OrthoCamera", "void SetTranslation(Vec3F &in)", asMETHOD(OrthoCamera, SetTranslation), asCALL_THISCALL) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("OrthoCamera", "Color4F& GetClearColor()", asMETHOD(OrthoCamera, GetClearColor), asCALL_THISCALL) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("OrthoCamera", "void SetClearColor(Color4F &in)", asMETHOD(OrthoCamera, SetClearColor), asCALL_THISCALL) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("OrthoCamera", "Vec3F& GetEye()", asMETHOD(OrthoCamera, GetEye), asCALL_THISCALL) < 0) { return false; }
@@ -649,12 +649,16 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	if (m_engine->RegisterObjectMethod("Sprite", "void SetSkew(Vec3F &in)", asMETHOD(Sprite, SetSkew), asCALL_THISCALL) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("Sprite", "Vec3F& GetScale()", asMETHOD(Sprite, GetScale), asCALL_THISCALL) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("Sprite", "void SetScale(Vec3F &in)", asMETHOD(Sprite, SetScale), asCALL_THISCALL) < 0) { return false; }
-	if (m_engine->RegisterObjectMethod("Sprite", "Vec3F& GetPosition()", asMETHOD(Sprite, GetPosition), asCALL_THISCALL) < 0) { return false; }
-	if (m_engine->RegisterObjectMethod("Sprite", "void SetPosition(Vec3F &in)", asMETHOD(Sprite, SetPosition), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Sprite", "Vec3F& GetTranslation()", asMETHOD(Sprite, GetTranslation), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Sprite", "void SetTranslation(Vec3F &in)", asMETHOD(Sprite, SetTranslation), asCALL_THISCALL) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("Sprite", "string GetTexturePath()", asMETHOD(Sprite, GetTexturePath), asCALL_THISCALL) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("Sprite", "void SetTexturePath(string value)", asMETHOD(Sprite, SetTexturePath), asCALL_THISCALL) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("Sprite", "RectF& GetUV()", asMETHOD(Sprite, GetUV), asCALL_THISCALL) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("Sprite", "void SetUV(RectF &in)", asMETHOD(Sprite, SetUV), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Sprite", "Vec3F& GetPosition()", asMETHOD(Sprite, GetPosition), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Sprite", "void SetPosition(Vec3F &in)", asMETHOD(Sprite, SetPosition), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Sprite", "SizeF& GetSize()", asMETHOD(Sprite, GetSize), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Sprite", "void SetSize(SizeF &in)", asMETHOD(Sprite, SetSize), asCALL_THISCALL) < 0) { return false; }
 
 	if (m_engine->SetDefaultNamespace("SceneManager") < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("uint SceneManager::CreateScene(bool)", asFUNCTION(SceneManager::CreateScene), asCALL_CDECL) < 0) { return false; }

@@ -34,7 +34,7 @@ Sprite::~Sprite(void)
         MeshUtility::DeleteMesh(m_meshID);
     }
 
-    DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, StringUtility::FormatString("Deleting node '%i'", m_nodeID));
+    DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, StringUtility::FormatString("Deleting node '%i'", GetID()));
 }
 
 void Sprite::Update(float dt)
@@ -64,7 +64,7 @@ void Sprite::Update(float dt)
     }
 
     MathUtility::Matrix4x4 matrix = GetTransform();
-    DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, StringUtility::FormatString("Updating, Calculated transfor for node '%i'", m_nodeID));
+    DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, StringUtility::FormatString("Updating, Calculated transfor for node '%i'", GetID()));
 }
 
 void Sprite::Render()
@@ -90,7 +90,7 @@ void Sprite::Render()
 	renderStateManager->ApplyChanges();
     renderStateManager->RenderMesh(m_meshID);
 
-    DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, StringUtility::FormatString("Rendering node '%i'", m_nodeID));
+    DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, StringUtility::FormatString("Rendering node '%i'", GetID()));
 }
 
 const std::string Sprite::GetTexturePath()
@@ -98,14 +98,14 @@ const std::string Sprite::GetTexturePath()
     return m_texturePath;
 }
 
-void Sprite::SetTexturePath(std::string value)
+void Sprite::SetTexturePath(const std::string& value)
 {
     if (m_texturePath == value) 
     {
         return;
     }
     m_texturePath = value;
-    m_isDirty = true;
+    m_textureIsDirty = true;
 }
 
 const MathUtility::RectF Sprite::GetUV()
@@ -113,12 +113,42 @@ const MathUtility::RectF Sprite::GetUV()
     return m_uv;
 }
 
-void Sprite::SetUV(MathUtility::RectF value)
+void Sprite::SetUV(const MathUtility::RectF& value)
 {
     if (m_uv == value) 
     {
         return;
     }
     m_uv = value;
-    m_isDirty = true;
+    m_meshIsDirty = true;
+}
+
+const MathUtility::Vec3F Sprite::GetPosition()
+{
+    return m_position;
+}
+
+void Sprite::SetPosition(const MathUtility::Vec3F& value)
+{
+    if (m_position == value) 
+    {
+        return;
+    }
+    m_position = value;
+    m_meshIsDirty = true;
+}
+
+const MathUtility::SizeF Sprite::GetSize()
+{
+    return m_size;
+}
+
+void Sprite::SetSize(const MathUtility::SizeF& value)
+{
+    if (m_size == value) 
+    {
+        return;
+    }
+    m_size = value;
+    m_meshIsDirty = true;
 }

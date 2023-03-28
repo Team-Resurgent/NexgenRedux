@@ -3,6 +3,8 @@
 #include "SceneManager.h"
 #include "GlobalTypes.h"
 #include "Node.h"
+#include "EntityEngine/OrthoCamera.h"
+#include "EntityEngine/Sprite.h"
 
 #include <Gensys/Int.h>
 

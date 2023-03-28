@@ -19,11 +19,17 @@ OrthoCamera::OrthoCamera(uint32_t nodeID) : Node(nodeID)
     m_up = MathUtility::Vec3F(0, 1, 0);
 
     m_projectionIsDirty = true;
+    m_left = 0;
+    m_right = 1;
+    m_bottom = 0;
+    m_top = 1;
+    m_zNear = 1;
+    m_zFar = 100;
 }
 
 OrthoCamera::~OrthoCamera(void)
 {
-    DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, StringUtility::FormatString("Deleting node '%i'", m_nodeID));
+    DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, StringUtility::FormatString("Deleting node '%i'", GetID()));
 }
 
 void OrthoCamera::Update(float dt)
@@ -112,7 +118,7 @@ const float OrthoCamera::GetLeft()
 
 void OrthoCamera::SetLeft(float value)
 {
-    if (abs(m_left - value) > 1e-6f) 
+    if (abs(m_left - value) <= 1e-6f) 
     {
         return;
     }
@@ -129,10 +135,9 @@ void OrthoCamera::SetRight(float value)
 {
     if (abs(m_right - value) > 1e-6f) 
     {
-        return;
+        m_right = value;
+        m_projectionIsDirty = true;
     }
-    m_right = value;
-    m_projectionIsDirty = true;
 }
 
 const float OrthoCamera::GetBottom()
@@ -142,7 +147,7 @@ const float OrthoCamera::GetBottom()
 
 void OrthoCamera::SetBottom(float value)
 {
-    if (abs(m_bottom - value) > 1e-6f) 
+    if (abs(m_bottom - value) <= 1e-6f) 
     {
         return;
     }
@@ -157,7 +162,7 @@ const float OrthoCamera::GetTop()
 
 void OrthoCamera::SetTop(float value)
 {
-    if (abs(m_top - value) > 1e-6f) 
+    if (abs(m_top - value) <= 1e-6f) 
     {
         return;
     }
@@ -172,7 +177,7 @@ const float OrthoCamera::GetZNear()
 
 void OrthoCamera::SetZNear(float value)
 {
-    if (abs(m_zNear - value) > 1e-6f) 
+    if (abs(m_zNear - value) <= 1e-6f) 
     {
         return;
     }
@@ -187,7 +192,7 @@ const float OrthoCamera::GetZFar()
 
 void OrthoCamera::SetZFar(float value)
 {
-    if (abs(m_zFar - value) > 1e-6f) 
+    if (abs(m_zFar - value) <= 1e-6f) 
     {
         return;
     }

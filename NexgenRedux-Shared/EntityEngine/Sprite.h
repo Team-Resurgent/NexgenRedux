@@ -19,9 +19,13 @@ namespace NexgenRedux
         void Render();
 
         const std::string GetTexturePath();
-        void SetTexturePath(std::string value);
+        void SetTexturePath(const std::string& value);
         const MathUtility::RectF GetUV();
-        void SetUV(MathUtility::RectF value);
+        void SetUV(const MathUtility::RectF& value);
+        const MathUtility::Vec3F GetPosition();
+        void SetPosition(const MathUtility::Vec3F& value);
+        const MathUtility::SizeF GetSize();
+        void SetSize(const MathUtility::SizeF& value);
 
     private:
 
@@ -31,6 +35,8 @@ namespace NexgenRedux
 
         bool m_meshIsDirty;
         MathUtility::RectF m_uv;
+        MathUtility::Vec3F m_position;
+        MathUtility::SizeF m_size;
         uint32_t m_meshID;
     };
 }

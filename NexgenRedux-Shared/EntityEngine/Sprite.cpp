@@ -24,13 +24,10 @@ Sprite::Sprite(uint32_t nodeID) : Node(nodeID)
 Sprite::~Sprite(void)
 {
     RenderStateManager* renderStateManager = RenderStateManager::GetInstance();
-
     if (m_textureID != 0)
     {
         renderStateManager->DeleteTexture(m_textureID);
     }
-
-    DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, StringUtility::FormatString("Deleting node '%i'", GetID()));
 }
 
 void Sprite::Update(float dt)
@@ -56,7 +53,6 @@ void Sprite::Update(float dt)
     }
 
     MathUtility::Matrix4x4 matrix = GetTransform();
-    DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, StringUtility::FormatString("Updating, Calculated transfor for node '%i'", GetID()));
 }
 
 void Sprite::Render()
@@ -66,23 +62,11 @@ void Sprite::Render()
         return;
     }
 
-// need to add delete mesh
-
     RenderStateManager* renderStateManager = RenderStateManager::GetInstance();
 
-
-	// MathUtility::Matrix4x4 modelMatrix = MathUtility::Matrix4x4::Translate(MathUtility::Vec3F(-320, -240, 0));
-    // modelMatrix *= MathUtility::Matrix4x4::RotateZ(10);
-    // modelMatrix *= MathUtility::Matrix4x4::Translate(MathUtility::Vec3F(320, 240, 0));
-
-    MathUtility::Matrix4x4 matrix = GetTransform();
-    renderStateManager->SetModelMatrix(matrix);
-
+    renderStateManager->SetModelMatrix(GetTransform());
 	renderStateManager->SetTexture(m_textureID, TextureFilterLinear);
-	renderStateManager->ApplyChanges();
     renderStateManager->RenderMesh(m_mesh);
-
-    DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, StringUtility::FormatString("Rendering node '%i'", GetID()));
 }
 
 const std::string Sprite::GetTexturePath()

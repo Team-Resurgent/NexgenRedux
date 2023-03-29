@@ -67,6 +67,9 @@ uint windowID = 0;
 uint64 currentTime;
 uint64 previousTime;
 uint frameCount;
+float spriteRotate = 0;
+
+Sprite@ sprite2 = NodeManager::CreateSprite();
 
 void Init()
 {
@@ -82,8 +85,8 @@ void Init()
     orthoCamera.SetRight(640);
     orthoCamera.SetBottom(0);
     orthoCamera.SetTop(480);
-    orthoCamera.SetZNear(1);
-    orthoCamera.SetZFar(100);
+    orthoCamera.SetZNear(-1024);
+    orthoCamera.SetZFar(1024);
 
     SceneManager::AssignNode(orthoCamera, sceneID);
 
@@ -94,11 +97,10 @@ void Init()
     sprite1.SetSize(SizeF(640, 480));
     NodeManager::AssignNode(sprite1, orthoCamera.GetID());
     
-    Sprite@ sprite2 = NodeManager::CreateSprite();
-    sprite2.SetTexturePath("skin:background.png");
+    sprite2.SetTexturePath("skin:sprite.png");
     sprite2.SetUV(RectF(0, 0, 1, 1));
-    sprite2.SetPosition(Vec3F(300, 100, 10));
-    sprite2.SetSize(SizeF(640, 480));
+    sprite2.SetPosition(Vec3F(-64, -64, 10));
+    sprite2.SetSize(SizeF(128, 128));
     NodeManager::AssignNode(sprite2, orthoCamera.GetID());
 
     // Sprite@ sprite2 = NodeManager::CreateSprite();
@@ -236,6 +238,9 @@ void Init()
 void Render(uint windowID, double dt)
 {
     //DebugPrint(1, "Frame Render on window " + windowID + " dt = " + dt);
+
+    sprite2.SetRotation(Vec3F(0, 0, spriteRotate));
+    spriteRotate++;
 
     currentTime = GetMillisecondsNow();
     double durationFPS = GetDurationSeconds(previousTime, currentTime);

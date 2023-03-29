@@ -24,7 +24,9 @@ Sprite::Sprite(uint32_t nodeID) : Node(nodeID)
     m_blendOperation = BlendOperationAdd;
     m_blendFactorSrc = BlendFactorSrcAlpha;
     m_blendFactorDst = BlendFactorOneMinusSrcAlpha;
-    m_drawMode = DrawModeOperationTriangles;
+    m_drawModeOperation = DrawModeOperationTriangles;
+    m_cullingOperation = CullingOperationBack;
+    m_depthOperation = DepthOperationLess;
 }
 
 Sprite::~Sprite(void)
@@ -74,7 +76,9 @@ void Sprite::Render()
     renderStateManager->SetTint(m_tint);
     renderStateManager->SetBlend(m_blendOperation);
     renderStateManager->SetBlendFactors(m_blendFactorSrc, m_blendFactorDst);
-    renderStateManager->SetDrawMode(m_drawMode);
+    renderStateManager->SetDrawMode(m_drawModeOperation);
+    renderStateManager->SetCulling(m_cullingOperation);
+    renderStateManager->SetDepth(m_depthOperation);
 
     renderStateManager->ApplyChanges();
     renderStateManager->RenderMesh(m_mesh);
@@ -182,10 +186,30 @@ void Sprite::SetBlendFactorDst(const BlendFactor value)
 
 const DrawModeOperation Sprite::GetDrawMode()
 {
-    return m_drawMode;
+    return m_drawModeOperation;
 }
 
 void Sprite::SetDrawMode(const DrawModeOperation value)
 {
-    m_drawMode = value;
+    m_drawModeOperation = value;
+}
+
+const CullingOperation Sprite::GetCulling()
+{
+    return m_cullingOperation;
+}
+
+void Sprite::SetCulling(const CullingOperation value)
+{
+    m_cullingOperation = value;
+}
+
+const DepthOperation Sprite::GetDepth()
+{
+    return m_depthOperation;
+}
+
+void Sprite::SetDepth(const DepthOperation value)
+{
+    m_depthOperation = value;
 }

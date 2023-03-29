@@ -5,6 +5,8 @@
 #include "EntityEngine/SceneManager.h"
 #include "EntityEngine/NodeManager.h"
 #include "EntityEngine/OrthoCamera.h"
+#include "EntityEngine/Fog.h"
+#include "EntityEngine/Lighting.h"
 #include "EntityEngine/Sprite.h"
 
 #include <Gensys/DebugUtility.h>
@@ -570,6 +572,36 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	if (m_engine->RegisterEnumValue("DrawModeOperation", "DrawModeOperationTriangles", DrawModeOperationTriangles) < 0) { return false; }
 	if (m_engine->RegisterEnumValue("DrawModeOperation", "DrawModeOperationLines", DrawModeOperationLines) < 0) { return false; }
 
+	if (m_engine->RegisterEnum("CullingOperation") < 0) { return false; }
+	if (m_engine->RegisterEnumValue("CullingOperation", "CullingOperationDisabled", CullingOperationDisabled) < 0) { return false; }
+	if (m_engine->RegisterEnumValue("CullingOperation", "CullingOperationFront", CullingOperationFront) < 0) { return false; }
+	if (m_engine->RegisterEnumValue("CullingOperation", "CullingOperationBack", CullingOperationBack) < 0) { return false; }
+
+	if (m_engine->RegisterEnum("DepthOperation") < 0) { return false; }
+	if (m_engine->RegisterEnumValue("DepthOperation", "DepthOperationDisabled", DepthOperationDisabled) < 0) { return false; }
+	if (m_engine->RegisterEnumValue("DepthOperation", "DepthOperationNever", DepthOperationNever) < 0) { return false; }
+	if (m_engine->RegisterEnumValue("DepthOperation", "DepthOperationLess", DepthOperationLess) < 0) { return false; }
+	if (m_engine->RegisterEnumValue("DepthOperation", "DepthOperationEqual", DepthOperationEqual) < 0) { return false; }
+	if (m_engine->RegisterEnumValue("DepthOperation", "DepthOperationLessOrEqual", DepthOperationLessOrEqual) < 0) { return false; }
+	if (m_engine->RegisterEnumValue("DepthOperation", "DepthOperationGreater", DepthOperationGreater) < 0) { return false; }
+	if (m_engine->RegisterEnumValue("DepthOperation", "DepthOperationNotEqual", DepthOperationNotEqual) < 0) { return false; }
+	if (m_engine->RegisterEnumValue("DepthOperation", "DepthOperationGreaterOrEqual", DepthOperationGreaterOrEqual) < 0) { return false; }
+	if (m_engine->RegisterEnumValue("DepthOperation", "DepthOperationAlways", DepthOperationAlways) < 0) { return false; }
+
+	if (m_engine->RegisterEnum("FogOperation") < 0) { return false; }
+	if (m_engine->RegisterEnumValue("FogOperation", "FogOperationDisabled", FogOperationDisabled) < 0) { return false; }
+	if (m_engine->RegisterEnumValue("FogOperation", "FogOperationExponent", FogOperationExponent) < 0) { return false; }
+	if (m_engine->RegisterEnumValue("FogOperation", "FogOperationExponent2", FogOperationExponent2) < 0) { return false; }
+	if (m_engine->RegisterEnumValue("FogOperation", "FogOperationLinear", FogOperationLinear) < 0) { return false; }
+
+	if (m_engine->RegisterEnum("LightsOperation") < 0) { return false; }
+	if (m_engine->RegisterEnumValue("LightsOperation", "LightsOperationDisabled", LightsOperationDisabled) < 0) { return false; }
+	if (m_engine->RegisterEnumValue("LightsOperation", "LightsOperationEnabled", LightsOperationEnabled) < 0) { return false; }
+
+	if (m_engine->RegisterEnum("LightOperation") < 0) { return false; }
+	if (m_engine->RegisterEnumValue("LightOperation", "LightOperationDisabled", LightOperationDisabled) < 0) { return false; }
+	if (m_engine->RegisterEnumValue("LightOperation", "LightOperationEnabled", LightOperationEnabled) < 0) { return false; }
+
 	if (m_engine->RegisterGlobalFunction("void SeedRandom()", asFUNCTION(MathUtility::SeedRandom), asCALL_CDECL) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void SeedRandomWithValue(int value)", asFUNCTION(MathUtility::SeedRandomWithValue), asCALL_CDECL) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("double GetRandomDouble()", asFUNCTION(MathUtility::GetRandomDouble), asCALL_CDECL) < 0) { return false; }
@@ -696,6 +728,82 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	if (m_engine->RegisterObjectMethod("Sprite", "void SetBlendFactorDst(BlendFactor)", asMETHOD(Sprite, SetBlendFactorDst), asCALL_THISCALL) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("Sprite", "DrawModeOperation GetDrawMode()", asMETHOD(Sprite, GetDrawMode), asCALL_THISCALL) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("Sprite", "void SetDrawMode(DrawModeOperation)", asMETHOD(Sprite, SetDrawMode), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Sprite", "CullingOperation GetCulling()", asMETHOD(Sprite, GetCulling), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Sprite", "void SetCulling(CullingOperation)", asMETHOD(Sprite, SetCulling), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Sprite", "DepthOperation GetDepth()", asMETHOD(Sprite, GetDepth), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Sprite", "void SetDepth(DepthOperation)", asMETHOD(Sprite, SetDepth), asCALL_THISCALL) < 0) { return false; }
+
+	if (m_engine->RegisterObjectType("Fog", sizeof(0), asOBJ_REF | asOBJ_NOCOUNT) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Fog", "uint GetID()", asMETHOD(Fog, GetID), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Fog", "Vec3F& GetAnchor()", asMETHOD(Fog, GetAnchor), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Fog", "void SetAnchor(Vec3F)", asMETHOD(Fog, SetAnchor), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Fog", "Vec3F& GetRotation()", asMETHOD(Fog, GetRotation), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Fog", "void SetRotation(Vec3F)", asMETHOD(Fog, SetRotation), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Fog", "Vec3F& GetSkew()", asMETHOD(Fog, GetSkew), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Fog", "void SetSkew(Vec3F)", asMETHOD(Fog, SetSkew), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Fog", "Vec3F& GetScale()", asMETHOD(Fog, GetScale), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Fog", "void SetScale(Vec3F)", asMETHOD(Fog, SetScale), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Fog", "Vec3F& GetTranslation()", asMETHOD(Fog, GetTranslation), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Fog", "void SetTranslation(Vec3F)", asMETHOD(Fog, SetTranslation), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Fog", "FogOperation GetFog()", asMETHOD(Fog, GetFog), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Fog", "void SetFog(FogOperation)", asMETHOD(Fog, SetFog), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Fog", "Color3F& GetFogColor()", asMETHOD(Fog, GetFogColor), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Fog", "void SetFogColor(Color3F)", asMETHOD(Fog, SetFogColor), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Fog", "float GetFogStart()", asMETHOD(Fog, GetFogStart), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Fog", "void SetFogStart(float)", asMETHOD(Fog, SetFogStart), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Fog", "float GetFogEnd()", asMETHOD(Fog, GetFogEnd), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Fog", "void SetFogEnd(float)", asMETHOD(Fog, SetFogEnd), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Fog", "float GetFogDensity()", asMETHOD(Fog, GetFogDensity), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Fog", "void SetFogDensity(float)", asMETHOD(Fog, SetFogDensity), asCALL_THISCALL) < 0) { return false; }
+
+	if (m_engine->RegisterObjectType("Lighting", sizeof(0), asOBJ_REF | asOBJ_NOCOUNT) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Lighting", "uint GetID()", asMETHOD(Lighting, GetID), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Lighting", "Vec3F& GetAnchor()", asMETHOD(Lighting, GetAnchor), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Lighting", "void SetAnchor(Vec3F)", asMETHOD(Lighting, SetAnchor), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Lighting", "Vec3F& GetRotation()", asMETHOD(Lighting, GetRotation), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Lighting", "void SetRotation(Vec3F)", asMETHOD(Lighting, SetRotation), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Lighting", "Vec3F& GetSkew()", asMETHOD(Lighting, GetSkew), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Lighting", "void SetSkew(Vec3F)", asMETHOD(Lighting, SetSkew), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Lighting", "Vec3F& GetScale()", asMETHOD(Lighting, GetScale), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Lighting", "void SetScale(Vec3F)", asMETHOD(Lighting, SetScale), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Lighting", "Vec3F& GetTranslation()", asMETHOD(Lighting, GetTranslation), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Lighting", "void SetTranslation(Vec3F)", asMETHOD(Lighting, SetTranslation), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Lighting", "LightsOperation GetLights()", asMETHOD(Lighting, GetLights), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Lighting", "void SetLights(LightsOperation)", asMETHOD(Lighting, SetLights), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Lighting", "Color3F& GetAmbientLight()", asMETHOD(Lighting, GetAmbientLight), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Lighting", "void SetAmbientLight(Color3F)", asMETHOD(Lighting, SetAmbientLight), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Lighting", "LightOperation GetLight1()", asMETHOD(Lighting, GetLight1), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Lighting", "void SetLight1(LightOperation)", asMETHOD(Lighting, SetLight1), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Lighting", "Vec3F& GetLight1Position()", asMETHOD(Lighting, GetLight1Position), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Lighting", "void SetLight1Position(Vec3F)", asMETHOD(Lighting, SetLight1Position), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Lighting", "float GetLight1Distance()", asMETHOD(Lighting, GetLight1Distance), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Lighting", "void SetLight1Distance(float)", asMETHOD(Lighting, SetLight1Distance), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Lighting", "Color4F& GetLight1Diffuse()", asMETHOD(Lighting, GetLight1Diffuse), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Lighting", "void SetLight1Diffuse(Color4F)", asMETHOD(Lighting, SetLight1Diffuse), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Lighting", "LightOperation GetLight2()", asMETHOD(Lighting, GetLight2), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Lighting", "void SetLight2(LightOperation)", asMETHOD(Lighting, SetLight2), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Lighting", "Vec3F& GetLight2Position()", asMETHOD(Lighting, GetLight2Position), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Lighting", "void SetLight2Position(Vec3F)", asMETHOD(Lighting, SetLight2Position), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Lighting", "float GetLight2Distance()", asMETHOD(Lighting, GetLight2Distance), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Lighting", "void SetLight2Distance(float)", asMETHOD(Lighting, SetLight2Distance), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Lighting", "Color4F& GetLight2Diffuse()", asMETHOD(Lighting, GetLight2Diffuse), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Lighting", "void SetLight2Diffuse(Color4F)", asMETHOD(Lighting, SetLight2Diffuse), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Lighting", "LightOperation GetLight3()", asMETHOD(Lighting, GetLight3), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Lighting", "void SetLight3(LightOperation)", asMETHOD(Lighting, SetLight3), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Lighting", "Vec3F& GetLight3Position()", asMETHOD(Lighting, GetLight3Position), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Lighting", "void SetLight3Position(Vec3F)", asMETHOD(Lighting, SetLight3Position), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Lighting", "float GetLight3Distance()", asMETHOD(Lighting, GetLight3Distance), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Lighting", "void SetLight3Distance(float)", asMETHOD(Lighting, SetLight3Distance), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Lighting", "Color4F& GetLight3Diffuse()", asMETHOD(Lighting, GetLight3Diffuse), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Lighting", "void SetLight3Diffuse(Color4F)", asMETHOD(Lighting, SetLight3Diffuse), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Lighting", "LightOperation GetLight4()", asMETHOD(Lighting, GetLight4), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Lighting", "void SetLight4(LightOperation)", asMETHOD(Lighting, SetLight4), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Lighting", "Vec3F& GetLight4Position()", asMETHOD(Lighting, GetLight4Position), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Lighting", "void SetLight4Position(Vec3F)", asMETHOD(Lighting, SetLight4Position), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Lighting", "float GetLight4Distance()", asMETHOD(Lighting, GetLight4Distance), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Lighting", "void SetLight4Distance(float)", asMETHOD(Lighting, SetLight4Distance), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Lighting", "Color4F& GetLight4Diffuse()", asMETHOD(Lighting, GetLight4Diffuse), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Lighting", "void SetLight4Diffuse(Color4F)", asMETHOD(Lighting, SetLight4Diffuse), asCALL_THISCALL) < 0) { return false; }
 
 	if (m_engine->SetDefaultNamespace("SceneManager") < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("uint SceneManager::CreateScene(bool)", asFUNCTION(SceneManager::CreateScene), asCALL_CDECL) < 0) { return false; }
@@ -705,8 +813,10 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	if (m_engine->RegisterGlobalFunction("bool SceneManager::Render()", asFUNCTION(SceneManager::Render), asCALL_CDECL) < 0) { return false; }
 
 	if (m_engine->SetDefaultNamespace("NodeManager") < 0) { return false; }
-	if (m_engine->RegisterGlobalFunction("Sprite& NodeManager::CreateSprite()", asFUNCTION(NodeManager::CreateSprite), asCALL_CDECL) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("OrthoCamera& NodeManager::CreateOrthoCamera()", asFUNCTION(NodeManager::CreateOrthoCamera), asCALL_CDECL) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("Fog& NodeManager::CreateFog()", asFUNCTION(NodeManager::CreateFog), asCALL_CDECL) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("Lighting& NodeManager::CreateLighting()", asFUNCTION(NodeManager::CreateLighting), asCALL_CDECL) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("Sprite& NodeManager::CreateSprite()", asFUNCTION(NodeManager::CreateSprite), asCALL_CDECL) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("bool NodeManager::AssignNode(Node@, uint)", asFUNCTION(NodeManager::AssignNode), asCALL_CDECL) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("bool NodeManager::AssignNodeAt(Node@, uint, uint)", asFUNCTION(NodeManager::AssignNodeAt), asCALL_CDECL) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void NodeManager::DeleteNode(uint)", asFUNCTION(NodeManager::DeleteNode), asCALL_CDECL) < 0) { return false; }
@@ -714,14 +824,22 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	if (m_engine->RegisterGlobalFunction("void NodeManager::PurgeNodes()", asFUNCTION(NodeManager::PurgeNodes), asCALL_CDECL) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void NodeManager::CheckForOrphans()", asFUNCTION(NodeManager::CheckForOrphans), asCALL_CDECL) < 0) { return false; }
 
-	if (m_engine->RegisterObjectMethod("Node", "OrthoCamera@ opCast()", asFUNCTION((refCast<Node,OrthoCamera>)), asCALL_CDECL_OBJLAST) < 0) { return false; }
-	if (m_engine->RegisterObjectMethod("Node", "Sprite@ opCast()", asFUNCTION((refCast<Node,Sprite>)), asCALL_CDECL_OBJLAST) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Node", "OrthoCamera@ opCast()", asFUNCTION((refCast<Node ,OrthoCamera>)), asCALL_CDECL_OBJLAST) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Node", "Fog@ opCast()", asFUNCTION((refCast<Node, Fog>)), asCALL_CDECL_OBJLAST) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Node", "Lighting@ opCast()", asFUNCTION((refCast<Node, Lighting>)), asCALL_CDECL_OBJLAST) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Node", "Sprite@ opCast()", asFUNCTION((refCast<Node, Sprite>)), asCALL_CDECL_OBJLAST) < 0) { return false; }
 
-	if (m_engine->RegisterObjectMethod("Node", "OrthoCamera@ opImplCast()", asFUNCTION((refCast<Node,OrthoCamera>)), asCALL_CDECL_OBJLAST) < 0) { return false; }
-	if (m_engine->RegisterObjectMethod("OrthoCamera", "Node@ opImplCast()", asFUNCTION((refCast<OrthoCamera,Node>)), asCALL_CDECL_OBJLAST) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Node", "OrthoCamera@ opImplCast()", asFUNCTION((refCast<Node, OrthoCamera>)), asCALL_CDECL_OBJLAST) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("OrthoCamera", "Node@ opImplCast()", asFUNCTION((refCast<OrthoCamera, Node>)), asCALL_CDECL_OBJLAST) < 0) { return false; }
 
-	if (m_engine->RegisterObjectMethod("Node", "Sprite@ opImplCast()", asFUNCTION((refCast<Node,Sprite>)), asCALL_CDECL_OBJLAST) < 0) { return false; }
-	if (m_engine->RegisterObjectMethod("Sprite", "Node@ opImplCast()", asFUNCTION((refCast<Sprite,Node>)), asCALL_CDECL_OBJLAST) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Node", "Fog@ opImplCast()", asFUNCTION((refCast<Node, Fog>)), asCALL_CDECL_OBJLAST) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Fog", "Node@ opImplCast()", asFUNCTION((refCast<Fog, Node>)), asCALL_CDECL_OBJLAST) < 0) { return false; }
+
+	if (m_engine->RegisterObjectMethod("Node", "Lighting@ opImplCast()", asFUNCTION((refCast<Node, Lighting>)), asCALL_CDECL_OBJLAST) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Lighting", "Node@ opImplCast()", asFUNCTION((refCast<Lighting, Node>)), asCALL_CDECL_OBJLAST) < 0) { return false; }
+
+	if (m_engine->RegisterObjectMethod("Node", "Sprite@ opImplCast()", asFUNCTION((refCast<Node, Sprite>)), asCALL_CDECL_OBJLAST) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Sprite", "Node@ opImplCast()", asFUNCTION((refCast<Sprite, Node>)), asCALL_CDECL_OBJLAST) < 0) { return false; }
 	
 	if (CompileScript(m_engine, launchFolder) == false)
 	{

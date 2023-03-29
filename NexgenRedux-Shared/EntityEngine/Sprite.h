@@ -37,6 +37,10 @@ namespace NexgenRedux
         void SetBlendFactorDst(const BlendFactor value);
         const DrawModeOperation GetDrawMode();
         void SetDrawMode(const DrawModeOperation value);
+        const CullingOperation GetCulling();
+        void SetCulling(const CullingOperation value);
+        const DepthOperation GetDepth();
+        void SetDepth(const DepthOperation value);
 
     private:
 
@@ -54,6 +58,8 @@ namespace NexgenRedux
         BlendOperation m_blendOperation;
         BlendFactor m_blendFactorSrc;
         BlendFactor m_blendFactorDst;
-        DrawModeOperation m_drawMode;
+        DrawModeOperation m_drawModeOperation;
+        CullingOperation m_cullingOperation;
+        DepthOperation m_depthOperation;
     };
 }

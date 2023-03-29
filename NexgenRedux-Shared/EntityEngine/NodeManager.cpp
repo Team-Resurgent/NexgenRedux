@@ -1,5 +1,7 @@
 #include "NodeManager.h"
 #include "OrthoCamera.h"
+#include "Fog.h"
+#include "Lighting.h"
 #include "Sprite.h"
 
 #include <Gensys/DebugUtility.h>
@@ -28,18 +30,34 @@ void NodeManager::Close(void)
 	}
 }
 
-Sprite* NodeManager::CreateSprite()
-{
-    uint32_t nodeID = ++m_maxNodeID;
-    Sprite* node = new Sprite(nodeID);
-    m_nodeMap.insert(std::pair<uint32_t, Node*>(nodeID, node));
-    return node;
-}
-
 OrthoCamera* NodeManager::CreateOrthoCamera()
 {
     uint32_t nodeID = ++m_maxNodeID;
     OrthoCamera* node = new OrthoCamera(nodeID);
+    m_nodeMap.insert(std::pair<uint32_t, Node*>(nodeID, node));
+    return node;
+}
+
+Fog* NodeManager::CreateFog()
+{
+    uint32_t nodeID = ++m_maxNodeID;
+    Fog* node = new Fog(nodeID);
+    m_nodeMap.insert(std::pair<uint32_t, Node*>(nodeID, node));
+    return node;
+}
+
+Lighting* NodeManager::CreateLighting()
+{
+    uint32_t nodeID = ++m_maxNodeID;
+    Lighting* node = new Lighting(nodeID);
+    m_nodeMap.insert(std::pair<uint32_t, Node*>(nodeID, node));
+    return node;
+}
+
+Sprite* NodeManager::CreateSprite()
+{
+    uint32_t nodeID = ++m_maxNodeID;
+    Sprite* node = new Sprite(nodeID);
     m_nodeMap.insert(std::pair<uint32_t, Node*>(nodeID, node));
     return node;
 }

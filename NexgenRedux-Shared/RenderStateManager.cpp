@@ -54,7 +54,7 @@ void RenderStateManager::Init(void)
     SetTint(MathUtility::Color4F(1, 1, 1, 1));
     SetBlend(BlendOperationAdd);
     SetBlendFactors(BlendFactorSrcAlpha, BlendFactorOneMinusSrcAlpha);
-    SetCulling(CullingOperationDisabled);
+    SetCulling(CullingOperationBack);
     SetDepth(DepthOperationLess);
     SetLights(LightsOperationDisabled);
     SetLight1(LightOperationDisabled);

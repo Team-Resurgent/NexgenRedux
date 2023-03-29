@@ -90,12 +90,29 @@ void Init()
 
     SceneManager::AssignNode(orthoCamera, sceneID);
 
+    Fog@ fog = NodeManager::CreateFog();
+    fog.SetFog(FogOperationLinear);
+    fog.SetFogColor(Color3F(0, 0.6, 0));
+    fog.SetFogStart(-1024);
+    fog.SetFogEnd(1024);
+    fog.SetFogDensity(0.002);
+    NodeManager::AssignNode(fog, orthoCamera.GetID());
+    
+    Lighting@ lighting = NodeManager::CreateLighting();
+    lighting.SetLights(LightsOperationDisabled);
+    lighting.SetAmbientLight(Color3F(0, 0, 0));
+    lighting.SetLight1(LightOperationDisabled);
+    lighting.SetLight1Position(Vec3F(0, 0, 0));
+    lighting.SetLight1Distance(0);
+    lighting.SetLight1Diffuse(Color4F(0, 0, 0, 0));
+    NodeManager::AssignNode(lighting, fog.GetID());
+
     Sprite@ sprite1 = NodeManager::CreateSprite();
     sprite1.SetTexturePath("skin:background.png");
     sprite1.SetUV(RectF(0, 0, 1, 1));
     sprite1.SetPosition(Vec3F(0, 0, 0));
     sprite1.SetSize(SizeF(640, 480));
-    NodeManager::AssignNode(sprite1, orthoCamera.GetID());
+    NodeManager::AssignNode(sprite1, lighting.GetID());
     
     sprite2.SetTexturePath("skin:sprite.png");
     sprite2.SetUV(RectF(0, 0, 1, 1));
@@ -108,24 +125,10 @@ void Init()
     sprite2.SetBlendFactorSrc(BlendFactorSrcAlpha);
     sprite2.SetBlendFactorDst(BlendFactorOneMinusSrcAlpha);
     sprite2.SetDrawMode(DrawModeOperationTriangles);
+    sprite2.SetCulling(CullingOperationDisabled);
+    sprite2.SetDepth(DepthOperationLess);
     NodeManager::AssignNode(sprite2, orthoCamera.GetID());
 
-
-    // SetAmbientLight(MathUtility::Color3F(25 / 255.0f, 25 / 255.0f, 2 / 255.0f));
-    // SetCulling(CullingOperationDisabled);
-    // SetDepth(DepthOperationLess);
-    // SetLights(LightsOperationDisabled);
-    // SetLight1(LightOperationDisabled);
-    // SetLightInstance1(MathUtility::Vec3F(0, 0, 0), 0, MathUtility::Color4F(0, 0, 0, 0));
-    // SetLight2(LightOperationDisabled);
-    // SetLightInstance2(MathUtility::Vec3F(0, 0, 0), 0, MathUtility::Color4F(0, 0, 0, 0));
-    // SetLight3(LightOperationDisabled);
-    // SetLightInstance3(MathUtility::Vec3F(0, 0, 0), 0, MathUtility::Color4F(0, 0, 0, 0));
-    // SetLight4(LightOperationDisabled);
-    // SetLightInstance4(MathUtility::Vec3F(0, 0, 0), 0, MathUtility::Color4F(0, 0, 0, 0));
-    // SetFog(FogOperationDisabled);
-    // SetFogInstance(MathUtility::Color3F(0, 0, 0), 0, 0, 0);
-    // SetDrawMode(DrawModeTriangles);
 
 
     // Sprite@ sprite2 = NodeManager::CreateSprite();

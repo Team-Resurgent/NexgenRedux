@@ -60,6 +60,20 @@ void OrthoCamera::Render()
     renderStateManager->SetBlend(BlendOperationAdd);
     renderStateManager->SetBlendFactors(BlendFactorSrcAlpha, BlendFactorOneMinusSrcAlpha);
     renderStateManager->SetDrawMode(DrawModeOperationTriangles);
+    renderStateManager->SetCulling(CullingOperationBack);
+    renderStateManager->SetDepth(DepthOperationLess);
+    renderStateManager->SetFog(FogOperationDisabled);
+    renderStateManager->SetFogInstance(MathUtility::Color3F(0, 0, 0), 0, 0, 0);
+    renderStateManager->SetLights(LightsOperationDisabled);
+    renderStateManager->SetAmbientLight(MathUtility::Color3F(0.25f, 0.25f, 0.25f));
+    renderStateManager->SetLight1(LightOperationDisabled);
+    renderStateManager->SetLightInstance1(MathUtility::Vec3F(0, 0, 0), 0, MathUtility::Color4F(0, 0, 0, 0));
+    renderStateManager->SetLight2(LightOperationDisabled);
+    renderStateManager->SetLightInstance2(MathUtility::Vec3F(0, 0, 0), 0, MathUtility::Color4F(0, 0, 0, 0));
+    renderStateManager->SetLight3(LightOperationDisabled);
+    renderStateManager->SetLightInstance3(MathUtility::Vec3F(0, 0, 0), 0, MathUtility::Color4F(0, 0, 0, 0));
+    renderStateManager->SetLight4(LightOperationDisabled);
+    renderStateManager->SetLightInstance4(MathUtility::Vec3F(0, 0, 0), 0, MathUtility::Color4F(0, 0, 0, 0));
 
     renderStateManager->ApplyChanges();
 }

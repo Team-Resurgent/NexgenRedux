@@ -4,6 +4,8 @@
 #include "GlobalTypes.h"
 #include "Node.h"
 #include "EntityEngine/OrthoCamera.h"
+#include "EntityEngine/Fog.h"
+#include "EntityEngine/Lighting.h"
 #include "EntityEngine/Sprite.h"
 
 #include <Gensys/Int.h>
@@ -20,8 +22,10 @@ namespace NexgenRedux
     public:
 
         static void Close(void);
-        static Sprite* CreateSprite();
         static OrthoCamera* CreateOrthoCamera();
+        static Fog* CreateFog();
+        static Lighting* CreateLighting();
+        static Sprite* CreateSprite();
         static bool AssignNode(Node* node, uint32_t parentNodeID);
         static bool AssignNodeAt(Node* node, uint32_t parentNodeID, uint32_t insertNodeID);
         static void DeleteNode(uint32_t nodeID);    

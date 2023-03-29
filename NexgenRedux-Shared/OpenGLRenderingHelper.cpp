@@ -907,11 +907,11 @@ bool OpenGLRenderingHelper::RenderMesh(const std::vector<MeshUtility::Vertex>& m
 	glVertexAttribPointer(aTexCoord, 2, GL_FLOAT, GL_FALSE, sizeof(MeshUtility::Vertex), (void*)offsetof(MeshUtility::Vertex, texcoord));
 
 	uint32_t vertexCount = (uint32_t)mesh.size();
-	if (m_renderStateManager->GetRenderState()->drawModeState.operation == DrawModeTriangles) 
+	if (m_renderStateManager->GetRenderState()->drawModeState.operation == DrawModeOperationTriangles) 
 	{
 		glDrawArrays(GL_TRIANGLES, 0, (GLsizei)vertexCount);
 	}
-	else if (m_renderStateManager->GetRenderState()->drawModeState.operation == DrawModeLines) 
+	else if (m_renderStateManager->GetRenderState()->drawModeState.operation == DrawModeOperationLines) 
 	{
 		glDrawArrays(GL_LINES, 0, (GLsizei)vertexCount);
 	}

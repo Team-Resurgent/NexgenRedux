@@ -35,6 +35,8 @@ namespace NexgenRedux
         void SetBlendFactorSrc(const BlendFactor value);
         const BlendFactor GetBlendFactorDst();
         void SetBlendFactorDst(const BlendFactor value);
+        const DrawModeOperation GetDrawMode();
+        void SetDrawMode(const DrawModeOperation value);
 
     private:
 
@@ -52,5 +54,6 @@ namespace NexgenRedux
         BlendOperation m_blendOperation;
         BlendFactor m_blendFactorSrc;
         BlendFactor m_blendFactorDst;
+        DrawModeOperation m_drawMode;
     };
 }

@@ -59,6 +59,7 @@ void OrthoCamera::Render()
     renderStateManager->SetTint(MathUtility::Color4F(1, 1, 1, 1));
     renderStateManager->SetBlend(BlendOperationAdd);
     renderStateManager->SetBlendFactors(BlendFactorSrcAlpha, BlendFactorOneMinusSrcAlpha);
+    renderStateManager->SetDrawMode(DrawModeOperationTriangles);
 
     renderStateManager->ApplyChanges();
 }

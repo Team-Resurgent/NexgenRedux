@@ -48,8 +48,8 @@ namespace NexgenRedux
 	} JoystickAxisStates;
 
     typedef enum DrawModeOperation {
-		DrawModeTriangles,
-		DrawModeLines
+		DrawModeOperationTriangles,
+		DrawModeOperationLines
 	} DrawModeOperation;
 
 	typedef enum TextureFilter {

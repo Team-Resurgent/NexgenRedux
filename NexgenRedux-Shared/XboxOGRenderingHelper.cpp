@@ -930,11 +930,11 @@ bool XboxOGRenderingHelper::RenderMesh(const std::vector<MeshUtility::Vertex>& m
 	IDirect3DDevice8* d3dDevice = ((XboxOGWindowHelper*)WindowManager::GetInstance()->GetWindowHelper())->GetD3DDevice();
 
 	uint32_t vertexCount = mesh.size();
-	if (m_renderStateManager->GetRenderState()->drawModeState.operation == DrawModeTriangles) 
+	if (m_renderStateManager->GetRenderState()->drawModeState.operation == DrawModeOperationTriangles) 
 	{
 		d3dDevice->DrawPrimitiveUP(D3DPT_TRIANGLELIST, vertexCount / 3, &mesh[0], sizeof(MeshUtility::Vertex));
 	}
-	else if (m_renderStateManager->GetRenderState()->drawModeState.operation == DrawModeLines) 
+	else if (m_renderStateManager->GetRenderState()->drawModeState.operation == DrawModeOperationLines) 
 	{
 		d3dDevice->DrawPrimitiveUP(D3DPT_LINELIST, vertexCount / 3, &mesh[0], sizeof(MeshUtility::Vertex));
 	}

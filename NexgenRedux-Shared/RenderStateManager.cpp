@@ -69,7 +69,7 @@ void RenderStateManager::Init(void)
     SetFogInstance(MathUtility::Color3F(0, 0, 0), 0, 0, 0);
     SetViewport(MathUtility::RectI(0, 0, 640, 480));
     SetScissor(ScissorOperationDisabled, MathUtility::RectI());
-    SetDrawMode(DrawModeTriangles);
+    SetDrawMode(DrawModeOperationTriangles);
 
     m_renderingHelper->Init();
 }

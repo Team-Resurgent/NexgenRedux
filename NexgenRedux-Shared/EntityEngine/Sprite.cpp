@@ -24,6 +24,7 @@ Sprite::Sprite(uint32_t nodeID) : Node(nodeID)
     m_blendOperation = BlendOperationAdd;
     m_blendFactorSrc = BlendFactorSrcAlpha;
     m_blendFactorDst = BlendFactorOneMinusSrcAlpha;
+    m_drawMode = DrawModeOperationTriangles;
 }
 
 Sprite::~Sprite(void)
@@ -73,6 +74,7 @@ void Sprite::Render()
     renderStateManager->SetTint(m_tint);
     renderStateManager->SetBlend(m_blendOperation);
     renderStateManager->SetBlendFactors(m_blendFactorSrc, m_blendFactorDst);
+    renderStateManager->SetDrawMode(m_drawMode);
 
     renderStateManager->ApplyChanges();
     renderStateManager->RenderMesh(m_mesh);
@@ -176,4 +178,14 @@ const BlendFactor Sprite::GetBlendFactorDst()
 void Sprite::SetBlendFactorDst(const BlendFactor value)
 {
     m_blendFactorDst = value;
+}
+
+const DrawModeOperation Sprite::GetDrawMode()
+{
+    return m_drawMode;
+}
+
+void Sprite::SetDrawMode(const DrawModeOperation value)
+{
+    m_drawMode = value;
 }

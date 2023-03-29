@@ -566,6 +566,10 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	if (m_engine->RegisterEnumValue("BlendFactor", "BlendFactorOneMinusConstantAlpha", BlendFactorOneMinusConstantAlpha) < 0) { return false; }
 	if (m_engine->RegisterEnumValue("BlendFactor", "BlendFactorSrcAlphaSaturate", BlendFactorSrcAlphaSaturate) < 0) { return false; }
 
+	if (m_engine->RegisterEnum("DrawModeOperation") < 0) { return false; }
+	if (m_engine->RegisterEnumValue("DrawModeOperation", "DrawModeOperationTriangles", DrawModeOperationTriangles) < 0) { return false; }
+	if (m_engine->RegisterEnumValue("DrawModeOperation", "DrawModeOperationLines", DrawModeOperationLines) < 0) { return false; }
+
 	if (m_engine->RegisterGlobalFunction("void SeedRandom()", asFUNCTION(MathUtility::SeedRandom), asCALL_CDECL) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void SeedRandomWithValue(int value)", asFUNCTION(MathUtility::SeedRandomWithValue), asCALL_CDECL) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("double GetRandomDouble()", asFUNCTION(MathUtility::GetRandomDouble), asCALL_CDECL) < 0) { return false; }
@@ -690,6 +694,8 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	if (m_engine->RegisterObjectMethod("Sprite", "void SetBlendFactorSrc(BlendFactor)", asMETHOD(Sprite, SetBlendFactorSrc), asCALL_THISCALL) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("Sprite", "BlendFactor GetBlendFactorDst()", asMETHOD(Sprite, GetBlendFactorDst), asCALL_THISCALL) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("Sprite", "void SetBlendFactorDst(BlendFactor)", asMETHOD(Sprite, SetBlendFactorDst), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Sprite", "DrawModeOperation GetDrawMode()", asMETHOD(Sprite, GetDrawMode), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Sprite", "void SetDrawMode(DrawModeOperation)", asMETHOD(Sprite, SetDrawMode), asCALL_THISCALL) < 0) { return false; }
 
 	if (m_engine->SetDefaultNamespace("SceneManager") < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("uint SceneManager::CreateScene(bool)", asFUNCTION(SceneManager::CreateScene), asCALL_CDECL) < 0) { return false; }

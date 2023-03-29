@@ -107,8 +107,25 @@ void Init()
     sprite2.SetBlend(BlendOperationAdd);
     sprite2.SetBlendFactorSrc(BlendFactorSrcAlpha);
     sprite2.SetBlendFactorDst(BlendFactorOneMinusSrcAlpha);
+    sprite2.SetDrawMode(DrawModeOperationTriangles);
     NodeManager::AssignNode(sprite2, orthoCamera.GetID());
 
+
+    // SetAmbientLight(MathUtility::Color3F(25 / 255.0f, 25 / 255.0f, 2 / 255.0f));
+    // SetCulling(CullingOperationDisabled);
+    // SetDepth(DepthOperationLess);
+    // SetLights(LightsOperationDisabled);
+    // SetLight1(LightOperationDisabled);
+    // SetLightInstance1(MathUtility::Vec3F(0, 0, 0), 0, MathUtility::Color4F(0, 0, 0, 0));
+    // SetLight2(LightOperationDisabled);
+    // SetLightInstance2(MathUtility::Vec3F(0, 0, 0), 0, MathUtility::Color4F(0, 0, 0, 0));
+    // SetLight3(LightOperationDisabled);
+    // SetLightInstance3(MathUtility::Vec3F(0, 0, 0), 0, MathUtility::Color4F(0, 0, 0, 0));
+    // SetLight4(LightOperationDisabled);
+    // SetLightInstance4(MathUtility::Vec3F(0, 0, 0), 0, MathUtility::Color4F(0, 0, 0, 0));
+    // SetFog(FogOperationDisabled);
+    // SetFogInstance(MathUtility::Color3F(0, 0, 0), 0, 0, 0);
+    // SetDrawMode(DrawModeTriangles);
 
 
     // Sprite@ sprite2 = NodeManager::CreateSprite();

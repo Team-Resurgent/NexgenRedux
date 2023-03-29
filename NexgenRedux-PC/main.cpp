@@ -20,8 +20,6 @@
 #include "WindowManager.h"
 #include "RenderStateManager.h"
 
-#include "ECSManager.h"
-
 #include "Windows.h"
 
 using namespace NexgenRedux;

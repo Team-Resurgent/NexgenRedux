@@ -169,12 +169,6 @@
 				RelativePath="..\NexgenRedux-Shared\Constants.h">
 			</File>
 			<File
-				RelativePath="..\NexgenRedux-Shared\ECSManager.cpp">
-			</File>
-			<File
-				RelativePath="..\NexgenRedux-Shared\ECSManager.h">
-			</File>
-			<File
 				RelativePath="..\NexgenRedux-Shared\GlobalTypes.h">
 			</File>
 			<File

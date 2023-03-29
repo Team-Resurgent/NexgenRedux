@@ -75,7 +75,7 @@ void Init()
 
     OrthoCamera@ orthoCamera = NodeManager::CreateOrthoCamera();
     orthoCamera.SetClearColor(Color4F(1, 1, 0, 1));
-    orthoCamera.SetEye(Vec3F(0, 0, 2));
+    orthoCamera.SetEye(Vec3F(0, 0, 50));
     orthoCamera.SetTarget(Vec3F(0, 0, 0));
     orthoCamera.SetUp(Vec3F(0, 1, 0));
     orthoCamera.SetLeft(0);

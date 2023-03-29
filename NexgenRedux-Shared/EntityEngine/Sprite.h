@@ -27,6 +27,14 @@ namespace NexgenRedux
         void SetPosition(const MathUtility::Vec3F value);
         const MathUtility::SizeF GetSize();
         void SetSize(const MathUtility::SizeF value);
+        const MathUtility::Color4F GetTint();
+        void SetTint(const MathUtility::Color4F value);
+        const BlendOperation GetBlend();
+        void SetBlend(const BlendOperation value);
+        const BlendFactor GetBlendFactorSrc();
+        void SetBlendFactorSrc(const BlendFactor value);
+        const BlendFactor GetBlendFactorDst();
+        void SetBlendFactorDst(const BlendFactor value);
 
     private:
 
@@ -39,5 +47,10 @@ namespace NexgenRedux
         MathUtility::Vec3F m_position;
         MathUtility::SizeF m_size;
         std::vector<MeshUtility::Vertex> m_mesh;
+
+        MathUtility::Color4F m_tint;
+        BlendOperation m_blendOperation;
+        BlendFactor m_blendFactorSrc;
+        BlendFactor m_blendFactorDst;
     };
 }

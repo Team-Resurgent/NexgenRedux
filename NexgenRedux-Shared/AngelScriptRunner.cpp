@@ -543,6 +543,29 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
     if (m_engine->RegisterObjectMethod("Color4F", "bool opEq(const Color4F &in) const", asMETHODPR(MathUtility::Color4F, operator==, (const MathUtility::Color4F &) const, bool), asCALL_THISCALL) < 0) { return false; }
     if (m_engine->RegisterObjectMethod("Color4F", "bool opNotEq(const Color4F &in) const", asMETHODPR(MathUtility::Color4F, operator!=, (const MathUtility::Color4F &) const, bool), asCALL_THISCALL) < 0) { return false; }
 
+	if (m_engine->RegisterEnum("BlendOperation") < 0) { return false; }
+	if (m_engine->RegisterEnumValue("BlendOperation", "BlendOperationDisabled", BlendOperationDisabled) < 0) { return false; }
+	if (m_engine->RegisterEnumValue("BlendOperation", "BlendOperationAdd", BlendOperationAdd) < 0) { return false; }
+	if (m_engine->RegisterEnumValue("BlendOperation", "BlendOperationSubtract", BlendOperationSubtract) < 0) { return false; }
+	if (m_engine->RegisterEnumValue("BlendOperation", "BlendOperationReverseSubtract", BlendOperationReverseSubtract) < 0) { return false; }
+
+	if (m_engine->RegisterEnum("BlendFactor") < 0) { return false; }
+	if (m_engine->RegisterEnumValue("BlendFactor", "BlendFactorZero", BlendFactorZero) < 0) { return false; }
+	if (m_engine->RegisterEnumValue("BlendFactor", "BlendFactorOne", BlendFactorOne) < 0) { return false; }
+	if (m_engine->RegisterEnumValue("BlendFactor", "BlendFactorSrcColor", BlendFactorSrcColor) < 0) { return false; }
+	if (m_engine->RegisterEnumValue("BlendFactor", "BlendFactorOneMinusSrcColor", BlendFactorOneMinusSrcColor) < 0) { return false; }
+	if (m_engine->RegisterEnumValue("BlendFactor", "BlendFactorDstColor", BlendFactorDstColor) < 0) { return false; }
+	if (m_engine->RegisterEnumValue("BlendFactor", "BlendFactorOneMinusDstColor", BlendFactorOneMinusDstColor) < 0) { return false; }
+	if (m_engine->RegisterEnumValue("BlendFactor", "BlendFactorSrcAlpha", BlendFactorSrcAlpha) < 0) { return false; }
+	if (m_engine->RegisterEnumValue("BlendFactor", "BlendFactorOneMinusSrcAlpha", BlendFactorOneMinusSrcAlpha) < 0) { return false; }
+	if (m_engine->RegisterEnumValue("BlendFactor", "BlendFactorDstAlpha", BlendFactorDstAlpha) < 0) { return false; }
+	if (m_engine->RegisterEnumValue("BlendFactor", "BlendFactorOneMinusDstAlpha", BlendFactorOneMinusDstAlpha) < 0) { return false; }
+	if (m_engine->RegisterEnumValue("BlendFactor", "BlendFactorConstantColor", BlendFactorConstantColor) < 0) { return false; }
+	if (m_engine->RegisterEnumValue("BlendFactor", "BlendFactorOneMinusConstantColor", BlendFactorOneMinusConstantColor) < 0) { return false; }
+	if (m_engine->RegisterEnumValue("BlendFactor", "BlendFactorConstantAlpha", BlendFactorConstantAlpha) < 0) { return false; }
+	if (m_engine->RegisterEnumValue("BlendFactor", "BlendFactorOneMinusConstantAlpha", BlendFactorOneMinusConstantAlpha) < 0) { return false; }
+	if (m_engine->RegisterEnumValue("BlendFactor", "BlendFactorSrcAlphaSaturate", BlendFactorSrcAlphaSaturate) < 0) { return false; }
+
 	if (m_engine->RegisterGlobalFunction("void SeedRandom()", asFUNCTION(MathUtility::SeedRandom), asCALL_CDECL) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void SeedRandomWithValue(int value)", asFUNCTION(MathUtility::SeedRandomWithValue), asCALL_CDECL) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("double GetRandomDouble()", asFUNCTION(MathUtility::GetRandomDouble), asCALL_CDECL) < 0) { return false; }
@@ -659,6 +682,14 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	if (m_engine->RegisterObjectMethod("Sprite", "void SetPosition(Vec3F)", asMETHOD(Sprite, SetPosition), asCALL_THISCALL) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("Sprite", "SizeF& GetSize()", asMETHOD(Sprite, GetSize), asCALL_THISCALL) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("Sprite", "void SetSize(SizeF)", asMETHOD(Sprite, SetSize), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Sprite", "Color4F& GetTint()", asMETHOD(Sprite, GetTint), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Sprite", "void SetTint(Color4F)", asMETHOD(Sprite, SetTint), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Sprite", "BlendOperation GetBlend()", asMETHOD(Sprite, GetBlend), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Sprite", "void SetBlend(BlendOperation)", asMETHOD(Sprite, SetBlend), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Sprite", "BlendFactor GetBlendFactorSrc()", asMETHOD(Sprite, GetBlendFactorSrc), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Sprite", "void SetBlendFactorSrc(BlendFactor)", asMETHOD(Sprite, SetBlendFactorSrc), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Sprite", "BlendFactor GetBlendFactorDst()", asMETHOD(Sprite, GetBlendFactorDst), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Sprite", "void SetBlendFactorDst(BlendFactor)", asMETHOD(Sprite, SetBlendFactorDst), asCALL_THISCALL) < 0) { return false; }
 
 	if (m_engine->SetDefaultNamespace("SceneManager") < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("uint SceneManager::CreateScene(bool)", asFUNCTION(SceneManager::CreateScene), asCALL_CDECL) < 0) { return false; }

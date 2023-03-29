@@ -19,6 +19,11 @@ Sprite::Sprite(uint32_t nodeID) : Node(nodeID)
     m_uv = MathUtility::RectF(0, 0, 1, 1);
     m_position = MathUtility::Vec3F(0, 0, 0);
     m_size = MathUtility::SizeF(1, 1);
+
+    m_tint = MathUtility::Color4F(1, 1, 1, 1);
+    m_blendOperation = BlendOperationAdd;
+    m_blendFactorSrc = BlendFactorSrcAlpha;
+    m_blendFactorDst = BlendFactorOneMinusSrcAlpha;
 }
 
 Sprite::~Sprite(void)
@@ -62,10 +67,13 @@ void Sprite::Render()
 
     RenderStateManager* renderStateManager = RenderStateManager::GetInstance();
 
-    MathUtility::Vec3F rotation = GetRotation();
-
     renderStateManager->SetModelMatrix(GetTransform());
 	renderStateManager->SetTexture(m_textureID, TextureFilterLinear);
+
+    renderStateManager->SetTint(m_tint);
+    renderStateManager->SetBlend(m_blendOperation);
+    renderStateManager->SetBlendFactors(m_blendFactorSrc, m_blendFactorDst);
+
     renderStateManager->ApplyChanges();
     renderStateManager->RenderMesh(m_mesh);
 }
@@ -128,4 +136,44 @@ void Sprite::SetSize(const MathUtility::SizeF value)
     }
     m_size = value;
     m_meshIsDirty = true;
+}
+
+const MathUtility::Color4F Sprite::GetTint()
+{
+    return m_tint;
+}
+
+void Sprite::SetTint(const MathUtility::Color4F value)
+{
+    m_tint = value;
+}
+
+const BlendOperation Sprite::GetBlend()
+{
+    return m_blendOperation;
+}
+
+void Sprite::SetBlend(const BlendOperation value)
+{
+    m_blendOperation = value;
+}
+
+const BlendFactor Sprite::GetBlendFactorSrc()
+{
+    return m_blendFactorSrc;
+}
+
+void Sprite::SetBlendFactorSrc(const BlendFactor value)
+{
+    m_blendFactorSrc = value;
+}
+
+const BlendFactor Sprite::GetBlendFactorDst()
+{
+    return m_blendFactorDst;
+}
+
+void Sprite::SetBlendFactorDst(const BlendFactor value)
+{
+    m_blendFactorDst = value;
 }

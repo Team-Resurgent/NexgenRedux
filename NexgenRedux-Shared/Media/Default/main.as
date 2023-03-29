@@ -103,7 +103,13 @@ void Init()
     sprite2.SetAnchor(Vec3F(64, 64, 0));
     sprite2.SetTranslation(Vec3F(64, 64, 0));
     sprite2.SetSize(SizeF(128, 128));
+    sprite2.SetTint(Color4F(0.5, 0.9, 0.6, 1.0));
+    sprite2.SetBlend(BlendOperationAdd);
+    sprite2.SetBlendFactorSrc(BlendFactorSrcAlpha);
+    sprite2.SetBlendFactorDst(BlendFactorOneMinusSrcAlpha);
     NodeManager::AssignNode(sprite2, orthoCamera.GetID());
+
+
 
     // Sprite@ sprite2 = NodeManager::CreateSprite();
     // sprite2.SetTexturePath("hello2");

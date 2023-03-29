@@ -52,8 +52,8 @@ void RenderStateManager::Init(void)
     SetAmbientLight(MathUtility::Color3F(25 / 255.0f, 25 / 255.0f, 2 / 255.0f));
     SetTexture(0, TextureFilterLinear);
     SetTint(MathUtility::Color4F(1, 1, 1, 1));
-    SetBlend(BlendOperationDisabled);
-    SetBlendFactors(BlendFactorOne, BlendFactorOne);
+    SetBlend(BlendOperationAdd);
+    SetBlendFactors(BlendFactorSrcAlpha, BlendFactorOneMinusSrcAlpha);
     SetCulling(CullingOperationDisabled);
     SetDepth(DepthOperationLess);
     SetLights(LightsOperationDisabled);

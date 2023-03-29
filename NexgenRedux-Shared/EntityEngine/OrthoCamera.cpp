@@ -55,6 +55,11 @@ void OrthoCamera::Render()
     renderStateManager->SetModelMatrix(GetTransform());
     renderStateManager->SetViewMatrix(m_viewMatrix);
     renderStateManager->SetProjectionMatrix(m_projectionMatrix);
+
+    renderStateManager->SetTint(MathUtility::Color4F(1, 1, 1, 1));
+    renderStateManager->SetBlend(BlendOperationAdd);
+    renderStateManager->SetBlendFactors(BlendFactorSrcAlpha, BlendFactorOneMinusSrcAlpha);
+
     renderStateManager->ApplyChanges();
 }
 

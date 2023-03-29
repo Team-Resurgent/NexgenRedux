@@ -19,27 +19,27 @@ namespace NexgenRedux
         void Render();
 
         const MathUtility::Color4F GetClearColor();
-        void SetClearColor(MathUtility::Color4F value);
+        void SetClearColor(const MathUtility::Color4F value);
 
         const MathUtility::Vec3F GetEye();
-        void SetEye(MathUtility::Vec3F value);
+        void SetEye(const MathUtility::Vec3F value);
         const MathUtility::Vec3F GetTarget();
-        void SetTarget(MathUtility::Vec3F value);
+        void SetTarget(const MathUtility::Vec3F value);
         const MathUtility::Vec3F GetUp();
-        void SetUp(MathUtility::Vec3F value);
+        void SetUp(const MathUtility::Vec3F value);
 
         const float GetLeft();
-        void SetLeft(float value);
+        void SetLeft(const float value);
         const float GetRight();
-        void SetRight(float value);
+        void SetRight(const float value);
         const float GetBottom();
-        void SetBottom(float value);
+        void SetBottom(const float value);
         const float GetTop();
-        void SetTop(float value);
+        void SetTop(const float value);
         const float GetZNear();
-        void SetZNear(float value);
+        void SetZNear(const float value);
         const float GetZFar();
-        void SetZFar(float value);
+        void SetZFar(const float value);
         
     private:
 

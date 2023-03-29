@@ -90,7 +90,7 @@ const std::string Sprite::GetTexturePath()
     return m_texturePath;
 }
 
-void Sprite::SetTexturePath(const std::string& value)
+void Sprite::SetTexturePath(const std::string value)
 {
     if (m_texturePath == value) 
     {
@@ -105,7 +105,7 @@ const MathUtility::RectF Sprite::GetUV()
     return m_uv;
 }
 
-void Sprite::SetUV(const MathUtility::RectF& value)
+void Sprite::SetUV(const MathUtility::RectF value)
 {
     if (m_uv == value) 
     {
@@ -120,7 +120,7 @@ const MathUtility::Vec3F Sprite::GetPosition()
     return m_position;
 }
 
-void Sprite::SetPosition(const MathUtility::Vec3F& value)
+void Sprite::SetPosition(const MathUtility::Vec3F value)
 {
     if (m_position == value) 
     {
@@ -135,7 +135,7 @@ const MathUtility::SizeF Sprite::GetSize()
     return m_size;
 }
 
-void Sprite::SetSize(const MathUtility::SizeF& value)
+void Sprite::SetSize(const MathUtility::SizeF value)
 {
     if (m_size == value) 
     {

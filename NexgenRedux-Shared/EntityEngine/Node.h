@@ -30,15 +30,15 @@ namespace NexgenRedux
 
         // Properties
         const MathUtility::Vec3F GetAnchor();
-        void SetAnchor(MathUtility::Vec3F value);
+        void SetAnchor(const MathUtility::Vec3F value);
         const MathUtility::Vec3F GetRotation();
-        void SetRotation(MathUtility::Vec3F value);
+        void SetRotation(const MathUtility::Vec3F value);
         const MathUtility::Vec3F GetSkew();
-        void SetSkew(MathUtility::Vec3F value);
+        void SetSkew(const MathUtility::Vec3F value);
         const MathUtility::Vec3F GetScale();
-        void SetScale(MathUtility::Vec3F value);
+        void SetScale(const MathUtility::Vec3F value);
         const MathUtility::Vec3F GetTranslation();
-        void SetTranslation(MathUtility::Vec3F value);
+        void SetTranslation(const MathUtility::Vec3F value);
         const MathUtility::Matrix4x4 GetTransform();
 
     private:

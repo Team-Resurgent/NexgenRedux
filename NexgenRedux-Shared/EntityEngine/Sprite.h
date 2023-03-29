@@ -20,13 +20,13 @@ namespace NexgenRedux
         void Render();
 
         const std::string GetTexturePath();
-        void SetTexturePath(const std::string& value);
+        void SetTexturePath(const std::string value);
         const MathUtility::RectF GetUV();
-        void SetUV(const MathUtility::RectF& value);
+        void SetUV(const MathUtility::RectF value);
         const MathUtility::Vec3F GetPosition();
-        void SetPosition(const MathUtility::Vec3F& value);
+        void SetPosition(const MathUtility::Vec3F value);
         const MathUtility::SizeF GetSize();
-        void SetSize(const MathUtility::SizeF& value);
+        void SetSize(const MathUtility::SizeF value);
 
     private:
 

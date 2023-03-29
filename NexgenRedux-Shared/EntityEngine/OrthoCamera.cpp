@@ -61,7 +61,7 @@ const MathUtility::Color4F OrthoCamera::GetClearColor()
     return m_clearColor;
 }
 
-void OrthoCamera::SetClearColor(MathUtility::Color4F value)
+void OrthoCamera::SetClearColor(const MathUtility::Color4F value)
 {
     m_clearColor = value;
 }
@@ -71,7 +71,7 @@ const MathUtility::Vec3F OrthoCamera::GetEye()
     return m_eye;
 }
 
-void OrthoCamera::SetEye(MathUtility::Vec3F value)
+void OrthoCamera::SetEye(const MathUtility::Vec3F value)
 {
     if (m_eye == value) 
     {
@@ -86,7 +86,7 @@ const MathUtility::Vec3F OrthoCamera::GetTarget()
     return m_target;
 }
 
-void OrthoCamera::SetTarget(MathUtility::Vec3F value)
+void OrthoCamera::SetTarget(const MathUtility::Vec3F value)
 {
     if (m_target == value) 
     {
@@ -101,7 +101,7 @@ const MathUtility::Vec3F OrthoCamera::GetUp()
     return m_up;
 }
 
-void OrthoCamera::SetUp(MathUtility::Vec3F value)
+void OrthoCamera::SetUp(const MathUtility::Vec3F value)
 {
     if (m_up == value) 
     {
@@ -116,7 +116,7 @@ const float OrthoCamera::GetLeft()
     return m_left;
 }
 
-void OrthoCamera::SetLeft(float value)
+void OrthoCamera::SetLeft(const float value)
 {
     if (abs(m_left - value) <= 1e-6f) 
     {
@@ -131,7 +131,7 @@ const float OrthoCamera::GetRight()
     return m_right;
 }
 
-void OrthoCamera::SetRight(float value)
+void OrthoCamera::SetRight(const float value)
 {
     if (abs(m_right - value) > 1e-6f) 
     {
@@ -145,7 +145,7 @@ const float OrthoCamera::GetBottom()
     return m_bottom;
 }
 
-void OrthoCamera::SetBottom(float value)
+void OrthoCamera::SetBottom(const float value)
 {
     if (abs(m_bottom - value) <= 1e-6f) 
     {
@@ -160,7 +160,7 @@ const float OrthoCamera::GetTop()
     return m_top;
 }
 
-void OrthoCamera::SetTop(float value)
+void OrthoCamera::SetTop(const float value)
 {
     if (abs(m_top - value) <= 1e-6f) 
     {
@@ -175,7 +175,7 @@ const float OrthoCamera::GetZNear()
     return m_zNear;
 }
 
-void OrthoCamera::SetZNear(float value)
+void OrthoCamera::SetZNear(const float value)
 {
     if (abs(m_zNear - value) <= 1e-6f) 
     {
@@ -190,7 +190,7 @@ const float OrthoCamera::GetZFar()
     return m_zFar;
 }
 
-void OrthoCamera::SetZFar(float value)
+void OrthoCamera::SetZFar(const float value)
 {
     if (abs(m_zFar - value) <= 1e-6f) 
     {

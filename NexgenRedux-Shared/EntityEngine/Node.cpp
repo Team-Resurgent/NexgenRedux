@@ -71,7 +71,7 @@ const MathUtility::Vec3F Node::GetAnchor()
     return m_anchor;
 }
 
-void Node::SetAnchor(MathUtility::Vec3F value)
+void Node::SetAnchor(const MathUtility::Vec3F value)
 {
     if (m_anchor == value) 
     {
@@ -86,7 +86,7 @@ const MathUtility::Vec3F Node::GetRotation()
     return m_rotation;
 }
 
-void Node::SetRotation(MathUtility::Vec3F value)
+void Node::SetRotation(const MathUtility::Vec3F value)
 {
     if (m_rotation == value) 
     {
@@ -101,7 +101,7 @@ const MathUtility::Vec3F Node::GetSkew()
     return m_skew;
 }
 
-void Node::SetSkew(MathUtility::Vec3F value)
+void Node::SetSkew(const MathUtility::Vec3F value)
 {
     if (m_skew == value) 
     {
@@ -116,7 +116,7 @@ const MathUtility::Vec3F Node::GetScale()
     return m_scale;
 }
 
-void Node::SetScale(MathUtility::Vec3F value)
+void Node::SetScale(const MathUtility::Vec3F value)
 {
     if (m_scale == value) 
     {
@@ -131,7 +131,7 @@ const MathUtility::Vec3F Node::GetTranslation()
     return m_translation;
 }
 
-void Node::SetTranslation(MathUtility::Vec3F value)
+void Node::SetTranslation(const MathUtility::Vec3F value)
 {
     if (m_translation == value) 
     {

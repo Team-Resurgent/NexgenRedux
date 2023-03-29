@@ -924,9 +924,6 @@ void XboxOGRenderingHelper::DeleteTexture(const uint32_t& textureID)
 
 bool XboxOGRenderingHelper::RenderMesh(const std::vector<MeshUtility::Vertex>& mesh)
 {
-	RenderStateManager* renderStateManager = RenderStateManager::GetInstance();
-	renderStateManager->ApplyChanges();
-
 	uint32_t requestedSize =  mesh.size() * sizeof(MeshUtility::Vertex);
 	ResizeDynamicBufferIfNeeded(requestedSize);
 

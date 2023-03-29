@@ -50,6 +50,7 @@ void RenderStateManager::Init(void)
     SetViewMatrix(MathUtility::Matrix4x4());
     SetProjectionMatrix(MathUtility::Matrix4x4());
     SetAmbientLight(MathUtility::Color3F(25 / 255.0f, 25 / 255.0f, 2 / 255.0f));
+    SetTexture(0, TextureFilterLinear);
     SetTint(MathUtility::Color4F(1, 1, 1, 1));
     SetBlend(BlendOperationDisabled);
     SetBlendFactors(BlendFactorOne, BlendFactorOne);

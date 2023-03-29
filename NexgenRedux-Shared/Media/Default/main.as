@@ -99,7 +99,9 @@ void Init()
     
     sprite2.SetTexturePath("skin:sprite.png");
     sprite2.SetUV(RectF(0, 0, 1, 1));
-    sprite2.SetPosition(Vec3F(-64, -64, 10));
+    sprite2.SetPosition(Vec3F(0, 0, 10));
+    sprite2.SetAnchor(Vec3F(64, 64, 0));
+    sprite2.SetTranslation(Vec3F(64, 64, 0));
     sprite2.SetSize(SizeF(128, 128));
     NodeManager::AssignNode(sprite2, orthoCamera.GetID());
 

@@ -50,11 +50,12 @@ void OrthoCamera::Update(float dt)
 void OrthoCamera::Render()
 {
     RenderStateManager *renderStateManager = RenderStateManager::GetInstance();
-    
+
     renderStateManager->Clear(m_clearColor);
     renderStateManager->SetModelMatrix(GetTransform());
     renderStateManager->SetViewMatrix(m_viewMatrix);
     renderStateManager->SetProjectionMatrix(m_projectionMatrix);
+    renderStateManager->ApplyChanges();
 }
 
 const MathUtility::Color4F OrthoCamera::GetClearColor()

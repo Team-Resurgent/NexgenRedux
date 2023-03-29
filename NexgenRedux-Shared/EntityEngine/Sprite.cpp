@@ -51,8 +51,6 @@ void Sprite::Update(float dt)
         m_mesh = MeshUtility::CreateQuadXY(m_position, m_size, m_uv);
         m_meshIsDirty = false;
     }
-
-    MathUtility::Matrix4x4 matrix = GetTransform();
 }
 
 void Sprite::Render()
@@ -64,8 +62,11 @@ void Sprite::Render()
 
     RenderStateManager* renderStateManager = RenderStateManager::GetInstance();
 
+    MathUtility::Vec3F rotation = GetRotation();
+
     renderStateManager->SetModelMatrix(GetTransform());
 	renderStateManager->SetTexture(m_textureID, TextureFilterLinear);
+    renderStateManager->ApplyChanges();
     renderStateManager->RenderMesh(m_mesh);
 }
 

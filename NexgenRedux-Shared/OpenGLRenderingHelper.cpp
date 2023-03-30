@@ -29,7 +29,7 @@ namespace
 		"    vec3 normal;\n"
 		"    vec3 w_normal;\n"
 		"    vec2 uv;\n"
-		"    float fog;\n"
+		"    vec4 viewSpace;\n"
 		"};\n"
 
 		"struct vertex_shader_input {\n"
@@ -73,7 +73,7 @@ namespace
 		"    pixel_shader_input OUT;\n"
 		"    OUT.position = (uModelMatrix * vec4(IN.position, 1.0));\n"
 		"    OUT.w_position = OUT.position.xyz;\n"
-		"    OUT.fog = length(IN.cameraPosition.xyz - OUT.w_position);\n"
+		"    OUT.viewSpace = uViewMatrix * vec4(-IN.cameraPosition, 1);\n"
 		"    OUT.position = (uViewMatrix * OUT.position);\n"
 		"    OUT.position = (uProjectionMatrix * OUT.position);\n"
 		"    OUT.normal = IN.normal;\n"
@@ -87,7 +87,7 @@ namespace
 		"varying vec3 vNormalW;\n"
 		"varying vec3 vNormal;\n"
 		"varying vec2 vTexCoord;\n"
-		"varying float vFog;\n"
+		"varying vec4 vViewSpace;\n"
 
 		"void main() {\n"
 
@@ -105,7 +105,7 @@ namespace
 		"    vNormalW = result.w_normal;\n"
 		"    vNormal = result.normal;\n"
 		"    vTexCoord = result.uv;\n"
-		"    vFog = result.fog;\n"
+		"    vViewSpace = result.viewSpace;\n"
 
 		"}";
 
@@ -118,7 +118,7 @@ namespace
 		"    vec3 w_normal;\n"
 		"    vec3 normal;\n"
 		"    vec2 uv;\n"
-		"    float fog;\n"
+		"    vec4 viewSpace;\n"
 		"};\n"
 	
 		"uniform sampler2D uTextureDiffuse;\n"
@@ -151,7 +151,7 @@ namespace
 		"varying vec3 vNormalW;\n"
 		"varying vec3 vNormal;\n"
 		"varying vec2 vTexCoord;\n"
-		"varying float vFog;\n"
+		"varying vec4 vViewSpace;\n"
 
 		"float saturate_f(float x) {\n"
 		"  return clamp(x, 0.0, 1.0);\n"
@@ -271,17 +271,23 @@ namespace
 		"    vec4 final_color = vec4((albedo.xyz * ((ambient + diffuse_total) + specular_total)), albedo.w);\n"
 		"    final_color = (final_color * uTintColor);\n"
 
+
+//http://web.archive.org/web/20160615092925/http://in2gpu.com/2014/07/22/create-fog-shader/
+
 		"    if (uFogMode > 0) {\n"
 		"        float fog_coefficient = 1.0;\n"
 		"        if (uFogMode == 1) {\n"
-		"            fog_coefficient = ((uFogEnd - IN.fog) / (uFogEnd - uFogStart));\n"
+		"            float dist = abs(IN.viewSpace.z);\n"
+		"            fog_coefficient = ((uFogEnd - dist) / (uFogEnd - uFogStart));\n"
 		"        } else if (uFogMode == 2) {\n"
-		"            fog_coefficient = (1.0 / pow( 2.71828, (IN.fog * uFogDensity)));\n"
+		"            float dist = length(IN.viewSpace);\n"
+		"            fog_coefficient = (1.0 / exp(dist * uFogDensity));\n"
 		"        } else if (uFogMode == 3) {\n"
-		"            fog_coefficient = (1.0 / pow( 2.71828, (((IN.fog * IN.fog) * uFogDensity) * uFogDensity)));\n"
+		"            float dist = length(IN.viewSpace);\n"
+		"            fog_coefficient = (1.0 / exp((dist * uFogDensity) * (dist * uFogDensity)));\n"
 		"        }\n"
 		"        float fog_factor = clamp(fog_coefficient, 0.0, 1.0);\n"
-		"        final_color.xyz = ((fog_factor * final_color.xyz) + ((1.0 - fog_factor) * uFogColor.xyz));\n"
+		"        final_color.xyz = mix(uFogColor.xyz, final_color.xyz, fog_factor);\n"
 		"    }\n"
 
 		"    return final_color;\n"
@@ -295,7 +301,7 @@ namespace
 		"    IN.w_normal = vNormalW;\n"
 		"    IN.normal = vNormal;\n"
 		"    IN.uv = vTexCoord;\n"
-		"    IN.fog = vFog;\n"
+		"    IN.viewSpace = vViewSpace;\n"
 
 		"    gl_FragColor = process(IN);\n"
 
@@ -772,15 +778,15 @@ void OpenGLRenderingHelper::SetFog(const FogOperation& operation)
 	{
 		glUniform1i(value, 0);
 	}
-	else if (operation == FogOperationExponent) 
+	else if (operation == FogOperationLinear) 
 	{
 		glUniform1i(value, 1);
 	}
-	else if (operation == FogOperationExponent2) 
+	else if (operation == FogOperationExponent) 
 	{
 		glUniform1i(value, 2);
 	}
-	else if (operation == FogOperationLinear) 
+	else if (operation == FogOperationExponent2) 
 	{
 		glUniform1i(value, 3);
 	}

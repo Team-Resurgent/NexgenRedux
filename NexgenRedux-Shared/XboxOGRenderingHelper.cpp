@@ -168,7 +168,7 @@ void XboxOGRenderingHelper::SetTexture(const uint32_t& textureID, const TextureF
 	TextureContainer* textureContainer = GetTextureContainer(textureID);
 	if (textureContainer == NULL)
 	{
-		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("SetTexture: Texture with ID '%s' not found.", textureID));
+		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("SetTexture: Texture with ID '%i' not found.", textureID));
 		return;
 	}
 

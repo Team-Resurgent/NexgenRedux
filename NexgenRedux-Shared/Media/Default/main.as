@@ -89,11 +89,11 @@ void Init()
     SceneManager::AssignNode(orthoCamera, sceneID);
 
     Fog@ fog = NodeManager::CreateFog();
-    fog.SetFog(FogOperationExponent);
+    fog.SetFog(FogOperationLinear);
     fog.SetFogColor(Color3F(0, 0.6, 0));
     fog.SetFogStart(-1024);
     fog.SetFogEnd(1024);
-    fog.SetFogDensity(0.03);
+    fog.SetFogDensity(0.01);
     NodeManager::AssignNode(fog, orthoCamera.GetID());
     
     Lighting@ lighting = NodeManager::CreateLighting();

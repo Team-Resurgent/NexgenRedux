@@ -19,6 +19,7 @@ using namespace NexgenRedux;
 
 namespace
 {
+	//https://github.com/hughsk/glsl-fog
     const std::string defaultVertexShader =
 
 		"precision mediump float;\n"
@@ -73,7 +74,6 @@ namespace
 		"    pixel_shader_input OUT;\n"
 		"    OUT.position = (uModelMatrix * vec4(IN.position, 1.0));\n"
 		"    OUT.w_position = OUT.position.xyz;\n"
-		"    OUT.viewSpace = uViewMatrix * vec4(-IN.cameraPosition, 1);\n"
 		"    OUT.position = (uViewMatrix * OUT.position);\n"
 		"    OUT.position = (uProjectionMatrix * OUT.position);\n"
 		"    OUT.normal = IN.normal;\n"
@@ -87,7 +87,6 @@ namespace
 		"varying vec3 vNormalW;\n"
 		"varying vec3 vNormal;\n"
 		"varying vec2 vTexCoord;\n"
-		"varying vec4 vViewSpace;\n"
 
 		"void main() {\n"
 
@@ -105,7 +104,6 @@ namespace
 		"    vNormalW = result.w_normal;\n"
 		"    vNormal = result.normal;\n"
 		"    vTexCoord = result.uv;\n"
-		"    vViewSpace = result.viewSpace;\n"
 
 		"}";
 
@@ -118,7 +116,6 @@ namespace
 		"    vec3 w_normal;\n"
 		"    vec3 normal;\n"
 		"    vec2 uv;\n"
-		"    vec4 viewSpace;\n"
 		"};\n"
 	
 		"uniform sampler2D uTextureDiffuse;\n"
@@ -151,7 +148,6 @@ namespace
 		"varying vec3 vNormalW;\n"
 		"varying vec3 vNormal;\n"
 		"varying vec2 vTexCoord;\n"
-		"varying vec4 vViewSpace;\n"
 
 		"float saturate_f(float x) {\n"
 		"  return clamp(x, 0.0, 1.0);\n"
@@ -271,19 +267,16 @@ namespace
 		"    vec4 final_color = vec4((albedo.xyz * ((ambient + diffuse_total) + specular_total)), albedo.w);\n"
 		"    final_color = (final_color * uTintColor);\n"
 
-
-//http://web.archive.org/web/20160615092925/http://in2gpu.com/2014/07/22/create-fog-shader/
-
 		"    if (uFogMode > 0) {\n"
 		"        float fog_coefficient = 1.0;\n"
 		"        if (uFogMode == 1) {\n"
-		"            float dist = abs(IN.viewSpace.z);\n"
+		"            float dist = abs(vPositionW.z);\n"
 		"            fog_coefficient = ((uFogEnd - dist) / (uFogEnd - uFogStart));\n"
 		"        } else if (uFogMode == 2) {\n"
-		"            float dist = length(IN.viewSpace);\n"
+		"            float dist = distance(vCameraPosition.xyz, vPositionW.xyz);\n"
 		"            fog_coefficient = (1.0 / exp(dist * uFogDensity));\n"
 		"        } else if (uFogMode == 3) {\n"
-		"            float dist = length(IN.viewSpace);\n"
+		"            float dist = distance(vCameraPosition.xyz, vPositionW.xyz);\n"
 		"            fog_coefficient = (1.0 / exp((dist * uFogDensity) * (dist * uFogDensity)));\n"
 		"        }\n"
 		"        float fog_factor = clamp(fog_coefficient, 0.0, 1.0);\n"
@@ -301,7 +294,6 @@ namespace
 		"    IN.w_normal = vNormalW;\n"
 		"    IN.normal = vNormal;\n"
 		"    IN.uv = vTexCoord;\n"
-		"    IN.viewSpace = vViewSpace;\n"
 
 		"    gl_FragColor = process(IN);\n"
 

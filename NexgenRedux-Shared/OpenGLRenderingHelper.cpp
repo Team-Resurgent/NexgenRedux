@@ -406,6 +406,11 @@ void OpenGLRenderingHelper::SetAmbientLight(const MathUtility::Color3F& color)
 
 void OpenGLRenderingHelper::SetTexture(const uint32_t& textureID, const TextureFilter& filter) 
 {
+	if (textureID == 0)
+	{
+		return;
+	}
+
 	TextureContainer* textureContainer = GetTextureContainer(textureID);
 	if (textureContainer == NULL)
 	{

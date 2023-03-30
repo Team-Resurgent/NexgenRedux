@@ -613,15 +613,15 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	if (m_engine->RegisterGlobalFunction("uint GetAvailableMonitorCount(void)", asFUNCTION(AngelScriptMethods::GetAvailableMonitorCount), asCALL_GENERIC) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("MonitorVideoMode GetMonitorVideoMode(uint monitorIndex)", asFUNCTION(AngelScriptMethods::GetMonitorVideoMode), asCALL_GENERIC) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("array<MonitorVideoMode> @GetMonitorVideoModes(uint monitorIndex)", asFUNCTION(AngelScriptMethods::GetMonitorVideoModes), asCALL_GENERIC) < 0) { return false; }
-	if (m_engine->RegisterGlobalFunction("uint WindowCreateWithVideoMode(MonitorVideoMode monitorVideoMode, string &in title)", asFUNCTION(AngelScriptMethods::WindowCreateWithVideoMode), asCALL_GENERIC) < 0) { return false; }
-	if (m_engine->RegisterGlobalFunction("uint WindowCreateWithSize(uint width, uint height, string &in title)", asFUNCTION(AngelScriptMethods::WindowCreateWithSize), asCALL_GENERIC) < 0) { return false; }
-	if (m_engine->RegisterGlobalFunction("SizeI GetWindowSize(uint windowHandle)", asFUNCTION(AngelScriptMethods::GetWindowSize), asCALL_GENERIC) < 0) { return false; }
-	if (m_engine->RegisterGlobalFunction("void SetCursorMode(uint windowHandle, uint mode)", asFUNCTION(AngelScriptMethods::SetCursorMode), asCALL_GENERIC) < 0) { return false; }
-	if (m_engine->RegisterGlobalFunction("void WindowClose(uint windowHandle)", asFUNCTION(AngelScriptMethods::WindowClose), asCALL_GENERIC) < 0) { return false; }
-	if (m_engine->RegisterGlobalFunction("uint GetKeyPressed(uint windowHandle, uint key)", asFUNCTION(AngelScriptMethods::GetKeyPressed), asCALL_GENERIC) < 0) { return false; }
-	if (m_engine->RegisterGlobalFunction("uint GetMouseButtonPressed(uint windowHandle, uint button)", asFUNCTION(AngelScriptMethods::GetMouseButtonPressed), asCALL_GENERIC) < 0) { return false; }
-	if (m_engine->RegisterGlobalFunction("Vec2D GetMouseCursorPosition(uint windowHandle)", asFUNCTION(AngelScriptMethods::GetMouseCursorPosition), asCALL_GENERIC) < 0) { return false; }
-	if (m_engine->RegisterGlobalFunction("void SetMouseCursorPosition(uint windowHandle, double xPos, double yPos)", asFUNCTION(AngelScriptMethods::SetMouseCursorPosition), asCALL_GENERIC) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("void WindowCreateWithVideoMode(MonitorVideoMode monitorVideoMode, string &in title)", asFUNCTION(AngelScriptMethods::WindowCreateWithVideoMode), asCALL_GENERIC) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("void WindowCreateWithSize(uint width, uint height, string &in title)", asFUNCTION(AngelScriptMethods::WindowCreateWithSize), asCALL_GENERIC) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("SizeI GetWindowSize()", asFUNCTION(AngelScriptMethods::GetWindowSize), asCALL_GENERIC) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("void SetCursorMode(uint mode)", asFUNCTION(AngelScriptMethods::SetCursorMode), asCALL_GENERIC) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("void WindowClose()", asFUNCTION(AngelScriptMethods::WindowClose), asCALL_GENERIC) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("uint GetKeyPressed(uint key)", asFUNCTION(AngelScriptMethods::GetKeyPressed), asCALL_GENERIC) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("uint GetMouseButtonPressed(uint button)", asFUNCTION(AngelScriptMethods::GetMouseButtonPressed), asCALL_GENERIC) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("Vec2D GetMouseCursorPosition()", asFUNCTION(AngelScriptMethods::GetMouseCursorPosition), asCALL_GENERIC) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("void SetMouseCursorPosition(double xPos, double yPos)", asFUNCTION(AngelScriptMethods::SetMouseCursorPosition), asCALL_GENERIC) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("string GetClipboardString(void)", asFUNCTION(AngelScriptMethods::GetClipboardString), asCALL_GENERIC) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void SetClipboardString(string)", asFUNCTION(AngelScriptMethods::SetClipboardString), asCALL_GENERIC) < 0) { return false; }
 
@@ -638,27 +638,27 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	if (m_engine->RegisterGlobalFunction("uint GetJoystickHatCount(uint joystickID)", asFUNCTION(AngelScriptMethods::GetJoystickHatCount), asCALL_GENERIC) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("uint GetJoystickHatDirection(uint joystickID, uint hatIndex)", asFUNCTION(AngelScriptMethods::GetJoystickHatDirection), asCALL_GENERIC) < 0) { return false; }
 
-	if (m_engine->RegisterFuncdef("void WindowIconifyCallback(uint windowHandle, uint iconified)") < 0) { return false; }
+	if (m_engine->RegisterFuncdef("void WindowIconifyCallback(uint iconified)") < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void SetWindowIconifyCallback(WindowIconifyCallback @windowIconifyCallback)", asFUNCTION(AngelScriptRunner::SetWindowIconifyCallback), asCALL_GENERIC) < 0) { return false; }
-	if (m_engine->RegisterFuncdef("void WindowMaximizeCallback(uint windowHandle, uint maximized)") < 0) { return false; }
+	if (m_engine->RegisterFuncdef("void WindowMaximizeCallback(uint maximized)") < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void SetWindowMaximizeCallback(WindowMaximizeCallback @windowMaximizeCallback)", asFUNCTION(AngelScriptRunner::SetWindowMaximizeCallback), asCALL_GENERIC) < 0) { return false; }
-	if (m_engine->RegisterFuncdef("void WindowSizeCallback(uint windowHandle, uint width, uint height)") < 0) { return false; }
+	if (m_engine->RegisterFuncdef("void WindowSizeCallback(uint width, uint height)") < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void SetWindowSizeCallback(WindowSizeCallback @windowSizeCallback)", asFUNCTION(AngelScriptRunner::SetWindowSizeCallback), asCALL_GENERIC) < 0) { return false; }
-	if (m_engine->RegisterFuncdef("void WindowFocusCallback(uint windowHandle, uint focused)") < 0) { return false; }
+	if (m_engine->RegisterFuncdef("void WindowFocusCallback(uint focused)") < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void SetWindowFocusCallback(WindowFocusCallback @windowFocusCallback)", asFUNCTION(AngelScriptRunner::SetWindowFocusCallback), asCALL_GENERIC) < 0) { return false; }
-	if (m_engine->RegisterFuncdef("void WindowKeyboardKeyCallback(uint windowHandle, uint key, uint scancode, uint action, uint modifier)") < 0) { return false; }
+	if (m_engine->RegisterFuncdef("void WindowKeyboardKeyCallback(uint key, uint scancode, uint action, uint modifier)") < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void SetWindowKeyboardKeyCallback(WindowKeyboardKeyCallback @windowKeyboardKeyCallback)", asFUNCTION(AngelScriptRunner::SetWindowKeyboardKeyCallback), asCALL_GENERIC) < 0) { return false; }
-	if (m_engine->RegisterFuncdef("void WindowKeyboardCharacterCallback(uint windowHandle, uint codepoint)") < 0) { return false; }
+	if (m_engine->RegisterFuncdef("void WindowKeyboardCharacterCallback(uint codepoint)") < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void SetWindowKeyboardCharacterCallback(WindowKeyboardCharacterCallback @windowKeyboardCharacterCallback)", asFUNCTION(AngelScriptRunner::SetWindowKeyboardCharacterCallback), asCALL_GENERIC) < 0) { return false; }
-	if (m_engine->RegisterFuncdef("void WindowMouseCursorPositionCallback(uint windowHandle, double xPos, double yPos)") < 0) { return false; }
+	if (m_engine->RegisterFuncdef("void WindowMouseCursorPositionCallback(double xPos, double yPos)") < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void SetWindowMouseCursorPositionCallback(WindowMouseCursorPositionCallback @windowMouseCursorPositionCallback)", asFUNCTION(AngelScriptRunner::SetWindowMouseCursorPositionCallback), asCALL_GENERIC) < 0) { return false; }
-	if (m_engine->RegisterFuncdef("void WindowMouseCursorEnterCallback(uint windowHandle, uint entered)") < 0) { return false; }
+	if (m_engine->RegisterFuncdef("void WindowMouseCursorEnterCallback(uint entered)") < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void SetWindowMouseCursorEnterCallback(WindowMouseCursorEnterCallback @windowMouseCursorEnterCallback)", asFUNCTION(AngelScriptRunner::SetWindowMouseCursorEnterCallback), asCALL_GENERIC) < 0) { return false; }
-	if (m_engine->RegisterFuncdef("void WindowMouseButtonCallback(uint windowHandle, uint button, uint action, uint modifier)") < 0) { return false; }
+	if (m_engine->RegisterFuncdef("void WindowMouseButtonCallback(uint button, uint action, uint modifier)") < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void SetWindowMouseButtonCallback(WindowMouseButtonCallback @windowMouseButtonCallback)", asFUNCTION(AngelScriptRunner::SetWindowMouseButtonCallback), asCALL_GENERIC) < 0) { return false; }
-	if (m_engine->RegisterFuncdef("void WindowMouseScrollCallback(uint windowHandle, double xOffset, double yOffset)") < 0) { return false; }
+	if (m_engine->RegisterFuncdef("void WindowMouseScrollCallback(double xOffset, double yOffset)") < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void SetWindowMouseScrollCallback(WindowMouseScrollCallback @windowMouseScrollCallback)", asFUNCTION(AngelScriptRunner::SetWindowMouseScrollCallback), asCALL_GENERIC) < 0) { return false; }
-	if (m_engine->RegisterFuncdef("void WindowDropCallback(uint windowHandle, array<string> paths)") < 0) { return false; }
+	if (m_engine->RegisterFuncdef("void WindowDropCallback(array<string> paths)") < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void SetWindowDropCallback(WindowDropCallback @windowDropCallback)", asFUNCTION(AngelScriptRunner::SetWindowDropCallback), asCALL_GENERIC) < 0) { return false; }
 	if (m_engine->RegisterFuncdef("void JoystickConnectCallback(uint joystickID, uint event)") < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void SetJoystickConnectCallback(JoystickConnectCallback @joystickConnectCallback)", asFUNCTION(AngelScriptRunner::SetJoystickConnectCallback), asCALL_GENERIC) < 0) { return false; }
@@ -876,7 +876,7 @@ bool AngelScriptRunner::ExecuteInit(void)
 	return success;
 }
 
-bool AngelScriptRunner::ExecuteRender(uint32_t windowHandle, double dt)
+bool AngelScriptRunner::ExecuteRender(double dt)
 {
 	asIScriptContext *context = m_engine->CreateContext();
 	if (context == NULL) 
@@ -884,7 +884,7 @@ bool AngelScriptRunner::ExecuteRender(uint32_t windowHandle, double dt)
 		return false;
 	}
 
-	asIScriptFunction *renderFunction = m_engine->GetModule(0)->GetFunctionByDecl("void Render(uint, double)");
+	asIScriptFunction *renderFunction = m_engine->GetModule(0)->GetFunctionByDecl("void Render(double)");
 	if (renderFunction == NULL)
 	{
 		context->Release();
@@ -897,15 +897,14 @@ bool AngelScriptRunner::ExecuteRender(uint32_t windowHandle, double dt)
 		return false;
 	}
 
-	context->SetArgDWord(0, windowHandle);
-	context->SetArgDouble(1, dt);
+	context->SetArgDouble(0, dt);
 
 	bool success = Execute(context);
 	context->Release();
 	return success;
 }
 
-bool AngelScriptRunner::ExecuteWindowIconifyCallback(uint32_t windowHandle, uint32_t iconified)
+bool AngelScriptRunner::ExecuteWindowIconifyCallback(uint32_t iconified)
 {
 	asIScriptContext *context = m_engine->CreateContext();
 	if (context == NULL) 
@@ -925,15 +924,14 @@ bool AngelScriptRunner::ExecuteWindowIconifyCallback(uint32_t windowHandle, uint
 		return false;
 	}
 
-	context->SetArgDWord(0, windowHandle);
-	context->SetArgDWord(1, iconified);
+	context->SetArgDWord(0, iconified);
 
 	bool success = Execute(context);
 	context->Release();
 	return success;
 }
 
-bool AngelScriptRunner::ExecuteWindowMaximizeCallback(uint32_t windowHandle, uint32_t maximized)
+bool AngelScriptRunner::ExecuteWindowMaximizeCallback(uint32_t maximized)
 {
 	asIScriptContext *context = m_engine->CreateContext();
 	if (context == NULL) 
@@ -953,15 +951,14 @@ bool AngelScriptRunner::ExecuteWindowMaximizeCallback(uint32_t windowHandle, uin
 		return false;
 	}
 
-	context->SetArgDWord(0, windowHandle);
-	context->SetArgDWord(1, maximized);
+	context->SetArgDWord(0, maximized);
 
 	bool success = Execute(context);
 	context->Release();
 	return success;
 }
 
-bool AngelScriptRunner::ExecuteWindowSizeCallback(uint32_t windowHandle, uint32_t width, uint32_t height)
+bool AngelScriptRunner::ExecuteWindowSizeCallback(uint32_t width, uint32_t height)
 {
 	asIScriptContext *context = m_engine->CreateContext();
 	if (context == NULL) 
@@ -981,16 +978,15 @@ bool AngelScriptRunner::ExecuteWindowSizeCallback(uint32_t windowHandle, uint32_
 		return false;
 	}
 
-	context->SetArgDWord(0, windowHandle);
-	context->SetArgDWord(1, width);
-	context->SetArgDWord(2, height);
+	context->SetArgDWord(0, width);
+	context->SetArgDWord(1, height);
 
 	bool success = Execute(context);
 	context->Release();
 	return success;
 }
 
-bool AngelScriptRunner::ExecuteWindowFocusCallback(uint32_t windowHandle, uint32_t focused)
+bool AngelScriptRunner::ExecuteWindowFocusCallback(uint32_t focused)
 {
 	asIScriptContext *context = m_engine->CreateContext();
 	if (context == NULL) 
@@ -1010,15 +1006,14 @@ bool AngelScriptRunner::ExecuteWindowFocusCallback(uint32_t windowHandle, uint32
 		return false;
 	}
 
-	context->SetArgDWord(0, windowHandle);
-	context->SetArgDWord(1, focused);
+	context->SetArgDWord(0, focused);
 
 	bool success = Execute(context);
 	context->Release();
 	return success;
 }
 
-bool AngelScriptRunner::ExecuteWindowKeyboardKeyCallback(uint32_t windowHandle, uint32_t key, uint32_t scancode, uint32_t action, uint32_t modifier)
+bool AngelScriptRunner::ExecuteWindowKeyboardKeyCallback(uint32_t key, uint32_t scancode, uint32_t action, uint32_t modifier)
 {
 	asIScriptContext *context = m_engine->CreateContext();
 	if (context == NULL) 
@@ -1038,18 +1033,17 @@ bool AngelScriptRunner::ExecuteWindowKeyboardKeyCallback(uint32_t windowHandle, 
 		return false;
 	}
 
-	context->SetArgDWord(0, windowHandle);
-	context->SetArgDWord(1, key);
-	context->SetArgDWord(2, scancode);
-	context->SetArgDWord(3, action);
-	context->SetArgDWord(4, modifier);
+	context->SetArgDWord(0, key);
+	context->SetArgDWord(1, scancode);
+	context->SetArgDWord(2, action);
+	context->SetArgDWord(3, modifier);
 
 	bool success = Execute(context);
 	context->Release();
 	return success;
 }
 
-bool AngelScriptRunner::ExecuteWindowKeyboardCharacterCallback(uint32_t windowHandle, uint32_t codepoint)
+bool AngelScriptRunner::ExecuteWindowKeyboardCharacterCallback(uint32_t codepoint)
 {
 	asIScriptContext *context = m_engine->CreateContext();
 	if (context == NULL) 
@@ -1069,15 +1063,14 @@ bool AngelScriptRunner::ExecuteWindowKeyboardCharacterCallback(uint32_t windowHa
 		return false;
 	}
 
-	context->SetArgDWord(0, windowHandle);
-	context->SetArgDWord(1, codepoint);
+	context->SetArgDWord(0, codepoint);
 
 	bool success = Execute(context);
 	context->Release();
 	return success;
 }
 
-bool AngelScriptRunner::ExecuteWindowMouseCursorPositionCallback(uint32_t windowHandle, double xPos, double yPos)
+bool AngelScriptRunner::ExecuteWindowMouseCursorPositionCallback(double xPos, double yPos)
 {
 	asIScriptContext *context = m_engine->CreateContext();
 	if (context == NULL) 
@@ -1097,16 +1090,15 @@ bool AngelScriptRunner::ExecuteWindowMouseCursorPositionCallback(uint32_t window
 		return false;
 	}
 
-	context->SetArgDWord(0, windowHandle);
-	context->SetArgDouble(1, xPos);
-	context->SetArgDouble(2, yPos);
+	context->SetArgDouble(0, xPos);
+	context->SetArgDouble(1, yPos);
 
 	bool success = Execute(context);
 	context->Release();
 	return success;
 }
 
-bool AngelScriptRunner::ExecuteWindowMouseCursorEnterCallback(uint32_t windowHandle, uint32_t entered)
+bool AngelScriptRunner::ExecuteWindowMouseCursorEnterCallback(uint32_t entered)
 {
 	asIScriptContext *context = m_engine->CreateContext();
 	if (context == NULL) 
@@ -1126,15 +1118,14 @@ bool AngelScriptRunner::ExecuteWindowMouseCursorEnterCallback(uint32_t windowHan
 		return false;
 	}
 
-	context->SetArgDWord(0, windowHandle);
-	context->SetArgDWord(1, entered);
+	context->SetArgDWord(0, entered);
 
 	bool success = Execute(context);
 	context->Release();
 	return success;
 }
 
-bool AngelScriptRunner::ExecuteWindowMouseButtonCallback(uint32_t windowHandle, uint32_t button, uint32_t action, uint32_t modifier)
+bool AngelScriptRunner::ExecuteWindowMouseButtonCallback(uint32_t button, uint32_t action, uint32_t modifier)
 {
 	asIScriptContext *context = m_engine->CreateContext();
 	if (context == NULL) 
@@ -1154,17 +1145,16 @@ bool AngelScriptRunner::ExecuteWindowMouseButtonCallback(uint32_t windowHandle, 
 		return false;
 	}
 
-	context->SetArgDWord(0, windowHandle);
-	context->SetArgDWord(1, button);
-	context->SetArgDWord(2, action);
-	context->SetArgDWord(3, modifier);
+	context->SetArgDWord(0, button);
+	context->SetArgDWord(1, action);
+	context->SetArgDWord(2, modifier);
 
 	bool success = Execute(context);
 	context->Release();
 	return success;
 }
 
-bool AngelScriptRunner::ExecuteWindowMouseScrollCallback(uint32_t windowHandle, double xOffset, double yOffset)
+bool AngelScriptRunner::ExecuteWindowMouseScrollCallback(double xOffset, double yOffset)
 {
 	asIScriptContext *context = m_engine->CreateContext();
 	if (context == NULL) 
@@ -1184,16 +1174,15 @@ bool AngelScriptRunner::ExecuteWindowMouseScrollCallback(uint32_t windowHandle, 
 		return false;
 	}
 
-	context->SetArgDWord(0, windowHandle);
-	context->SetArgDouble(1, xOffset);
-	context->SetArgDouble(2, yOffset);
+	context->SetArgDouble(0, xOffset);
+	context->SetArgDouble(1, yOffset);
 
 	bool success = Execute(context);
 	context->Release();
 	return success;
 }
 
-bool AngelScriptRunner::ExecuteWindowDropCallback(uint32_t windowHandle, std::vector<std::string> paths)
+bool AngelScriptRunner::ExecuteWindowDropCallback(std::vector<std::string> paths)
 {
 	asIScriptContext *context = m_engine->CreateContext();
 	if (context == NULL) 
@@ -1212,8 +1201,6 @@ bool AngelScriptRunner::ExecuteWindowDropCallback(uint32_t windowHandle, std::ve
 		context->Release();
 		return false;
 	}
-
-	context->SetArgDWord(0, windowHandle);
 
 	asITypeInfo *arrayType = m_engine->GetTypeInfoByDecl("array<string>");
 	CScriptArray *array = CScriptArray::Create(arrayType, (uint32_t)paths.size());

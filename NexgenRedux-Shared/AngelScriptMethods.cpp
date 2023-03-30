@@ -79,8 +79,7 @@ void AngelScriptMethods::WindowCreateWithSize(asIScriptGeneric* gen)
 	uint32_t width = gen->GetArgDWord(0);
 	uint32_t height = gen->GetArgDWord(1);
 	std::string* title = (std::string*)gen->GetArgAddress(2);
-	uint32_t windowHandle;
-	if (WindowManager::GetInstance()->WindowCreateWithSize(width, height, *title, windowHandle) == false) 
+	if (WindowManager::GetInstance()->WindowCreateWithSize(width, height, *title) == false) 
 	{
 		asIScriptContext *context = asGetActiveContext();
 		if (context) 
@@ -89,16 +88,13 @@ void AngelScriptMethods::WindowCreateWithSize(asIScriptGeneric* gen)
 			return;
 		}
 	}
-	*(uint32_t*)gen->GetAddressOfReturnLocation() = windowHandle;
 }
 
 void AngelScriptMethods::GetWindowSize(asIScriptGeneric* gen)
 {
-	uint32_t windowHandle = gen->GetArgDWord(0);
-	
 	uint32_t width;
 	uint32_t height;
-	if (WindowManager::GetInstance()->GetWindowSize(windowHandle, width, height) == false) 
+	if (WindowManager::GetInstance()->GetWindowSize(width, height) == false) 
 	{
 		asIScriptContext *context = asGetActiveContext();
 		if (context) 
@@ -117,8 +113,7 @@ void AngelScriptMethods::WindowCreateWithVideoMode(asIScriptGeneric* gen)
 {
 	MonitorVideoMode* monitorVideoMode = (MonitorVideoMode*)gen->GetArgObject(0);
 	std::string* title = (std::string*)gen->GetArgAddress(1);
-	uint32_t windowHandle;
-	if (WindowManager::GetInstance()->WindowCreateWithVideoMode(*monitorVideoMode, *title, windowHandle) == false) 
+	if (WindowManager::GetInstance()->WindowCreateWithVideoMode(*monitorVideoMode, *title) == false) 
 	{
 		asIScriptContext *context = asGetActiveContext();
 		if (context) 
@@ -127,14 +122,12 @@ void AngelScriptMethods::WindowCreateWithVideoMode(asIScriptGeneric* gen)
 			return;
 		}
 	}
-	*(uint32_t*)gen->GetAddressOfReturnLocation() = windowHandle;
 }
 
 void AngelScriptMethods::SetCursorMode(asIScriptGeneric* gen)
 {
-	uint32_t windowHandle = gen->GetArgDWord(0);
-	uint32_t mode = gen->GetArgDWord(1);
-	if (WindowManager::GetInstance()->SetCursorMode(windowHandle, mode) == false) 
+	uint32_t mode = gen->GetArgDWord(0);
+	if (WindowManager::GetInstance()->SetCursorMode(mode) == false) 
 	{
 		asIScriptContext *context = asGetActiveContext();
 		if (context) 
@@ -147,8 +140,7 @@ void AngelScriptMethods::SetCursorMode(asIScriptGeneric* gen)
 
 void AngelScriptMethods::WindowClose(asIScriptGeneric* gen)
 {
-	uint32_t windowHandle = gen->GetArgDWord(0);
-	if (WindowManager::GetInstance()->WindowClose(windowHandle) == false) 
+	if (WindowManager::GetInstance()->WindowClose() == false) 
 	{
 		asIScriptContext *context = asGetActiveContext();
 		if (context) 
@@ -176,11 +168,10 @@ void AngelScriptMethods::GetClipboardString(asIScriptGeneric* gen)
 
 void AngelScriptMethods::GetKeyPressed(asIScriptGeneric* gen)
 {
-	uint32_t windowHandle = gen->GetArgDWord(0);
-	uint32_t key = gen->GetArgDWord(1);
+	uint32_t key = gen->GetArgDWord(0);
 
 	uint32_t pressed;
-	if (WindowManager::GetInstance()->GetKeyPressed(windowHandle, key, pressed) == false) 
+	if (WindowManager::GetInstance()->GetKeyPressed(key, pressed) == false) 
 	{
 		asIScriptContext *context = asGetActiveContext();
 		if (context) 
@@ -194,11 +185,10 @@ void AngelScriptMethods::GetKeyPressed(asIScriptGeneric* gen)
 
 void AngelScriptMethods::GetMouseButtonPressed(asIScriptGeneric* gen)
 {
-	uint32_t windowHandle = gen->GetArgDWord(0);
-	uint32_t button = gen->GetArgDWord(1);
+	uint32_t button = gen->GetArgDWord(0);
 
 	uint32_t pressed;
-	if (WindowManager::GetInstance()->GetMouseButtonPressed(windowHandle, button, pressed) == false) 
+	if (WindowManager::GetInstance()->GetMouseButtonPressed(button, pressed) == false) 
 	{
 		asIScriptContext *context = asGetActiveContext();
 		if (context) 
@@ -212,11 +202,9 @@ void AngelScriptMethods::GetMouseButtonPressed(asIScriptGeneric* gen)
 
 void AngelScriptMethods::GetMouseCursorPosition(asIScriptGeneric* gen)
 {
-	uint32_t windowHandle = gen->GetArgDWord(0);
-
 	double xPos;
 	double yPos;
-	if (WindowManager::GetInstance()->GetWindowHelper()->GetMouseCursorPosition(windowHandle, xPos, yPos) == false) 
+	if (WindowManager::GetInstance()->GetWindowHelper()->GetMouseCursorPosition(xPos, yPos) == false) 
 	{
 		asIScriptContext *context = asGetActiveContext();
 		if (context) 
@@ -232,12 +220,11 @@ void AngelScriptMethods::GetMouseCursorPosition(asIScriptGeneric* gen)
 
 void AngelScriptMethods::SetMouseCursorPosition(asIScriptGeneric* gen)
 {
-	uint32_t windowHandle = gen->GetArgDWord(0);
-	double xPos = gen->GetArgDouble(1);
-	double yPos = gen->GetArgDouble(2);
+	double xPos = gen->GetArgDouble(0);
+	double yPos = gen->GetArgDouble(1);
 
 	std::string value;
-	if (WindowManager::GetInstance()->SetMouseCursorPosition(windowHandle, xPos, yPos) == false) 
+	if (WindowManager::GetInstance()->SetMouseCursorPosition(xPos, yPos) == false) 
 	{
 		asIScriptContext *context = asGetActiveContext();
 		if (context) 

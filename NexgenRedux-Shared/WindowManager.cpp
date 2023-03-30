@@ -60,11 +60,6 @@ IWindowHelper* WindowManager::GetWindowHelper(void)
 	return m_windowHelper;
 }
 
-std::vector<uint32_t> WindowManager::GetWindowHandles(void)
-{
-	return m_windowHelper->GetWindowHandles();
-}
-
 bool WindowManager::GetAvailableMonitorCount(uint32_t& monitorCount)
 {
 	return m_windowHelper->GetAvailableMonitorCount(monitorCount);
@@ -80,39 +75,44 @@ bool WindowManager::GetMonitorVideoModes(uint32_t monitorIndex, std::vector<Moni
 	return m_windowHelper->GetMonitorVideoModes(monitorIndex, monitorVideoModes);
 }
 
-bool WindowManager::WindowCreateWithVideoMode(MonitorVideoMode monitorVideoMode, std::string title, uint32_t& windowHandle)
+bool WindowManager::WindowCreateWithVideoMode(MonitorVideoMode monitorVideoMode, std::string title)
 {
-	return m_windowHelper->WindowCreateWithVideoMode(monitorVideoMode, title, windowHandle);
+	return m_windowHelper->WindowCreateWithVideoMode(monitorVideoMode, title);
 }
 
-bool WindowManager::WindowCreateWithSize(uint32_t width, uint32_t height, std::string title, uint32_t& windowHandle)
+bool WindowManager::WindowCreateWithSize(uint32_t width, uint32_t height, std::string title)
 {
-	return m_windowHelper->WindowCreateWithSize(width, height, title, windowHandle);
+	return m_windowHelper->WindowCreateWithSize(width, height, title);
 }
 
-bool WindowManager::GetWindowSize(uint32_t windowHandle, uint32_t& width, uint32_t& height)
+void* WindowManager::GetWindowPtr()
 {
-	return m_windowHelper->GetWindowSize(windowHandle, width, height);
+	return m_windowHelper->GetWindowPtr();
 }
 
-bool WindowManager::SetCursorMode(uint32_t windowHandle, uint32_t mode)
+bool WindowManager::GetWindowSize(uint32_t& width, uint32_t& height)
 {
-	return m_windowHelper->SetCursorMode(windowHandle, mode);
+	return m_windowHelper->GetWindowSize(width, height);
 }
 
-bool WindowManager::WindowClose(uint32_t windowHandle)
+bool WindowManager::SetCursorMode(uint32_t mode)
 {
-	return m_windowHelper->WindowClose(windowHandle);
+	return m_windowHelper->SetCursorMode(mode);
 }
 
-bool WindowManager::WindowPreRender(uint32_t& windowHandle, bool& exitRequested)
+bool WindowManager::WindowClose()
 {
-	return m_windowHelper->WindowPreRender(windowHandle, exitRequested);
+	return m_windowHelper->WindowClose();
 }
 
-bool WindowManager::WindowPostRender(uint32_t& windowHandle)
+bool WindowManager::WindowPreRender(bool& exitRequested)
+{
+	return m_windowHelper->WindowPreRender(exitRequested);
+}
+
+bool WindowManager::WindowPostRender()
 { 
-	return m_windowHelper->WindowPostRender(windowHandle);
+	return m_windowHelper->WindowPostRender();
 }
 
 void WindowManager::PollEvents(void)
@@ -126,11 +126,9 @@ bool WindowManager::RenderLoop()
 
 	renderStateManager->Init();
 
-	std::vector<uint32_t> windowHandles = GetWindowHandles();
-
 	float f = 0;
 
-	if (windowHandles.size() > 0) 
+	if (m_windowHelper->GetWindowPtr() != NULL) 
 	{
 		bool exitRequested = false;
 		while (exitRequested == false)
@@ -138,34 +136,29 @@ bool WindowManager::RenderLoop()
 			uint64_t now = TimeUtility::GetMillisecondsNow();
 			uint64_t previousNow = now;
 
-			windowHandles = GetWindowHandles();
-
-			for (uint32_t i = 0; i < windowHandles.size(); i++)
+			double dt = TimeUtility::GetDurationSeconds(previousNow, now);
+			if (WindowPreRender(exitRequested) == false)
 			{
-				uint32_t windowHandle = windowHandles.at(i);
-				double dt = TimeUtility::GetDurationSeconds(previousNow, now);
-                if (WindowPreRender(windowHandle, exitRequested) == false)
-				{
-					DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "WindowPreRender failed.");
-					return false;
-				}
-
-				SceneManager::Update((float)dt);
-
-				if (AngelScriptRunner::ExecuteRender(windowHandle, dt) == false)
-				{
-					DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteRender failed.");
-					return false;
-				}
-
-				SceneManager::Render();
-
-				if (WindowPostRender(windowHandle) == false)
-				{
-					DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "WindowPostRender failed.");
-					return false;
-				}
+				DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "WindowPreRender failed.");
+				return false;
 			}
+
+			SceneManager::Update((float)dt);
+
+			if (AngelScriptRunner::ExecuteRender(dt) == false)
+			{
+				DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteRender failed.");
+				return false;
+			}
+
+			SceneManager::Render();
+
+			if (WindowPostRender() == false)
+			{
+				DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "WindowPostRender failed.");
+				return false;
+			}
+			
 			PollEvents();
 			previousNow = now;
 		}
@@ -173,24 +166,24 @@ bool WindowManager::RenderLoop()
     return true;
 }
 
-bool WindowManager::GetKeyPressed(uint32_t windowHandle, uint32_t key, uint32_t& pressed)
+bool WindowManager::GetKeyPressed(uint32_t key, uint32_t& pressed)
 {
-	return m_windowHelper->GetKeyPressed(windowHandle, key, pressed);
+	return m_windowHelper->GetKeyPressed(key, pressed);
 }
 
-bool WindowManager::GetMouseButtonPressed(uint32_t windowHandle, uint32_t button, uint32_t& pressed)
+bool WindowManager::GetMouseButtonPressed(uint32_t button, uint32_t& pressed)
 {
-	return m_windowHelper->GetMouseButtonPressed(windowHandle, button, pressed);
+	return m_windowHelper->GetMouseButtonPressed(button, pressed);
 }
 
-bool WindowManager::GetMouseCursorPosition(uint32_t windowHandle, double& xPos, double& yPos)
+bool WindowManager::GetMouseCursorPosition(double& xPos, double& yPos)
 {
-	return m_windowHelper->GetMouseCursorPosition(windowHandle, xPos, yPos);
+	return m_windowHelper->GetMouseCursorPosition(xPos, yPos);
 }
 
-bool WindowManager::SetMouseCursorPosition(uint32_t windowHandle, double xPos, double yPos)
+bool WindowManager::SetMouseCursorPosition(double xPos, double yPos)
 {
-	return m_windowHelper->SetMouseCursorPosition(windowHandle, xPos, yPos);
+	return m_windowHelper->SetMouseCursorPosition(xPos, yPos);
 }
 
 bool WindowManager::GetClipboardString(std::string& value)

@@ -23,23 +23,23 @@ namespace NexgenRedux
 		static void Close();
 
 		IWindowHelper* GetWindowHelper(void);
-		std::vector<uint32_t> GetWindowHandles(void);
 		bool GetAvailableMonitorCount(uint32_t& monitorCount);
 		bool GetMonitorVideoMode(uint32_t monitorIndex, MonitorVideoMode& monitorVideoMode);
 		bool GetMonitorVideoModes(uint32_t monitorIndex, std::vector<MonitorVideoMode>& monitorVideoModes);
-		bool WindowCreateWithVideoMode(MonitorVideoMode monitorVideoMode, std::string title, uint32_t& windowHandle);
-		bool WindowCreateWithSize(uint32_t width, uint32_t height, std::string title, uint32_t& windowHandle);
-		bool GetWindowSize(uint32_t windowHandle, uint32_t& width, uint32_t& height);
-		bool SetCursorMode(uint32_t windowHandle, uint32_t mode);
-        bool WindowClose(uint32_t windowHandle);
-		bool WindowPreRender(uint32_t& windowHandle, bool& exitRequested);
-		bool WindowPostRender(uint32_t& windowHandle);
+		bool WindowCreateWithVideoMode(MonitorVideoMode monitorVideoMode, std::string title);
+		bool WindowCreateWithSize(uint32_t width, uint32_t height, std::string title);
+		void* GetWindowPtr();
+		bool GetWindowSize(uint32_t& width, uint32_t& height);
+		bool SetCursorMode(uint32_t mode);
+        bool WindowClose();
+		bool WindowPreRender(bool& exitRequested);
+		bool WindowPostRender();
 		void PollEvents(void);
 		bool RenderLoop();
-		bool GetKeyPressed(uint32_t windowHandle, uint32_t key, uint32_t& pressed);
-		bool GetMouseButtonPressed(uint32_t windowHandle, uint32_t button, uint32_t& pressed);
-		bool GetMouseCursorPosition(uint32_t windowHandle, double& xPos, double& yPos);
-		bool SetMouseCursorPosition(uint32_t windowHandle, double xPos, double yPos);
+		bool GetKeyPressed(uint32_t key, uint32_t& pressed);
+		bool GetMouseButtonPressed(uint32_t button, uint32_t& pressed);
+		bool GetMouseCursorPosition(double& xPos, double& yPos);
+		bool SetMouseCursorPosition(double xPos, double yPos);
 		bool GetClipboardString(std::string& value);
 		bool SetClipboardString(std::string value);
 	

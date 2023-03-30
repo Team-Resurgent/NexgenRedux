@@ -165,6 +165,11 @@ void XboxOGRenderingHelper::SetAmbientLight(const MathUtility::Color3F& color)
 
 void XboxOGRenderingHelper::SetTexture(const uint32_t& textureID, const TextureFilter& filter) 
 {
+	if (textureID == 0)
+	{
+		return;
+	}
+
 	TextureContainer* textureContainer = GetTextureContainer(textureID);
 	if (textureContainer == NULL)
 	{

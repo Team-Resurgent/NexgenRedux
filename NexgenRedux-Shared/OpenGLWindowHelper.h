@@ -16,41 +16,36 @@ namespace NexgenRedux
 	{		
 	private:
 
-		typedef struct WindowContainer
-		{
-			uint32_t width;
-			uint32_t height;
-			GLFWwindow* window;
-		} WindowContainer;
-
 		bool m_initialized;
-		uint32_t m_maxWindowContainerID;
-		std::map<uint32_t, WindowContainer> m_windowContainerMap;
+
+		uint32_t m_width;
+		uint32_t m_height;
+		GLFWwindow* m_window;
 
 	public:
 
 		OpenGLWindowHelper();
 		~OpenGLWindowHelper();
 
-		std::vector<uint32_t> GetWindowHandles(void) override;
 		bool GetAvailableMonitorCount(uint32_t& monitorCount) override;
 		bool GetMonitorVideoMode(uint32_t monitorIndex, MonitorVideoMode& monitorVideoMode) override;
 		bool GetMonitorVideoModes(uint32_t monitorIndex, std::vector<MonitorVideoMode>& monitorVideoModes) override;
-		bool WindowCreateWithVideoMode(MonitorVideoMode monitorVideoMode, std::string title, uint32_t& windowHandle) override;
-		bool WindowCreateWithSize(uint32_t width, uint32_t height, std::string title, uint32_t& windowHandle) override;
-		bool GetWindowSize(uint32_t windowHandle, uint32_t& width, uint32_t& height) override;
-		bool WindowPreRender(uint32_t& windowHandle, bool& exitRequested) override;
-		bool WindowPostRender(uint32_t& windowHandle) override;
+		bool WindowCreateWithVideoMode(MonitorVideoMode monitorVideoMode, std::string title) override;
+		bool WindowCreateWithSize(uint32_t width, uint32_t height, std::string title) override;
+		void* GetWindowPtr() override;
+		bool GetWindowSize(uint32_t& width, uint32_t& height) override;
+		bool WindowPreRender(bool& exitRequested) override;
+		bool WindowPostRender() override;
 		void PollEvents(void) override;
-		bool WindowClose(uint32_t windowHandle) override;
-		bool GetKeyPressed(uint32_t windowHandle, uint32_t key, uint32_t& pressed) override;
-		bool GetMouseButtonPressed(uint32_t windowHandle, uint32_t button, uint32_t& pressed) override;
-		bool GetMouseCursorPosition(uint32_t windowHandle, double& xPos, double& yPos) override;
-		bool SetMouseCursorPosition(uint32_t windowHandle, double xPos, double yPos) override;
+		bool WindowClose() override;
+		bool GetKeyPressed(uint32_t key, uint32_t& pressed) override;
+		bool GetMouseButtonPressed(uint32_t button, uint32_t& pressed) override;
+		bool GetMouseCursorPosition(double& xPos, double& yPos) override;
+		bool SetMouseCursorPosition(double xPos, double yPos) override;
 		bool GetClipboardString(std::string& value) override;
 		bool SetClipboardString(std::string value) override;
 
-		bool SetCursorMode(uint32_t windowHandle, uint32_t mode) override;
+		bool SetCursorMode(uint32_t mode) override;
 		bool JoystickIsPresent(uint32_t joystickID, uint32_t& present) override;
 		bool JoystickIsGamepad(uint32_t joystickID, uint32_t& gamepad) override;
 		bool GetJoystickButtonStates(uint32_t joystickID, JoystickButtonStates& joystickButtonStates) override;
@@ -75,7 +70,6 @@ namespace NexgenRedux
 		static void WindowMouseScroll(GLFWwindow* window, double xOffset, double yOffset);
 		static void WindowDrop(GLFWwindow* window, int count, const char** paths);
 		static void JoystickConnect(int joystickID, int event);
-		bool GetWindowHandle(GLFWwindow* window, uint32_t& windowHandle);
 	};
 }
 

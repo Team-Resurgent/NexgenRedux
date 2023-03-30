@@ -246,6 +246,18 @@
 				Name="EntityEngine"
 				Filter="">
 				<File
+					RelativePath="..\NexgenRedux-Shared\EntityEngine\Fog.cpp">
+				</File>
+				<File
+					RelativePath="..\NexgenRedux-Shared\EntityEngine\Fog.h">
+				</File>
+				<File
+					RelativePath="..\NexgenRedux-Shared\EntityEngine\Lighting.cpp">
+				</File>
+				<File
+					RelativePath="..\NexgenRedux-Shared\EntityEngine\Lighting.h">
+				</File>
+				<File
 					RelativePath="..\NexgenRedux-Shared\EntityEngine\Node.cpp">
 				</File>
 				<File

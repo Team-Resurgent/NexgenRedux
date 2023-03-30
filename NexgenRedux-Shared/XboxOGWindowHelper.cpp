@@ -22,7 +22,6 @@ using namespace NexgenRedux;
 XboxOGWindowHelper::XboxOGWindowHelper()
 {
 	m_initialized = false;
-	m_maxWindowContainerID = 0;
 	m_d3dDevice = NULL;
 	m_clipboardValue = "";
 	m_mouseX = 0;
@@ -63,11 +62,7 @@ XboxOGWindowHelper::XboxOGWindowHelper()
 
 XboxOGWindowHelper::~XboxOGWindowHelper()
 {
-	std::vector<uint32_t> windowHandles = GetWindowHandles();
-    for (uint32_t i = 0; i < windowHandles.size(); i++)
-	{
-        WindowClose(windowHandles.at(i));
-	}
+    WindowClose();
 
 	for (uint32_t i = 0; i < XGetPortCount(); i++) 
 	{
@@ -200,9 +195,9 @@ bool XboxOGWindowHelper::GetMonitorVideoModes(uint32_t monitorIndex, std::vector
 	return true;
 }
 
-bool XboxOGWindowHelper::WindowCreateWithVideoMode(MonitorVideoMode monitorVideoMode, std::string title, uint32_t& windowHandle)
+bool XboxOGWindowHelper::WindowCreateWithVideoMode(MonitorVideoMode monitorVideoMode, std::string title)
 {
-	if (m_windowContainerMap.size() > 0)
+	if (m_d3dDevice != NULL)
 	{
 		return false;
 	}
@@ -289,20 +284,19 @@ bool XboxOGWindowHelper::WindowCreateWithVideoMode(MonitorVideoMode monitorVideo
 		return false;
 	}
 
-    WindowContainer windowContainer;
-	windowContainer.width = selectedDisplayMode.Width;
-    windowContainer.height = selectedDisplayMode.Height;
-
-	uint32_t windowContainerID = ++m_maxWindowContainerID;
-    m_windowContainerMap.insert(std::pair<uint32_t, WindowContainer>(windowContainerID, windowContainer));
-    windowHandle = windowContainerID;
-
+	m_width = selectedDisplayMode.Width;
+    m_height = selectedDisplayMode.Height;
 	return true;
 }
 
-bool XboxOGWindowHelper::WindowCreateWithSize(uint32_t width, uint32_t height, std::string title, uint32_t& windowHandle)
+void* XboxOGWindowHelper::GetWindowPtr()
 {
-	if (m_windowContainerMap.size() > 0)
+    return m_d3dDevice;
+}
+
+bool XboxOGWindowHelper::WindowCreateWithSize(uint32_t width, uint32_t height, std::string title)
+{
+	if (m_d3dDevice != NULL)
 	{
 		return false;
 	}
@@ -369,59 +363,34 @@ bool XboxOGWindowHelper::WindowCreateWithSize(uint32_t width, uint32_t height, s
 		return false;
 	}
 
-    WindowContainer windowContainer;
-	windowContainer.width = selectedDisplayMode.Width;
-    windowContainer.height = selectedDisplayMode.Height;
-
-    uint32_t windowContainerID = ++m_maxWindowContainerID;
-    m_windowContainerMap.insert(std::pair<uint32_t, WindowContainer>(windowContainerID, windowContainer));
-    windowHandle = windowContainerID;
-
+	m_width = selectedDisplayMode.Width;
+    m_height = selectedDisplayMode.Height;
 	return true;
 }
 
-bool XboxOGWindowHelper::GetWindowSize(uint32_t windowHandle, uint32_t& width, uint32_t& height)
+bool XboxOGWindowHelper::GetWindowSize(uint32_t& width, uint32_t& height)
 {
-	std::map<uint32_t, WindowContainer>::iterator it = m_windowContainerMap.find(windowHandle);
-	if (it == m_windowContainerMap.end()) 
-	{
-		return false;
-	}
-
-	width = it->second.width;
-	height = it->second.height;
+	width = m_width;
+	height = m_height;
 	return true;
 }
 
-bool XboxOGWindowHelper::SetCursorMode(uint32_t windowHandle, uint32_t mode)
+bool XboxOGWindowHelper::SetCursorMode(uint32_t mode)
 {
 	return true;
 }
 
-bool XboxOGWindowHelper::WindowPreRender(uint32_t& windowHandle, bool& exitRequested)
+bool XboxOGWindowHelper::WindowPreRender(bool& exitRequested)
 {
-	std::map<uint32_t, WindowContainer>::iterator it = m_windowContainerMap.find(windowHandle);
-	if (it == m_windowContainerMap.end()) 
-	{
-		return false;
-	}
-
 	return true;
 }
 
-bool XboxOGWindowHelper::WindowPostRender(uint32_t& windowHandle)
+bool XboxOGWindowHelper::WindowPostRender()
 {
-	std::map<uint32_t, WindowContainer>::iterator it = m_windowContainerMap.find(windowHandle);
-	if (it == m_windowContainerMap.end()) 
-	{
-		return false;
-	}
-
 	if (FAILED(m_d3dDevice->Present(NULL, NULL, NULL, NULL)))
 	{
 		return false;
 	}
-
 	return true;
 }
 
@@ -432,27 +401,18 @@ void XboxOGWindowHelper::PollEvents(void)
 	ProcessMouse();
 }
 
-bool XboxOGWindowHelper::WindowClose(uint32_t windowHandle)
+bool XboxOGWindowHelper::WindowClose()
 {
-	std::map<uint32_t, WindowContainer>::iterator it = m_windowContainerMap.find(windowHandle);
-	if (it == m_windowContainerMap.end()) 
+	if (m_d3dDevice != NULL)
 	{
-		return false;
+		m_d3dDevice->Release();
+		m_d3dDevice = NULL;
 	}
-
-	m_d3dDevice->Release();
-	m_windowContainerMap.erase(windowHandle);
 	return true;
 }
 
-bool XboxOGWindowHelper::GetKeyPressed(uint32_t windowHandle, uint32_t key, uint32_t& pressed)
+bool XboxOGWindowHelper::GetKeyPressed(uint32_t key, uint32_t& pressed)
 {
-	std::map<uint32_t, WindowContainer>::iterator it = m_windowContainerMap.find(windowHandle);
-	if (it == m_windowContainerMap.end()) 
-	{
-		return false;
-	}
-
 	pressed = 0;
 
 	if (key >= KEY_LAST)
@@ -464,14 +424,8 @@ bool XboxOGWindowHelper::GetKeyPressed(uint32_t windowHandle, uint32_t key, uint
 	return true;
 }
 
-bool XboxOGWindowHelper::GetMouseButtonPressed(uint32_t windowHandle, uint32_t button, uint32_t& pressed)
+bool XboxOGWindowHelper::GetMouseButtonPressed(uint32_t button, uint32_t& pressed)
 {
-	std::map<uint32_t, WindowContainer>::iterator it = m_windowContainerMap.find(windowHandle);
-	if (it == m_windowContainerMap.end()) 
-	{
-		return false;
-	}
-
 	pressed = 0;
 
 	if (button >= 5)
@@ -483,14 +437,14 @@ bool XboxOGWindowHelper::GetMouseButtonPressed(uint32_t windowHandle, uint32_t b
     return true;
 }
 
-bool XboxOGWindowHelper::GetMouseCursorPosition(uint32_t windowHandle, double& xPos, double& yPos)
+bool XboxOGWindowHelper::GetMouseCursorPosition(double& xPos, double& yPos)
 {
 	xPos = m_mouseX;
 	yPos = m_mouseY;
     return true;
 }
 
-bool XboxOGWindowHelper::SetMouseCursorPosition(uint32_t windowHandle, double xPos, double yPos)
+bool XboxOGWindowHelper::SetMouseCursorPosition(double xPos, double yPos)
 {
 	m_mouseX = (int32_t)xPos;
 	m_mouseY = (int32_t)yPos;
@@ -960,7 +914,7 @@ void XboxOGWindowHelper::ProcessKeyboard()
 
 		if (currentKeyStroke.Ascii != 0)
 		{
-			if (AngelScriptRunner::ExecuteWindowKeyboardCharacterCallback(0, currentKeyStroke.Ascii) == false)
+			if (AngelScriptRunner::ExecuteWindowKeyboardCharacterCallback(currentKeyStroke.Ascii) == false)
 			{
 				DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteWindowKeyboardCharacterCallback failed.");
 			}
@@ -971,7 +925,7 @@ void XboxOGWindowHelper::ProcessKeyboard()
 			if (it->first == currentKeyStroke.VirtualKey)
 			{
 				m_keyboardKeys[it->second.keyID] = (keyState - 1) == 1;
-				if (AngelScriptRunner::ExecuteWindowKeyboardKeyCallback(0, it->second.keyID, it->second.scancode, keyState - 1, modifier) == false)
+				if (AngelScriptRunner::ExecuteWindowKeyboardKeyCallback(it->second.keyID, it->second.scancode, keyState - 1, modifier) == false)
 				{
 					DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteWindowKeyboardKeyCallback failed.");
 				}
@@ -985,7 +939,7 @@ void XboxOGWindowHelper::ProcessMouse()
 {
 	uint32_t windowWidth;
 	uint32_t windowHeight;
-	if (GetWindowSize(0, windowWidth, windowHeight) == false)
+	if (GetWindowSize(windowWidth, windowHeight) == false)
 	{
 		return;
 	}
@@ -1046,7 +1000,7 @@ void XboxOGWindowHelper::ProcessMouse()
 
 				if (m_mouseStates[i].DebugMouse.cMickeysX > 0 || m_mouseStates[i].DebugMouse.cMickeysY > 0) 
 				{
-					if (AngelScriptRunner::ExecuteWindowMouseCursorPositionCallback(0, m_mouseX, m_mouseY) == false)
+					if (AngelScriptRunner::ExecuteWindowMouseCursorPositionCallback(m_mouseX, m_mouseY) == false)
 					{
 						DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteWindowMouseCursorPositionCallback failed.");
 					}
@@ -1062,7 +1016,7 @@ void XboxOGWindowHelper::ProcessMouse()
 				{
 					if (m_previousMouseButtons[j] != m_mouseButtons[j]) 
 					{
-						if (AngelScriptRunner::ExecuteWindowMouseButtonCallback(0, j, m_mouseButtons[j] ? 1 : 0, m_keyboardModifier) == false)
+						if (AngelScriptRunner::ExecuteWindowMouseButtonCallback(j, m_mouseButtons[j] ? 1 : 0, m_keyboardModifier) == false)
 						{
 							DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteWindowMouseCursorPositionCallback failed.");
 						}
@@ -1072,7 +1026,7 @@ void XboxOGWindowHelper::ProcessMouse()
 
 				if (m_mouseStates[i].DebugMouse.cWheel != 0) 
 				{
-					if (AngelScriptRunner::ExecuteWindowMouseScrollCallback(0, 0, m_mouseStates[i].DebugMouse.cWheel) == false)
+					if (AngelScriptRunner::ExecuteWindowMouseScrollCallback(0, m_mouseStates[i].DebugMouse.cWheel) == false)
 					{
 						DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteWindowMouseScrollCallback failed.");
 					}
@@ -1082,16 +1036,6 @@ void XboxOGWindowHelper::ProcessMouse()
 			}
 		}
 	}
-}
-
-std::vector<uint32_t> XboxOGWindowHelper::GetWindowHandles(void)
-{
-	std::vector<uint32_t> windowHandles;
-	for (std::map<uint32_t, WindowContainer>::iterator it = m_windowContainerMap.begin(); it != m_windowContainerMap.end(); ++it)
-	{
-		 windowHandles.push_back(it->first);
-	}
-	return windowHandles;
 }
 
 #endif

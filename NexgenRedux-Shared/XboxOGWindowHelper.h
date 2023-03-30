@@ -19,17 +19,12 @@ namespace NexgenRedux
 	{		
 	public:
 
-		typedef struct WindowContainer
-		{
-			uint32_t width;
-			uint32_t height;
-		} WindowContainer;
+		uint32_t m_width;
+		uint32_t m_height;
+		IDirect3DDevice8* m_d3dDevice;
 
 		bool m_initialized;
-		uint32_t m_maxWindowContainerID;
-		std::map<uint32_t, XboxOGWindowHelper::WindowContainer> m_windowContainerMap;
 
-		IDirect3DDevice8* m_d3dDevice;
 		std::string m_clipboardValue;
 
 		typedef struct KeyInfo
@@ -62,25 +57,25 @@ namespace NexgenRedux
 		XboxOGWindowHelper();
 		~XboxOGWindowHelper();
 
-		std::vector<uint32_t> GetWindowHandles(void);
 		bool GetAvailableMonitorCount(uint32_t& monitorCount);
 		bool GetMonitorVideoMode(uint32_t monitorIndex, MonitorVideoMode& monitorVideoMode);
 		bool GetMonitorVideoModes(uint32_t monitorIndex, std::vector<MonitorVideoMode>& monitorVideoModes);
-		bool WindowCreateWithVideoMode(MonitorVideoMode monitorVideoMode, std::string title, uint32_t& windowHandle);
-		bool WindowCreateWithSize(uint32_t width, uint32_t height, std::string title, uint32_t& windowHandle);
-		bool GetWindowSize(uint32_t windowHandle, uint32_t& width, uint32_t& height);
-		bool WindowPreRender(uint32_t& windowHandle, bool& exitRequested);
-		bool WindowPostRender(uint32_t& windowHandle);
+		bool WindowCreateWithVideoMode(MonitorVideoMode monitorVideoMode, std::string title);
+		void* GetWindowPtr();
+		bool WindowCreateWithSize(uint32_t width, uint32_t height, std::string title);
+		bool GetWindowSize(uint32_t& width, uint32_t& height);
+		bool WindowPreRender(bool& exitRequested);
+		bool WindowPostRender();
 		void PollEvents(void);
-		bool WindowClose(uint32_t windowHandle);
-		bool GetKeyPressed(uint32_t windowHandle, uint32_t key, uint32_t& pressed);
-		bool GetMouseButtonPressed(uint32_t windowHandle, uint32_t button, uint32_t& pressed);
-		bool GetMouseCursorPosition(uint32_t windowHandle, double& xPos, double& yPos);
-		bool SetMouseCursorPosition(uint32_t windowHandle, double xPos, double yPos);
+		bool WindowClose();
+		bool GetKeyPressed(uint32_t key, uint32_t& pressed);
+		bool GetMouseButtonPressed(uint32_t button, uint32_t& pressed);
+		bool GetMouseCursorPosition(double& xPos, double& yPos);
+		bool SetMouseCursorPosition(double xPos, double yPos);
 		bool GetClipboardString(std::string& value);
 		bool SetClipboardString(std::string value);
 
-		bool SetCursorMode(uint32_t windowHandle, uint32_t mode);
+		bool SetCursorMode(uint32_t mode);
 		bool JoystickIsPresent(uint32_t joystickID, uint32_t& present);
 		bool JoystickIsGamepad(uint32_t joystickID, uint32_t& gamepad);
 		bool GetJoystickButtonStates(uint32_t joystickID, JoystickButtonStates& joystickButtonStates);

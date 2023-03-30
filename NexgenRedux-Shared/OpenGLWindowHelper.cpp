@@ -29,27 +29,13 @@ using namespace NexgenRedux;
 OpenGLWindowHelper::OpenGLWindowHelper()
 {
     m_initialized = false;
-    m_maxWindowContainerID = 0;
+    m_window = NULL;
 }
 
 OpenGLWindowHelper::~OpenGLWindowHelper()
 {
-    std::vector<uint32_t> windowHandles = GetWindowHandles();
-    for (uint32_t i = 0; i < windowHandles.size(); i++)
-	{
-        WindowClose(windowHandles.at(i));
-	}
+    WindowClose();
     glfwTerminate();
-}
-
-std::vector<uint32_t> OpenGLWindowHelper::GetWindowHandles(void)
-{
-	std::vector<uint32_t> windowHandles;
-	for (std::map<uint32_t, WindowContainer>::iterator it = m_windowContainerMap.begin(); it != m_windowContainerMap.end(); ++it)
-	{
-		 windowHandles.push_back(it->first);
-	}
-	return windowHandles;
 }
 
 bool OpenGLWindowHelper::GetAvailableMonitorCount(uint32_t& monitorCount)
@@ -124,12 +110,17 @@ bool OpenGLWindowHelper::GetMonitorVideoModes(uint32_t monitorIndex, std::vector
     return true;
 }
 
-bool OpenGLWindowHelper::WindowCreateWithVideoMode(MonitorVideoMode monitorVideoMode, std::string title, uint32_t& windowHandle)
+bool OpenGLWindowHelper::WindowCreateWithVideoMode(MonitorVideoMode monitorVideoMode, std::string title)
 {
 	if (Init() == false)
     {
         return false;
     }
+
+    if (m_window != NULL)
+	{
+		return false;
+	}
 
 	int monitorCount;
     GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
@@ -171,24 +162,29 @@ bool OpenGLWindowHelper::WindowCreateWithVideoMode(MonitorVideoMode monitorVideo
 
     SetDarkTitleBar(window);
 
-    WindowContainer windowContainer;
-    windowContainer.width = monitorVideoMode.width;
-    windowContainer.height = monitorVideoMode.height;
-    windowContainer.window = window;
-
-    uint32_t windowContainerID = ++m_maxWindowContainerID;
-    m_windowContainerMap.insert(std::pair<uint32_t, WindowContainer>(windowContainerID, windowContainer));
-    windowHandle = windowContainerID;
+    m_width = monitorVideoMode.width;
+    m_height = monitorVideoMode.height;
+    m_window = window;
 
 	return Init();
 }
 
-bool OpenGLWindowHelper::WindowCreateWithSize(uint32_t width, uint32_t height, std::string title, uint32_t& windowHandle)
+void* OpenGLWindowHelper::GetWindowPtr()
+{
+    return m_window;
+}
+
+bool OpenGLWindowHelper::WindowCreateWithSize(uint32_t width, uint32_t height, std::string title)
 {
 	if (Init() == false)
     {
         return false;
     }
+
+    if (m_window != NULL)
+	{
+		return false;
+	}
 
 	glfwWindowHint(GLFW_SAMPLES, 0);
     
@@ -218,100 +214,82 @@ bool OpenGLWindowHelper::WindowCreateWithSize(uint32_t width, uint32_t height, s
 
     SetDarkTitleBar(window);
 
-    WindowContainer windowContainer;
-    windowContainer.width = width;
-    windowContainer.height = height;
-    windowContainer.window = window;
-    
-    uint32_t windowContainerID = ++m_maxWindowContainerID;
-    m_windowContainerMap.insert(std::pair<uint32_t, WindowContainer>(windowContainerID, windowContainer));
-    windowHandle = windowContainerID;
+    m_width = width;
+    m_height = height;
+    m_window = window;
 
 	return Init();
 }
 
-bool OpenGLWindowHelper::GetWindowSize(uint32_t windowHandle, uint32_t& width, uint32_t& height)
+bool OpenGLWindowHelper::GetWindowSize(uint32_t& width, uint32_t& height)
 {
-	std::map<uint32_t, WindowContainer>::iterator it = m_windowContainerMap.find(windowHandle);
-	if (it == m_windowContainerMap.end()) 
-	{
-		return false;
-	}
-
-	width = it->second.width;
-	height = it->second.height;
+	width = m_width;
+	height = m_height;
 	return true;
 }
 
-bool OpenGLWindowHelper::SetCursorMode(uint32_t windowHandle, uint32_t mode)
+bool OpenGLWindowHelper::SetCursorMode(uint32_t mode)
 {
     if (Init() == false)
     {
         return false;
     }
 
-	std::map<uint32_t, WindowContainer>::iterator it = m_windowContainerMap.find(windowHandle);
-	if (it == m_windowContainerMap.end()) 
+	if (m_window == NULL) 
 	{
 		return false;
 	}
 
-	GLFWwindow* window = it->second.window;
-
     if (mode == 0)
     {
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
         return true;
     }
     if (mode == 1)
     {
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+        glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
         return true;
     }
     else if (mode == 2)
     {
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         return true;
     }
     else if (mode == 2)
     {
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_CAPTURED);
+        glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_CAPTURED);
         return true;
     }
 
     return false;
 }
 
-bool OpenGLWindowHelper::WindowPreRender(uint32_t& windowHandle, bool& exitRequested)
+bool OpenGLWindowHelper::WindowPreRender(bool& exitRequested)
 {
-	std::map<uint32_t, WindowContainer>::iterator it = m_windowContainerMap.find(windowHandle);
-	if (it == m_windowContainerMap.end()) 
+	if (m_window == NULL) 
 	{
 		return false;
 	}
 
-	GLFWwindow* window = it->second.window;
-
-	int closeFlag = glfwWindowShouldClose(window);
+	int closeFlag = glfwWindowShouldClose(m_window);
 	if (closeFlag != 0)
 	{
 		exitRequested = true;
 		return true;
 	}
 
-	glfwMakeContextCurrent(window);
+	glfwMakeContextCurrent(m_window);
 	return true;
 }
 
-bool OpenGLWindowHelper::WindowPostRender(uint32_t& windowHandle)
+bool OpenGLWindowHelper::WindowPostRender()
 {
-	std::map<uint32_t, WindowContainer>::iterator it = m_windowContainerMap.find(windowHandle);
-	if (it == m_windowContainerMap.end()) 
+	if (m_window == NULL) 
 	{
 		return false;
 	}
 
-	glfwSwapBuffers(it->second.window);
+	glfwSwapBuffers(m_window);
 	return true;
 }
 
@@ -320,84 +298,77 @@ void OpenGLWindowHelper::PollEvents(void)
     glfwPollEvents();
 }
 
-bool OpenGLWindowHelper::WindowClose(uint32_t windowHandle)
+bool OpenGLWindowHelper::WindowClose()
 {
-    std::map<uint32_t, WindowContainer>::iterator it = m_windowContainerMap.find(windowHandle);
-	if (it == m_windowContainerMap.end()) 
-	{
-		return NULL;
-	}
-
-	glfwDestroyWindow(it->second.window);
-	m_windowContainerMap.erase(windowHandle);
+    if (m_window != NULL)
+    {
+	    glfwDestroyWindow(m_window);
+        m_window = NULL;
+    }
 	return true;
 }
 
-bool OpenGLWindowHelper::GetKeyPressed(uint32_t windowHandle, uint32_t key, uint32_t& pressed)
+bool OpenGLWindowHelper::GetKeyPressed(uint32_t key, uint32_t& pressed)
 {
     if (Init() == false)
     {
         return false;
     }
 
-	std::map<uint32_t, WindowContainer>::iterator it = m_windowContainerMap.find(windowHandle);
-	if (it == m_windowContainerMap.end()) 
+	if (m_window == NULL) 
 	{
 		return false;
 	}
 
-    pressed = (uint32_t)glfwGetKey(it->second.window, key);
+    pressed = (uint32_t)glfwGetKey(m_window, key);
     return true;
 }
 
-bool OpenGLWindowHelper::GetMouseButtonPressed(uint32_t windowHandle, uint32_t button, uint32_t& pressed)
+bool OpenGLWindowHelper::GetMouseButtonPressed(uint32_t button, uint32_t& pressed)
 {
     if (Init() == false)
     {
         return false;
     }
 
-	std::map<uint32_t, WindowContainer>::iterator it = m_windowContainerMap.find(windowHandle);
-	if (it == m_windowContainerMap.end()) 
+	if (m_window == NULL) 
 	{
 		return false;
 	}
 
-    pressed = (uint32_t)glfwGetMouseButton(it->second.window, button);
+    pressed = (uint32_t)glfwGetMouseButton(m_window, button);
     return true;
 }
 
-bool OpenGLWindowHelper::GetMouseCursorPosition(uint32_t windowHandle, double& xPos, double& yPos)
+bool OpenGLWindowHelper::GetMouseCursorPosition(double& xPos, double& yPos)
 {
     if (Init() == false)
     {
         return false;
     }
 
-	std::map<uint32_t, WindowContainer>::iterator it = m_windowContainerMap.find(windowHandle);
-	if (it == m_windowContainerMap.end()) 
+	if (m_window == NULL) 
 	{
 		return false;
 	}
 
-    glfwGetCursorPos(it->second.window, &xPos, &yPos);
+    glfwGetCursorPos(m_window, &xPos, &yPos);
     return true;
 }
 
-bool OpenGLWindowHelper::SetMouseCursorPosition(uint32_t windowHandle, double xPos, double yPos)
+bool OpenGLWindowHelper::SetMouseCursorPosition(double xPos, double yPos)
 {
     if (Init() == false)
     {
         return false;
     }
 
-	std::map<uint32_t, WindowContainer>::iterator it = m_windowContainerMap.find(windowHandle);
-	if (it == m_windowContainerMap.end()) 
+	if (m_window == NULL) 
 	{
 		return false;
 	}
 
-    glfwSetCursorPos(it->second.window, xPos, yPos);
+    glfwSetCursorPos(m_window, xPos, yPos);
     return true;
 }
 
@@ -616,14 +587,7 @@ void OpenGLWindowHelper::SetCallbacks(GLFWwindow* window)
 
 void OpenGLWindowHelper::WindowIconify(GLFWwindow* window, int iconified)
 {
-    OpenGLWindowHelper* instance = static_cast<OpenGLWindowHelper*>(glfwGetWindowUserPointer(window));
-
-    uint32_t windowHandle;
-    if (instance->GetWindowHandle(window, windowHandle) == false) 
-    {
-        DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "GetWindowHandle failed.");
-    }
-    else if (AngelScriptRunner::ExecuteWindowIconifyCallback(windowHandle, (uint32_t)iconified) == false)
+    if (AngelScriptRunner::ExecuteWindowIconifyCallback((uint32_t)iconified) == false)
     {
         DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteWindowIconifyCallback failed.");
     }
@@ -631,14 +595,7 @@ void OpenGLWindowHelper::WindowIconify(GLFWwindow* window, int iconified)
 
 void OpenGLWindowHelper::WindowMaximize(GLFWwindow* window, int maximized)
 {
-    OpenGLWindowHelper* instance = static_cast<OpenGLWindowHelper*>(glfwGetWindowUserPointer(window));
-
-    uint32_t windowHandle;
-    if (instance->GetWindowHandle(window, windowHandle) == false) 
-    {
-        DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "GetWindowHandle failed.");
-    }
-    else if (AngelScriptRunner::ExecuteWindowMaximizeCallback(windowHandle, (uint32_t)maximized) == false)
+    if (AngelScriptRunner::ExecuteWindowMaximizeCallback((uint32_t)maximized) == false)
     {
         DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteWindowMaximizeCallback failed.");
     }
@@ -646,14 +603,7 @@ void OpenGLWindowHelper::WindowMaximize(GLFWwindow* window, int maximized)
 
 void OpenGLWindowHelper::WindowSize(GLFWwindow* window, int width, int height)
 {
-    OpenGLWindowHelper* instance = static_cast<OpenGLWindowHelper*>(glfwGetWindowUserPointer(window));
-
-    uint32_t windowHandle;
-    if (instance->GetWindowHandle(window, windowHandle) == false) 
-    {
-        DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "GetWindowHandle failed.");
-    }
-    else if (AngelScriptRunner::ExecuteWindowSizeCallback(windowHandle, (uint32_t)width, (uint32_t)height) == false)
+    if (AngelScriptRunner::ExecuteWindowSizeCallback((uint32_t)width, (uint32_t)height) == false)
     {
         DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteWindowSizeCallback failed.");
     }
@@ -661,14 +611,7 @@ void OpenGLWindowHelper::WindowSize(GLFWwindow* window, int width, int height)
 
 void OpenGLWindowHelper::WindowFocus(GLFWwindow* window, int focused)
 {
-    OpenGLWindowHelper* instance = static_cast<OpenGLWindowHelper*>(glfwGetWindowUserPointer(window));
-
-    uint32_t windowHandle;
-    if (instance->GetWindowHandle(window, windowHandle) == false) 
-    {
-        DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "GetWindowHandle failed.");
-    }
-    else if (AngelScriptRunner::ExecuteWindowFocusCallback(windowHandle, (uint32_t)focused) == false)
+    if (AngelScriptRunner::ExecuteWindowFocusCallback((uint32_t)focused) == false)
     {
         DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteWindowFocusCallback failed.");
     }
@@ -676,14 +619,7 @@ void OpenGLWindowHelper::WindowFocus(GLFWwindow* window, int focused)
 
 void OpenGLWindowHelper::WindowKeyboardKey(GLFWwindow* window, int key, int scancode, int action, int modifier)
 {
-    OpenGLWindowHelper* instance = static_cast<OpenGLWindowHelper*>(glfwGetWindowUserPointer(window));
-
-    uint32_t windowHandle;
-    if (instance->GetWindowHandle(window, windowHandle) == false) 
-    {
-        DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "GetWindowHandle failed.");
-    }
-    else if (AngelScriptRunner::ExecuteWindowKeyboardKeyCallback(windowHandle, (uint32_t)key, (uint32_t)scancode, (uint32_t)action, (uint32_t)modifier) == false)
+    if (AngelScriptRunner::ExecuteWindowKeyboardKeyCallback((uint32_t)key, (uint32_t)scancode, (uint32_t)action, (uint32_t)modifier) == false)
     {
         DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteWindowKeyboardKeyCallback failed.");
     }
@@ -691,14 +627,7 @@ void OpenGLWindowHelper::WindowKeyboardKey(GLFWwindow* window, int key, int scan
 
 void OpenGLWindowHelper::WindowKeyboardCharacter(GLFWwindow* window, unsigned int codepoint)
 {
-    OpenGLWindowHelper* instance = static_cast<OpenGLWindowHelper*>(glfwGetWindowUserPointer(window));
-
-    uint32_t windowHandle;
-    if (instance->GetWindowHandle(window, windowHandle) == false) 
-    {
-        DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "GetWindowHandle failed.");
-    }
-    else if (AngelScriptRunner::ExecuteWindowKeyboardCharacterCallback(windowHandle, (uint32_t)codepoint) == false)
+    if (AngelScriptRunner::ExecuteWindowKeyboardCharacterCallback((uint32_t)codepoint) == false)
     {
         DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteWindowKeyboardCharacterCallback failed.");
     }
@@ -706,14 +635,7 @@ void OpenGLWindowHelper::WindowKeyboardCharacter(GLFWwindow* window, unsigned in
 
 void OpenGLWindowHelper::WindowMouseCursorPosition(GLFWwindow* window, double xPos, double yPos)
 {
-    OpenGLWindowHelper* instance = static_cast<OpenGLWindowHelper*>(glfwGetWindowUserPointer(window));
-
-    uint32_t windowHandle;
-    if (instance->GetWindowHandle(window, windowHandle) == false) 
-    {
-        DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "GetWindowHandle failed.");
-    }
-    else if (AngelScriptRunner::ExecuteWindowMouseCursorPositionCallback(windowHandle, xPos, yPos) == false)
+    if (AngelScriptRunner::ExecuteWindowMouseCursorPositionCallback(xPos, yPos) == false)
     {
         DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteWindowMouseCursorPositionCallback failed.");
     }
@@ -721,14 +643,7 @@ void OpenGLWindowHelper::WindowMouseCursorPosition(GLFWwindow* window, double xP
 
 void OpenGLWindowHelper::WindowMouseCursorEnter(GLFWwindow* window, int entered)
 {
-    OpenGLWindowHelper* instance = static_cast<OpenGLWindowHelper*>(glfwGetWindowUserPointer(window));
-
-    uint32_t windowHandle;
-    if (instance->GetWindowHandle(window, windowHandle) == false) 
-    {
-        DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "GetWindowHandle failed.");
-    }
-    else if (AngelScriptRunner::ExecuteWindowMouseCursorEnterCallback(windowHandle, (uint32_t)entered) == false)
+    if (AngelScriptRunner::ExecuteWindowMouseCursorEnterCallback((uint32_t)entered) == false)
     {
         DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteWindowMouseCursorEnterCallback failed.");
     }
@@ -736,14 +651,7 @@ void OpenGLWindowHelper::WindowMouseCursorEnter(GLFWwindow* window, int entered)
 
 void OpenGLWindowHelper::WindowMouseButton(GLFWwindow* window, int button, int action, int modifier)
 {
-    OpenGLWindowHelper* instance = static_cast<OpenGLWindowHelper*>(glfwGetWindowUserPointer(window));
-
-    uint32_t windowHandle;
-    if (instance->GetWindowHandle(window, windowHandle) == false) 
-    {
-        DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "GetWindowHandle failed.");
-    }
-    else if (AngelScriptRunner::ExecuteWindowMouseButtonCallback(windowHandle, (uint32_t)button, (uint32_t)action, (uint32_t)modifier) == false)
+    if (AngelScriptRunner::ExecuteWindowMouseButtonCallback((uint32_t)button, (uint32_t)action, (uint32_t)modifier) == false)
     {
         DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteWindowMouseButtonCallback failed.");
     }
@@ -751,14 +659,7 @@ void OpenGLWindowHelper::WindowMouseButton(GLFWwindow* window, int button, int a
 
 void OpenGLWindowHelper::WindowMouseScroll(GLFWwindow* window, double xOffset, double yOffset)
 {
-    OpenGLWindowHelper* instance = static_cast<OpenGLWindowHelper*>(glfwGetWindowUserPointer(window));
-
-    uint32_t windowHandle;
-    if (instance->GetWindowHandle(window, windowHandle) == false) 
-    {
-        DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "GetWindowHandle failed.");
-    }
-    else if (AngelScriptRunner::ExecuteWindowMouseScrollCallback(windowHandle, xOffset, yOffset) == false)
+    if (AngelScriptRunner::ExecuteWindowMouseScrollCallback(xOffset, yOffset) == false)
     {
         DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteWindowMousScrollCallback failed.");
     }
@@ -766,8 +667,6 @@ void OpenGLWindowHelper::WindowMouseScroll(GLFWwindow* window, double xOffset, d
 
 void OpenGLWindowHelper::WindowDrop(GLFWwindow* window, int count, const char** paths)
 {
-    OpenGLWindowHelper* instance = static_cast<OpenGLWindowHelper*>(glfwGetWindowUserPointer(window));
-
     std::vector<std::string> pathArray;
     for (int i = 0; i < count; i++) 
     {
@@ -775,12 +674,7 @@ void OpenGLWindowHelper::WindowDrop(GLFWwindow* window, int count, const char** 
         pathArray.push_back(path);
     }
 
-    uint32_t windowHandle;
-    if (instance->GetWindowHandle(window, windowHandle) == false) 
-    {
-        DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "GetWindowHandle failed.");
-    }
-    else if (AngelScriptRunner::ExecuteWindowDropCallback(windowHandle, pathArray) == false)
+    if (AngelScriptRunner::ExecuteWindowDropCallback(pathArray) == false)
     {
         DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteWindowDropCallback failed.");
     }
@@ -802,19 +696,6 @@ void OpenGLWindowHelper::JoystickConnect(int joystickID, int event)
             DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteJoystickConnectCallback failed.");
         }
     }
-}
-
-bool OpenGLWindowHelper::GetWindowHandle(GLFWwindow* window, uint32_t& windowHandle)
-{
-	for (std::map<uint32_t, WindowContainer>::iterator it = m_windowContainerMap.begin(); it != m_windowContainerMap.end(); ++it)
-	{
-		if (it->second.window == window)
-		{
-			windowHandle = it->first;
-			return true;
-		} 
-	}
-	return false;
 }
 
 #endif

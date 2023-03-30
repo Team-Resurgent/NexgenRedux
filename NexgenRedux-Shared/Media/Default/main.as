@@ -83,10 +83,8 @@ void Init()
     orthoCamera.SetRight(640);
     orthoCamera.SetBottom(0);
     orthoCamera.SetTop(480);
-    orthoCamera.SetZNear(1);
-    orthoCamera.SetZFar(100);
-    //orthoCamera.SetZNear(-1024);
-    //orthoCamera.SetZFar(1024);
+    orthoCamera.SetZNear(-1024);
+    orthoCamera.SetZFar(1024);
 
     SceneManager::AssignNode(orthoCamera, sceneID);
 
@@ -125,7 +123,6 @@ void Init()
     sprite2.SetBlendFactorSrc(BlendFactorSrcAlpha);
     sprite2.SetBlendFactorDst(BlendFactorOneMinusSrcAlpha);
     sprite2.SetDrawMode(DrawModeOperationTriangles);
-    sprite2.SetCulling(CullingOperationDisabled);
     sprite2.SetDepth(DepthOperationLess);
     NodeManager::AssignNode(sprite2, lighting.GetID());
 

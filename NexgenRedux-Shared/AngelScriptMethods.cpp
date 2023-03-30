@@ -340,6 +340,7 @@ void AngelScriptMethods::GetJoystickHatDirection(asIScriptGeneric* gen)
 	uint32_t hatIndex = gen->GetArgDWord(1);
 
 	uint32_t direction;
+
 	if (WindowManager::GetInstance()->GetWindowHelper()->GetJoystickHatDirection(joystickID, hatIndex, direction) == false)
 	{
 		asIScriptContext *context = asGetActiveContext();

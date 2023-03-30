@@ -42,8 +42,6 @@ void Sprite::Update(float dt)
 {
     RenderStateManager* renderStateManager = RenderStateManager::GetInstance();
 
-    //TODO: add concept of texture shared (needs ref count)
-
     if (m_textureIsDirty == true)
     {
         if (m_textureID != 0)

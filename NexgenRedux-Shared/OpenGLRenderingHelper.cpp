@@ -22,6 +22,7 @@ namespace
 	//https://github.com/hughsk/glsl-fog
     const std::string defaultVertexShader =
 
+		"#version 100\n"
 		"precision mediump float;\n"
 		
 		"struct pixel_shader_input {\n"
@@ -109,6 +110,7 @@ namespace
 
 	const std::string defaultFragmentShader =
 
+		"#version 100\n"
 		"precision mediump float;\n"
 
 		"struct pixel_shader_input {\n"

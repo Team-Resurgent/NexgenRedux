@@ -260,49 +260,49 @@ namespace NexgenRedux
 
 			bool operator != (const Matrix4x4& other) const { return !(*this == other); }
 
-			Matrix4x4 Transpose(const Matrix4x4& other)
+			static Matrix4x4 Transpose(const Matrix4x4& value)
 			{
 				Matrix4x4 result;
-				result.values[0] = other.values[0];
-				result.values[1] = other.values[4];
-				result.values[2] = other.values[8];
-				result.values[3] = other.values[12];
-				result.values[4] = other.values[1];
-				result.values[5] = other.values[5];
-				result.values[6] = other.values[9];
-				result.values[7] = other.values[13];
-				result.values[8] = other.values[2];
-				result.values[9] = other.values[6];
-				result.values[10] = other.values[10];
-				result.values[11] = other.values[14];
-				result.values[12] = other.values[3];
-				result.values[13] = other.values[7];
-				result.values[14] = other.values[11];
-				result.values[15] = other.values[15];
+				result.values[0] = value.values[0];
+				result.values[1] = value.values[4];
+				result.values[2] = value.values[8];
+				result.values[3] = value.values[12];
+				result.values[4] = value.values[1];
+				result.values[5] = value.values[5];
+				result.values[6] = value.values[9];
+				result.values[7] = value.values[13];
+				result.values[8] = value.values[2];
+				result.values[9] = value.values[6];
+				result.values[10] = value.values[10];
+				result.values[11] = value.values[14];
+				result.values[12] = value.values[3];
+				result.values[13] = value.values[7];
+				result.values[14] = value.values[11];
+				result.values[15] = value.values[15];
 				return result;
 			}
 
-			Matrix4x4 Invert(const Matrix4x4& other)
+			static Matrix4x4 Inverse(const Matrix4x4& value)
 			{
 				Matrix4x4 inverse;
-				inverse.values[0] = other.values[5] * other.values[10] * other.values[15] - other.values[5] * other.values[11] * other.values[14] - other.values[9] * other.values[6] * other.values[15] + other.values[9] * other.values[7] * other.values[14] + other.values[13] * other.values[6] * other.values[11] - other.values[13] * other.values[7] * other.values[10];
-				inverse.values[4] = -other.values[4] * other.values[10] * other.values[15] + other.values[4] * other.values[11] * other.values[14] + other.values[8] * other.values[6] * other.values[15] - other.values[8] * other.values[7] * other.values[14] - other.values[12] * other.values[6] * other.values[11] + other.values[12] * other.values[7] * other.values[10];
-				inverse.values[8] = other.values[4] * other.values[9] * other.values[15] - other.values[4] * other.values[11] * other.values[13] - other.values[8] * other.values[5] * other.values[15] + other.values[8] * other.values[7] * other.values[13] + other.values[12] * other.values[5] * other.values[11] - other.values[12] * other.values[7] * other.values[9];
-				inverse.values[12] = -other.values[4] * other.values[9] * other.values[14] + other.values[4] * other.values[10] * other.values[13] + other.values[8] * other.values[5] * other.values[14] - other.values[8] * other.values[6] * other.values[13] - other.values[12] * other.values[5] * other.values[10] + other.values[12] * other.values[6] * other.values[9];
-				inverse.values[1] = -other.values[1] * other.values[10] * other.values[15] + other.values[1] * other.values[11] * other.values[14] + other.values[9] * other.values[2] * other.values[15] - other.values[9] * other.values[3] * other.values[14] - other.values[13] * other.values[2] * other.values[11] + other.values[13] * other.values[3] * other.values[10];
-				inverse.values[5] = other.values[0] * other.values[10] * other.values[15] - other.values[0] * other.values[11] * other.values[14] - other.values[8] * other.values[2] * other.values[15] + other.values[8] * other.values[3] * other.values[14] + other.values[12] * other.values[2] * other.values[11] - other.values[12] * other.values[3] * other.values[10];
-				inverse.values[9] = -other.values[0] * other.values[9] * other.values[15] + other.values[0] * other.values[11] * other.values[13] + other.values[8] * other.values[1] * other.values[15] - other.values[8] * other.values[3] * other.values[13] - other.values[12] * other.values[1] * other.values[11] + other.values[12] * other.values[3] * other.values[9];
-				inverse.values[13] = other.values[0] * other.values[9] * other.values[14] - other.values[0] * other.values[10] * other.values[13] - other.values[8] * other.values[1] * other.values[14] + other.values[8] * other.values[2] * other.values[13] + other.values[12] * other.values[1] * other.values[10] - other.values[12] * other.values[2] * other.values[9];
-				inverse.values[2] = other.values[1] * other.values[6] * other.values[15] - other.values[1] * other.values[7] * other.values[14] - other.values[5] * other.values[2] * other.values[15] + other.values[5] * other.values[3] * other.values[14] + other.values[13] * other.values[2] * other.values[7] - other.values[13] * other.values[3] * other.values[6];
-				inverse.values[6] = -other.values[0] * other.values[6] * other.values[15] + other.values[0] * other.values[7] * other.values[14] + other.values[4] * other.values[2] * other.values[15] - other.values[4] * other.values[3] * other.values[14] - other.values[12] * other.values[2] * other.values[7] + other.values[12] * other.values[3] * other.values[6];
-				inverse.values[10] = other.values[0] * other.values[5] * other.values[15] - other.values[0] * other.values[7] * other.values[13] - other.values[4] * other.values[1] * other.values[15] + other.values[4] * other.values[3] * other.values[13] + other.values[12] * other.values[1] * other.values[7] - other.values[12] * other.values[3] * other.values[5];
-				inverse.values[14] = -other.values[0] * other.values[5] * other.values[14] + other.values[0] * other.values[6] * other.values[13] + other.values[4] * other.values[1] * other.values[14] - other.values[4] * other.values[2] * other.values[13] - other.values[12] * other.values[1] * other.values[6] + other.values[12] * other.values[2] * other.values[5];
-				inverse.values[3] = -other.values[1] * other.values[6] * other.values[11] + other.values[1] * other.values[7] * other.values[10] + other.values[5] * other.values[2] * other.values[11] - other.values[5] * other.values[3] * other.values[10] - other.values[9] * other.values[2] * other.values[7] + other.values[9] * other.values[3] * other.values[6];
-				inverse.values[7] = other.values[0] * other.values[6] * other.values[11] - other.values[0] * other.values[7] * other.values[10] - other.values[4] * other.values[2] * other.values[11] + other.values[4] * other.values[3] * other.values[10] + other.values[8] * other.values[2] * other.values[7] - other.values[8] * other.values[3] * other.values[6];
-				inverse.values[11] = -other.values[0] * other.values[5] * other.values[11] + other.values[0] * other.values[7] * other.values[9] + other.values[4] * other.values[1] * other.values[11] - other.values[4] * other.values[3] * other.values[9] - other.values[8] * other.values[1] * other.values[7] + other.values[8] * other.values[3] * other.values[5];
-				inverse.values[15] = other.values[0] * other.values[5] * other.values[10] - other.values[0] * other.values[6] * other.values[9] - other.values[4] * other.values[1] * other.values[10] + other.values[4] * other.values[2] * other.values[9] + other.values[8] * other.values[1] * other.values[6] - other.values[8] * other.values[2] * other.values[5];
+				inverse.values[0] = value.values[5] * value.values[10] * value.values[15] - value.values[5] * value.values[11] * value.values[14] - value.values[9] * value.values[6] * value.values[15] + value.values[9] * value.values[7] * value.values[14] + value.values[13] * value.values[6] * value.values[11] - value.values[13] * value.values[7] * value.values[10];
+				inverse.values[4] = -value.values[4] * value.values[10] * value.values[15] + value.values[4] * value.values[11] * value.values[14] + value.values[8] * value.values[6] * value.values[15] - value.values[8] * value.values[7] * value.values[14] - value.values[12] * value.values[6] * value.values[11] + value.values[12] * value.values[7] * value.values[10];
+				inverse.values[8] = value.values[4] * value.values[9] * value.values[15] - value.values[4] * value.values[11] * value.values[13] - value.values[8] * value.values[5] * value.values[15] + value.values[8] * value.values[7] * value.values[13] + value.values[12] * value.values[5] * value.values[11] - value.values[12] * value.values[7] * value.values[9];
+				inverse.values[12] = -value.values[4] * value.values[9] * value.values[14] + value.values[4] * value.values[10] * value.values[13] + value.values[8] * value.values[5] * value.values[14] - value.values[8] * value.values[6] * value.values[13] - value.values[12] * value.values[5] * value.values[10] + value.values[12] * value.values[6] * value.values[9];
+				inverse.values[1] = -value.values[1] * value.values[10] * value.values[15] + value.values[1] * value.values[11] * value.values[14] + value.values[9] * value.values[2] * value.values[15] - value.values[9] * value.values[3] * value.values[14] - value.values[13] * value.values[2] * value.values[11] + value.values[13] * value.values[3] * value.values[10];
+				inverse.values[5] = value.values[0] * value.values[10] * value.values[15] - value.values[0] * value.values[11] * value.values[14] - value.values[8] * value.values[2] * value.values[15] + value.values[8] * value.values[3] * value.values[14] + value.values[12] * value.values[2] * value.values[11] - value.values[12] * value.values[3] * value.values[10];
+				inverse.values[9] = -value.values[0] * value.values[9] * value.values[15] + value.values[0] * value.values[11] * value.values[13] + value.values[8] * value.values[1] * value.values[15] - value.values[8] * value.values[3] * value.values[13] - value.values[12] * value.values[1] * value.values[11] + value.values[12] * value.values[3] * value.values[9];
+				inverse.values[13] = value.values[0] * value.values[9] * value.values[14] - value.values[0] * value.values[10] * value.values[13] - value.values[8] * value.values[1] * value.values[14] + value.values[8] * value.values[2] * value.values[13] + value.values[12] * value.values[1] * value.values[10] - value.values[12] * value.values[2] * value.values[9];
+				inverse.values[2] = value.values[1] * value.values[6] * value.values[15] - value.values[1] * value.values[7] * value.values[14] - value.values[5] * value.values[2] * value.values[15] + value.values[5] * value.values[3] * value.values[14] + value.values[13] * value.values[2] * value.values[7] - value.values[13] * value.values[3] * value.values[6];
+				inverse.values[6] = -value.values[0] * value.values[6] * value.values[15] + value.values[0] * value.values[7] * value.values[14] + value.values[4] * value.values[2] * value.values[15] - value.values[4] * value.values[3] * value.values[14] - value.values[12] * value.values[2] * value.values[7] + value.values[12] * value.values[3] * value.values[6];
+				inverse.values[10] = value.values[0] * value.values[5] * value.values[15] - value.values[0] * value.values[7] * value.values[13] - value.values[4] * value.values[1] * value.values[15] + value.values[4] * value.values[3] * value.values[13] + value.values[12] * value.values[1] * value.values[7] - value.values[12] * value.values[3] * value.values[5];
+				inverse.values[14] = -value.values[0] * value.values[5] * value.values[14] + value.values[0] * value.values[6] * value.values[13] + value.values[4] * value.values[1] * value.values[14] - value.values[4] * value.values[2] * value.values[13] - value.values[12] * value.values[1] * value.values[6] + value.values[12] * value.values[2] * value.values[5];
+				inverse.values[3] = -value.values[1] * value.values[6] * value.values[11] + value.values[1] * value.values[7] * value.values[10] + value.values[5] * value.values[2] * value.values[11] - value.values[5] * value.values[3] * value.values[10] - value.values[9] * value.values[2] * value.values[7] + value.values[9] * value.values[3] * value.values[6];
+				inverse.values[7] = value.values[0] * value.values[6] * value.values[11] - value.values[0] * value.values[7] * value.values[10] - value.values[4] * value.values[2] * value.values[11] + value.values[4] * value.values[3] * value.values[10] + value.values[8] * value.values[2] * value.values[7] - value.values[8] * value.values[3] * value.values[6];
+				inverse.values[11] = -value.values[0] * value.values[5] * value.values[11] + value.values[0] * value.values[7] * value.values[9] + value.values[4] * value.values[1] * value.values[11] - value.values[4] * value.values[3] * value.values[9] - value.values[8] * value.values[1] * value.values[7] + value.values[8] * value.values[3] * value.values[5];
+				inverse.values[15] = value.values[0] * value.values[5] * value.values[10] - value.values[0] * value.values[6] * value.values[9] - value.values[4] * value.values[1] * value.values[10] + value.values[4] * value.values[2] * value.values[9] + value.values[8] * value.values[1] * value.values[6] - value.values[8] * value.values[2] * value.values[5];
 				
-				float det = 1.0f / (float)(other.values[0] * inverse.values[0] + other.values[1] * inverse.values[4] + other.values[2] * inverse.values[8] + other.values[3] * inverse.values[12]);
+				float det = 1.0f / (float)(value.values[0] * inverse.values[0] + value.values[1] * inverse.values[4] + value.values[2] * inverse.values[8] + value.values[3] * inverse.values[12]);
 				
 				Matrix4x4 result;
 				for (uint32_t i = 0; i < 16; i++)
@@ -631,6 +631,18 @@ namespace NexgenRedux
 #endif
 			}
 
+			static Vec3F TransformVec3F(const Matrix4x4& matrix, const Vec3F& vec)
+			{
+				Vec4F result = Vec4F(
+					matrix.values[0] * vec.x + matrix.values[1] * vec.y + matrix.values[2] * vec.z + matrix.values[3],
+					matrix.values[4] * vec.x + matrix.values[5] * vec.y + matrix.values[6] * vec.z + matrix.values[7],
+					matrix.values[8] * vec.x + matrix.values[9] * vec.y + matrix.values[10] * vec.z + matrix.values[11],
+					matrix.values[12] * vec.x + matrix.values[13] * vec.y + matrix.values[14] * vec.z + matrix.values[15]
+				);
+
+				return Vec3F(result.x / result.w, result.y / result.w, result.z / result.w);
+			}
+
 		} Matrix4x4;
 
 		typedef struct SizeI
@@ -690,6 +702,8 @@ namespace NexgenRedux
 			bool operator==(const RectI& other) const;
 			bool operator!=(const RectI& other) const;
 
+			bool ContainsPoint(const int32_t& x, const int32_t& y) const;
+
 		};
 
 		struct RectF
@@ -710,6 +724,8 @@ namespace NexgenRedux
 
 			bool operator==(const RectF& other) const;
 			bool operator!=(const RectF& other) const;
+
+			bool ContainsPoint(const float& x, const float& y) const;
 
 		};
 

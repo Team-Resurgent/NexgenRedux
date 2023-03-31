@@ -112,21 +112,6 @@ void Sprite::SetUV(const MathUtility::RectF value)
     m_meshIsDirty = true;
 }
 
-const MathUtility::Vec3F Sprite::GetPosition()
-{
-    return m_position;
-}
-
-void Sprite::SetPosition(const MathUtility::Vec3F value)
-{
-    if (m_position == value) 
-    {
-        return;
-    }
-    m_position = value;
-    m_meshIsDirty = true;
-}
-
 const MathUtility::SizeF Sprite::GetSize()
 {
     return m_size;
@@ -210,4 +195,14 @@ const DepthOperation Sprite::GetDepth()
 void Sprite::SetDepth(const DepthOperation value)
 {
     m_depthOperation = value;
+}
+
+bool Sprite::HitTest(const float& screenPosX, const float& screenPosY, OrthoCamera* camera)
+{
+    MathUtility::RectF rect;
+    rect.x = 0;
+    rect.y = 0;
+    rect.width = m_size.width;
+    rect.height = m_size.height;
+    return camera->IsScreenPointInRect(screenPosX, screenPosY, GetInverseTransform(), rect);
 }

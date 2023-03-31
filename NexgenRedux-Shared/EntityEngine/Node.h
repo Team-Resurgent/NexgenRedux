@@ -40,7 +40,12 @@ namespace NexgenRedux
         const MathUtility::Vec3F GetTranslation();
         void SetTranslation(const MathUtility::Vec3F value);
         const MathUtility::Matrix4x4 GetTransform();
+        const MathUtility::Matrix4x4 GetInverseTransform();
 
+    private:
+
+        void CalculateTransforms();
+        
     private:
 
         friend class NodeManager;
@@ -59,12 +64,13 @@ namespace NexgenRedux
         std::vector<uint32_t> m_childNodes;
         bool m_deleteFlag;
 
-        bool m_isDirty;
+        bool m_transformIsDirty;
         MathUtility::Vec3F m_anchor;
         MathUtility::Vec3F m_rotation;
         MathUtility::Vec3F m_skew;
         MathUtility::Vec3F m_scale;
         MathUtility::Vec3F m_translation;
-        MathUtility::Matrix4x4 m_matrix;
+        MathUtility::Matrix4x4 m_transform;
+        MathUtility::Matrix4x4 m_inverseTransform;
     };
 }

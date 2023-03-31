@@ -108,15 +108,13 @@ void Init()
     Sprite@ sprite1 = NodeManager::CreateSprite();
     sprite1.SetTexturePath("skin:background.png");
     sprite1.SetUV(RectF(0, 0, 1, 1));
-    sprite1.SetPosition(Vec3F(0, 0, 0));
     sprite1.SetSize(SizeF(640, 480));
     NodeManager::AssignNode(sprite1, lighting.GetID());
     
     sprite2.SetTexturePath("skin:sprite.png");
     sprite2.SetUV(RectF(0, 0, 1, 1));
-    sprite2.SetPosition(Vec3F(0, 0, 10));
     sprite2.SetAnchor(Vec3F(64, 64, 0));
-    sprite2.SetTranslation(Vec3F(64, 64, 0));
+    sprite2.SetTranslation(Vec3F(74, 74, 10));
     sprite2.SetSize(SizeF(128, 128));
     sprite2.SetTint(Color4F(0.5, 0.9, 0.6, 1.0));
     sprite2.SetBlend(BlendOperationAdd);

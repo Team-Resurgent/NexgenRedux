@@ -40,6 +40,12 @@ namespace NexgenRedux
         void SetZNear(const float value);
         const float GetZFar();
         void SetZFar(const float value);
+
+        bool IsScreenPointInRect(const float& screenPosX, const float& screenPosY, const MathUtility::Matrix4x4 w2l, const MathUtility::RectF rect);
+
+    private:
+
+        MathUtility::Vec3F Unproject(const MathUtility::Vec3F source);
         
     private:
 
@@ -60,5 +66,6 @@ namespace NexgenRedux
 
         MathUtility::Matrix4x4 m_viewMatrix;
         MathUtility::Matrix4x4 m_projectionMatrix;
+        MathUtility::Matrix4x4 m_inverseProjectionViewMatrix;
     };
 }

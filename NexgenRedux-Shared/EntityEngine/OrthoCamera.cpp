@@ -34,16 +34,21 @@ OrthoCamera::~OrthoCamera(void)
 
 void OrthoCamera::Update(float dt)
 {
-    if (m_viewIsDirty == true)
+    if (m_viewIsDirty == true || m_projectionIsDirty == true)
     {
-        m_viewMatrix = MathUtility::Matrix4x4::LookAt(m_eye, m_target, m_up);
-        m_viewIsDirty = false;
-    }
+        if (m_viewIsDirty == true)
+        {
+            m_viewMatrix = MathUtility::Matrix4x4::LookAt(m_eye, m_target, m_up);
+            m_viewIsDirty = false;
+        }
 
-    if (m_projectionIsDirty == true)
-    {
-        m_projectionMatrix = MathUtility::Matrix4x4::OrthoOffCenter(m_left, m_right, m_bottom, m_top, m_zNear, m_zFar);
-        m_projectionIsDirty = false;
+        if (m_projectionIsDirty == true)
+        {
+            m_projectionMatrix = MathUtility::Matrix4x4::OrthoOffCenter(m_left, m_right, m_bottom, m_top, m_zNear, m_zFar);
+            m_projectionIsDirty = false;
+        }
+
+        m_inverseProjectionViewMatrix = MathUtility::Matrix4x4::Inverse(m_projectionMatrix * m_viewMatrix);
     }
 }
 
@@ -220,4 +225,69 @@ void OrthoCamera::SetZFar(const float value)
     }
     m_zFar = value;
     m_projectionIsDirty = true;
+}
+
+bool OrthoCamera::IsScreenPointInRect(const float& screenPosX, const float& screenPosY, const MathUtility::Matrix4x4 w2l, const MathUtility::RectF rect)
+{
+    if (rect.width <= 0 || rect.height <= 0)
+    {
+        return false;
+    }
+    
+    // first, convert pt to near/far plane, get Pn and Pf
+    MathUtility::Vec3F Pn = MathUtility::Vec3F(screenPosX, screenPosY, -1);
+    MathUtility::Vec3F Pf = MathUtility::Vec3F(screenPosX, screenPosY, 1);
+    Pn = Unproject(Pn);
+    Pf = Unproject(Pf);
+    
+    //  then convert Pn and Pf to node space
+
+    Pn = MathUtility::Matrix4x4::TransformVec3F(w2l, Pn);
+    Pf = MathUtility::Matrix4x4::TransformVec3F(w2l, Pf);
+
+    // Pn and Pf define a line Q(t) = D + t * E which D = Pn
+    auto E = Pf - Pn;
+    
+    // second, get three points which define content plane
+    //  these points define a plane P(u, w) = A + uB + wC
+    MathUtility::Vec3F A = MathUtility::Vec3F(rect.x, rect.y, 0);
+    MathUtility::Vec3F B = MathUtility::Vec3F(rect.x + rect.width, rect.y, 0);
+    MathUtility::Vec3F C = MathUtility::Vec3F(rect.x, rect.y + rect.height, 0);
+    B = B - A;
+    C = C - A;
+    
+    //  the line Q(t) intercept with plane P(u, w)
+    //  calculate the intercept point P = Q(t)
+    //      (BxC).A - (BxC).D
+    //  t = -----------------
+    //          (BxC).E
+    MathUtility::Vec3F BxC = B.Cross(C);
+    auto BxCdotE = BxC.Dot(E);
+    if (BxCdotE == 0) 
+    {
+        return false;
+    }
+    float t = (BxC.Dot(A) - BxC.Dot(Pn)) / BxCdotE;
+    MathUtility::Vec3F P = Pn + MathUtility::Vec3F(E.x * t, E.y * t, E.z * t);
+    return rect.ContainsPoint(P.x, P.y);
+}
+
+// Private
+
+MathUtility::Vec3F OrthoCamera::Unproject(const MathUtility::Vec3F source)
+{
+    uint32_t windowWidth;
+    uint32_t windowHeight;
+    if (WindowManager::GetInstance()->GetWindowSize(windowWidth, windowHeight) == false)
+    {
+        DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, "Unproject: Unable to get window size.");
+        return source;
+    }
+
+    MathUtility::Vec3F screen = MathUtility::Vec3F(source.x / windowWidth, source.y / windowHeight, source.z);
+    screen.x = screen.x * 2.0f - 1.0f;
+    screen.y = screen.y * 2.0f - 1.0f;
+    screen.z = screen.z * 2.0f - 1.0f;
+
+    return MathUtility::Matrix4x4::TransformVec3F(m_inverseProjectionViewMatrix, screen);
 }

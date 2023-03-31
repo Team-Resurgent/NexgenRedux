@@ -3,6 +3,7 @@
 #include "Node.h"
 #include "GlobalTypes.h"
 #include "MeshUtility.h"
+#include "OrthoCamera.h"
 
 #include <vector>
 #include <map>
@@ -23,8 +24,6 @@ namespace NexgenRedux
         void SetTexturePath(const std::string value);
         const MathUtility::RectF GetUV();
         void SetUV(const MathUtility::RectF value);
-        const MathUtility::Vec3F GetPosition();
-        void SetPosition(const MathUtility::Vec3F value);
         const MathUtility::SizeF GetSize();
         void SetSize(const MathUtility::SizeF value);
         const MathUtility::Color4F GetTint();
@@ -41,6 +40,8 @@ namespace NexgenRedux
         void SetCulling(const CullingOperation value);
         const DepthOperation GetDepth();
         void SetDepth(const DepthOperation value);
+
+        bool HitTest(const float& screenPosX, const float& screenPosY, OrthoCamera* camera);
 
     private:
 

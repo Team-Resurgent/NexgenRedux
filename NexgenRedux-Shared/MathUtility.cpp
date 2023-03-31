@@ -513,6 +513,11 @@ bool MathUtility::RectI::operator!=(const MathUtility::RectI& other) const
     return !(*this == other); 
 }
 
+bool MathUtility::RectI::ContainsPoint(const int32_t& x, const int32_t& y) const
+{
+    return x >= values[0] && x <= (values[0] + values[2]) && y >= y && y <= (values[1] + values[3]);
+}
+
 // RectF
 
 MathUtility::RectF::RectF() : x(0), y(0), width(0), height(0) 
@@ -548,6 +553,11 @@ bool MathUtility::RectF::operator==(const MathUtility::RectF& other) const
 bool MathUtility::RectF::operator!=(const MathUtility::RectF& other) const 
 { 
     return !(*this == other); 
+}
+
+bool MathUtility::RectF::ContainsPoint(const float& x, const float& y) const
+{
+    return x >= values[0] && x <= (values[0] + values[2]) && y >= y && y <= (values[1] + values[3]);
 }
 
 // Color3F

@@ -714,8 +714,6 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	if (m_engine->RegisterObjectMethod("Sprite", "void SetTexturePath(string)", asMETHOD(Sprite, SetTexturePath), asCALL_THISCALL) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("Sprite", "RectF& GetUV()", asMETHOD(Sprite, GetUV), asCALL_THISCALL) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("Sprite", "void SetUV(RectF)", asMETHOD(Sprite, SetUV), asCALL_THISCALL) < 0) { return false; }
-	if (m_engine->RegisterObjectMethod("Sprite", "Vec3F& GetPosition()", asMETHOD(Sprite, GetPosition), asCALL_THISCALL) < 0) { return false; }
-	if (m_engine->RegisterObjectMethod("Sprite", "void SetPosition(Vec3F)", asMETHOD(Sprite, SetPosition), asCALL_THISCALL) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("Sprite", "SizeF& GetSize()", asMETHOD(Sprite, GetSize), asCALL_THISCALL) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("Sprite", "void SetSize(SizeF)", asMETHOD(Sprite, SetSize), asCALL_THISCALL) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("Sprite", "Color4F& GetTint()", asMETHOD(Sprite, GetTint), asCALL_THISCALL) < 0) { return false; }
@@ -732,6 +730,9 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	if (m_engine->RegisterObjectMethod("Sprite", "void SetCulling(CullingOperation)", asMETHOD(Sprite, SetCulling), asCALL_THISCALL) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("Sprite", "DepthOperation GetDepth()", asMETHOD(Sprite, GetDepth), asCALL_THISCALL) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("Sprite", "void SetDepth(DepthOperation)", asMETHOD(Sprite, SetDepth), asCALL_THISCALL) < 0) { return false; }
+
+	if (m_engine->RegisterObjectMethod("Sprite", "bool HitTest(float, float, OrthoCamera@)", asMETHOD(Sprite, HitTest), asCALL_THISCALL) < 0) { return false; }
+
 
 	if (m_engine->RegisterObjectType("Fog", sizeof(0), asOBJ_REF | asOBJ_NOCOUNT) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("Fog", "uint GetID()", asMETHOD(Fog, GetID), asCALL_THISCALL) < 0) { return false; }

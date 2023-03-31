@@ -130,12 +130,12 @@ bool WindowManager::RenderLoop()
 
 	if (m_windowHelper->GetWindowPtr() != NULL) 
 	{
+		uint64_t now = TimeUtility::GetMillisecondsNow();
+		uint64_t previousNow = now;
+
 		bool exitRequested = false;
 		while (exitRequested == false)
 		{
-			uint64_t now = TimeUtility::GetMillisecondsNow();
-			uint64_t previousNow = now;
-
 			double dt = TimeUtility::GetDurationSeconds(previousNow, now);
 			if (WindowPreRender(exitRequested) == false)
 			{
@@ -161,6 +161,7 @@ bool WindowManager::RenderLoop()
 			
 			PollEvents();
 			previousNow = now;
+			now = TimeUtility::GetMillisecondsNow();
 		}
 	}
     return true;

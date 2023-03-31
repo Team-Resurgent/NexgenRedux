@@ -254,7 +254,9 @@ void Init()
 void Render(double dt)
 {
     sprite2.SetRotation(Vec3F(0, 0, spriteRotate));
-    spriteRotate++;
+    spriteRotate += float(dt) * 90;
+
+    DebugPrint(1, "fps = " + dt);
 
     currentTime = GetMillisecondsNow();
     double durationFPS = GetDurationSeconds(previousTime, currentTime);

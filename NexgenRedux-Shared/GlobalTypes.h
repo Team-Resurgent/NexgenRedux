@@ -273,17 +273,10 @@ namespace NexgenRedux
 		DrawModeState drawModeState;
 	} RenderState;  
 
-	typedef enum NodeType {
-		NodeTypeCamera,
-		NodeTypeSprite
-	} NodeType;  
-
-	typedef enum PropertyType {
-		PropertyTypeAnchor,
-		PropertyTypeRotation,
-		PropertyTypeScale,
-		PropertyTypeSkew,
-		PropertyTypePosition,
-		PropertyTypeTransform
-	} PropertyType;  
+	typedef enum CursorMode {
+		CursorModeNormal,
+		CursorModeHidden,
+		CursorModeDisabled,
+		CursorModeCaptured
+	} CursorMode;  
 }

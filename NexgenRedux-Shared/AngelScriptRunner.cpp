@@ -545,6 +545,12 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
     if (m_engine->RegisterObjectMethod("Color4F", "bool opEq(const Color4F &in) const", asMETHODPR(MathUtility::Color4F, operator==, (const MathUtility::Color4F &) const, bool), asCALL_THISCALL) < 0) { return false; }
     if (m_engine->RegisterObjectMethod("Color4F", "bool opNotEq(const Color4F &in) const", asMETHODPR(MathUtility::Color4F, operator!=, (const MathUtility::Color4F &) const, bool), asCALL_THISCALL) < 0) { return false; }
 
+	if (m_engine->RegisterEnum("CursorMode") < 0) { return false; }
+	if (m_engine->RegisterEnumValue("CursorMode", "CursorModeNormal", CursorModeNormal) < 0) { return false; }
+	if (m_engine->RegisterEnumValue("CursorMode", "CursorModeHidden", CursorModeHidden) < 0) { return false; }
+	if (m_engine->RegisterEnumValue("CursorMode", "CursorModeDisabled", CursorModeDisabled) < 0) { return false; }
+	if (m_engine->RegisterEnumValue("CursorMode", "CursorModeCaptured", CursorModeCaptured) < 0) { return false; }
+
 	if (m_engine->RegisterEnum("BlendOperation") < 0) { return false; }
 	if (m_engine->RegisterEnumValue("BlendOperation", "BlendOperationDisabled", BlendOperationDisabled) < 0) { return false; }
 	if (m_engine->RegisterEnumValue("BlendOperation", "BlendOperationAdd", BlendOperationAdd) < 0) { return false; }
@@ -616,7 +622,7 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	if (m_engine->RegisterGlobalFunction("void WindowCreateWithVideoMode(MonitorVideoMode monitorVideoMode, string &in title)", asFUNCTION(AngelScriptMethods::WindowCreateWithVideoMode), asCALL_GENERIC) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void WindowCreateWithSize(uint width, uint height, string &in title)", asFUNCTION(AngelScriptMethods::WindowCreateWithSize), asCALL_GENERIC) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("SizeI GetWindowSize()", asFUNCTION(AngelScriptMethods::GetWindowSize), asCALL_GENERIC) < 0) { return false; }
-	if (m_engine->RegisterGlobalFunction("void SetCursorMode(uint mode)", asFUNCTION(AngelScriptMethods::SetCursorMode), asCALL_GENERIC) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("void SetCursorMode(CursorMode)", asFUNCTION(AngelScriptMethods::SetCursorMode), asCALL_GENERIC) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void WindowClose()", asFUNCTION(AngelScriptMethods::WindowClose), asCALL_GENERIC) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("uint GetKeyPressed(uint key)", asFUNCTION(AngelScriptMethods::GetKeyPressed), asCALL_GENERIC) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("uint GetMouseButtonPressed(uint button)", asFUNCTION(AngelScriptMethods::GetMouseButtonPressed), asCALL_GENERIC) < 0) { return false; }
@@ -731,7 +737,7 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	if (m_engine->RegisterObjectMethod("Sprite", "DepthOperation GetDepth()", asMETHOD(Sprite, GetDepth), asCALL_THISCALL) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("Sprite", "void SetDepth(DepthOperation)", asMETHOD(Sprite, SetDepth), asCALL_THISCALL) < 0) { return false; }
 
-	if (m_engine->RegisterObjectMethod("Sprite", "bool HitTest(float, float, OrthoCamera@)", asMETHOD(Sprite, HitTest), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Sprite", "bool HitTest(double, double, OrthoCamera@)", asMETHOD(Sprite, HitTest), asCALL_THISCALL) < 0) { return false; }
 
 
 	if (m_engine->RegisterObjectType("Fog", sizeof(0), asOBJ_REF | asOBJ_NOCOUNT) < 0) { return false; }

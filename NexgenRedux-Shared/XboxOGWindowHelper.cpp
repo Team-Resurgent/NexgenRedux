@@ -375,7 +375,7 @@ bool XboxOGWindowHelper::GetWindowSize(uint32_t& width, uint32_t& height)
 	return true;
 }
 
-bool XboxOGWindowHelper::SetCursorMode(uint32_t mode)
+bool XboxOGWindowHelper::SetCursorMode(CursorMode mode)
 {
 	return true;
 }

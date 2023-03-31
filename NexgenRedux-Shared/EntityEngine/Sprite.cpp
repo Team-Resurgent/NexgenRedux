@@ -197,12 +197,8 @@ void Sprite::SetDepth(const DepthOperation value)
     m_depthOperation = value;
 }
 
-bool Sprite::HitTest(const float& screenPosX, const float& screenPosY, OrthoCamera* camera)
+bool Sprite::HitTest(const double screenPosX, const double screenPosY, OrthoCamera* camera)
 {
-    MathUtility::RectF rect;
-    rect.x = 0;
-    rect.y = 0;
-    rect.width = m_size.width;
-    rect.height = m_size.height;
-    return camera->IsScreenPointInRect(screenPosX, screenPosY, GetInverseTransform(), rect);
+    MathUtility::RectF rect = MathUtility::RectF(0, 0, m_size.width, m_size.height);
+    return camera->IsScreenPointInRect((float)screenPosX, (float)screenPosY, GetInverseTransform(), rect);
 }

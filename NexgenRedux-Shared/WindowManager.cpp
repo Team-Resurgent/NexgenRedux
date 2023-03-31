@@ -95,7 +95,7 @@ bool WindowManager::GetWindowSize(uint32_t& width, uint32_t& height)
 	return m_windowHelper->GetWindowSize(width, height);
 }
 
-bool WindowManager::SetCursorMode(uint32_t mode)
+bool WindowManager::SetCursorMode(CursorMode mode)
 {
 	return m_windowHelper->SetCursorMode(mode);
 }

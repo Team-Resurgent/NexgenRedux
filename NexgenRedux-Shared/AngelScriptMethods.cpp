@@ -126,7 +126,7 @@ void AngelScriptMethods::WindowCreateWithVideoMode(asIScriptGeneric* gen)
 
 void AngelScriptMethods::SetCursorMode(asIScriptGeneric* gen)
 {
-	uint32_t mode = gen->GetArgDWord(0);
+	CursorMode mode = (CursorMode)gen->GetArgDWord(0);
 	if (WindowManager::GetInstance()->SetCursorMode(mode) == false) 
 	{
 		asIScriptContext *context = asGetActiveContext();

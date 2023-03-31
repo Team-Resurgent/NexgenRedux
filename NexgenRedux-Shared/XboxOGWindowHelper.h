@@ -75,7 +75,7 @@ namespace NexgenRedux
 		bool GetClipboardString(std::string& value);
 		bool SetClipboardString(std::string value);
 
-		bool SetCursorMode(uint32_t mode);
+		bool SetCursorMode(CursorMode mode);
 		bool JoystickIsPresent(uint32_t joystickID, uint32_t& present);
 		bool JoystickIsGamepad(uint32_t joystickID, uint32_t& gamepad);
 		bool GetJoystickButtonStates(uint32_t joystickID, JoystickButtonStates& joystickButtonStates);

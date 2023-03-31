@@ -41,7 +41,7 @@ namespace NexgenRedux
         const DepthOperation GetDepth();
         void SetDepth(const DepthOperation value);
 
-        bool HitTest(const float& screenPosX, const float& screenPosY, OrthoCamera* camera);
+        bool HitTest(const double screenPosX, const double screenPosY, OrthoCamera* camera);
 
     private:
 

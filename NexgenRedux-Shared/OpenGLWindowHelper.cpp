@@ -228,7 +228,7 @@ bool OpenGLWindowHelper::GetWindowSize(uint32_t& width, uint32_t& height)
 	return true;
 }
 
-bool OpenGLWindowHelper::SetCursorMode(uint32_t mode)
+bool OpenGLWindowHelper::SetCursorMode(CursorMode mode)
 {
     if (Init() == false)
     {
@@ -240,22 +240,22 @@ bool OpenGLWindowHelper::SetCursorMode(uint32_t mode)
 		return false;
 	}
 
-    if (mode == 0)
+    if (mode == CursorModeNormal)
     {
         glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
         return true;
     }
-    if (mode == 1)
+    if (mode == CursorModeHidden)
     {
         glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
         return true;
     }
-    else if (mode == 2)
+    else if (mode == CursorModeDisabled)
     {
         glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         return true;
     }
-    else if (mode == 2)
+    else if (mode == CursorModeCaptured)
     {
         glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_CAPTURED);
         return true;

@@ -30,7 +30,7 @@ namespace NexgenRedux
 		bool WindowCreateWithSize(uint32_t width, uint32_t height, std::string title);
 		void* GetWindowPtr();
 		bool GetWindowSize(uint32_t& width, uint32_t& height);
-		bool SetCursorMode(uint32_t mode);
+		bool SetCursorMode(CursorMode mode);
         bool WindowClose();
 		bool WindowPreRender(bool& exitRequested);
 		bool WindowPostRender();

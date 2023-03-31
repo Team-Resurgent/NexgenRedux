@@ -1,3 +1,6 @@
+OrthoCamera@ orthoCamera = NodeManager::CreateOrthoCamera();
+Sprite@ sprite2 = NodeManager::CreateSprite();
+
 void OnWindowIconify(uint iconified)
 {
     DebugPrint(0, "OnWindowIconify iconified = " + iconified);
@@ -31,7 +34,7 @@ void OnWindowKeyboardCharacter(uint codepoint)
 void OnWindowMouseCursorPosition(double xPos, double yPos)
 {
     // commented out to reduce noisey logging
-    DebugPrint(0, "OnWindowMouseCursorPosition xPos = " + xPos + ", yPos = " + yPos);
+    //DebugPrint(0, "OnWindowMouseCursorPosition xPos = " + xPos + ", yPos = " + yPos);
 }
 
 void OnWindowMouseCursorEnter(uint entered)
@@ -67,14 +70,11 @@ uint64 previousTime;
 uint frameCount;
 float spriteRotate = 0;
 
-Sprite@ sprite2 = NodeManager::CreateSprite();
-
 void Init()
 {
     uint sceneID = SceneManager::CreateScene(true);
     SceneManager::SetCurrentScene(sceneID);
 
-    OrthoCamera@ orthoCamera = NodeManager::CreateOrthoCamera();
     orthoCamera.SetClearColor(Color4F(0, 0, 0, 1));
     orthoCamera.SetEye(Vec3F(0, 0, 50));
     orthoCamera.SetTarget(Vec3F(0, 0, 0));
@@ -208,11 +208,7 @@ void Init()
 
     SetJoystickConnectCallback(OnJoystickConnect);
 
-    const uint CursorModeNormal = 0;
-    const uint CursorModeHidden = 1;
-    const uint CursorModeDisabled = 2;
-    const uint CursorModeCaptured = 3;
-    SetCursorMode(CursorModeHidden);
+    SetCursorMode(CursorModeNormal);
 
     bool joystickIsPresent = JoystickIsPresent(0);
     DebugPrint(1, "JoystickIsPresent = " + joystickIsPresent);
@@ -303,7 +299,14 @@ void Render(double dt)
     DebugPrintIf(keyPressed > 0, 1, "keyPressed = " + keyPressed);
 
     uint mouseButtonPressed = GetMouseButtonPressed(0);
-    DebugPrintIf(mouseButtonPressed > 0, 1, "mouseButtonPressed = " + mouseButtonPressed);
+    if (mouseButtonPressed == 1)
+    {
+        Vec2D mousePos = GetMouseCursorPosition();
+        if (sprite2.HitTest(mousePos.x, mousePos.y, orthoCamera) == true)
+        {
+            DebugPrint(1, "sprite clicked");
+        }
+    }
 
     frameCount++;
 }

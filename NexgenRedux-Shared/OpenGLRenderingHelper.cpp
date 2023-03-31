@@ -23,7 +23,8 @@ namespace
     const std::string defaultVertexShader =
 
 		"#version 100\n"
-		"precision mediump float;\n"
+        "precision mediump float;\n"
+        "precision mediump int;\n"
 		
 		"struct pixel_shader_input {\n"
 		"    vec4 position;\n"
@@ -111,7 +112,8 @@ namespace
 	const std::string defaultFragmentShader =
 
 		"#version 100\n"
-		"precision mediump float;\n"
+        "precision mediump float;\n"
+        "precision mediump int;\n"
 
 		"struct pixel_shader_input {\n"
 		"    vec3 w_position;\n"

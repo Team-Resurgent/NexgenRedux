@@ -631,17 +631,42 @@ namespace NexgenRedux
 #endif
 			}
 
-			static Vec3F TransformVec3F(const Matrix4x4& matrix, const Vec3F& vec)
+			static Vec3F GetPosition(const Matrix4x4& matrix)
 			{
-				Vec4F result = Vec4F(
-					matrix.values[0] * vec.x + matrix.values[1] * vec.y + matrix.values[2] * vec.z + matrix.values[3],
-					matrix.values[4] * vec.x + matrix.values[5] * vec.y + matrix.values[6] * vec.z + matrix.values[7],
-					matrix.values[8] * vec.x + matrix.values[9] * vec.y + matrix.values[10] * vec.z + matrix.values[11],
-					matrix.values[12] * vec.x + matrix.values[13] * vec.y + matrix.values[14] * vec.z + matrix.values[15]
-				);
-
-				return Vec3F(result.x / result.w, result.y / result.w, result.z / result.w);
+				return Vec3F(matrix.values[12] / matrix.values[15], matrix.values[13] / matrix.values[15], matrix.values[14] / matrix.values[15]);
 			}
+
+			static Vec4F MultiplyMatrixByVec4F(const Matrix4x4& matrix, const Vec4F& vec)
+			{
+				Vec4F result = Vec4F();
+				for (uint32_t i = 0; i < 4; i++) 
+				{
+					result.values[i] = 0;
+					for (uint32_t j = 0; j < 4; j++) 
+					{
+						result.values[i] += matrix.values[i * 4 + j] * vec.values[j];
+					}
+				}
+				return result;
+			}
+
+
+			// static Vec3F TransformVec3F(const Matrix4x4& matrix, const Vec3F& vec)
+			// {
+			// 	Vec4F result = Vec4F(
+			// 		matrix.values[0] * vec.x + matrix.values[1] * vec.y + matrix.values[2] * vec.z + matrix.values[3],
+			// 		matrix.values[4] * vec.x + matrix.values[5] * vec.y + matrix.values[6] * vec.z + matrix.values[7],
+			// 		matrix.values[8] * vec.x + matrix.values[9] * vec.y + matrix.values[10] * vec.z + matrix.values[11],
+			// 		matrix.values[12] * vec.x + matrix.values[13] * vec.y + matrix.values[14] * vec.z + matrix.values[15]
+			// 	);
+
+			// 	if (result.w != 0)
+			// 	{
+			// 		return Vec3F(result.x / result.w, result.y / result.w, result.z / result.w);
+			// 	}
+
+			// 	return Vec3F(result.x, result.y, result.z);
+			// }
 
 		} Matrix4x4;
 

@@ -40,13 +40,13 @@ namespace NexgenRedux
         void SetZNear(const float value);
         const float GetZFar();
         void SetZFar(const float value);
-
-        bool IsScreenPointInRect(const float& screenPosX, const float& screenPosY, const MathUtility::Matrix4x4 w2l, const MathUtility::RectF rect);
-
+        
+        bool TestRayIntersectsObb(const MathUtility::Vec2F screenCoord, const MathUtility::Vec3F aabb_min, const MathUtility::Vec3F aabb_max, const MathUtility::Matrix4x4 modelMatrix);
+        
     private:
 
-        MathUtility::Vec3F Unproject(const MathUtility::Vec3F source);
-        
+        MathUtility::Vec3F Unproject(const MathUtility::Vec3F screenCoord);
+
     private:
 
         MathUtility::Color4F m_clearColor;

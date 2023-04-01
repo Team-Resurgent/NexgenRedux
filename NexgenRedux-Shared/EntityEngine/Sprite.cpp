@@ -199,6 +199,6 @@ void Sprite::SetDepth(const DepthOperation value)
 
 bool Sprite::HitTest(const double screenPosX, const double screenPosY, OrthoCamera* camera)
 {
-    MathUtility::RectF rect = MathUtility::RectF(0, 0, m_size.width, m_size.height);
-    return camera->IsScreenPointInRect((float)screenPosX, (float)screenPosY, GetInverseTransform(), rect);
+    MathUtility::Vec2F screenCoord = MathUtility::Vec2F((float)screenPosX, (float)screenPosY);
+    return camera->TestRayIntersectsObb(screenCoord, MathUtility::Vec3F(), MathUtility::Vec3F(m_size.width, m_size.height, 0.0f), GetTransform());
 }

@@ -93,7 +93,7 @@ void Init()
     fog.SetFogColor(Color3F(0, 0.6, 0));
     fog.SetFogStart(-1024);
     fog.SetFogEnd(1024);
-    fog.SetFogDensity(0.01);
+    fog.SetFogDensity(0.001);
     NodeManager::AssignNode(fog, orthoCamera.GetID());
     
     Lighting@ lighting = NodeManager::CreateLighting();
@@ -116,8 +116,8 @@ void Init()
     sprite2.SetAnchor(Vec3F(64, 64, 0));
     sprite2.SetTranslation(Vec3F(74, 74, 10));
     sprite2.SetSize(SizeF(128, 128));
-    sprite2.SetTint(Color4F(0.5, 0.9, 0.6, 1.0));
-    sprite2.SetBlend(BlendOperationAdd);
+    sprite2.SetTint(Color4F(1, 1, 1, 1));
+    sprite2.SetBlend(BlendOperationDisabled);
     sprite2.SetBlendFactorSrc(BlendFactorSrcAlpha);
     sprite2.SetBlendFactorDst(BlendFactorOneMinusSrcAlpha);
     sprite2.SetDrawMode(DrawModeOperationTriangles);
@@ -302,6 +302,7 @@ void Render(double dt)
     if (mouseButtonPressed == 1)
     {
         Vec2D mousePos = GetMouseCursorPosition();
+        DebugPrint(1, "sprite mousePosx " + mousePos.x + " moy = " + + mousePos.y);
         if (sprite2.HitTest(mousePos.x, mousePos.y, orthoCamera) == true)
         {
             DebugPrint(1, "sprite clicked");

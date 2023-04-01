@@ -398,8 +398,8 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
     if (m_engine->RegisterObjectBehaviour("Vec2D", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Vec2DConstructorDefault), asCALL_CDECL_OBJLAST) < 0) { return false; }
     if (m_engine->RegisterObjectBehaviour("Vec2D", asBEHAVE_CONSTRUCT, "void f(double, double)", asFUNCTION(Vec2DConstructorValues), asCALL_CDECL_OBJLAST) < 0) { return false; }
     if (m_engine->RegisterObjectBehaviour("Vec2D", asBEHAVE_CONSTRUCT, "void f(Vec2D &in)", asFUNCTION(Vec2DConstructorCopy), asCALL_CDECL_OBJLAST) < 0) { return false; }
-    if (m_engine->RegisterObjectProperty("Vec2D", "float x", asOFFSET(MathUtility::Vec2D, x)) < 0) { return false; }
-    if (m_engine->RegisterObjectProperty("Vec2D", "float y", asOFFSET(MathUtility::Vec2D, y)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("Vec2D", "double x", asOFFSET(MathUtility::Vec2D, x)) < 0) { return false; }
+    if (m_engine->RegisterObjectProperty("Vec2D", "double y", asOFFSET(MathUtility::Vec2D, y)) < 0) { return false; }
     if (m_engine->RegisterObjectMethod("Vec2D", "Vec2D opDiv(const Vec2D &in) const", asMETHODPR(MathUtility::Vec2D, operator/, (const MathUtility::Vec2D &) const, MathUtility::Vec2D), asCALL_THISCALL) < 0) { return false; }
     if (m_engine->RegisterObjectMethod("Vec2D", "Vec2D opMul(const Vec2D &in) const", asMETHODPR(MathUtility::Vec2D, operator*, (const MathUtility::Vec2D &) const, MathUtility::Vec2D), asCALL_THISCALL) < 0) { return false; }
     if (m_engine->RegisterObjectMethod("Vec2D", "Vec2D opAdd(const Vec2D &in) const", asMETHODPR(MathUtility::Vec2D, operator+, (const MathUtility::Vec2D &) const, MathUtility::Vec2D), asCALL_THISCALL) < 0) { return false; }

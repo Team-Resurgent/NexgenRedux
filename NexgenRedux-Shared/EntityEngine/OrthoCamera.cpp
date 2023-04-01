@@ -227,67 +227,66 @@ void OrthoCamera::SetZFar(const float value)
     m_projectionIsDirty = true;
 }
 
-bool OrthoCamera::IsScreenPointInRect(const float& screenPosX, const float& screenPosY, const MathUtility::Matrix4x4 w2l, const MathUtility::RectF rect)
-{
-    if (rect.width <= 0 || rect.height <= 0)
-    {
-        return false;
-    }
-    
-    // first, convert pt to near/far plane, get Pn and Pf
-    MathUtility::Vec3F Pn = MathUtility::Vec3F(screenPosX, screenPosY, -1);
-    MathUtility::Vec3F Pf = MathUtility::Vec3F(screenPosX, screenPosY, 1);
-    Pn = Unproject(Pn);
-    Pf = Unproject(Pf);
-    
-    //  then convert Pn and Pf to node space
-
-    Pn = MathUtility::Matrix4x4::TransformVec3F(w2l, Pn);
-    Pf = MathUtility::Matrix4x4::TransformVec3F(w2l, Pf);
-
-    // Pn and Pf define a line Q(t) = D + t * E which D = Pn
-    auto E = Pf - Pn;
-    
-    // second, get three points which define content plane
-    //  these points define a plane P(u, w) = A + uB + wC
-    MathUtility::Vec3F A = MathUtility::Vec3F(rect.x, rect.y, 0);
-    MathUtility::Vec3F B = MathUtility::Vec3F(rect.x + rect.width, rect.y, 0);
-    MathUtility::Vec3F C = MathUtility::Vec3F(rect.x, rect.y + rect.height, 0);
-    B = B - A;
-    C = C - A;
-    
-    //  the line Q(t) intercept with plane P(u, w)
-    //  calculate the intercept point P = Q(t)
-    //      (BxC).A - (BxC).D
-    //  t = -----------------
-    //          (BxC).E
-    MathUtility::Vec3F BxC = B.Cross(C);
-    auto BxCdotE = BxC.Dot(E);
-    if (BxCdotE == 0) 
-    {
-        return false;
-    }
-    float t = (BxC.Dot(A) - BxC.Dot(Pn)) / BxCdotE;
-    MathUtility::Vec3F P = Pn + MathUtility::Vec3F(E.x * t, E.y * t, E.z * t);
-    return rect.ContainsPoint(P.x, P.y);
-}
-
 // Private
 
-MathUtility::Vec3F OrthoCamera::Unproject(const MathUtility::Vec3F source)
+MathUtility::Vec3F OrthoCamera::Unproject(const MathUtility::Vec3F screenCoord)
 {
-    uint32_t windowWidth;
-    uint32_t windowHeight;
-    if (WindowManager::GetInstance()->GetWindowSize(windowWidth, windowHeight) == false)
+    MathUtility::Vec4F viewport = MathUtility::Vec4F(0, 0, m_right, m_top); 
+
+    MathUtility::Vec4F temp = MathUtility::Vec4F();
+    temp.x = (((screenCoord.x - viewport.values[0]) / viewport.values[2]) * 2) - 1;
+    temp.y = (((screenCoord.y - viewport.values[1]) / viewport.values[3]) * 2) - 1;
+    temp.z = screenCoord.z;
+    temp.w = 1;
+
+    MathUtility::Vec4F result = MathUtility::Matrix4x4::MultiplyMatrixByVec4F(m_inverseProjectionViewMatrix, temp);
+    return MathUtility::Vec3F(result.x / result.w, result.y / result.w, result.z / result.w);
+}
+
+bool OrthoCamera::TestRayIntersectsObb(const MathUtility::Vec2F screenCoord, const MathUtility::Vec3F aabb_min, const MathUtility::Vec3F aabb_max, const MathUtility::Matrix4x4 modelMatrix)
+{
+    MathUtility::Vec3F rayOrigin = MathUtility::Vec3F(screenCoord.x, screenCoord.y, 0.0f);
+    MathUtility::Vec3F rayDirection = Unproject(MathUtility::Vec3F(screenCoord.x, screenCoord.y, 1.0f) - rayOrigin).Normal();
+
+    MathUtility::Vec3F obbPositionWorld = MathUtility::Matrix4x4::GetPosition(modelMatrix);
+    MathUtility::Vec3F delta = obbPositionWorld - rayOrigin;
+    
+    float tMin = 0.0f;
+    float tMax = 100000.0f;
+
+    for (uint32_t i = 0; i <= 2; i++)
     {
-        DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, "Unproject: Unable to get window size.");
-        return source;
+        MathUtility::Vec3F axis = MathUtility::Vec3F(modelMatrix.values[(i * 4)], modelMatrix.values[(i * 4) + 1], modelMatrix.values[(i * 4) + 2]);
+        
+        float e = axis.Dot(delta);
+        float f = rayDirection.Dot(axis);
+        if (fabs(f) > 0.001f)
+        {
+            float t1 = (e + aabb_min.values[i]) / f;
+            float t2 = (e + aabb_max.values[i]) / f;
+            if (t1 > t2)
+            {
+                float temp = t1;
+                t1 = t2;
+                t2 = temp;
+            }
+            if (t2 < tMax)
+            {
+                tMax = t2;
+            }
+            if (t1 > tMin)
+            {
+                tMin = t1;
+            }
+            if (tMin > tMax)
+            {
+                return false;
+            }
+        } 
+        else if (-e + aabb_min.values[i] > 0.0f || -e + aabb_max.values[i] < 0.0f) 
+        {
+            return false;
+        }
     }
-
-    MathUtility::Vec3F screen = MathUtility::Vec3F(source.x / windowWidth, source.y / windowHeight, source.z);
-    screen.x = screen.x * 2.0f - 1.0f;
-    screen.y = screen.y * 2.0f - 1.0f;
-    screen.z = screen.z * 2.0f - 1.0f;
-
-    return MathUtility::Matrix4x4::TransformVec3F(m_inverseProjectionViewMatrix, screen);
+    return true;
 }

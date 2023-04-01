@@ -352,7 +352,11 @@ bool OpenGLWindowHelper::GetMouseCursorPosition(double& xPos, double& yPos)
 		return false;
 	}
 
-    glfwGetCursorPos(m_window, &xPos, &yPos);
+    double tempX;
+    double tempY;
+    glfwGetCursorPos(m_window, &tempX, &tempY);
+    xPos = tempX;
+    yPos = m_height - tempY;
     return true;
 }
 
@@ -635,7 +639,15 @@ void OpenGLWindowHelper::WindowKeyboardCharacter(GLFWwindow* window, unsigned in
 
 void OpenGLWindowHelper::WindowMouseCursorPosition(GLFWwindow* window, double xPos, double yPos)
 {
-    if (AngelScriptRunner::ExecuteWindowMouseCursorPositionCallback(xPos, yPos) == false)
+    uint32_t windowWidth;
+    uint32_t windowHeight;
+    if (WindowManager::GetInstance()->GetWindowSize(windowWidth, windowHeight) == false)
+    {
+        DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "WindowMouseCursorPosition: Unable to get window size.");
+        return;
+    }
+
+    if (AngelScriptRunner::ExecuteWindowMouseCursorPositionCallback(xPos, windowHeight - yPos) == false)
     {
         DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteWindowMouseCursorPositionCallback failed.");
     }

@@ -176,7 +176,6 @@ void Node::CalculateTransforms()
     MathUtility::Matrix4x4 anchorPositionMatrix = MathUtility::Matrix4x4::Translate(m_anchor + m_translation);
     m_transform = parentMatrix * inverseAnchorMatrix * rotationMatrix * scaleMatrix * skewMatrix * anchorPositionMatrix;
     m_inverseTransform = MathUtility::Matrix4x4::Inverse(m_transform);
-
     m_transformIsDirty = false;
 }
 

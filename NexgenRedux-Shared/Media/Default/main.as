@@ -1,4 +1,5 @@
 OrthoCamera@ orthoCamera = NodeManager::CreateOrthoCamera();
+Sprite@ sprite1 = NodeManager::CreateSprite();
 Sprite@ sprite2 = NodeManager::CreateSprite();
 
 void OnWindowIconify(uint iconified)
@@ -13,7 +14,7 @@ void OnWindowMaximize(uint maximized)
 
 void OnWindowSize(uint width, uint height)
 {
-    DebugPrint(0, "OnWindowSize width = " + width + ", height = " + height);
+    //sprite1.SetSize(SizeF(width, height));
 }
 
 void OnWindowFocus(uint focused)
@@ -105,7 +106,6 @@ void Init()
     lighting.SetLight1Diffuse(Color4F(0, 0, 0, 0));
     NodeManager::AssignNode(lighting, fog.GetID());
 
-    Sprite@ sprite1 = NodeManager::CreateSprite();
     sprite1.SetTexturePath("skin:background.png");
     sprite1.SetUV(RectF(0, 0, 1, 1));
     sprite1.SetSize(SizeF(640, 480));

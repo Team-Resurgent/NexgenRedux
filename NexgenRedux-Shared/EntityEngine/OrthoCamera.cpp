@@ -80,6 +80,13 @@ void OrthoCamera::Render()
     renderStateManager->SetLight4(LightOperationDisabled);
     renderStateManager->SetLightInstance4(MathUtility::Vec3F(0, 0, 0), 0, MathUtility::Color4F(0, 0, 0, 0));
 
+    uint32_t windowWidth;
+    uint32_t windowHeight;
+    if (WindowManager::GetInstance()->GetWindowSize(windowWidth, windowHeight) == true)
+    {
+        renderStateManager->SetViewport(MathUtility::RectI(0, 0, windowWidth, windowHeight));
+    }
+
     renderStateManager->ApplyChanges();
 }
 

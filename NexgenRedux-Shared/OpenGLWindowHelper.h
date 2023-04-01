@@ -18,8 +18,6 @@ namespace NexgenRedux
 
 		bool m_initialized;
 
-		uint32_t m_width;
-		uint32_t m_height;
 		GLFWwindow* m_window;
 
 	public:

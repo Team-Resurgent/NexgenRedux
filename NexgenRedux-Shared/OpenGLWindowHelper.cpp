@@ -26,6 +26,12 @@
 using namespace Gensys;
 using namespace NexgenRedux;
 
+namespace
+{
+    uint32_t m_width;
+	uint32_t m_height;
+}
+
 OpenGLWindowHelper::OpenGLWindowHelper()
 {
     m_initialized = false;
@@ -607,6 +613,8 @@ void OpenGLWindowHelper::WindowMaximize(GLFWwindow* window, int maximized)
 
 void OpenGLWindowHelper::WindowSize(GLFWwindow* window, int width, int height)
 {
+    m_width = width;
+    m_height = height;
     if (AngelScriptRunner::ExecuteWindowSizeCallback((uint32_t)width, (uint32_t)height) == false)
     {
         DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteWindowSizeCallback failed.");

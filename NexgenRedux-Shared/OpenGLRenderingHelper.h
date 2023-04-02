@@ -21,7 +21,7 @@ namespace NexgenRedux
 			uint32_t texture;
 			uint32_t width;
 			uint32_t height;
-			std::wstring path;
+			std::wstring key;
 			uint32_t refCount;
 		} TextureContainer;
 
@@ -65,7 +65,8 @@ namespace NexgenRedux
 		void SetViewport(const MathUtility::RectI rect) override;
 		void SetScissor(const ScissorOperation& operation, const MathUtility::RectI& rect) override;
 
-		bool LoadTexture(std::wstring path, uint32_t& textureID) override;
+		bool LoadTexture(const std::wstring& path, uint32_t& textureID) override;
+		bool LoadTextureData(const std::vector<uint8_t>& data, const uint32_t& width, const uint32_t& height, uint32_t& textureID) override;
 		void DeleteTexture(const uint32_t& textureID) override;
 		bool RenderMesh(const std::vector<MeshUtility::Vertex>& mesh) override;
 		void Clear(const MathUtility::Color4F& color) override;

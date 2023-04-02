@@ -37,8 +37,8 @@ namespace NexgenRedux
         void SetSkew(const MathUtility::Vec3F value);
         const MathUtility::Vec3F GetScale();
         void SetScale(const MathUtility::Vec3F value);
-        const MathUtility::Vec3F GetTranslation();
-        void SetTranslation(const MathUtility::Vec3F value);
+        const MathUtility::Vec3F GetPosition();
+        void SetPosition(const MathUtility::Vec3F value);
         const MathUtility::Matrix4x4 GetTransform();
         const MathUtility::Matrix4x4 GetInverseTransform();
 
@@ -69,7 +69,7 @@ namespace NexgenRedux
         MathUtility::Vec3F m_rotation;
         MathUtility::Vec3F m_skew;
         MathUtility::Vec3F m_scale;
-        MathUtility::Vec3F m_translation;
+        MathUtility::Vec3F m_position;
         MathUtility::Matrix4x4 m_transform;
         MathUtility::Matrix4x4 m_inverseTransform;
     };

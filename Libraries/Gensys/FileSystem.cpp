@@ -532,6 +532,30 @@ bool FileSystem::FileReadAllAsString(std::wstring const path, std::string* buffe
 	return bytesRead == fileLength;
 }
 
+bool FileSystem::FileReadAllAsData(std::wstring const path, std::vector<uint8_t>* buffer)
+{
+	FILE *file;
+#if defined NEXGEN_OG || defined NEXGEN_360 || defined NEXGEN_MAC || defined NEXGEN_LINUX
+	file = fopen(StringUtility::ToString(path).c_str(), "rb");
+#elif defined NEXGEN_WIN || defined NEXGEN_UWP
+	fopen_s(&file, StringUtility::ToString(path).c_str(), "rb");
+#endif
+	if(file == NULL)
+	{
+		return false;
+	}
+
+	fseek(file, 0, SEEK_END);
+	uint32_t fileLength = ftell(file);
+	fseek(file, 0, SEEK_SET);
+
+	buffer->resize(fileLength);
+	uint32_t bytesRead = (uint32_t)fread((void*)buffer->data(), 1, fileLength, file);
+	fclose(file);
+
+	return bytesRead == fileLength;
+}
+
 bool FileSystem::FileWrite(uint32_t fileHandle, char* writeBuffer, uint32_t bytesToWrite, uint32_t& bytesWritten)
 {
 	FileContainer* fileContainer = GetFileContainer(fileHandle);

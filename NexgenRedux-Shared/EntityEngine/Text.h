@@ -5,27 +5,39 @@
 #include "MeshUtility.h"
 #include "OrthoCamera.h"
 
+#include <SSFN/ssfn.h>
+
 #include <vector>
 #include <map>
 #include <string>
 
+//https://github.com/Neptune650/scalable-font2/blob/6dbbd7be932a6be21b4e7439ed7c09032acddcb3/docs/API.md
+//https://github.com/Team-Resurgent/XBlastOS/blob/5149a2d18032306d4f6e4b0b3a9c0948103f1699/drivers/video/BootVideoHelpers.c
+//https://github.com/Team-Resurgent/XBlastOS/blob/5149a2d18032306d4f6e4b0b3a9c0948103f1699/drivers/video/BootVideoHelpers.c
+
 namespace NexgenRedux
 {
-    class Sprite : public Node
+    class Text : public Node
     {
     public:
-        Sprite(uint32_t nodeID);
-        ~Sprite(void);
+        Text(uint32_t nodeID);
+        ~Text(void);
 
         void Update(float dt);
         void Render();
 
-        const std::string GetTexturePath();
-        void SetTexturePath(const std::string value);
-        const MathUtility::RectF GetUV();
-        void SetUV(const MathUtility::RectF value);
-        const MathUtility::SizeF GetSize();
-        void SetSize(const MathUtility::SizeF value);
+        const std::string GetFontPath();
+        void SetFontPath(const std::string value);
+        const std::string GetText();
+        void SetText(std::string value);
+        const uint32_t GetFontSize();
+        void SetFontSize(const uint32_t value);
+
+        //family, style, size, family name
+
+        // const MathUtility::SizeF GetSize();
+        // void SetSize(const MathUtility::SizeF value);
+
         const MathUtility::Color4F GetTint();
         void SetTint(const MathUtility::Color4F value);
         const BlendOperation GetBlend();
@@ -45,13 +57,20 @@ namespace NexgenRedux
 
     private:
 
-        bool m_textureIsDirty;
-        std::string m_texturePath;
+        bool m_fontIsDirty;
+        std::string m_fontPath;
+        ssfn_t m_fontContext;
+        bool m_fontLoaded;
+
         uint32_t m_textureID;
 
+        bool m_textIsDirty;
+        std::string m_text;
+        uint32_t m_fontSize;
+
         bool m_meshIsDirty;
-        MathUtility::RectF m_uv;
         MathUtility::SizeF m_size;
+        MathUtility::SizeI m_pixelBufferSize;
         std::vector<MeshUtility::Vertex> m_mesh;
 
         MathUtility::Color4F m_tint;

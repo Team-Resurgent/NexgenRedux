@@ -17,7 +17,6 @@ Sprite::Sprite(uint32_t nodeID) : Node(nodeID)
 
     m_meshIsDirty = true;
     m_uv = MathUtility::RectF(0, 0, 1, 1);
-    m_position = MathUtility::Vec3F(0, 0, 0);
     m_size = MathUtility::SizeF(1, 1);
 
     m_tint = MathUtility::Color4F(1, 1, 1, 1);
@@ -54,7 +53,7 @@ void Sprite::Update(float dt)
 
     if (m_meshIsDirty == true)
     {
-        m_mesh = MeshUtility::CreateQuadXY(m_position, m_size, m_uv);
+        m_mesh = MeshUtility::CreateQuadXY(MathUtility::Vec3F(0, 0, 0), m_size, m_uv);
         m_meshIsDirty = false;
     }
 }

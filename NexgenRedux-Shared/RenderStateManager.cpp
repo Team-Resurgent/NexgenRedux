@@ -184,9 +184,14 @@ bool RenderStateManager::CanBatch(void)
     return true;
 }
 
-bool RenderStateManager::LoadTexture(std::wstring path, uint32_t& textureID)
+bool RenderStateManager::LoadTexture(const std::wstring& path, uint32_t& textureID)
 {
     return m_renderingHelper->LoadTexture(path, textureID);
+}
+
+bool RenderStateManager::LoadTextureData(const std::vector<uint8_t>& data, const uint32_t& width, const uint32_t& height, uint32_t& textureID)
+{
+    return m_renderingHelper->LoadTextureData(data, width, height, textureID);
 }
 
 void RenderStateManager::DeleteTexture(const uint32_t& textureID)

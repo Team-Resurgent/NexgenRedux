@@ -819,7 +819,7 @@ void OpenGLRenderingHelper::SetScissor(const ScissorOperation& operation, const 
 	}
 }
 
-bool OpenGLRenderingHelper::LoadTexture(std::wstring path, uint32_t& textureID)
+bool OpenGLRenderingHelper::LoadTexture(const std::wstring& path, uint32_t& textureID)
 {	
 	std::wstring mappedPath;
 	if (ConfigLoader::MapPath(path, mappedPath) == 0)
@@ -829,7 +829,7 @@ bool OpenGLRenderingHelper::LoadTexture(std::wstring path, uint32_t& textureID)
 
 	for (std::map<uint32_t, TextureContainer>::iterator it = m_textureContainerMap.begin(); it != m_textureContainerMap.end(); ++it)
 	{
-		if (it->second.path != path)
+		if (it->second.key != path)
 		{
 			continue;
 		}
@@ -863,7 +863,30 @@ bool OpenGLRenderingHelper::LoadTexture(std::wstring path, uint32_t& textureID)
 	textureContainer.texture = textureId;
 	textureContainer.width = width;
 	textureContainer.height = height;
-	textureContainer.path = path;
+	textureContainer.key = path;
+	textureContainer.refCount = 1;
+	m_textureContainerMap.insert(std::pair<int, TextureContainer>(textureContainerID, textureContainer));
+	textureID = textureContainerID;
+	return true;
+}
+
+bool OpenGLRenderingHelper::LoadTextureData(const std::vector<uint8_t>& data, const uint32_t& width, const uint32_t& height, uint32_t& textureID)
+{
+	GLuint textureId;
+	glGenTextures(1, &textureId);
+	glBindTexture(GL_TEXTURE_2D, textureId);		
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data.data());
+
+	uint32_t textureContainerID = ++m_maxTextureContainerID;
+	TextureContainer textureContainer;
+	textureContainer.texture = textureId;
+	textureContainer.width = width;
+	textureContainer.height = height;
+	textureContainer.key = L"";
 	textureContainer.refCount = 1;
 	m_textureContainerMap.insert(std::pair<int, TextureContainer>(textureContainerID, textureContainer));
 	textureID = textureContainerID;

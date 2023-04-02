@@ -62,6 +62,14 @@ Sprite* NodeManager::CreateSprite()
     return node;
 }
 
+Text* NodeManager::CreateText()
+{
+    uint32_t nodeID = ++m_maxNodeID;
+    Text* node = new Text(nodeID);
+    m_nodeMap.insert(std::pair<uint32_t, Node*>(nodeID, node));
+    return node;
+}
+
 bool NodeManager::AssignNode(Node* node, uint32_t parentNodeID)
 {
     // Check if node already added

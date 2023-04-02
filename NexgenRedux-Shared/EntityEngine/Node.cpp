@@ -23,7 +23,7 @@ Node::Node(uint32_t nodeID)
     m_rotation = MathUtility::Vec3F(0, 0, 0);
     m_skew = MathUtility::Vec3F(0, 0, 0);
     m_scale = MathUtility::Vec3F(1, 1, 1);
-    m_translation = MathUtility::Vec3F(0, 0, 0);
+    m_position = MathUtility::Vec3F(0, 0, 0);
     m_transformIsDirty = true;
 }
 
@@ -126,18 +126,18 @@ void Node::SetScale(const MathUtility::Vec3F value)
     m_transformIsDirty = true;
 }
 
-const MathUtility::Vec3F Node::GetTranslation()
+const MathUtility::Vec3F Node::GetPosition()
 {
-    return m_translation;
+    return m_position;
 }
 
-void Node::SetTranslation(const MathUtility::Vec3F value)
+void Node::SetPosition(const MathUtility::Vec3F value)
 {
-    if (m_translation == value) 
+    if (m_position == value) 
     {
         return;
     }
-    m_translation = value;
+    m_position = value;
     m_transformIsDirty = true;
 }
 
@@ -173,7 +173,7 @@ void Node::CalculateTransforms()
     MathUtility::Matrix4x4 rotationMatrix = MathUtility::Matrix4x4::Rotation(m_rotation);
     MathUtility::Matrix4x4 scaleMatrix = MathUtility::Matrix4x4::Scale(m_scale);
     MathUtility::Matrix4x4 skewMatrix = MathUtility::Matrix4x4::Skew(m_skew);
-    MathUtility::Matrix4x4 anchorPositionMatrix = MathUtility::Matrix4x4::Translate(m_anchor + m_translation);
+    MathUtility::Matrix4x4 anchorPositionMatrix = MathUtility::Matrix4x4::Translate(m_anchor + m_position);
     m_transform = parentMatrix * inverseAnchorMatrix * rotationMatrix * scaleMatrix * skewMatrix * anchorPositionMatrix;
     m_inverseTransform = MathUtility::Matrix4x4::Inverse(m_transform);
     m_transformIsDirty = false;

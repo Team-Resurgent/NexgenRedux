@@ -1,5 +1,4 @@
 OrthoCamera@ orthoCamera = NodeManager::CreateOrthoCamera();
-Sprite@ sprite1 = NodeManager::CreateSprite();
 Sprite@ sprite2 = NodeManager::CreateSprite();
 
 void OnWindowIconify(uint iconified)
@@ -14,7 +13,7 @@ void OnWindowMaximize(uint maximized)
 
 void OnWindowSize(uint width, uint height)
 {
-    //sprite1.SetSize(SizeF(width, height));
+    DebugPrint(0, "OnWindowSize width = " + width + ", height = " + height);
 }
 
 void OnWindowFocus(uint focused)
@@ -106,6 +105,7 @@ void Init()
     lighting.SetLight1Diffuse(Color4F(0, 0, 0, 0));
     NodeManager::AssignNode(lighting, fog.GetID());
 
+    Sprite@ sprite1 = NodeManager::CreateSprite();
     sprite1.SetTexturePath("skin:background.png");
     sprite1.SetUV(RectF(0, 0, 1, 1));
     sprite1.SetSize(SizeF(640, 480));
@@ -114,17 +114,23 @@ void Init()
     sprite2.SetTexturePath("skin:sprite.png");
     sprite2.SetUV(RectF(0, 0, 1, 1));
     sprite2.SetAnchor(Vec3F(64, 64, 0));
-    sprite2.SetTranslation(Vec3F(74, 74, 10));
+    sprite2.SetPosition(Vec3F(74, 74, 10));
     sprite2.SetSize(SizeF(128, 128));
     sprite2.SetTint(Color4F(1, 1, 1, 1));
-    sprite2.SetBlend(BlendOperationDisabled);
+    sprite2.SetBlend(BlendOperationAdd);
     sprite2.SetBlendFactorSrc(BlendFactorSrcAlpha);
     sprite2.SetBlendFactorDst(BlendFactorOneMinusSrcAlpha);
     sprite2.SetDrawMode(DrawModeOperationTriangles);
     sprite2.SetDepth(DepthOperationLess);
     NodeManager::AssignNode(sprite2, lighting.GetID());
 
-
+    Text@ text = NodeManager::CreateText();
+    text.SetFontPath("skin:verdana.sfn");
+    text.SetFontSize(20);
+    text.SetText("Hello World");
+    //TODO: SetFontStyle(FontStyleBold | FontStyleItalic | FontStyleUnderline);
+    text.SetPosition(Vec3F(75, 200, 10));
+    NodeManager::AssignNode(text, lighting.GetID());
 
     // Sprite@ sprite2 = NodeManager::CreateSprite();
     // sprite2.SetTexturePath("hello2");

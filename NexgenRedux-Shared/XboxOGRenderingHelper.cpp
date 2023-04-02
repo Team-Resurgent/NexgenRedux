@@ -961,7 +961,7 @@ void XboxOGRenderingHelper::SetScissor(const ScissorOperation& operation, const 
 	}
 }
 
-bool XboxOGRenderingHelper::LoadTexture(std::wstring path, uint32_t& textureID)
+bool XboxOGRenderingHelper::LoadTexture(const std::wstring& path, uint32_t& textureID)
 {	
 	std::wstring mappedPath;
 	if (ConfigLoader::MapPath(path, mappedPath) == 0)
@@ -971,7 +971,7 @@ bool XboxOGRenderingHelper::LoadTexture(std::wstring path, uint32_t& textureID)
 
 	for (std::map<uint32_t, TextureContainer>::iterator it = m_textureContainerMap.begin(); it != m_textureContainerMap.end(); ++it)
 	{
-		if (it->second.path != path)
+		if (it->second.key != path)
 		{
 			continue;
 		}
@@ -1000,7 +1000,33 @@ bool XboxOGRenderingHelper::LoadTexture(std::wstring path, uint32_t& textureID)
 	textureContainer.texture = texture;
 	textureContainer.width = surfaceDesc.Width;
 	textureContainer.height = surfaceDesc.Height;
-	textureContainer.path = path;
+	textureContainer.key = path;
+	textureContainer.refCount = 1;
+	m_textureContainerMap.insert(std::pair<int, TextureContainer>(textureContainerID, textureContainer));
+	textureID = textureContainerID;
+	return true;
+}
+
+bool XboxOGRenderingHelper::LoadTextureData(const std::vector<uint8_t>& data, const uint32_t& width, const uint32_t& height, uint32_t& textureID)
+{
+	IDirect3DDevice8* d3dDevice = (IDirect3DDevice8*)WindowManager::GetInstance()->GetWindowPtr();
+	if (d3dDevice == NULL)
+	{
+		return false;
+	}
+
+	IDirect3DTexture8 *texture;
+	if (FAILED(D3DXCreateTextureFromFileA(d3dDevice, StringUtility::ToString(mappedPath).c_str(), &texture)))
+	{
+		return false;
+	}
+
+	uint32_t textureContainerID = ++m_maxTextureContainerID;
+	TextureContainer textureContainer;
+	textureContainer.texture = texture;
+	textureContainer.width = width;
+	textureContainer.height = height;
+	textureContainer.key = "";
 	textureContainer.refCount = 1;
 	m_textureContainerMap.insert(std::pair<int, TextureContainer>(textureContainerID, textureContainer));
 	textureID = textureContainerID;

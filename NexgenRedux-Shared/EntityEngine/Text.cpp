@@ -20,6 +20,11 @@
 using namespace Gensys;
 using namespace NexgenRedux;
 
+namespace 
+{
+    ssfn_t m_fontContext {0};
+}
+
 Text::Text(uint32_t nodeID) : Node(nodeID)
 {
     m_fontIsDirty = true;
@@ -80,17 +85,17 @@ void Text::Update(float dt)
 
         if (m_fontLoaded == true)
         {
-            //ssfn_free(&m_fontContext);
+            ssfn_free(&m_fontContext);
             m_fontLoaded = false;
         }
 
-        // memset(&m_fontContext, 0, sizeof(m_fontContext));
-        // int status = ssfn_load(&m_fontContext, buffer.data());
-        // if (status != 0)
-        // {
-        //     DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "Failed to load font data.");
-        //     return;
-        // }
+        memset(&m_fontContext, 0, sizeof(m_fontContext));
+        int status = ssfn_load(&m_fontContext, buffer.data());
+        if (status != 0)
+        {
+            DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "Failed to load font data.");
+            return;
+        }
 
         m_fontLoaded = true;
         m_fontIsDirty = false;

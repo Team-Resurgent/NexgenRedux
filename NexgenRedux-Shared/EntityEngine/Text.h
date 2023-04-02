@@ -5,7 +5,7 @@
 #include "MeshUtility.h"
 #include "OrthoCamera.h"
 
-#include <SSFN/ssfn.h>
+//#include <SSFN/ssfn.h>
 
 #include <vector>
 #include <map>
@@ -59,7 +59,7 @@ namespace NexgenRedux
 
         bool m_fontIsDirty;
         std::string m_fontPath;
-        ssfn_t m_fontContext;
+        //ssfn_t m_fontContext;
         bool m_fontLoaded;
 
         uint32_t m_textureID;

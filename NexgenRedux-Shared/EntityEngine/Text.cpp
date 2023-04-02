@@ -9,12 +9,10 @@
 #include <string>
 
 #define SSFN_IMPLEMENTATION
-// #include "stdlib.h"
 #define SSFN_memcmp memcmp
 #define SSFN_memset memset
 #define SSFN_realloc realloc
 #define SSFN_free free
-
 #include <SSFN/ssfn.h>
 
 using namespace Gensys;
@@ -22,7 +20,7 @@ using namespace NexgenRedux;
 
 namespace 
 {
-    ssfn_t m_fontContext {0};
+    ssfn_t m_fontContext = ssfn_t();
 }
 
 Text::Text(uint32_t nodeID) : Node(nodeID)
@@ -89,11 +87,11 @@ void Text::Update(float dt)
             m_fontLoaded = false;
         }
 
-        memset(&m_fontContext, 0, sizeof(m_fontContext));
+        //memset(&m_fontContext, 0, sizeof(m_fontContext));
         int status = ssfn_load(&m_fontContext, buffer.data());
         if (status != 0)
         {
-            DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "Failed to load font data.");
+            DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("Failed to load font data '%s'.", ssfn_error(status)));
             return;
         }
 
@@ -103,13 +101,23 @@ void Text::Update(float dt)
 
     if (m_fontLoaded && m_textIsDirty == true)
     {
-        // int status = ssfn_select(&m_fontContext, SSFN_FAMILY_ANY, NULL, SSFN_STYLE_REGULAR, m_fontSize);
-        // if (status != 0)
-        // {
-        //     DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "Failed to select font.");
-        //     return;
-        // }
+        int status = ssfn_select(&m_fontContext, SSFN_FAMILY_ANY, NULL, SSFN_STYLE_REGULAR, m_fontSize);
+        if (status != 0)
+        {
+            DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("Failed to select font '%s'.", ssfn_error(status)));
+            return;
+        }
 
+        int width = 0;
+        int height = 0;
+        int left = 0;
+        int top = 0;
+        status = ssfn_bbox(&m_fontContext, m_text.c_str(), &width, &height, &left, &top);
+        if (status != 0)
+        {
+            DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("Failed to measure text '%s'.", ssfn_error(status)));
+            return;
+        }
         // if (m_textureID != 0)
         // {
         //     renderStateManager->DeleteTexture(m_textureID);

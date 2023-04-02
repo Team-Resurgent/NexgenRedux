@@ -325,7 +325,7 @@ static int SSFN_memcmp(const void *__s1, const void *__s2, size_t __n)
 #    define SSFN_memset memset
 #   else
 static void *SSFN_memset(void *__s, int __c, size_t __n)
-{ unsigned char *a = __s; if(__n > 0) { while(__n-- > 0) *a++ = __c; } return __s; }
+{ unsigned char *a = (unsigned char*)__s; if(__n > 0) { while(__n-- > 0) *a++ = __c; } return (unsigned char*)__s; }
 #   endif
 #  endif
 # endif

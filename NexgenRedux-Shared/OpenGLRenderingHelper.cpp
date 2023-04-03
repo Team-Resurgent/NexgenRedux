@@ -870,7 +870,7 @@ bool OpenGLRenderingHelper::LoadTexture(const std::wstring& path, uint32_t& text
 	return true;
 }
 
-bool OpenGLRenderingHelper::LoadTextureData(const std::vector<uint8_t>& data, const uint32_t& width, const uint32_t& height, uint32_t& textureID)
+bool OpenGLRenderingHelper::LoadTextureData(const uint8_t* data, const uint32_t& width, const uint32_t& height, uint32_t& textureID)
 {
 	GLuint textureId;
 	glGenTextures(1, &textureId);
@@ -879,7 +879,7 @@ bool OpenGLRenderingHelper::LoadTextureData(const std::vector<uint8_t>& data, co
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data.data());
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 
 	uint32_t textureContainerID = ++m_maxTextureContainerID;
 	TextureContainer textureContainer;

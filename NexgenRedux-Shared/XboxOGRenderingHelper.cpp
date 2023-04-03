@@ -1007,7 +1007,7 @@ bool XboxOGRenderingHelper::LoadTexture(const std::wstring& path, uint32_t& text
 	return true;
 }
 
-bool XboxOGRenderingHelper::LoadTextureData(const std::vector<uint8_t>& data, const uint32_t& width, const uint32_t& height, uint32_t& textureID)
+bool XboxOGRenderingHelper::LoadTextureData(const uint8_t* data, const uint32_t& width, const uint32_t& height, uint32_t& textureID)
 {
 	IDirect3DDevice8* d3dDevice = (IDirect3DDevice8*)WindowManager::GetInstance()->GetWindowPtr();
 	if (d3dDevice == NULL)

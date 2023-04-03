@@ -130,9 +130,9 @@ void Init()
     text.SetText("Hello World");
     text.SetFontName("FreeSans");
     text.SetFontStyle(0);
-    text.SetFontSize(20);
+    text.SetFontSize(60);
     //TODO: SetFontStyle(FontStyleBold | FontStyleItalic | FontStyleUnderline);
-    text.SetPosition(Vec3F(75, 200, 10));
+    text.SetPosition(Vec3F(75, 300, 10));
     NodeManager::AssignNode(text, lighting.GetID());
 
     // Sprite@ sprite2 = NodeManager::CreateSprite();

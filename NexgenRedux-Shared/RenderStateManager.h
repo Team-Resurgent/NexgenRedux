@@ -25,7 +25,7 @@ namespace NexgenRedux
 		RenderState* GetRenderState(void);
 		bool CanBatch(void);
 		bool LoadTexture(const std::wstring& path, uint32_t& textureID);
-		bool LoadTextureData(const std::vector<uint8_t>& data, const uint32_t& width, const uint32_t& height, uint32_t& textureID);
+		bool LoadTextureData(const uint8_t* data, const uint32_t& width, const uint32_t& height, uint32_t& textureID);
 		
 		void DeleteTexture(const uint32_t& textureID);
 		bool RenderMesh(const std::vector<MeshUtility::Vertex>& mesh);

@@ -59,9 +59,8 @@ void Text::Update(float dt)
                 {
                     renderStateManager->DeleteTexture(m_textureID);
                 }
-                // renderStateManager->LoadTexture(StringUtility::ToWideString(m_texturePath), m_textureID);
-                // TODO: Create texture
-
+                renderStateManager->LoadTextureData(pixelBuffer, width, height, m_textureID);
+                
                 m_textSize = MathUtility::SizeF(width, height);
                 m_mesh = MeshUtility::CreateQuadXY(MathUtility::Vec3F(0, 0, 0), m_textSize, MathUtility::RectF(0, 0, 1, 1));
 

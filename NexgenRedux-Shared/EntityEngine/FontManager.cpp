@@ -59,7 +59,7 @@ bool FontManager::LoadFont(const std::string fontPath)
     return true;
 }
 
-bool FontManager::SelectFont(const std::string fontName, const uint32_t fontSize, const uint32_t fontstyle)
+bool FontManager::SelectFont(const std::string fontName, const uint32_t fontStyle, const uint32_t fontSize)
 {
     if (m_font == NULL)
     {
@@ -67,7 +67,7 @@ bool FontManager::SelectFont(const std::string fontName, const uint32_t fontSize
         return false;
     }
 
-    int status = m_font->Select(SSFN_FAMILY_ANY, fontName.c_str(), SSFN_STYLE_REGULAR, fontSize);
+    int status = m_font->Select(SSFN_FAMILY_ANY, fontName.c_str(), fontStyle, fontSize);
     if (status != 0)
     {
         DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("Failed to select font '%s'.", m_font->ErrorStr(status).c_str()));
@@ -84,17 +84,16 @@ bool FontManager::RenderText(const std::string text, void** textHandle)
     return buffer != NULL;
 }
 
-bool FontManager::GetTextPixelBuffer(void** textHandle, uint8_t** pixelBuffer, uint32_t& width, uint32_t& height)
+void FontManager::GetTextPixelBuffer(void* textHandle, uint8_t** pixelBuffer, uint32_t& width, uint32_t& height)
 {
     if (textHandle == NULL)
     {
-        return false;
+        return;
     }
     ssfn_buf_t* buffer = (ssfn_buf_t*)textHandle;
     *pixelBuffer = buffer->ptr;
     width = buffer->w;
     height = buffer->h;
-    return true;
 }
 
 void FontManager::DeleteRenderText(void* textHandle)

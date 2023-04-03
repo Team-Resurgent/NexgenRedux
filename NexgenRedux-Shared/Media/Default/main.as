@@ -127,9 +127,10 @@ void Init()
     NodeManager::AssignNode(sprite2, lighting.GetID());
 
     Text@ text = NodeManager::CreateText();
-    text.SetFontPath("skin:freesans.sfn");
-    text.SetFontSize(20);
     text.SetText("Hello World");
+    text.SetFontName("FreeSans");
+    text.SetFontStyle(0);
+    text.SetFontSize(20);
     //TODO: SetFontStyle(FontStyleBold | FontStyleItalic | FontStyleUnderline);
     text.SetPosition(Vec3F(75, 200, 10));
     NodeManager::AssignNode(text, lighting.GetID());

@@ -26,17 +26,16 @@ namespace NexgenRedux
         void Update(float dt);
         void Render();
 
-        const std::string GetFontPath();
-        void SetFontPath(const std::string value);
         const std::string GetText();
         void SetText(std::string value);
+        const std::string GetFontName();
+        void SetFontName(std::string value);
+        const uint32_t GetFontStyle();
+        void SetFontStyle(const uint32_t value);
         const uint32_t GetFontSize();
         void SetFontSize(const uint32_t value);
 
-        //family, style, size, family name
-
-        // const MathUtility::SizeF GetSize();
-        // void SetSize(const MathUtility::SizeF value);
+        const MathUtility::SizeF GetTextSize();
 
         const MathUtility::Color4F GetTint();
         void SetTint(const MathUtility::Color4F value);
@@ -57,20 +56,13 @@ namespace NexgenRedux
 
     private:
 
-        bool m_fontIsDirty;
-        std::string m_fontPath;
-        //ssfn_t m_fontContext;
-        bool m_fontLoaded;
-
-        uint32_t m_textureID;
-
         bool m_textIsDirty;
         std::string m_text;
+        std::string m_fontName;
+        uint32_t m_fontStyle;
         uint32_t m_fontSize;
-
-        bool m_meshIsDirty;
-        MathUtility::SizeF m_size;
-        MathUtility::SizeI m_pixelBufferSize;
+        MathUtility::SizeF m_textSize;
+        uint32_t m_textureID;
         std::vector<MeshUtility::Vertex> m_mesh;
 
         MathUtility::Color4F m_tint;

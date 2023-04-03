@@ -17,7 +17,7 @@ MathUtility::Vec2D::Vec2D() : x(0), y(0)
 
 } 
 
-MathUtility::Vec2D::Vec2D(const double& x, const double& y) : x(x), y(y) 
+MathUtility::Vec2D::Vec2D(const double x, const double y) : x(x), y(y) 
 {
 
 }  
@@ -110,7 +110,7 @@ MathUtility::Vec2F::Vec2F() : x(0), y(0)
 
 } 
 
-MathUtility::Vec2F::Vec2F(const float& x, const float& y) : x(x), y(y) 
+MathUtility::Vec2F::Vec2F(const float x, const float y) : x(x), y(y) 
 {
 
 }  
@@ -203,7 +203,7 @@ MathUtility::Vec3F::Vec3F() : x(0), y(0), z(0)
 
 } 
 
-MathUtility::Vec3F::Vec3F(const float& x, const float& y, const float& z) : x(x), y(y), z(z) 
+MathUtility::Vec3F::Vec3F(const float x, const float y, const float z) : x(x), y(y), z(z) 
 {
 
 }  
@@ -316,7 +316,7 @@ MathUtility::Vec4F::Vec4F() : x(0), y(0), z(0), w(0)
 
 } 
 
-MathUtility::Vec4F::Vec4F(const float& x, const float& y, const float& z, const float& w) : x(x), y(y), z(z), w(w) 
+MathUtility::Vec4F::Vec4F(const float x, const float y, const float z, const float w) : x(x), y(y), z(z), w(w) 
 {
 
 }  
@@ -409,7 +409,7 @@ MathUtility::SizeI::SizeI() : width(0), height(0)
 
 }  
 
-MathUtility::SizeI::SizeI(const int32_t& width, const int32_t& height) : width(width), height(height)
+MathUtility::SizeI::SizeI(const int32_t width, const int32_t height) : width(width), height(height)
 {
 
 }  
@@ -446,7 +446,7 @@ MathUtility::SizeF::SizeF() : width(0), height(0)
 
 }  
 
-MathUtility::SizeF::SizeF(const float& width, const float& height) : width(width), height(height)
+MathUtility::SizeF::SizeF(const float width, const float height) : width(width), height(height)
 {
 
 }  
@@ -483,7 +483,7 @@ MathUtility::RectI::RectI() : x(0), y(0), width(0), height(0)
 
 }  
 
-MathUtility::RectI::RectI(const int32_t& x, const int32_t& y, const int32_t& width, const int32_t& height) : x(x), y(y), width(width), height(height)
+MathUtility::RectI::RectI(const int32_t x, const int32_t y, const int32_t width, const int32_t height) : x(x), y(y), width(width), height(height)
 {
 
 }  
@@ -525,7 +525,7 @@ MathUtility::RectF::RectF() : x(0), y(0), width(0), height(0)
 
 }  
 
-MathUtility::RectF::RectF(const float& x, const float& y, const float& width, const float& height) : x(x), y(y), width(width), height(height)
+MathUtility::RectF::RectF(const float x, const float y, const float width, const float height) : x(x), y(y), width(width), height(height)
 {
 
 }  
@@ -567,7 +567,7 @@ MathUtility::Color3F::Color3F() : r(0), g(0), b(0)
 
 } 
 
-MathUtility::Color3F::Color3F(const float& r, const float& g, const float& b) : r(r), g(g), b(b) 
+MathUtility::Color3F::Color3F(const float r, const float g, const float b) : r(r), g(g), b(b) 
 {
 
 }  
@@ -660,7 +660,7 @@ MathUtility::Color4F::Color4F() : r(0), g(0), b(0), a(0)
 
 } 
 
-MathUtility::Color4F::Color4F(const float& r, const float& g, const float& b, const float& a) : r(r), g(g), b(b), a(a) 
+MathUtility::Color4F::Color4F(const float r, const float g, const float b, const float a) : r(r), g(g), b(b), a(a) 
 {
 
 }  

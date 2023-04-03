@@ -21,7 +21,7 @@ namespace NexgenRedux
 			};
 
 			Vec2D();
-			Vec2D(const double& x, const double& y);
+			Vec2D(const double x, const double y);
 			Vec2D(const Vec2D& other);
 
 			Vec2D operator/(const Vec2D& other) const;
@@ -49,7 +49,7 @@ namespace NexgenRedux
 			};
 
 			Vec2F();
-			Vec2F(const float& x, const float& y);
+			Vec2F(const float x, const float y);
 			Vec2F(const Vec2F& other);
 
 			Vec2F operator/(const Vec2F& other) const;
@@ -78,7 +78,7 @@ namespace NexgenRedux
 			};
 
 			Vec3F();
-			Vec3F(const float& x, const float& y, const float& z);
+			Vec3F(const float x, const float y, const float z);
 			Vec3F(const Vec3F& other);
 
 			Vec3F operator/(const Vec3F& other) const;
@@ -112,7 +112,7 @@ namespace NexgenRedux
 			};
 
 			Vec4F();
-            Vec4F(const float& x, const float& y, const float& z, const float& w);
+            Vec4F(const float x, const float y, const float z, const float w);
             Vec4F(const Vec4F& other);
 
             Vec4F operator/(const Vec4F& other) const;
@@ -681,7 +681,7 @@ namespace NexgenRedux
 			};
 
 			SizeI();
-			SizeI(const int32_t& width, const int32_t& height);
+			SizeI(const int32_t width, const int32_t height);
 			SizeI(const SizeI& other);
 
 			bool operator == (const SizeI& other) const;
@@ -700,7 +700,7 @@ namespace NexgenRedux
 			};
 
 			SizeF();
-			SizeF(const float& width, const float& height);
+			SizeF(const float width, const float height);
 			SizeF(const SizeF& other);
 
 			bool operator == (const SizeF& other) const;
@@ -721,7 +721,7 @@ namespace NexgenRedux
 			};
 
 			RectI();
-			RectI(const int32_t& x, const int32_t& y, const int32_t& width, const int32_t& height);
+			RectI(const int32_t x, const int32_t y, const int32_t width, const int32_t height);
 			RectI(const RectI& other);
 
 			bool operator==(const RectI& other) const;
@@ -744,7 +744,7 @@ namespace NexgenRedux
 			};
 
 			RectF(); 
-			RectF(const float& x, const float& y, const float& width, const float& height);
+			RectF(const float x, const float y, const float width, const float height);
 			RectF(const RectF& other);
 
 			bool operator==(const RectF& other) const;
@@ -766,7 +766,7 @@ namespace NexgenRedux
 			};
 
 			Color3F();
-			Color3F(const float& r, const float& g, const float& b);
+			Color3F(const float r, const float g, const float b);
 			Color3F(const Color3F& other);
 
 			Color3F operator/(const Color3F& other) const;
@@ -796,7 +796,7 @@ namespace NexgenRedux
 			};
 
 			Color4F();
-			Color4F(const float& r, const float& g, const float& b, const float& a);
+			Color4F(const float r, const float g, const float b, const float a);
 			Color4F(const Color4F& other);
 
 			Color4F operator/(const Color4F& other) const;

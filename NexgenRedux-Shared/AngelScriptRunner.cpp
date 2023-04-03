@@ -752,15 +752,15 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	if (m_engine->RegisterObjectMethod("Text", "void SetScale(Vec3F)", asMETHOD(Text, SetScale), asCALL_THISCALL) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("Text", "Vec3F& GetPosition()", asMETHOD(Text, GetPosition), asCALL_THISCALL) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("Text", "void SetPosition(Vec3F)", asMETHOD(Text, SetPosition), asCALL_THISCALL) < 0) { return false; }
-
-	if (m_engine->RegisterObjectMethod("Text", "string GetFontPath()", asMETHOD(Text, GetFontPath), asCALL_THISCALL) < 0) { return false; }
-	if (m_engine->RegisterObjectMethod("Text", "void SetFontPath(string)", asMETHOD(Text, SetFontPath), asCALL_THISCALL) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("Text", "string GetText()", asMETHOD(Text, GetText), asCALL_THISCALL) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("Text", "void SetText(string)", asMETHOD(Text, SetText), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Text", "string GetFontName()", asMETHOD(Text, GetFontName), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Text", "void SetFontName(string)", asMETHOD(Text, SetFontName), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Text", "uint GetFontStyle()", asMETHOD(Text, GetFontStyle), asCALL_THISCALL) < 0) { return false; }
+	if (m_engine->RegisterObjectMethod("Text", "void SetFontStyle(uint)", asMETHOD(Text, SetFontStyle), asCALL_THISCALL) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("Text", "uint GetFontSize()", asMETHOD(Text, GetFontSize), asCALL_THISCALL) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("Text", "void SetFontSize(uint)", asMETHOD(Text, SetFontSize), asCALL_THISCALL) < 0) { return false; }
-
-
+	if (m_engine->RegisterObjectMethod("Text", "SizeF& GetTextSize()", asMETHOD(Text, GetTextSize), asCALL_THISCALL) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("Text", "Color4F& GetTint()", asMETHOD(Text, GetTint), asCALL_THISCALL) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("Text", "void SetTint(Color4F)", asMETHOD(Text, SetTint), asCALL_THISCALL) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("Text", "BlendOperation GetBlend()", asMETHOD(Text, GetBlend), asCALL_THISCALL) < 0) { return false; }
@@ -776,8 +776,6 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	if (m_engine->RegisterObjectMethod("Text", "DepthOperation GetDepth()", asMETHOD(Text, GetDepth), asCALL_THISCALL) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("Text", "void SetDepth(DepthOperation)", asMETHOD(Text, SetDepth), asCALL_THISCALL) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("Text", "bool HitTest(double, double, OrthoCamera@)", asMETHOD(Text, HitTest), asCALL_THISCALL) < 0) { return false; }
-
-
 
 	if (m_engine->RegisterObjectType("Fog", sizeof(0), asOBJ_REF | asOBJ_NOCOUNT) < 0) { return false; }
 	if (m_engine->RegisterObjectMethod("Fog", "uint GetID()", asMETHOD(Fog, GetID), asCALL_THISCALL) < 0) { return false; }

@@ -1,4 +1,5 @@
 #include "Text.h"
+#include "FontManager.h"
 #include "RenderStateManager.h"
 #include "ConfigLoader.h"
 
@@ -13,24 +14,13 @@ using namespace NexgenRedux;
 
 Text::Text(uint32_t nodeID) : Node(nodeID)
 {
-    m_fontIsDirty = true;
-    m_fontPath = "";
-    //memset(&m_fontContext, 0, sizeof(m_fontContext));
-    m_fontLoaded = false;
-
     m_textIsDirty = true;
+    m_text = "";
+    m_fontName = "";
+    m_fontStyle = 0;
     m_fontSize = 10;
-
-
-
-    //m_texturePath = "";
+    m_textSize = MathUtility::SizeF();
     m_textureID = 0;
-
-    m_meshIsDirty = true;
-    //m_uv = MathUtility::RectF(0, 0, 1, 1);
-    //m_position = MathUtility::Vec3F(0, 0, 0);
-    m_size = MathUtility::SizeF(1, 1);
-
     m_tint = MathUtility::Color4F(1, 1, 1, 1);
     m_blendOperation = BlendOperationAdd;
     m_blendFactorSrc = BlendFactorSrcAlpha;
@@ -55,39 +45,31 @@ void Text::Update(float dt)
 
     if (m_textIsDirty == true)
     {
-        // int status = ssfn_select(&m_fontContext, SSFN_FAMILY_ANY, NULL, SSFN_STYLE_REGULAR, m_fontSize);
-        // if (status != 0)
-        // {
-        //     DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("Failed to select font '%s'.", ssfn_error(status)));
-        //     return;
-        // }
+        if (FontManager::SelectFont(m_fontName, m_fontStyle, m_fontSize) == true)
+        {
+            void* textHandle;
+            if (FontManager::RenderText(m_text, &textHandle) == true)
+            {
+                uint8_t* pixelBuffer;
+                uint32_t width;
+                uint32_t height;
+                FontManager::GetTextPixelBuffer(textHandle, &pixelBuffer, width, height);
 
-        // int width = 0;
-        // int height = 0;
-        // int left = 0;
-        // int top = 0;
-        // status = ssfn_bbox(&m_fontContext, m_text.c_str(), &width, &height, &left, &top);
-        // if (status != 0)
-        // {
-        //     DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("Failed to measure text '%s'.", ssfn_error(status)));
-        //     return;
-        // }
-        // if (m_textureID != 0)
-        // {
-        //     renderStateManager->DeleteTexture(m_textureID);
-        // }
+                if (m_textureID != 0)
+                {
+                    renderStateManager->DeleteTexture(m_textureID);
+                }
+                // renderStateManager->LoadTexture(StringUtility::ToWideString(m_texturePath), m_textureID);
+                // TODO: Create texture
 
+                m_textSize = MathUtility::SizeF(width, height);
+                m_mesh = MeshUtility::CreateQuadXY(MathUtility::Vec3F(0, 0, 0), m_textSize, MathUtility::RectF(0, 0, 1, 1));
 
-       // renderStateManager->LoadTextureData()
-    //     renderStateManager->LoadTexture(StringUtility::ToWideString(m_texturePath), m_textureID);
+                FontManager::DeleteRenderText(textHandle);
+            }
+        }
         m_textIsDirty = false;
     }
-
-    // if (m_meshIsDirty == true)
-    // {
-    //     m_mesh = MeshUtility::CreateQuadXY(MathUtility::Vec3F(0, 0, 0), m_size, MathUtility::RectF(0, 0, 1, 1));
-    //     m_meshIsDirty = false;
-    // }
 }
 
 void Text::Render()
@@ -97,36 +79,20 @@ void Text::Render()
         return;
     }
 
-    // RenderStateManager* renderStateManager = RenderStateManager::GetInstance();
+    RenderStateManager* renderStateManager = RenderStateManager::GetInstance();
 
-    // renderStateManager->SetModelMatrix(GetTransform());
-	// renderStateManager->SetTexture(m_textureID, TextureFilterLinear);
+    renderStateManager->SetModelMatrix(GetTransform());
+	renderStateManager->SetTexture(m_textureID, TextureFilterLinear);
 
-    // renderStateManager->SetTint(m_tint);
-    // renderStateManager->SetBlend(m_blendOperation);
-    // renderStateManager->SetBlendFactors(m_blendFactorSrc, m_blendFactorDst);
-    // renderStateManager->SetDrawMode(m_drawModeOperation);
-    // renderStateManager->SetCulling(m_cullingOperation);
-    // renderStateManager->SetDepth(m_depthOperation);
+    renderStateManager->SetTint(m_tint);
+    renderStateManager->SetBlend(m_blendOperation);
+    renderStateManager->SetBlendFactors(m_blendFactorSrc, m_blendFactorDst);
+    renderStateManager->SetDrawMode(m_drawModeOperation);
+    renderStateManager->SetCulling(m_cullingOperation);
+    renderStateManager->SetDepth(m_depthOperation);
 
-    // renderStateManager->ApplyChanges();
-    //renderStateManager->RenderMesh(m_mesh);
-}
-
-const std::string Text::GetFontPath()
-{
-    return m_fontPath;
-}
-
-void Text::SetFontPath(const std::string value)
-{
-    if (m_fontPath == value) 
-    {
-        return;
-    }
-    m_fontPath = value;
-    m_fontIsDirty = true;
-    m_textIsDirty = true;
+    renderStateManager->ApplyChanges();
+    renderStateManager->RenderMesh(m_mesh);
 }
 
 const std::string Text::GetText()
@@ -141,6 +107,36 @@ void Text::SetText(const std::string value)
         return;
     }
     m_text = value;
+    m_textIsDirty = true;
+}
+
+const std::string Text::GetFontName()
+{
+    return m_fontName;
+}
+
+void Text::SetFontName(const std::string value)
+{
+    if (m_fontName == value) 
+    {
+        return;
+    }
+    m_fontName = value;
+    m_textIsDirty = true;
+}
+
+const uint32_t Text::GetFontStyle()
+{
+    return m_fontStyle;
+}
+
+void Text::SetFontStyle(const uint32_t value)
+{
+    if (m_fontStyle == value) 
+    {
+        return;
+    }
+    m_fontStyle = value;
     m_textIsDirty = true;
 }
 
@@ -159,20 +155,10 @@ void Text::SetFontSize(const uint32_t value)
     m_textIsDirty = true;
 }
 
-// const MathUtility::SizeF Text::GetSize()
-// {
-//     return m_size;
-// }
-
-// void Text::SetSize(const MathUtility::SizeF value)
-// {
-//     if (m_size == value) 
-//     {
-//         return;
-//     }
-//     m_size = value;
-//     m_meshIsDirty = true;
-// }
+const MathUtility::SizeF Text::GetTextSize()
+{
+    return m_textSize;
+}
 
 const MathUtility::Color4F Text::GetTint()
 {
@@ -247,5 +233,5 @@ void Text::SetDepth(const DepthOperation value)
 bool Text::HitTest(const double screenPosX, const double screenPosY, OrthoCamera* camera)
 {
     MathUtility::Vec2F screenCoord = MathUtility::Vec2F((float)screenPosX, (float)screenPosY);
-    return camera->TestRayIntersectsObb(screenCoord, MathUtility::Vec3F(), MathUtility::Vec3F(m_size.width, m_size.height, 0.0f), GetTransform());
+    return camera->TestRayIntersectsObb(screenCoord, MathUtility::Vec3F(), MathUtility::Vec3F(m_textSize.width, m_textSize.height, 0.0f), GetTransform());
 }

@@ -3,6 +3,7 @@
 #include "WindowManager.h"
 #include "MathUtility.h"
 #include "EntityEngine/SceneManager.h"
+#include "EntityEngine/FontManager.h"
 #include "EntityEngine/NodeManager.h"
 #include "EntityEngine/OrthoCamera.h"
 #include "EntityEngine/Fog.h"
@@ -856,6 +857,9 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	if (m_engine->RegisterGlobalFunction("bool SceneManager::AssignNode(Node@, uint)", asFUNCTION(SceneManager::AssignNode), asCALL_CDECL) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("bool SceneManager::Update(float)", asFUNCTION(SceneManager::Update), asCALL_CDECL) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("bool SceneManager::Render()", asFUNCTION(SceneManager::Render), asCALL_CDECL) < 0) { return false; }
+
+	if (m_engine->SetDefaultNamespace("FontManager") < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("bool FontManager::LoadFont(string)", asFUNCTION(FontManager::LoadFont), asCALL_CDECL) < 0) { return false; }
 
 	if (m_engine->SetDefaultNamespace("NodeManager") < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("OrthoCamera& NodeManager::CreateOrthoCamera()", asFUNCTION(NodeManager::CreateOrthoCamera), asCALL_CDECL) < 0) { return false; }

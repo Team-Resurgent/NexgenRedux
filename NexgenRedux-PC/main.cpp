@@ -10,6 +10,8 @@
 #include <vector>
 #include <cstring>
 
+#include <EntityEngine/FontManager.h>
+#include <EntityEngine/NodeManager.h>
 #include <Gensys/DebugUtility.h>
 #include <Gensys/StringUtility.h>
 #include <Gensys/FileSystem.h>
@@ -56,7 +58,8 @@ int main(int argc, const char* argv[])
     }
 
     NodeManager::Close();
-
+    FontManager::Close();
+    
     RenderStateManager::Close();
     WindowManager::Close();
     AngelScriptRunner::Close();

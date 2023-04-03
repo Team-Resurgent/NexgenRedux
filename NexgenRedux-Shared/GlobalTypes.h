@@ -279,4 +279,14 @@ namespace NexgenRedux
 		CursorModeDisabled,
 		CursorModeCaptured
 	} CursorMode;  
+
+	typedef enum FontStyle {
+		FontStyleRegular = 0,
+		FontStyleBold = 1,
+		FontStyleItalic = 2,
+		FontStyleUserDefined1 = 4,
+		FontStyleUserDefined2 = 8,
+		FontStyleUnderline = 16,
+		FontStyleStrikeThrough = 32,
+	} FontStyle;  
 }

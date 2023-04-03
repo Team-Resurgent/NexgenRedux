@@ -72,6 +72,8 @@ float spriteRotate = 0;
 
 void Init()
 {
+    FontManager::LoadFont("skin:freesans.sfn");
+
     uint sceneID = SceneManager::CreateScene(true);
     SceneManager::SetCurrentScene(sceneID);
 
@@ -125,7 +127,7 @@ void Init()
     NodeManager::AssignNode(sprite2, lighting.GetID());
 
     Text@ text = NodeManager::CreateText();
-    text.SetFontPath("skin:verdana.sfn");
+    text.SetFontPath("skin:freesans.sfn");
     text.SetFontSize(20);
     text.SetText("Hello World");
     //TODO: SetFontStyle(FontStyleBold | FontStyleItalic | FontStyleUnderline);

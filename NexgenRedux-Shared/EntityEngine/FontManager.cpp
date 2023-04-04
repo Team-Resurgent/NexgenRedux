@@ -49,7 +49,7 @@ bool FontManager::LoadFont(const std::string fontPath)
         return false;
     }
 
-    int status = m_font->Load(buffer.data());
+    int status = m_font->Load(&buffer[0]);
     if (status != 0)
     {
         DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("Failed to load font data '%s'.", m_font->ErrorStr(status).c_str()));

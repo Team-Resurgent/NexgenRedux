@@ -252,6 +252,12 @@
 					RelativePath="..\NexgenRedux-Shared\EntityEngine\Fog.h">
 				</File>
 				<File
+					RelativePath="..\NexgenRedux-Shared\EntityEngine\FontManager.cpp">
+				</File>
+				<File
+					RelativePath="..\NexgenRedux-Shared\EntityEngine\FontManager.h">
+				</File>
+				<File
 					RelativePath="..\NexgenRedux-Shared\EntityEngine\Lighting.cpp">
 				</File>
 				<File
@@ -286,6 +292,12 @@
 				</File>
 				<File
 					RelativePath="..\NexgenRedux-Shared\EntityEngine\Sprite.h">
+				</File>
+				<File
+					RelativePath="..\NexgenRedux-Shared\EntityEngine\Text.cpp">
+				</File>
+				<File
+					RelativePath="..\NexgenRedux-Shared\EntityEngine\Text.h">
 				</File>
 			</Filter>
 		</Filter>

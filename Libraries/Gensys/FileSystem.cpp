@@ -550,7 +550,7 @@ bool FileSystem::FileReadAllAsData(std::wstring const path, std::vector<uint8_t>
 	fseek(file, 0, SEEK_SET);
 
 	buffer->resize(fileLength);
-	uint32_t bytesRead = (uint32_t)fread((void*)buffer->data(), 1, fileLength, file);
+	uint32_t bytesRead = (uint32_t)fread((void*)&buffer[0], 1, fileLength, file);
 	fclose(file);
 
 	return bytesRead == fileLength;

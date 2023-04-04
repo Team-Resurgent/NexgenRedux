@@ -1,5 +1,6 @@
 OrthoCamera@ orthoCamera = NodeManager::CreateOrthoCamera();
 Sprite@ sprite2 = NodeManager::CreateSprite();
+Text@ text = NodeManager::CreateText();
 
 void OnWindowIconify(uint iconified)
 {
@@ -116,23 +117,22 @@ void Init()
     sprite2.SetTexturePath("skin:sprite.png");
     sprite2.SetUV(RectF(0, 0, 1, 1));
     sprite2.SetAnchor(Vec3F(64, 64, 0));
-    sprite2.SetPosition(Vec3F(74, 74, 10));
+    sprite2.SetPosition(Vec3F(174, 74, 10));
     sprite2.SetSize(SizeF(128, 128));
     sprite2.SetTint(Color4F(1, 1, 1, 1));
     sprite2.SetBlend(BlendOperationAdd);
     sprite2.SetBlendFactorSrc(BlendFactorSrcAlpha);
     sprite2.SetBlendFactorDst(BlendFactorOneMinusSrcAlpha);
     sprite2.SetDrawMode(DrawModeOperationTriangles);
-    sprite2.SetDepth(DepthOperationLess);
     NodeManager::AssignNode(sprite2, lighting.GetID());
 
-    Text@ text = NodeManager::CreateText();
-    text.SetText("Hello World");
     text.SetFontName("FreeSans");
     text.SetFontStyle(0);
     text.SetFontSize(60);
+    text.SetRotation(Vec3F(0, 0, 10));
+
     //TODO: SetFontStyle(FontStyleBold | FontStyleItalic | FontStyleUnderline);
-    text.SetPosition(Vec3F(75, 300, 10));
+    text.SetPosition(Vec3F(75, 300, 20));
     NodeManager::AssignNode(text, lighting.GetID());
 
     // Sprite@ sprite2 = NodeManager::CreateSprite();
@@ -270,6 +270,7 @@ void Render(double dt)
     if (durationFPS > 2.0)
     {
         double fps = CalculateFramesPerSecond(frameCount, durationFPS);
+        text.SetText("fps = " + fps);
         DebugPrint(1, "fps = " + fps);
         frameCount = 0;
         previousTime = currentTime;

@@ -55,13 +55,9 @@ void Text::Update(float dt)
                 uint32_t height;
                 FontManager::GetTextPixelBuffer(textHandle, &pixelBuffer, width, height);
 
-                if (m_textureID != 0)
-                {
-                    renderStateManager->DeleteTexture(m_textureID);
-                }
-                renderStateManager->LoadTextureData(pixelBuffer, width, height, m_textureID);
-                
-                m_textSize = MathUtility::SizeF(width, height);
+                renderStateManager->LoadOrReplaceTextureData(pixelBuffer, width, height, m_textureID);
+
+                m_textSize = MathUtility::SizeF((float)width, (float)height);
                 m_mesh = MeshUtility::CreateQuadXY(MathUtility::Vec3F(0, 0, 0), m_textSize, MathUtility::RectF(0, 0, 1, 1));
 
                 FontManager::DeleteRenderText(textHandle);

@@ -870,26 +870,33 @@ bool OpenGLRenderingHelper::LoadTexture(const std::wstring& path, uint32_t& text
 	return true;
 }
 
-bool OpenGLRenderingHelper::LoadTextureData(const uint8_t* data, const uint32_t& width, const uint32_t& height, uint32_t& textureID)
+bool OpenGLRenderingHelper::LoadOrReplaceTextureData(const uint8_t* data, const uint32_t& width, const uint32_t& height, uint32_t& textureID)
 {
-	GLuint textureId;
-	glGenTextures(1, &textureId);
-	glBindTexture(GL_TEXTURE_2D, textureId);		
+	if (textureID != 0)
+	{
+		DeleteTexture(textureID);
+	}
+	else
+	{
+		textureID = ++m_maxTextureContainerID;
+	}
+
+	GLuint texture;
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D, texture);		
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 
-	uint32_t textureContainerID = ++m_maxTextureContainerID;
 	TextureContainer textureContainer;
-	textureContainer.texture = textureId;
+	textureContainer.texture = texture;
 	textureContainer.width = width;
 	textureContainer.height = height;
 	textureContainer.key = L"";
 	textureContainer.refCount = 1;
-	m_textureContainerMap.insert(std::pair<int, TextureContainer>(textureContainerID, textureContainer));
-	textureID = textureContainerID;
+	m_textureContainerMap.insert(std::pair<int, TextureContainer>(textureID, textureContainer));
 	return true;
 }
 

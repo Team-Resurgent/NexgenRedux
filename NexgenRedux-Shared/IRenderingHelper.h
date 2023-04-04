@@ -42,6 +42,7 @@ namespace NexgenRedux
 		virtual void SetScissor(const ScissorOperation& operation, const MathUtility::RectI& rect) = 0;
 		virtual bool LoadTexture(const std::wstring& path, uint32_t& textureID) = 0;
 		virtual bool LoadOrReplaceTextureData(const uint8_t* data, const uint32_t& width, const uint32_t& height, uint32_t& textureID) = 0;
+		virtual bool GetTexureMaxUV(const uint32_t& textureID, MathUtility::Vec2F& maxUV) = 0;
 		virtual void DeleteTexture(const uint32_t& textureID) = 0;
 		virtual bool RenderMesh(const std::vector<MeshUtility::Vertex>& mesh) = 0;
 		virtual void Clear(const MathUtility::Color4F& color) = 0;

@@ -117,7 +117,7 @@ void Init()
     sprite2.SetTexturePath("skin:sprite.png");
     sprite2.SetUV(RectF(0, 0, 1, 1));
     sprite2.SetAnchor(Vec3F(64, 64, 0));
-    sprite2.SetPosition(Vec3F(174, 74, 10));
+    sprite2.SetPosition(Vec3F(74, 74, 10));
     sprite2.SetSize(SizeF(128, 128));
     sprite2.SetTint(Color4F(1, 1, 1, 1));
     sprite2.SetBlend(BlendOperationAdd);

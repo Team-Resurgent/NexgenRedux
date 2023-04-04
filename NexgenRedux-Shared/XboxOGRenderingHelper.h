@@ -19,6 +19,8 @@ namespace NexgenRedux
 		typedef struct TextureContainer
 		{
 			IDirect3DTexture8* texture;
+			float maxUVX;
+			float maxUVY;
 			uint32_t width;
 			uint32_t height;
 			std::wstring key;
@@ -67,6 +69,7 @@ namespace NexgenRedux
 
 		bool LoadTexture(const std::wstring& path, uint32_t& textureID);
 		bool LoadOrReplaceTextureData(const uint8_t* data, const uint32_t& width, const uint32_t& height, uint32_t& textureID);
+		bool GetTexureMaxUV(const uint32_t& textureID, MathUtility::Vec2F& maxUV);
 		void DeleteTexture(const uint32_t& textureID);
 		bool RenderMesh(const std::vector<MeshUtility::Vertex>& mesh);
 		void Clear(const MathUtility::Color4F& color);

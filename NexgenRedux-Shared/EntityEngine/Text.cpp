@@ -58,8 +58,12 @@ void Text::Update(float dt)
 				if (pixelBuffer == NULL) 
 				{
 					renderStateManager->LoadOrReplaceTextureData(pixelBuffer, width, height, m_textureID);
+					
+					MathUtility::Vec2F maxUV;
+					renderStateManager->GetTexureMaxUV(m_textureID, maxUV);
+					
 					m_textSize = MathUtility::SizeF((float)width, (float)height);
-					m_mesh = MeshUtility::CreateQuadXY(MathUtility::Vec3F(0, 0, 0), m_textSize, MathUtility::RectF(0, 0, 1, 1));
+					m_mesh = MeshUtility::CreateQuadXY(MathUtility::Vec3F(0, 0, 0), m_textSize, MathUtility::RectF(0, 0, maxUV.x, maxUV.y));
 				}
                 FontManager::DeleteRenderText(textHandle);
             }

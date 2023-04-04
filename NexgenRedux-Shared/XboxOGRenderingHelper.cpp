@@ -1019,12 +1019,16 @@ bool XboxOGRenderingHelper::LoadTexture(const std::wstring& path, uint32_t& text
 		return false;
 	}
 
+	D3DSURFACE_DESC surfaceDesc;
+	texture->GetLevelDesc(0, &surfaceDesc);
+
 	D3DLOCKED_RECT lockedRect;
     if (FAILED(texture->LockRect(0, &lockedRect, NULL, 0)))
     {
 		return false;
 	}
-	memset(lockedRect.pBits, 0, lockedRect.Pitch * height);
+
+	memset(lockedRect.pBits, 0, surfaceDesc.Size);
 	Swizzle(data, 4, width, height, lockedRect.pBits);
 	texture->UnlockRect(0);
 	stbi_image_free(data);
@@ -1032,6 +1036,8 @@ bool XboxOGRenderingHelper::LoadTexture(const std::wstring& path, uint32_t& text
 	uint32_t textureContainerID = ++m_maxTextureContainerID;
 	TextureContainer textureContainer;
 	textureContainer.texture = texture;
+	textureContainer.maxUVX = width / (float)surfaceDesc.Width;
+	textureContainer.maxUVY = height / (float)surfaceDesc.Height;
 	textureContainer.width = width;
 	textureContainer.height = height;
 	textureContainer.key = path;
@@ -1064,22 +1070,41 @@ bool XboxOGRenderingHelper::LoadOrReplaceTextureData(const uint8_t* data, const 
 		return false;
 	}
 
+	D3DSURFACE_DESC surfaceDesc;
+	texture->GetLevelDesc(0, &surfaceDesc);
+
 	D3DLOCKED_RECT lockedRect;
     if (FAILED(texture->LockRect(0, &lockedRect, NULL, 0)))
     {
 		return false;
 	}
-	memset(lockedRect.pBits, 0, lockedRect.Pitch * height);
+
+	memset(lockedRect.pBits, 0, surfaceDesc.Size);
 	Swizzle(data, 4, width, height, lockedRect.pBits);
 	texture->UnlockRect(0);
 
 	TextureContainer textureContainer;
 	textureContainer.texture = texture;
+	textureContainer.maxUVX = width / (float)surfaceDesc.Width;
+	textureContainer.maxUVY = height / (float)surfaceDesc.Height;
 	textureContainer.width = width;
 	textureContainer.height = height;
 	textureContainer.key = L"";
 	textureContainer.refCount = 1;
 	m_textureContainerMap.insert(std::pair<int, TextureContainer>(textureID, textureContainer));
+	return true;
+}
+
+bool XboxOGRenderingHelper::GetTexureMaxUV(const uint32_t& textureID, MathUtility::Vec2F& maxUV)
+{
+	std::map<uint32_t, TextureContainer>::iterator it = m_textureContainerMap.find(textureID);
+	if (it == m_textureContainerMap.end()) 
+	{
+		return false;
+	}
+
+	maxUV.x = it->second.maxUVX;
+	maxUV.y = it->second.maxUVY;
 	return true;
 }
 

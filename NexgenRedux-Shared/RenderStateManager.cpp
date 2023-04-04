@@ -194,6 +194,11 @@ bool RenderStateManager::LoadOrReplaceTextureData(const uint8_t* data, const uin
     return m_renderingHelper->LoadOrReplaceTextureData(data, width, height, textureID);
 }
 
+bool RenderStateManager::GetTexureMaxUV(const uint32_t& textureID, MathUtility::Vec2F& maxUV)
+{
+	return m_renderingHelper->GetTexureMaxUV(textureID, maxUV);
+}
+
 void RenderStateManager::DeleteTexture(const uint32_t& textureID)
 {
     m_renderingHelper->DeleteTexture(textureID);

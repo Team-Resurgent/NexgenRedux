@@ -53,7 +53,16 @@ void Sprite::Update(float dt)
 
     if (m_meshIsDirty == true)
     {
-        m_mesh = MeshUtility::CreateQuadXY(MathUtility::Vec3F(0, 0, 0), m_size, m_uv);
+		MathUtility::Vec2F maxUV;
+		if (renderStateManager->GetTexureMaxUV(m_textureID, maxUV) == true)
+		{
+			MathUtility::RectF uvRect;
+			uvRect.x = m_uv.x * maxUV.x;
+			uvRect.y = m_uv.y * maxUV.y;
+			uvRect.width = m_uv.width * maxUV.x;
+			uvRect.height = m_uv.height * maxUV.y;
+			m_mesh = MeshUtility::CreateQuadXY(MathUtility::Vec3F(0, 0, 0), m_size, uvRect);
+		}
         m_meshIsDirty = false;
     }
 }
@@ -94,6 +103,7 @@ void Sprite::SetTexturePath(const std::string value)
     }
     m_texturePath = value;
     m_textureIsDirty = true;
+	m_meshIsDirty = true;
 }
 
 const MathUtility::RectF Sprite::GetUV()

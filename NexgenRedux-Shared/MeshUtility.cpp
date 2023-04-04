@@ -8,10 +8,10 @@ const std::vector<MeshUtility::Vertex> MeshUtility::CreateQuadXY(const MathUtili
 {
     std::vector<Vertex> vertices;
 
-    Vertex v1 = Vertex(position.x, position.y, position.z, 0.0f, 0.0f, 1.0f, uvRect.x, 1.0f - uvRect.y);
-    Vertex v2 = Vertex(position.x + size.width, position.y, position.z, 0.0f, 0.0f, 1.0f, uvRect.x + uvRect.width, 1.0f - uvRect.y);
-    Vertex v3 = Vertex(position.x + size.width, position.y + size.height, position.z, 0.0f, 0.0f, 1.0f, uvRect.x + uvRect.width, 1.0f - (uvRect.y + uvRect.height));
-    Vertex v4 = Vertex(position.x, position.y + size.height, position.z, 0.0f, 0.0f, 1.0f, uvRect.x, 1.0f - (uvRect.y + uvRect.height));
+    Vertex v1 = Vertex(position.x, position.y, position.z, 0.0f, 0.0f, 1.0f, uvRect.x, uvRect.y + uvRect.height);
+    Vertex v2 = Vertex(position.x + size.width, position.y, position.z, 0.0f, 0.0f, 1.0f, uvRect.x + uvRect.width, uvRect.y + uvRect.height);
+    Vertex v3 = Vertex(position.x + size.width, position.y + size.height, position.z, 0.0f, 0.0f, 1.0f, uvRect.x + uvRect.width, uvRect.y);
+    Vertex v4 = Vertex(position.x, position.y + size.height, position.z, 0.0f, 0.0f, 1.0f, uvRect.x, uvRect.y);
 
     float nx = (v2.position.y - v1.position.y) * (v3.position.z - v1.position.z) - (v2.position.z - v1.position.z) * (v3.position.y - v1.position.y);
     float ny = (v2.position.z - v1.position.z) * (v3.position.x - v1.position.x) - (v2.position.x - v1.position.x) * (v3.position.z - v1.position.z);

@@ -26,7 +26,8 @@ namespace NexgenRedux
 		bool CanBatch(void);
 		bool LoadTexture(const std::wstring& path, uint32_t& textureID);
 		bool LoadOrReplaceTextureData(const uint8_t* data, const uint32_t& width, const uint32_t& height, uint32_t& textureID);
-		
+		bool GetTexureMaxUV(const uint32_t& textureID, MathUtility::Vec2F& maxUV);
+
 		void DeleteTexture(const uint32_t& textureID);
 		bool RenderMesh(const std::vector<MeshUtility::Vertex>& mesh);
 		void Clear(const MathUtility::Color4F& color);

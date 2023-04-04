@@ -19,6 +19,8 @@ namespace NexgenRedux
 		typedef struct TextureContainer
 		{
 			uint32_t texture;
+			float maxUVX;
+			float maxUVY;
 			uint32_t width;
 			uint32_t height;
 			std::wstring key;
@@ -67,6 +69,7 @@ namespace NexgenRedux
 
 		bool LoadTexture(const std::wstring& path, uint32_t& textureID) override;
 		bool LoadOrReplaceTextureData(const uint8_t* data, const uint32_t& width, const uint32_t& height, uint32_t& textureID) override;
+		bool GetTexureMaxUV(const uint32_t& textureID, MathUtility::Vec2F& maxUV) override;
 		void DeleteTexture(const uint32_t& textureID) override;
 		bool RenderMesh(const std::vector<MeshUtility::Vertex>& mesh) override;
 		void Clear(const MathUtility::Color4F& color) override;

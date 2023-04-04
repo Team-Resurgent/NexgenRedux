@@ -6,7 +6,7 @@
 #include <Gensys/FileSystem.h>
 
 #define SSFN_IMPLEMENTATION
-#define SSFN_MAXLINES 4096
+#define SFFN_MAXLINES 8192
 #define SSFN_memcmp memcmp
 #define SSFN_memset memset
 #define SSFN_realloc realloc

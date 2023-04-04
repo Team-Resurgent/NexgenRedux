@@ -861,6 +861,8 @@ bool OpenGLRenderingHelper::LoadTexture(const std::wstring& path, uint32_t& text
 	uint32_t textureContainerID = ++m_maxTextureContainerID;
 	TextureContainer textureContainer;
 	textureContainer.texture = textureId;
+	textureContainer.maxUVX = 1;
+	textureContainer.maxUVY = 1;
 	textureContainer.width = width;
 	textureContainer.height = height;
 	textureContainer.key = path;
@@ -892,11 +894,26 @@ bool OpenGLRenderingHelper::LoadOrReplaceTextureData(const uint8_t* data, const 
 
 	TextureContainer textureContainer;
 	textureContainer.texture = texture;
+	textureContainer.maxUVX = 1;
+	textureContainer.maxUVY = 1;
 	textureContainer.width = width;
 	textureContainer.height = height;
 	textureContainer.key = L"";
 	textureContainer.refCount = 1;
 	m_textureContainerMap.insert(std::pair<int, TextureContainer>(textureID, textureContainer));
+	return true;
+}
+
+bool OpenGLRenderingHelper::GetTexureMaxUV(const uint32_t& textureID, MathUtility::Vec2F& maxUV)
+{
+	std::map<uint32_t, TextureContainer>::iterator it = m_textureContainerMap.find(textureID);
+	if (it == m_textureContainerMap.end()) 
+	{
+		return false;
+	}
+
+	maxUV.x = it->second.maxUVX;
+	maxUV.y = it->second.maxUVY;
 	return true;
 }
 

@@ -55,7 +55,7 @@ void Text::Update(float dt)
                 uint32_t height;
                 FontManager::GetTextPixelBuffer(textHandle, &pixelBuffer, width, height);
 
-				if (pixelBuffer == NULL) 
+				if (pixelBuffer != NULL) 
 				{
 					renderStateManager->LoadOrReplaceTextureData(pixelBuffer, width, height, m_textureID);
 					

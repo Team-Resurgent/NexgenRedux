@@ -78,6 +78,7 @@ namespace NexgenRedux
 		void DeleteDynamicBuffer();
 		TextureContainer* GetTextureContainer(uint32_t textureID);
 		void DeleteTextures();
+		void Swizzle(const void *src, const uint32_t& depth, const uint32_t& width, const uint32_t& height, void *dest);
 	};
 }
 

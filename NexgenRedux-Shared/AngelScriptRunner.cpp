@@ -22,6 +22,8 @@
 #include <AngelScript/addons/scriptarray/scriptarray.h>
 #include <AngelScript/addons/scriptdictionary/scriptdictionary.h>
 
+//#define ANGELSCRIPT_DEBUG
+
 #include <cstring>
 
 using namespace Gensys;
@@ -123,6 +125,13 @@ void MessageCallback(asSMessageInfo* msg, void* param)
 	{
 		DebugUtility::LogMessage(logLevel, StringUtility::FormatString("(%d, %d) : %s", msg->row, msg->col, msg->message));
 	}
+}
+
+void DebugLineCallback(asIScriptContext *ctx, void* ptr)
+{
+	const char *scriptSection;
+	int line = ctx->GetLineNumber(0, 0, &scriptSection);
+	DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, StringUtility::FormatString("Processing line %i, %s", line, scriptSection));
 }
 
 bool CompileScript(asIScriptEngine* engine, std::wstring launchFolder)
@@ -910,6 +919,10 @@ bool AngelScriptRunner::ExecuteInit(void)
 		return false;
 	}
 
+#ifdef ANGELSCRIPT_DEBUG
+	context->SetLineCallback(asFUNCTION(DebugLineCallback), NULL, asCALL_CDECL);
+#endif
+
 	asIScriptFunction *initFunction = m_engine->GetModule(0)->GetFunctionByDecl("void Init()");
 	if (initFunction == NULL)
 	{
@@ -935,6 +948,10 @@ bool AngelScriptRunner::ExecuteRender(double dt)
 	{
 		return false;
 	}
+
+#ifdef ANGELSCRIPT_DEBUG
+	context->SetLineCallback(asFUNCTION(DebugLineCallback), NULL, asCALL_CDECL);
+#endif
 
 	asIScriptFunction *renderFunction = m_engine->GetModule(0)->GetFunctionByDecl("void Render(double)");
 	if (renderFunction == NULL)
@@ -964,6 +981,10 @@ bool AngelScriptRunner::ExecuteWindowIconifyCallback(uint32_t iconified)
 		return false;
 	}
 
+#ifdef ANGELSCRIPT_DEBUG
+	context->SetLineCallback(asFUNCTION(DebugLineCallback), NULL, asCALL_CDECL);
+#endif
+
 	if (m_windowIconifyCallback == NULL)
 	{
 		context->Release();
@@ -991,6 +1012,10 @@ bool AngelScriptRunner::ExecuteWindowMaximizeCallback(uint32_t maximized)
 		return false;
 	}
 
+#ifdef ANGELSCRIPT_DEBUG
+	context->SetLineCallback(asFUNCTION(DebugLineCallback), NULL, asCALL_CDECL);
+#endif
+
 	if (m_windowMaximizeCallback == NULL)
 	{
 		context->Release();
@@ -1017,6 +1042,10 @@ bool AngelScriptRunner::ExecuteWindowSizeCallback(uint32_t width, uint32_t heigh
 	{
 		return false;
 	}
+
+#ifdef ANGELSCRIPT_DEBUG
+	context->SetLineCallback(asFUNCTION(DebugLineCallback), NULL, asCALL_CDECL);
+#endif
 
 	if (m_windowSizeCallback == NULL)
 	{
@@ -1046,6 +1075,10 @@ bool AngelScriptRunner::ExecuteWindowFocusCallback(uint32_t focused)
 		return false;
 	}
 
+#ifdef ANGELSCRIPT_DEBUG
+	context->SetLineCallback(asFUNCTION(DebugLineCallback), NULL, asCALL_CDECL);
+#endif
+
 	if (m_windowFocusCallback == NULL)
 	{
 		context->Release();
@@ -1072,6 +1105,10 @@ bool AngelScriptRunner::ExecuteWindowKeyboardKeyCallback(uint32_t key, uint32_t 
 	{
 		return false;
 	}
+
+#ifdef ANGELSCRIPT_DEBUG
+	context->SetLineCallback(asFUNCTION(DebugLineCallback), NULL, asCALL_CDECL);
+#endif
 
 	if (m_windowKeyboardKeyCallback == NULL)
 	{
@@ -1103,6 +1140,10 @@ bool AngelScriptRunner::ExecuteWindowKeyboardCharacterCallback(uint32_t codepoin
 		return false;
 	}
 
+#ifdef ANGELSCRIPT_DEBUG
+	context->SetLineCallback(asFUNCTION(DebugLineCallback), NULL, asCALL_CDECL);
+#endif
+
 	if (m_windowKeyboardCharacterCallback == NULL)
 	{
 		context->Release();
@@ -1129,6 +1170,10 @@ bool AngelScriptRunner::ExecuteWindowMouseCursorPositionCallback(double xPos, do
 	{
 		return false;
 	}
+
+#ifdef ANGELSCRIPT_DEBUG
+	context->SetLineCallback(asFUNCTION(DebugLineCallback), NULL, asCALL_CDECL);
+#endif
 
 	if (m_windowMouseCursorPositionCallback == NULL)
 	{
@@ -1158,6 +1203,10 @@ bool AngelScriptRunner::ExecuteWindowMouseCursorEnterCallback(uint32_t entered)
 		return false;
 	}
 
+#ifdef ANGELSCRIPT_DEBUG
+	context->SetLineCallback(asFUNCTION(DebugLineCallback), NULL, asCALL_CDECL);
+#endif
+
 	if (m_windowMouseCursorEnterCallback == NULL)
 	{
 		context->Release();
@@ -1184,6 +1233,10 @@ bool AngelScriptRunner::ExecuteWindowMouseButtonCallback(uint32_t button, uint32
 	{
 		return false;
 	}
+	
+#ifdef ANGELSCRIPT_DEBUG
+	context->SetLineCallback(asFUNCTION(DebugLineCallback), NULL, asCALL_CDECL);
+#endif
 
 	if (m_windowMouseButtonCallback == NULL)
 	{
@@ -1214,6 +1267,10 @@ bool AngelScriptRunner::ExecuteWindowMouseScrollCallback(double xOffset, double 
 		return false;
 	}
 
+#ifdef ANGELSCRIPT_DEBUG
+	context->SetLineCallback(asFUNCTION(DebugLineCallback), NULL, asCALL_CDECL);
+#endif
+
 	if (m_windowMouseScrollCallback == NULL)
 	{
 		context->Release();
@@ -1241,6 +1298,10 @@ bool AngelScriptRunner::ExecuteWindowDropCallback(std::vector<std::string> paths
 	{
 		return false;
 	}
+
+#ifdef ANGELSCRIPT_DEBUG
+	context->SetLineCallback(asFUNCTION(DebugLineCallback), NULL, asCALL_CDECL);
+#endif
 
 	if (m_windowDropCallback == NULL)
 	{
@@ -1276,6 +1337,10 @@ bool AngelScriptRunner::ExecuteJoystickConnectCallback(uint32_t joystickID, uint
 	{
 		return false;
 	}
+
+#ifdef ANGELSCRIPT_DEBUG
+	context->SetLineCallback(asFUNCTION(DebugLineCallback), NULL, asCALL_CDECL);
+#endif
 
 	if (m_joystickConnectCallback == NULL)
 	{

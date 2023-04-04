@@ -65,6 +65,24 @@ void XboxOGRenderingHelper::SetShader(std::string shaderName)
 		return;
 	}
 
+	if (FAILED(d3dDevice->SetTextureStageState(0, D3DTSS_ADDRESSU, D3DTADDRESS_WRAP)))
+	{
+		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("SetShader: Shader '%s' init failed.", shaderName.c_str()));
+		return;
+	}
+
+	if (FAILED(d3dDevice->SetTextureStageState(0, D3DTSS_ADDRESSV, D3DTADDRESS_WRAP)))
+	{
+		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("SetShader: Shader '%s' init failed.", shaderName.c_str()));
+		return;
+	}
+
+	if (FAILED(d3dDevice->SetTextureStageState(0, D3DTSS_ADDRESSW, D3DTADDRESS_WRAP)))
+	{
+		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("SetShader: Shader '%s' init failed.", shaderName.c_str()));
+		return;
+	}
+
 	if (FAILED(d3dDevice->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE)))
 	{
 		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("SetShader: Shader '%s' init failed.", shaderName.c_str()));
@@ -990,25 +1008,32 @@ bool XboxOGRenderingHelper::LoadTexture(const std::wstring& path, uint32_t& text
 	int height;
 	int channels;
 	unsigned char* data = stbi_load(StringUtility::ToString(mappedPath).c_str(), &width, &height, &channels, STBI_rgb_alpha);
-	if (!data)
+	if (data == NULL)
 	{
 		return false;
 	}
 
 	IDirect3DTexture8 *texture;
-	if (FAILED(D3DXCreateTexture(d3dDevice, width, height, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &texture)))
+	if (FAILED(D3DXCreateTexture(d3dDevice, width, height, 1, 0, D3DFMT_A8B8G8R8, D3DPOOL_DEFAULT, &texture)))
 	{
 		return false;
 	}
 
-	D3DSURFACE_DESC surfaceDesc;
-	texture->GetLevelDesc(0, &surfaceDesc);
+	D3DLOCKED_RECT lockedRect;
+    if (FAILED(texture->LockRect(0, &lockedRect, NULL, 0)))
+    {
+		return false;
+	}
+	memset(lockedRect.pBits, 0, lockedRect.Pitch * height);
+	Swizzle(data, 4, width, height, lockedRect.pBits);
+	texture->UnlockRect(0);
+	stbi_image_free(data);
 
 	uint32_t textureContainerID = ++m_maxTextureContainerID;
 	TextureContainer textureContainer;
 	textureContainer.texture = texture;
-	textureContainer.width = surfaceDesc.Width;
-	textureContainer.height = surfaceDesc.Height;
+	textureContainer.width = width;
+	textureContainer.height = height;
 	textureContainer.key = path;
 	textureContainer.refCount = 1;
 	m_textureContainerMap.insert(std::pair<int, TextureContainer>(textureContainerID, textureContainer));
@@ -1034,10 +1059,19 @@ bool XboxOGRenderingHelper::LoadOrReplaceTextureData(const uint8_t* data, const 
 	}
 
 	IDirect3DTexture8 *texture;
-	if (FAILED(D3DXCreateTexture(d3dDevice, width, height, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &texture)))
+	if (FAILED(D3DXCreateTexture(d3dDevice, width, height, 1, 0, D3DFMT_A8B8G8R8, D3DPOOL_DEFAULT, &texture)))
 	{
 		return false;
 	}
+
+	D3DLOCKED_RECT lockedRect;
+    if (FAILED(texture->LockRect(0, &lockedRect, NULL, 0)))
+    {
+		return false;
+	}
+	memset(lockedRect.pBits, 0, lockedRect.Pitch * height);
+	Swizzle(data, 4, width, height, lockedRect.pBits);
+	texture->UnlockRect(0);
 
 	TextureContainer textureContainer;
 	textureContainer.texture = texture;
@@ -1166,6 +1200,48 @@ void XboxOGRenderingHelper::DeleteTextures()
 		IDirect3DTexture8* texture = it->second.texture;
 		texture->Release();
 	}
+}
+
+void XboxOGRenderingHelper::Swizzle(const void *src, const uint32_t& depth, const uint32_t& width, const uint32_t& height, void *dest)
+{
+  for (UINT y = 0; y < height; y++)
+  {
+    UINT sy = 0;
+    if (y < width)
+    {
+      for (int bit = 0; bit < 16; bit++)
+        sy |= ((y >> bit) & 1) << (2*bit);
+      sy <<= 1; // y counts twice
+    }
+    else
+    {
+      UINT y_mask = y % width;
+      for (int bit = 0; bit < 16; bit++)
+        sy |= ((y_mask >> bit) & 1) << (2*bit);
+      sy <<= 1; // y counts twice
+      sy += (y / width) * width * width;
+    }
+    BYTE *s = (BYTE *)src + y * width * depth;
+    for (UINT x = 0; x < width; x++)
+    {
+      UINT sx = 0;
+      if (x < height * 2)
+      {
+        for (int bit = 0; bit < 16; bit++)
+          sx |= ((x >> bit) & 1) << (2*bit);
+      }
+      else
+      {
+        int x_mask = x % (2*height);
+        for (int bit = 0; bit < 16; bit++)
+          sx |= ((x_mask >> bit) & 1) << (2*bit);
+        sx += (x / (2 * height)) * 2 * height * height;
+      }
+      BYTE *d = (BYTE *)dest + (sx + sy)*depth;
+      for (unsigned int i = 0; i < depth; ++i)
+        *d++ = *s++;
+    }
+  }
 }
 
 #endif

@@ -532,7 +532,7 @@ bool FileSystem::FileReadAllAsString(std::wstring const path, std::string* buffe
 	return bytesRead == fileLength;
 }
 
-bool FileSystem::FileReadAllAsData(std::wstring const path, std::vector<uint8_t>* buffer)
+bool FileSystem::FileReadAllAsData(std::wstring const path, std::vector<uint8_t>& buffer)
 {
 	FILE *file;
 #if defined NEXGEN_OG || defined NEXGEN_360 || defined NEXGEN_MAC || defined NEXGEN_LINUX
@@ -549,7 +549,7 @@ bool FileSystem::FileReadAllAsData(std::wstring const path, std::vector<uint8_t>
 	uint32_t fileLength = ftell(file);
 	fseek(file, 0, SEEK_SET);
 
-	buffer->resize(fileLength);
+	buffer.resize(fileLength);
 	uint32_t bytesRead = (uint32_t)fread((void*)&buffer[0], 1, fileLength, file);
 	fclose(file);
 

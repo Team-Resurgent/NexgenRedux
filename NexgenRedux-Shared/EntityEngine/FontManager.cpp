@@ -6,6 +6,7 @@
 #include <Gensys/FileSystem.h>
 
 #define SSFN_IMPLEMENTATION
+#define SSFN_MAXLINES 4096
 #define SSFN_memcmp memcmp
 #define SSFN_memset memset
 #define SSFN_realloc realloc
@@ -43,7 +44,7 @@ bool FontManager::LoadFont(const std::string fontPath)
     }
 
     std::vector<uint8_t> buffer;
-    if (FileSystem::FileReadAllAsData(mappedPath, &buffer) == false)
+    if (FileSystem::FileReadAllAsData(mappedPath, buffer) == false)
     {
         DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("Failed to load font file '%s'.", fontPath.c_str()));
         return false;
@@ -103,6 +104,12 @@ void FontManager::DeleteRenderText(void* textHandle)
         return;
     }
     ssfn_buf_t* buffer = (ssfn_buf_t*)textHandle;
-    free(buffer->ptr);
-    free(buffer);
+	if (buffer->ptr != NULL)
+	{
+		free(buffer->ptr);
+	}
+	if (buffer != NULL)
+	{
+		free(buffer);
+	}
 }

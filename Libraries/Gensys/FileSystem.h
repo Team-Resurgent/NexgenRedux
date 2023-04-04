@@ -55,7 +55,7 @@ namespace Gensys
 		static bool FileOpen(std::wstring const path, FileMode const fileMode, uint32_t& fileHandle);
 		static bool FileRead(uint32_t fileHandle, char* readBuffer, uint32_t const bytesToRead, uint32_t& bytesRead);
 		static bool FileReadAllAsString(std::wstring const path, std::string* buffer);
-		static bool FileReadAllAsData(std::wstring const path, std::vector<uint8_t>* buffer);
+		static bool FileReadAllAsData(std::wstring const path, std::vector<uint8_t>& buffer);
 		static bool FileWrite(uint32_t fileHandle, char* writeBuffer, uint32_t bytesToWrite, uint32_t& bytesWritten);
 		static bool FileClose(uint32_t fileHandle);
 		static bool FileSeek(uint32_t fileHandle, FileSeekMode const fileSeekMode, uint32_t const offset);

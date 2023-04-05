@@ -21,9 +21,7 @@ void __cdecl main(int, char **)
 
     WindowManager *windowManager = WindowManager::GetInstance();
     RenderStateManager *renderStateManager = RenderStateManager::GetInstance();
-
-    //ECSManager::ECSManagerExample();
-
+    
 	if (ConfigLoader::LoadConfig() == false) 
 	{
 		return;
@@ -45,6 +43,7 @@ void __cdecl main(int, char **)
     }
 
     NodeManager::Close();
+    FontManager::Close();
 
     RenderStateManager::Close();
     WindowManager::Close();

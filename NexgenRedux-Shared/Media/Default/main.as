@@ -1,3 +1,5 @@
+#include "util.as"
+
 OrthoCamera@ orthoCamera = NodeManager::CreateOrthoCamera();
 Sprite@ sprite2 = NodeManager::CreateSprite();
 Text@ textFPS = NodeManager::CreateText();
@@ -74,6 +76,8 @@ float spriteRotate = 0;
 
 void Init()
 {
+    PrintHello();
+
     FontManager::LoadFont("skin:freesans.sfn");
 
     uint sceneID = SceneManager::CreateScene(true);

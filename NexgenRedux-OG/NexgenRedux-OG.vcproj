@@ -67,7 +67,7 @@
 				ForceCopy="TRUE"/>
 			<Tool
 				Name="XboxImageTool"
-				StackSize="0x40000"
+				StackSize="0x20000"
 				IncludeDebugInfo="TRUE"
 				SuppressStartupBanner="TRUE"
 				DontMountUD="TRUE"

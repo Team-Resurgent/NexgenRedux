@@ -1,15 +1,3 @@
-#include "GLAD/glad.h"
-#include "GLFW/glfw3.h"
-
-#include "Icon.h"
-#include <array>
-#include <chrono>
-#include <cmath>
-#include <sstream>
-#include <string>
-#include <vector>
-#include <cstring>
-
 #include <EntityEngine/FontManager.h>
 #include <EntityEngine/NodeManager.h>
 #include <Gensys/DebugUtility.h>
@@ -34,9 +22,7 @@ int main(int argc, const char* argv[])
 {
     WindowManager *windowManager = WindowManager::GetInstance();
     RenderStateManager *renderStateManager = RenderStateManager::GetInstance();
-
-    //ECSManager::ECSManagerExample();
-
+    
 	if (ConfigLoader::LoadConfig() == false) 
 	{
 		return 0;

@@ -27,7 +27,7 @@
 
 // Angelscript DocGen https://github.com/marcakafoddex/angelscript-docgen
 
-//#define ANGELSCRIPT_DEBUG
+// #define ANGELSCRIPT_DEBUG
 
 #include <cstring>
 
@@ -912,10 +912,10 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 
 	result = m_engine->SetDefaultNamespace("NodeManager"); if (result < 0) { return false; }
 	result = m_engine->RegisterGlobalFunction("OrthoCamera& NodeManager::CreateOrthoCamera()", asFUNCTION(NodeManager::CreateOrthoCamera), asCALL_CDECL); if (result < 0) { return false; }
-	result = m_engine->RegisterGlobalFunction("Fog& NodeManager::CreateFog()", asFUNCTION(NodeManager::CreateFog), asCALL_CDECL); if (result < 0) { return false; }
-	result = m_engine->RegisterGlobalFunction("Lighting& NodeManager::CreateLighting()", asFUNCTION(NodeManager::CreateLighting), asCALL_CDECL); if (result < 0) { return false; }
-	result = m_engine->RegisterGlobalFunction("Sprite& NodeManager::CreateSprite()", asFUNCTION(NodeManager::CreateSprite), asCALL_CDECL); if (result < 0) { return false; }
-	result = m_engine->RegisterGlobalFunction("Text& NodeManager::CreateText()", asFUNCTION(NodeManager::CreateText), asCALL_CDECL); if (result < 0) { return false; }
+	result = m_engine->RegisterGlobalFunction("Fog@ NodeManager::CreateFog()", asFUNCTION(NodeManager::CreateFog), asCALL_CDECL); if (result < 0) { return false; }
+	result = m_engine->RegisterGlobalFunction("Lighting@ NodeManager::CreateLighting()", asFUNCTION(NodeManager::CreateLighting), asCALL_CDECL); if (result < 0) { return false; }
+	result = m_engine->RegisterGlobalFunction("Sprite@ NodeManager::CreateSprite()", asFUNCTION(NodeManager::CreateSprite), asCALL_CDECL); if (result < 0) { return false; }
+	result = m_engine->RegisterGlobalFunction("Text@ NodeManager::CreateText()", asFUNCTION(NodeManager::CreateText), asCALL_CDECL); if (result < 0) { return false; }
 	result = m_engine->RegisterGlobalFunction("bool NodeManager::AssignNode(Node@, uint)", asFUNCTION(NodeManager::AssignNode), asCALL_CDECL); if (result < 0) { return false; }
 	result = m_engine->RegisterGlobalFunction("bool NodeManager::AssignNodeAt(Node@, uint, uint)", asFUNCTION(NodeManager::AssignNodeAt), asCALL_CDECL); if (result < 0) { return false; }
 	result = m_engine->RegisterGlobalFunction("void NodeManager::DeleteNode(uint)", asFUNCTION(NodeManager::DeleteNode), asCALL_CDECL); if (result < 0) { return false; }
@@ -927,7 +927,7 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	result = m_engine->RegisterObjectMethod("Node", "Fog@ opCast()", asFUNCTION((refCast<Node, Fog>)), asCALL_CDECL_OBJLAST); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("Node", "Lighting@ opCast()", asFUNCTION((refCast<Node, Lighting>)), asCALL_CDECL_OBJLAST); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("Node", "Sprite@ opCast()", asFUNCTION((refCast<Node, Sprite>)), asCALL_CDECL_OBJLAST); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectMethod("Node", "Text@ opCast()", asFUNCTION((refCast<Node, Sprite>)), asCALL_CDECL_OBJLAST); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("Node", "Text@ opCast()", asFUNCTION((refCast<Node, Text>)), asCALL_CDECL_OBJLAST); if (result < 0) { return false; }
 
 	result = m_engine->RegisterObjectMethod("Node", "OrthoCamera@ opImplCast()", asFUNCTION((refCast<Node, OrthoCamera>)), asCALL_CDECL_OBJLAST); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("OrthoCamera", "Node@ opImplCast()", asFUNCTION((refCast<OrthoCamera, Node>)), asCALL_CDECL_OBJLAST); if (result < 0) { return false; }

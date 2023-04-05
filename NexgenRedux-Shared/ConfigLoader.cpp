@@ -1,5 +1,6 @@
 #include "ConfigLoader.h"
 #include <Gensys/Int.h>
+#include <Gensys/DebugUtility.h>
 #include <Gensys/StringUtility.h>
 #include <Gensys/FileSystem.h>
 #include <string>
@@ -56,8 +57,17 @@ namespace
 
 bool ConfigLoader::LoadConfig()
 {
+    std::wstring appPath;
+	if (FileSystem::GetAppDirectory(appPath) == false)
+    {
+        return false;
+    }
+
+    DebugUtility::SetLogFile(FileSystem::CombinePath(appPath, L"log.txt"));
+	DebugUtility::DeleteLogFile();
+
 	std::wstring mediaPath;
-	if (!FileSystem::GetMediaDirectory(mediaPath))
+	if (FileSystem::GetMediaDirectory(mediaPath) == false)
 	{
 		return false;
 	}

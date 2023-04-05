@@ -86,7 +86,8 @@
 			"xutility": "cpp",
 			"list": "cpp",
 			"xhash": "cpp",
-			"coroutine": "cpp"
+			"coroutine": "cpp",
+			"regex": "cpp"
 		}
 	}
 }

@@ -869,7 +869,7 @@ bool FileSystem::GetMediaDirectory(std::wstring& mediaDirectory)
 	return true;
 #elif defined NEXGEN_OG || defined NEXGEN_360 || defined NEXGEN_WIN || defined NEXGEN_MAC || defined NEXGEN_LINUX
 	std::wstring appDirectory;
-	if (!GetAppDirectory(appDirectory))
+	if (GetAppDirectory(appDirectory) == false)
 	{
 		return false;
 	}

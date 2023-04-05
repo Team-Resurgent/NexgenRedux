@@ -131,14 +131,14 @@ void Init()
     textFPS.SetFontStyle(0);
     textFPS.SetFontSize(60);
     //TODO: SetFontStyle(FontStyleBold | FontStyleItalic | FontStyleUnderline);
-    textFPS.SetPosition(Vec3F(75, 360, 16));
+    textFPS.SetPosition(Vec3F(75, 360, 20));
     NodeManager::AssignNode(textFPS, lighting.GetID());
     
     textMem.SetFontName("FreeSans");
     textMem.SetFontStyle(0);
-    textMem.SetFontSize(60);
+    textMem.SetFontSize(30);
     //TODO: SetFontStyle(FontStyleBold | FontStyleItalic | FontStyleUnderline);
-    textMem.SetPosition(Vec3F(75, 300, 12));
+    textMem.SetPosition(Vec3F(75, 300, 30));
     NodeManager::AssignNode(textMem, lighting.GetID());
     
 

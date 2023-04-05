@@ -1,6 +1,7 @@
 OrthoCamera@ orthoCamera = NodeManager::CreateOrthoCamera();
 Sprite@ sprite2 = NodeManager::CreateSprite();
-Text@ text = NodeManager::CreateText();
+Text@ textFPS = NodeManager::CreateText();
+Text@ textMem = NodeManager::CreateText();
 
 void OnWindowIconify(uint iconified)
 {
@@ -126,14 +127,20 @@ void Init()
     sprite2.SetDrawMode(DrawModeOperationTriangles);
     NodeManager::AssignNode(sprite2, lighting.GetID());
 
-    text.SetFontName("FreeSans");
-    text.SetFontStyle(0);
-    text.SetFontSize(60);
-    text.SetRotation(Vec3F(0, 0, 10));
-
+    textFPS.SetFontName("FreeSans");
+    textFPS.SetFontStyle(0);
+    textFPS.SetFontSize(60);
     //TODO: SetFontStyle(FontStyleBold | FontStyleItalic | FontStyleUnderline);
-    text.SetPosition(Vec3F(75, 300, 20));
-    NodeManager::AssignNode(text, lighting.GetID());
+    textFPS.SetPosition(Vec3F(75, 360, 16));
+    NodeManager::AssignNode(textFPS, lighting.GetID());
+    
+    textMem.SetFontName("FreeSans");
+    textMem.SetFontStyle(0);
+    textMem.SetFontSize(60);
+    //TODO: SetFontStyle(FontStyleBold | FontStyleItalic | FontStyleUnderline);
+    textMem.SetPosition(Vec3F(75, 300, 12));
+    NodeManager::AssignNode(textMem, lighting.GetID());
+    
 
     // Sprite@ sprite2 = NodeManager::CreateSprite();
     // sprite2.SetTexturePath("hello2");
@@ -270,11 +277,13 @@ void Render(double dt)
     if (durationFPS > 2.0)
     {
         double fps = CalculateFramesPerSecond(frameCount, durationFPS);
-        text.SetText("fps = " + fps);
+        textFPS.SetText("fps = " + fps);
         DebugPrint(1, "fps = " + fps);
         frameCount = 0;
         previousTime = currentTime;
     }
+    
+    textMem.SetText("free mem = " + (GetFreePhysicalMemory() / (1024 * 1024)) + "MB");
 
     JoystickButtonStates joystickButtonStates = GetJoystickButtonStates(0);
 	DebugPrintIf(joystickButtonStates.buttonA == 1, 1, "buttonA = " + joystickButtonStates.buttonA);

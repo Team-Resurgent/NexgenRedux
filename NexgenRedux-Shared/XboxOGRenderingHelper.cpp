@@ -1103,8 +1103,8 @@ bool XboxOGRenderingHelper::LoadOrReplaceTextureData(const uint8_t* data, const 
 
 	TextureContainer textureContainer;
 	textureContainer.texture = texture;
-	textureContainer.maxUVX = 1; //width / (float)surfaceDesc.Width;
-	textureContainer.maxUVY = 1; //height / (float)surfaceDesc.Height;
+	textureContainer.maxUVX = width / (float)surfaceDesc.Width;
+	textureContainer.maxUVY = height / (float)surfaceDesc.Height;
 	textureContainer.width = width;
 	textureContainer.height = height;
 	textureContainer.key = L"";

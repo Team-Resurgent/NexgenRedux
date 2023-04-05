@@ -15,6 +15,7 @@
 #include <Gensys/FileSystem.h>
 #include <Gensys/StringUtility.h>
 #include <Gensys/TimeUtility.h>
+#include <Gensys/Memory.h>
 #include <AngelScript/angelscript.h>
 #include <AngelScript/addons/autowrapper/aswrappedcall.h>
 #include <AngelScript/addons/scriptstdstring/scriptstdstring.h>
@@ -626,6 +627,11 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 
 	if (m_engine->RegisterGlobalFunction("void DebugPrintIf(const bool condition, const int logLevel, const string message)", asFUNCTIONPR(DebugUtility::LogMessageIf, (const bool, const DebugUtility::LogLevel, const std::string), void), asCALL_CDECL) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("void DebugPrint(const int logLevel, const string message)", asFUNCTIONPR(DebugUtility::LogMessage, (const DebugUtility::LogLevel, const std::string), void), asCALL_CDECL) < 0) { return false; }
+
+	if (m_engine->RegisterGlobalFunction("uint GetTotalVirtualMemory()", asFUNCTION(Memory::GetTotalVirtualMemory), asCALL_CDECL) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("uint GetFreeVirtualMemory()", asFUNCTION(Memory::GetFreeVirtualMemory), asCALL_CDECL) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("uint GetTotalPhysicalMemory()", asFUNCTION(Memory::GetTotalPhysicalMemory), asCALL_CDECL) < 0) { return false; }
+	if (m_engine->RegisterGlobalFunction("uint GetFreePhysicalMemory()", asFUNCTION(Memory::GetFreePhysicalMemory), asCALL_CDECL) < 0) { return false; }
 
 	if (m_engine->RegisterGlobalFunction("uint GetAvailableMonitorCount(void)", asFUNCTION(AngelScriptMethods::GetAvailableMonitorCount), asCALL_GENERIC) < 0) { return false; }
 	if (m_engine->RegisterGlobalFunction("MonitorVideoMode GetMonitorVideoMode(uint monitorIndex)", asFUNCTION(AngelScriptMethods::GetMonitorVideoMode), asCALL_GENERIC) < 0) { return false; }

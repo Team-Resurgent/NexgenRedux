@@ -1,9 +1,9 @@
 #include "util.as"
 
-OrthoCamera@ orthoCamera = NodeManager::CreateOrthoCamera();
-Sprite@ sprite2 = NodeManager::CreateSprite();
-Text@ textFPS = NodeManager::CreateText();
-Text@ textMem = NodeManager::CreateText();
+OrthoCameraNode@ orthoCamera = NodeManager::CreateOrthoCamera();
+SpriteNode@ sprite2 = NodeManager::CreateSprite();
+TextNode@ textFPS = NodeManager::CreateText();
+TextNode@ textMem = NodeManager::CreateText();
 
 void OnWindowIconify(uint iconified)
 {
@@ -96,7 +96,7 @@ void Init()
 
     SceneManager::AssignNode(orthoCamera, sceneID);
 
-    Fog@ fog = NodeManager::CreateFog();
+    FogNode@ fog = NodeManager::CreateFog();
     fog.SetFog(FogOperationDisabled);
     fog.SetFogColor(Color3F(0, 0.6, 0));
     fog.SetFogStart(-1024);
@@ -104,7 +104,7 @@ void Init()
     fog.SetFogDensity(0.001);
     NodeManager::AssignNode(fog, orthoCamera.GetID());
     
-    Lighting@ lighting = NodeManager::CreateLighting();
+    LightingNode@ lighting = NodeManager::CreateLighting();
     lighting.SetLights(LightsOperationDisabled);
     lighting.SetAmbientLight(Color3F(0, 0, 0));
     lighting.SetLight1(LightOperationDisabled);
@@ -113,7 +113,7 @@ void Init()
     lighting.SetLight1Diffuse(Color4F(0, 0, 0, 0));
     NodeManager::AssignNode(lighting, fog.GetID());
 
-    Sprite@ sprite1 = NodeManager::CreateSprite();
+    SpriteNode@ sprite1 = NodeManager::CreateSprite();
     sprite1.SetTexturePath("skin:background.png");
     sprite1.SetUV(RectF(0, 0, 1, 1));
     sprite1.SetSize(SizeF(640, 480));

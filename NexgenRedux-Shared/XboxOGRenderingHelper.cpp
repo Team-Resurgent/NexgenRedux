@@ -1016,6 +1016,7 @@ bool XboxOGRenderingHelper::LoadTexture(const std::wstring& path, uint32_t& text
 	IDirect3DTexture8 *texture;
 	if (FAILED(D3DXCreateTexture(d3dDevice, width, height, 1, 0, D3DFMT_A8B8G8R8, D3DPOOL_DEFAULT, &texture)))
 	{
+		stbi_image_free(data);
 		return false;
 	}
 
@@ -1023,14 +1024,23 @@ bool XboxOGRenderingHelper::LoadTexture(const std::wstring& path, uint32_t& text
 	texture->GetLevelDesc(0, &surfaceDesc);
 
 	D3DLOCKED_RECT lockedRect;
-    if (FAILED(texture->LockRect(0, &lockedRect, NULL, 0)))
+    if (SUCCEEDED(texture->LockRect(0, &lockedRect, NULL, 0)))
     {
-		return false;
+		uint8_t* tempBuffer = (uint8_t*)malloc(surfaceDesc.Size);
+		memset(tempBuffer, 0, surfaceDesc.Size);
+		uint8_t* src = (uint8_t*)data;
+		uint8_t* dst = tempBuffer;
+		for (uint32_t y = 0; y < (uint32_t)height; y++)
+		{
+			memcpy(dst, src, width * 4);
+			src += width * 4;
+			dst += surfaceDesc.Width * 4;
+		}
+		Swizzle(tempBuffer, 4, surfaceDesc.Width, surfaceDesc.Height, lockedRect.pBits);
+		free(tempBuffer);
+		texture->UnlockRect(0);
 	}
 
-	memset(lockedRect.pBits, 0, surfaceDesc.Size);
-	Swizzle(data, 4, width, height, lockedRect.pBits);
-	texture->UnlockRect(0);
 	stbi_image_free(data);
 
 	uint32_t textureContainerID = ++m_maxTextureContainerID;
@@ -1074,19 +1084,27 @@ bool XboxOGRenderingHelper::LoadOrReplaceTextureData(const uint8_t* data, const 
 	texture->GetLevelDesc(0, &surfaceDesc);
 
 	D3DLOCKED_RECT lockedRect;
-    if (FAILED(texture->LockRect(0, &lockedRect, NULL, 0)))
+    if (SUCCEEDED(texture->LockRect(0, &lockedRect, NULL, 0)))
     {
-		return false;
+		uint8_t* tempBuffer = (uint8_t*)malloc(surfaceDesc.Size);
+		memset(tempBuffer, 0, surfaceDesc.Size);
+		uint8_t* src = (uint8_t*)data;
+		uint8_t* dst = tempBuffer;
+		for (uint32_t y = 0; y < height; y++)
+		{
+			memcpy(dst, src, width * 4);
+			src += width * 4;
+			dst += surfaceDesc.Width * 4;
+		}
+		Swizzle(tempBuffer, 4, surfaceDesc.Width, surfaceDesc.Height, lockedRect.pBits);
+		free(tempBuffer);
+		texture->UnlockRect(0);
 	}
-
-	memset(lockedRect.pBits, 0, surfaceDesc.Size);
-	Swizzle(data, 4, width, height, lockedRect.pBits);
-	texture->UnlockRect(0);
 
 	TextureContainer textureContainer;
 	textureContainer.texture = texture;
-	textureContainer.maxUVX = width / (float)surfaceDesc.Width;
-	textureContainer.maxUVY = height / (float)surfaceDesc.Height;
+	textureContainer.maxUVX = 1; //width / (float)surfaceDesc.Width;
+	textureContainer.maxUVY = 1; //height / (float)surfaceDesc.Height;
 	textureContainer.width = width;
 	textureContainer.height = height;
 	textureContainer.key = L"";

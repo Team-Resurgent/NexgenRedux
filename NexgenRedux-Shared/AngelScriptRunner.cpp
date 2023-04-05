@@ -664,10 +664,10 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	result = m_engine->RegisterGlobalFunction("void DebugPrintIf(const bool condition, const int logLevel, const string message)", asFUNCTIONPR(DebugUtility::LogMessageIf, (const bool, const DebugUtility::LogLevel, const std::string), void), asCALL_CDECL); if (result < 0) { return false; }
 	result = m_engine->RegisterGlobalFunction("void DebugPrint(const int logLevel, const string message)", asFUNCTIONPR(DebugUtility::LogMessage, (const DebugUtility::LogLevel, const std::string), void), asCALL_CDECL); if (result < 0) { return false; }
 
-	result = m_engine->RegisterGlobalFunction("uint GetTotalVirtualMemory()", asFUNCTION(Memory::GetTotalVirtualMemory), asCALL_CDECL); if (result < 0) { return false; }
-	result = m_engine->RegisterGlobalFunction("uint GetFreeVirtualMemory()", asFUNCTION(Memory::GetFreeVirtualMemory), asCALL_CDECL); if (result < 0) { return false; }
-	result = m_engine->RegisterGlobalFunction("uint GetTotalPhysicalMemory()", asFUNCTION(Memory::GetTotalPhysicalMemory), asCALL_CDECL); if (result < 0) { return false; }
-	result = m_engine->RegisterGlobalFunction("uint GetFreePhysicalMemory()", asFUNCTION(Memory::GetFreePhysicalMemory), asCALL_CDECL); if (result < 0) { return false; }
+	result = m_engine->RegisterGlobalFunction("uint64 GetTotalVirtualMemory()", asFUNCTION(Memory::GetTotalVirtualMemory), asCALL_CDECL); if (result < 0) { return false; }
+	result = m_engine->RegisterGlobalFunction("uint64 GetFreeVirtualMemory()", asFUNCTION(Memory::GetFreeVirtualMemory), asCALL_CDECL); if (result < 0) { return false; }
+	result = m_engine->RegisterGlobalFunction("uint64 GetTotalPhysicalMemory()", asFUNCTION(Memory::GetTotalPhysicalMemory), asCALL_CDECL); if (result < 0) { return false; }
+	result = m_engine->RegisterGlobalFunction("uint64 GetFreePhysicalMemory()", asFUNCTION(Memory::GetFreePhysicalMemory), asCALL_CDECL); if (result < 0) { return false; }
 
 	result = m_engine->RegisterGlobalFunction("uint GetAvailableMonitorCount(void)", asFUNCTION(AngelScriptMethods::GetAvailableMonitorCount), asCALL_GENERIC); if (result < 0) { return false; }
 	result = m_engine->RegisterGlobalFunction("MonitorVideoMode GetMonitorVideoMode(uint monitorIndex)", asFUNCTION(AngelScriptMethods::GetMonitorVideoMode), asCALL_GENERIC); if (result < 0) { return false; }

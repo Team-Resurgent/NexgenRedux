@@ -26,6 +26,9 @@ namespace NexgenRedux
         void Update(float dt);
         void Render();
 
+        const bool GetVisible();
+        void SetVisible(const bool value);
+
         const std::string GetText();
         void SetText(std::string value);
         const std::string GetFontName();
@@ -55,6 +58,8 @@ namespace NexgenRedux
         bool HitTest(const double screenPosX, const double screenPosY, OrthoCamera* camera);
 
     private:
+
+        bool m_visible;
 
         bool m_textIsDirty;
         std::string m_text;

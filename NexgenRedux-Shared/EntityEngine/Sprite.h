@@ -20,6 +20,9 @@ namespace NexgenRedux
         void Update(float dt);
         void Render();
 
+        const bool GetVisible();
+        void SetVisible(const bool value);
+
         const std::string GetTexturePath();
         void SetTexturePath(const std::string value);
         const MathUtility::RectF GetUV();
@@ -44,6 +47,8 @@ namespace NexgenRedux
         bool HitTest(const double screenPosX, const double screenPosY, OrthoCamera* camera);
 
     private:
+
+        bool m_visible;
 
         bool m_textureIsDirty;
         std::string m_texturePath;

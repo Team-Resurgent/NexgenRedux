@@ -11,6 +11,8 @@ using namespace NexgenRedux;
 
 Sprite::Sprite(uint32_t nodeID) : Node(nodeID)
 {
+    m_visible = true;
+
     m_textureIsDirty = true;
     m_texturePath = "";
     m_textureID = 0;
@@ -69,7 +71,7 @@ void Sprite::Update(float dt)
 
 void Sprite::Render()
 {
-    if (m_textureID == 0 || m_mesh.size() == 0) 
+    if (m_visible = false || m_textureID == 0 || m_mesh.size() == 0) 
     {
         return;
     }
@@ -88,6 +90,16 @@ void Sprite::Render()
 
     renderStateManager->ApplyChanges();
     renderStateManager->RenderMesh(m_mesh);
+}
+
+const bool Sprite::GetVisible()
+{
+    return m_visible;
+}
+
+void Sprite::SetVisible(const bool value)
+{
+    m_visible = value;
 }
 
 const std::string Sprite::GetTexturePath()

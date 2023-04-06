@@ -14,6 +14,8 @@ using namespace NexgenRedux;
 
 Text::Text(uint32_t nodeID) : Node(nodeID)
 {
+    m_visible = true;
+
     m_textIsDirty = true;
     m_text = "";
     m_fontName = "";
@@ -74,7 +76,7 @@ void Text::Update(float dt)
 
 void Text::Render()
 {
-    if (m_textureID == 0 || m_mesh.size() == 0) 
+    if (m_visible = false || m_textureID == 0 || m_mesh.size() == 0) 
     {
         return;
     }
@@ -93,6 +95,16 @@ void Text::Render()
 
     renderStateManager->ApplyChanges();
     renderStateManager->RenderMesh(m_mesh);
+}
+
+const bool Text::GetVisible()
+{
+    return m_visible;
+}
+
+void Text::SetVisible(const bool value)
+{
+    m_visible = value;
 }
 
 const std::string Text::GetText()

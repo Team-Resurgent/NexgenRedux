@@ -27,6 +27,10 @@
 
 // Angelscript DocGen https://github.com/marcakafoddex/angelscript-docgen
 
+// https://github.com/codecat/asdbg/blob/master/asdbg_host/asdbg.h
+
+// TODO: add node defaults to documenation
+
 // #define ANGELSCRIPT_DEBUG
 
 #include <cstring>
@@ -784,6 +788,8 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	result = m_engine->RegisterObjectMethod("SpriteNode", "void SetScale(Vec3F)", asMETHOD(Sprite, SetScale), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("SpriteNode", "Vec3F& GetPosition()", asMETHOD(Sprite, GetPosition), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("SpriteNode", "void SetPosition(Vec3F)", asMETHOD(Sprite, SetPosition), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("SpriteNode", "bool GetVisible()", asMETHOD(Sprite, GetVisible), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("SpriteNode", "void SetVisible(bool)", asMETHOD(Sprite, SetVisible), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("SpriteNode", "string GetTexturePath()", asMETHOD(Sprite, GetTexturePath), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("SpriteNode", "void SetTexturePath(string)", asMETHOD(Sprite, SetTexturePath), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("SpriteNode", "RectF& GetUV()", asMETHOD(Sprite, GetUV), asCALL_THISCALL); if (result < 0) { return false; }
@@ -818,6 +824,8 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	result = m_engine->RegisterObjectMethod("TextNode", "void SetScale(Vec3F)", asMETHOD(Text, SetScale), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("TextNode", "Vec3F& GetPosition()", asMETHOD(Text, GetPosition), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("TextNode", "void SetPosition(Vec3F)", asMETHOD(Text, SetPosition), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("TextNode", "bool GetVisible()", asMETHOD(Text, GetVisible), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("TextNode", "void SetVisible(bool)", asMETHOD(Text, SetVisible), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("TextNode", "string GetText()", asMETHOD(Text, GetText), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("TextNode", "void SetText(string)", asMETHOD(Text, SetText), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("TextNode", "string GetFontName()", asMETHOD(Text, GetFontName), asCALL_THISCALL); if (result < 0) { return false; }

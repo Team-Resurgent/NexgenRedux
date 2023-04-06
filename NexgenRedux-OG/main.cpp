@@ -1,6 +1,7 @@
 #include "ConfigLoader.h"
 #include "AngelScriptRunner.h"
 #include "WindowManager.h"
+#include "EntityEngine/FontManager.h"
 #include "RenderStateManager.h"
 
 #include <Gensys/DebugUtility.h>

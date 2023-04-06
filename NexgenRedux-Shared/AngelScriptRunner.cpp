@@ -23,7 +23,10 @@
 #include <AngelScript/addons/scriptmath/scriptmath.h>
 #include <AngelScript/addons/scriptarray/scriptarray.h>
 #include <AngelScript/addons/scriptdictionary/scriptdictionary.h>
+
+#if defined NEXGEN_WIN
 #include <DocGen/docgen.h>
+#endif
 
 // Angelscript DocGen https://github.com/marcakafoddex/angelscript-docgen
 
@@ -156,7 +159,7 @@ bool CompileScript(asIScriptEngine* engine, std::wstring launchFolder)
 		return false;
 	}
 
-	std::string scriptFile = StringUtility::ToString(FileSystem::CombinePath(FileSystem::CombinePath(mediaDirectory, launchFolder), L"main.as"));
+	std::string scriptFile = StringUtility::ToString(FileSystem::CombinePath(FileSystem::CombinePath(mediaDirectory, launchFolder), L"Main.as"));
 
 	if (m_builder->StartNewModule(engine, "main") < 0) { return false; }
 	if (m_builder->AddSectionFromFile(scriptFile.c_str()) < 0) { return false; }
@@ -356,6 +359,7 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 
 	m_builder = new CScriptBuilder();
 
+#if defined NEXGEN_WIN
     ScriptDocumentationOptions docgenOptions;
     docgenOptions.projectName = "Nexgen Redux";
 	docgenOptions.outputFile = "NexgenRedux.html";
@@ -384,6 +388,7 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	docgenOptions.additionalJavascript = nullptr;		
 
     DocumentationGenerator docGen(m_engine, docgenOptions);
+#endif
 
 	RegisterStdString(m_engine);
 	RegisterScriptMath(m_engine);
@@ -475,7 +480,9 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	result = m_engine->RegisterEnumValue("LightOperation", "LightOperationEnabled", LightOperationEnabled); if (result < 0) { return false; }
 
 	result = m_engine->RegisterObjectType("MonitorVideoMode", sizeof(MonitorVideoMode), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CAK); if (result < 0) { return false; } 
+#if defined NEXGEN_WIN
 	result = docGen.DocumentObjectType(result, "<b>MonitorVideoMode</b> is an object containing video mode properties."); if (result < 0) { return false; }
+#endif
 	result = m_engine->RegisterObjectProperty("MonitorVideoMode", "uint monitorIndex", asOFFSET(MonitorVideoMode, monitorIndex)); if (result < 0) { return false; }
     result = m_engine->RegisterObjectProperty("MonitorVideoMode", "uint width", asOFFSET(MonitorVideoMode, width)); if (result < 0) { return false; }
     result = m_engine->RegisterObjectProperty("MonitorVideoMode", "uint height", asOFFSET(MonitorVideoMode, height)); if (result < 0) { return false; }
@@ -485,8 +492,10 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
     result = m_engine->RegisterObjectProperty("MonitorVideoMode", "uint refreshRate", asOFFSET(MonitorVideoMode, refreshRate)); if (result < 0) { return false; }
 
 	result = m_engine->RegisterObjectType("JoystickButtonStates", sizeof(JoystickButtonStates), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CAK); if (result < 0) { return false; }
+#if defined NEXGEN_WIN
 	result = docGen.DocumentObjectType(result, "<b>JoystickButtonStates</b> is an object containing joystick button state properties."); if (result < 0) { return false; }
-    result = m_engine->RegisterObjectProperty("JoystickButtonStates", "JoystickButtonState buttonA", asOFFSET(JoystickButtonStates, buttonA)); if (result < 0) { return false; }
+#endif 
+	result = m_engine->RegisterObjectProperty("JoystickButtonStates", "JoystickButtonState buttonA", asOFFSET(JoystickButtonStates, buttonA)); if (result < 0) { return false; }
     result = m_engine->RegisterObjectProperty("JoystickButtonStates", "JoystickButtonState buttonB", asOFFSET(JoystickButtonStates, buttonB)); if (result < 0) { return false; }
     result = m_engine->RegisterObjectProperty("JoystickButtonStates", "JoystickButtonState buttonX", asOFFSET(JoystickButtonStates, buttonX)); if (result < 0) { return false; }
     result = m_engine->RegisterObjectProperty("JoystickButtonStates", "JoystickButtonState buttonY", asOFFSET(JoystickButtonStates, buttonY)); if (result < 0) { return false; }
@@ -503,8 +512,10 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	result = m_engine->RegisterObjectProperty("JoystickButtonStates", "JoystickButtonState buttonDpadLeft", asOFFSET(JoystickButtonStates, buttonDpadLeft)); if (result < 0) { return false; }
 
 	result = m_engine->RegisterObjectType("JoystickAxisStates", sizeof(JoystickAxisStates), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CAK); if (result < 0) { return false; }
+#if defined NEXGEN_WIN
 	result = docGen.DocumentObjectType(result, "<b>JoystickAxisStates</b> is an object containing joystick axis state properties."); if (result < 0) { return false; }
-    result = m_engine->RegisterObjectProperty("JoystickAxisStates", "float axisLeftX", asOFFSET(JoystickAxisStates, axisLeftX)); if (result < 0) { return false; }
+#endif
+	result = m_engine->RegisterObjectProperty("JoystickAxisStates", "float axisLeftX", asOFFSET(JoystickAxisStates, axisLeftX)); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectProperty("JoystickAxisStates", "float axisLeftY", asOFFSET(JoystickAxisStates, axisLeftY)); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectProperty("JoystickAxisStates", "float axisRightX", asOFFSET(JoystickAxisStates, axisRightX)); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectProperty("JoystickAxisStates", "float axisRightY", asOFFSET(JoystickAxisStates, axisRightY)); if (result < 0) { return false; }
@@ -512,8 +523,10 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	result = m_engine->RegisterObjectProperty("JoystickAxisStates", "float axisRightTrigger", asOFFSET(JoystickAxisStates, axisRightTrigger)); if (result < 0) { return false; }
 
 	result = m_engine->RegisterObjectType("Time", sizeof(TimeUtility::Time), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CAK); if (result < 0) { return false; }
+#if defined NEXGEN_WIN
 	result = docGen.DocumentObjectType(result, "<b>Time</b> is an object containing time and date properties."); if (result < 0) { return false; }
-    result = m_engine->RegisterObjectProperty("Time", "uint16 month", asOFFSET(TimeUtility::Time, month)); if (result < 0) { return false; }
+#endif   
+	result = m_engine->RegisterObjectProperty("Time", "uint16 month", asOFFSET(TimeUtility::Time, month)); if (result < 0) { return false; }
     result = m_engine->RegisterObjectProperty("Time", "uint16 day", asOFFSET(TimeUtility::Time, day)); if (result < 0) { return false; }
     result = m_engine->RegisterObjectProperty("Time", "uint16 year", asOFFSET(TimeUtility::Time, year)); if (result < 0) { return false; }
     result = m_engine->RegisterObjectProperty("Time", "uint16 hour", asOFFSET(TimeUtility::Time, hour)); if (result < 0) { return false; }
@@ -521,7 +534,9 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
     result = m_engine->RegisterObjectProperty("Time", "uint16 second", asOFFSET(TimeUtility::Time, second)); if (result < 0) { return false; }
 
     result = m_engine->RegisterObjectType("Vec2D", sizeof(MathUtility::Vec2D), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CAK); if (result < 0) { return false; }
+#if defined NEXGEN_WIN	
 	result = docGen.DocumentObjectType(result, "<b>Vec2D</b> is an object containing x and y double precision properties."); if (result < 0) { return false; }
+#endif
 	result = m_engine->RegisterObjectProperty("Vec2D", "double x", asOFFSET(MathUtility::Vec2D, x)); if (result < 0) { return false; }
     result = m_engine->RegisterObjectProperty("Vec2D", "double y", asOFFSET(MathUtility::Vec2D, y)); if (result < 0) { return false; }
     result = m_engine->RegisterObjectBehaviour("Vec2D", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Vec2DConstructorDefault), asCALL_CDECL_OBJLAST); if (result < 0) { return false; }
@@ -539,8 +554,10 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
     result = m_engine->RegisterObjectMethod("Vec2D", "bool opNotEq(const Vec2D &in) const", asMETHODPR(MathUtility::Vec2D, operator!=, (const MathUtility::Vec2D &) const, bool), asCALL_THISCALL); if (result < 0) { return false; }
 
 	result = m_engine->RegisterObjectType("Vec2F", sizeof(MathUtility::Vec2F), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CAK); if (result < 0) { return false; }
+#if defined NEXGEN_WIN
 	result = docGen.DocumentObjectType(result, "<b>Vec2F</b> is an object containing x and y float precision properties."); if (result < 0) { return false; }
-    result = m_engine->RegisterObjectBehaviour("Vec2F", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Vec2FConstructorDefault), asCALL_CDECL_OBJLAST); if (result < 0) { return false; }
+#endif
+	result = m_engine->RegisterObjectBehaviour("Vec2F", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Vec2FConstructorDefault), asCALL_CDECL_OBJLAST); if (result < 0) { return false; }
     result = m_engine->RegisterObjectBehaviour("Vec2F", asBEHAVE_CONSTRUCT, "void f(float, float)", asFUNCTION(Vec2FConstructorValues), asCALL_CDECL_OBJLAST); if (result < 0) { return false; }
     result = m_engine->RegisterObjectBehaviour("Vec2F", asBEHAVE_CONSTRUCT, "void f(Vec2F &in)", asFUNCTION(Vec2FConstructorCopy), asCALL_CDECL_OBJLAST); if (result < 0) { return false; }
     result = m_engine->RegisterObjectProperty("Vec2F", "float x", asOFFSET(MathUtility::Vec2F, x)); if (result < 0) { return false; }
@@ -557,8 +574,10 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
     result = m_engine->RegisterObjectMethod("Vec2F", "bool opNotEq(const Vec2F &in) const", asMETHODPR(MathUtility::Vec2F, operator!=, (const MathUtility::Vec2F &) const, bool), asCALL_THISCALL); if (result < 0) { return false; }
 
     result = m_engine->RegisterObjectType("Vec3F", sizeof(MathUtility::Vec3F), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CAK); if (result < 0) { return false; }
+#if defined NEXGEN_WIN
 	result = docGen.DocumentObjectType(result, "<b>Vec3F</b> is an object containing x, y and z float precision properties."); if (result < 0) { return false; }
-    result = m_engine->RegisterObjectBehaviour("Vec3F", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Vec3FConstructorDefault), asCALL_CDECL_OBJLAST); if (result < 0) { return false; }
+#endif   
+	result = m_engine->RegisterObjectBehaviour("Vec3F", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Vec3FConstructorDefault), asCALL_CDECL_OBJLAST); if (result < 0) { return false; }
     result = m_engine->RegisterObjectBehaviour("Vec3F", asBEHAVE_CONSTRUCT, "void f(float, float, float)", asFUNCTION(Vec3FConstructorValues), asCALL_CDECL_OBJLAST); if (result < 0) { return false; }
     result = m_engine->RegisterObjectBehaviour("Vec3F", asBEHAVE_CONSTRUCT, "void f(Vec3F &in)", asFUNCTION(Vec3FConstructorCopy), asCALL_CDECL_OBJLAST); if (result < 0) { return false; }
     result = m_engine->RegisterObjectProperty("Vec3F", "float x", asOFFSET(MathUtility::Vec3F, x)); if (result < 0) { return false; }
@@ -579,8 +598,10 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
     result = m_engine->RegisterObjectMethod("Vec3F", "Vec3F Normal()", asMETHOD(MathUtility::Vec3F, Normal), asCALL_THISCALL); if (result < 0) { return false; }
 
     result = m_engine->RegisterObjectType("Vec4F", sizeof(MathUtility::Vec4F), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CAK); if (result < 0) { return false; }
+#if defined NEXGEN_WIN	
 	result = docGen.DocumentObjectType(result, "<b>Vec4F</b> is an object containing x, y, z and w float precision properties."); if (result < 0) { return false; }
-    result = m_engine->RegisterObjectBehaviour("Vec4F", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Vec4FConstructorDefault), asCALL_CDECL_OBJLAST); if (result < 0) { return false; }
+#endif 
+	result = m_engine->RegisterObjectBehaviour("Vec4F", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Vec4FConstructorDefault), asCALL_CDECL_OBJLAST); if (result < 0) { return false; }
     result = m_engine->RegisterObjectBehaviour("Vec4F", asBEHAVE_CONSTRUCT, "void f(float, float, float, float)", asFUNCTION(Vec4FConstructorValues), asCALL_CDECL_OBJLAST); if (result < 0) { return false; }
     result = m_engine->RegisterObjectBehaviour("Vec4F", asBEHAVE_CONSTRUCT, "void f(Vec4F &in)", asFUNCTION(Vec4FConstructorCopy), asCALL_CDECL_OBJLAST); if (result < 0) { return false; }
     result = m_engine->RegisterObjectProperty("Vec4F", "float x", asOFFSET(MathUtility::Vec4F, x)); if (result < 0) { return false; }
@@ -967,7 +988,9 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	result = m_engine->RegisterObjectMethod("Node", "TextNode@ opImplCast()", asFUNCTION((refCast<Node, Text>)), asCALL_CDECL_OBJLAST); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("TextNode", "Node@ opImplCast()", asFUNCTION((refCast<Text, Node>)), asCALL_CDECL_OBJLAST); if (result < 0) { return false; }
 
+#if defined NEXGEN_WIN	
 	result = docGen.Generate(); if (result < 0) { return false; }
+#endif
 
 	if (CompileScript(m_engine, launchFolder) == false)
 	{

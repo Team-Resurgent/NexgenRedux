@@ -136,14 +136,14 @@ bool ConfigLoader::MapPath(const std::wstring& path, std::wstring& mappedPath)
 	{
 		std::wstring scriptPath = FileSystem::CombinePath(mediaDirectory, GetLaunchFolder());
 		scriptPath = FileSystem::CombinePath(scriptPath, L"Scripts");
-		mappedPath = FileSystem::CombinePath(scriptPath, path.substr(8));
+		mappedPath = FileSystem::CombinePath(scriptPath, path.substr(7));
 		return true;
 	}
 	if (StringUtility::StartsWith(path, L"asset:", true))
 	{
 		std::wstring assetPath = FileSystem::CombinePath(mediaDirectory, GetLaunchFolder());		
 		assetPath = FileSystem::CombinePath(assetPath, L"Asset");
-		mappedPath = FileSystem::CombinePath(assetPath, path.substr(7));
+		mappedPath = FileSystem::CombinePath(assetPath, path.substr(6));
 		return true;
 	}
 	if (StringUtility::StartsWith(path, L"audio:", true))

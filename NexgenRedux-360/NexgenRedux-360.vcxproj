@@ -251,7 +251,7 @@
     <None Include="..\Libraries\AngelScript\as_callfunc_arm_xcode.S" />
     <None Include="..\Libraries\AngelScript\as_callfunc_x64_msvc_asm.asm" />
     <None Include="..\NexgenRedux-Shared\Media\config.ini" />
-    <None Include="..\NexgenRedux-Shared\Media\Default\main.as" />
+    <None Include="..\NexgenRedux-Shared\Media\Default\Main.as" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Libraries\AngelScript\addons\autowrapper\aswrappedcall.h" />

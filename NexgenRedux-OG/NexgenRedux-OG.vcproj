@@ -238,7 +238,7 @@
 					Name="Default"
 					Filter="">
 					<File
-						RelativePath="..\NexgenRedux-Shared\Media\Default\main.as">
+						RelativePath="..\NexgenRedux-Shared\Media\Default\Main.as">
 					</File>
 				</Filter>
 			</Filter>
@@ -357,6 +357,12 @@
 			</File>
 			<File
 				RelativePath="..\Libraries\Gensys\SocketUtility.h">
+			</File>
+			<File
+				RelativePath="..\Libraries\Gensys\SocketUtilityOld.cpp">
+			</File>
+			<File
+				RelativePath="..\Libraries\Gensys\SocketUtilityOld.h">
 			</File>
 			<File
 				RelativePath="..\Libraries\Gensys\StringUtility.cpp">

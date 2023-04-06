@@ -1,229 +1,340 @@
-#include "SocketUtility.h"
-#include "StringUtility.h"
-#include "DebugUtility.h"
-
-using namespace Gensys;
-
-bool SocketUtility::CreateSocket(int af, int type, int protocol, uint64_t& result)
-{
-	result = socket(af, type, protocol);
-	if (result < 0) 
-	{
-		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("Create socket failed: %i", WSAGetLastError()));
-		return false;
-	}
-	return true;
-}
-
-bool SocketUtility::ConnectSocket(uint64_t socket, sockaddr_in* socket_addr_in)
-{
-	const int result = connect((SOCKET)socket, (sockaddr*)socket_addr_in, sizeof(SOCKADDR_IN));
-	if (result < 0)
-	{
-		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("Connect socket failed: %i", WSAGetLastError()));
-		return false;
-	}
-	return true;
-}
-
-bool SocketUtility::ConnectSocket(uint64_t socket, sockaddr* socket_addr)
-{
-	const int result = connect((SOCKET)socket, socket_addr, sizeof(sockaddr));
-	if (result < 0)
-	{
-		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("Connect socket failed: %i", WSAGetLastError()));
-		return false;
-	}
-	return true;
-}
-
-bool SocketUtility::AcceptSocket(uint64_t socket, uint64_t& result)
-{
-	result = accept((SOCKET)socket, NULL, 0);
-	if (result < 0)
-	{
-		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("Accept socket failed: %i", WSAGetLastError()));
-		return false;
-	}
-	return true;
-}
-
-bool SocketUtility::AcceptSocket(uint64_t socket, sockaddr_in* socket_addr_in, uint64_t& result)
-{
-	int dw = sizeof(sockaddr_in);
-	result = accept((SOCKET)socket, (sockaddr*)socket_addr_in, &dw);
-	if (result < 0)
-	{
-		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("Accept socket failed: %i", WSAGetLastError()));
-		return false;
-	}
-	return true;
-}
-
-bool SocketUtility::AcceptSocket(uint64_t socket, sockaddr* socket_addr, uint64_t& result)
-{
-	int dw = sizeof(sockaddr);
-	result = accept((SOCKET)socket, socket_addr, &dw);
-	if (result < 0)
-	{
-		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("Accept socket failed: %i", WSAGetLastError()));
-		return false;
-	}
-	return true;
-}
-
-bool SocketUtility::SetSocketOptions(uint64_t socket)
-{
-	bool success = true;
-
-#if defined NEXGEN_360
-
-	BOOL bBroadcast = TRUE;
-	int result = setsockopt((SOCKET)socket, SOL_SOCKET, 0x5802, (PCSTR)&bBroadcast, sizeof(BOOL));
-	if (result < 0)
-	{
-		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "Set socket option 5802 failed: %i", WSAGetLastError());
-		success = false;
-	}
-
-	result = setsockopt((SOCKET)socket, SOL_SOCKET, 0x5801, (PCSTR)&bBroadcast, sizeof(BOOL));
-	if (result < 0)
-	{
-		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "Set socket option 5801 failed: %i", WSAGetLastError());
-		success = false;
-	}
-
-#endif
-
-	return success;
-}
-
-
-bool SocketUtility::SetSocketRecvSize(uint64_t socket, int &recv_size)
-{	
-	int recvBufferSize = RECV_SOCKET_BUFFER_SIZE;
-	int result = setsockopt((SOCKET)socket, SOL_SOCKET, SO_RCVBUF, (char*)&recvBufferSize, sizeof(int));
-	if (result < 0)
-	{
-		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("Set socket option SO_RCVBUF failed: %i", WSAGetLastError()));
-	}
-
-	int isize = sizeof(recvBufferSize);
-	result = getsockopt((SOCKET)socket, SOL_SOCKET, SO_RCVBUF, (char*)&recvBufferSize, (int*)&isize);
-	if (result < 0)
-	{
-		recvBufferSize = 8192;
-	}
-
-	recv_size = recvBufferSize;
-	return true;
-}
-
-bool SocketUtility::SetSocketSendSize(uint64_t socket, int &send_size)
-{	
-	int sendBufferSize = SEND_SOCKET_BUFFER_SIZE;
-	int result = setsockopt((SOCKET)socket, SOL_SOCKET, SO_SNDBUF, (char*)&sendBufferSize, sizeof(int));
-	if (result < 0)
-	{
-		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("Set socket option SO_SNDBUF failed: %i", WSAGetLastError()));
-	}
-
-	int isize = sizeof(sendBufferSize);
-	result = getsockopt((SOCKET)socket, SOL_SOCKET, SO_SNDBUF, (char*)&sendBufferSize, (int*)&isize);
-	if (result < 0)
-	{
-		sendBufferSize = 8192;
-	}
-
-	send_size = sendBufferSize;
-	return true;
-}
-
-bool SocketUtility::GetReadQueueLength(uint64_t socket, int &queue_length)
-{
-	DWORD temp;
-	int result = ioctlsocket((SOCKET)socket, FIONREAD, &temp);
-	if (result < 0)
-	{
-		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("Get read queue length failed: %i", WSAGetLastError()));
-		queue_length = 0;
-		return false;
-	}
-	queue_length = temp;
-	return true;
-}
-
-bool SocketUtility::BindSocket(uint64_t socket, sockaddr_in* socket_addr_in)
-{
-	int result = bind((SOCKET)socket, (sockaddr*)socket_addr_in, sizeof(sockaddr_in));
-	if (result < 0)
-	{
-		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("Bind socket failed: %i", WSAGetLastError()));
-		return false;
-	}
-	return true;
-}
-
-bool SocketUtility::BindSocket(uint64_t socket, sockaddr* socket_addr)
-{
-	int result = bind((SOCKET)socket, socket_addr, sizeof(sockaddr));
-	if (result < 0)
-	{
-		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("Bind socket failed: %i", WSAGetLastError()));
-		return false;
-	}
-	return true;
-}
-
-bool SocketUtility::ListenSocket(uint64_t socket, int count)
-{
-	int result = listen((SOCKET)socket, count);
-	if (result < 0)
-	{
-		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("Listen socket failed: %i", WSAGetLastError()));
-		return false;
-	}
-	return true;
-}
-
-bool SocketUtility::CloseSocket(uint64_t& socket)
-{
-	if (!socket) 
-	{
-		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_WARNING, "Close socket called on null socket.");
-		return true;
-	}
-	int result = closesocket((SOCKET)socket);
-	if (result < 0)
-	{
-		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("Close socket failed: %i", WSAGetLastError()));
-		socket = 0;
-		return false;
-	}
-	socket = 0;
-	return true;
-}
-
-bool SocketUtility::GetSocketName(uint64_t socket, sockaddr_in* socket_addr_in)
-{
-	int size = sizeof(sockaddr_in);
-	int result = getsockname((SOCKET)socket, (sockaddr*)socket_addr_in, &size);
-	if (result < 0)
-	{
-		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("Get socket name failed: %i", WSAGetLastError()));
-		return false;
-	}
-	return true;
-}
-
-bool SocketUtility::GetSocketName(uint64_t socket, sockaddr* socket_addr)
-{
-	int size = sizeof(sockaddr);
-	const int result = getsockname((SOCKET)socket, socket_addr, &size);
-	if (result < 0)
-	{
-		DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, StringUtility::FormatString("Get socket name failed: %i", WSAGetLastError()));
-		return false;
-	}
-	return true;
-}
+//#include "SocketUtility.h" 
+//
+//#if defined NEXGEN_WIN
+//#pragma comment(lib,"wsock32.lib")
+//typedef int socklen_t;
+//#elif defined NEXGEN_OG
+//typedef int socklen_t;
+//#else
+//#include <unistd.h>
+//#include <arpa/inet.h>
+//#include <netdb.h>
+//#include <cstring>
+//#endif
+//
+//#if !defined(SOCKET_ERROR)
+//#define SOCKET_ERROR -1
+//#endif
+//
+//#if !defined(SOCKET_NONE)
+//#define SOCKET_NONE 0
+//#endif
+//
+//#if !defined(INVALID_SOCKET)
+//#define INVALID_SOCKET -1
+//#endif
+//
+//using namespace Gensys;
+//
+//SocketUtility::SocketUtility()
+//{
+//	m_maxcon = 64;
+//	memset(&m_addr, 0, sizeof(m_addr));
+//
+//#if defined NEXGEN_WIN
+//	WSAStartup(MAKEWORD(1, 1), &m_wsda);
+//#endif
+//
+//	m_sock = (uint32_t)INVALID_SOCKET;
+//	m_blocking = false;
+//	m_valid = false;
+//	m_times.tv_sec = 0;
+//	m_times.tv_usec = 0;
+//	m_state = skDISCONNECTED;
+//	m_totaldata = 0;
+//}
+//
+//SocketUtility::~SocketUtility()
+//{
+//	if (Check()) 
+//    {
+//		Close();
+//	}
+//}
+//
+//bool SocketUtility::Create()
+//{
+//	return this->Create(IPPROTO_TCP, SOCK_STREAM);
+//}
+//
+//bool SocketUtility::Create(int Protocol)
+//{
+//	switch (Protocol) 
+//    {
+//        case IPPROTO_TCP: 
+//            return this->Create(IPPROTO_TCP, SOCK_STREAM);
+//        case IPPROTO_UDP: 
+//            return this->Create(IPPROTO_UDP, SOCK_DGRAM);
+//        default:          
+//            return this->Create(Protocol, SOCK_RAW);
+//	}
+//}
+//
+//bool SocketUtility::Create(int Protocol, int Type)
+//{
+//	if (this->Check()) 
+//    {
+//		return false;
+//	}
+//
+//	m_state = skDISCONNECTED;
+//	m_sock = (int)::socket(AF_INET, Type, Protocol);
+//	m_lastCode = m_sock;
+//
+//	return m_sock > SOCKET_NONE;
+//}
+//
+//void SocketUtility::Drop()
+//{
+//	m_sock = SOCKET_NONE;
+//}
+//
+//bool SocketUtility::GetLastCode()
+//{
+//    return m_lastCode;
+//}
+//
+//bool SocketUtility::GetValid()
+//{
+//    return m_valid;
+//}
+//
+//bool SocketUtility::GetBlocking()
+//{
+//    return m_blocking;
+//}
+//
+//void SocketUtility::SetBlocking(bool blocking)
+//{
+//	if (Check() == false) 
+//    {
+//		if (Create() == false) 
+//        {
+//			return;
+//		}
+//	}
+//
+//	u_long nonblocking = (blocking ? 0 : 1);
+//#if defined NEXGEN_WIN
+//	ioctlsocket(m_sock, FIONBIO, &nonblocking);
+//#else
+//	ioctl(sock, O_NONBLOCK, &nonblocking);
+//#endif
+//	m_blocking = blocking;
+//}
+//
+//bool SocketUtility::Bind(unsigned short port)
+//{
+//	if (Check() == false && Create() == false) 
+//    {
+//		return false;
+//	}
+//
+//	m_addr.sin_family = AF_INET;
+//	m_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+//	m_addr.sin_port = htons(port);
+//	m_lastCode = ::bind(m_sock, (struct sockaddr*)&m_addr, sizeof(m_addr));
+//
+//	return !m_lastCode;
+//}
+//
+//bool SocketUtility::Bind(const char* host, unsigned short port)
+//{
+//	if (Check() == false && Create() == false) 
+//    {
+//		return false;
+//	}
+//
+//	struct hostent* phe;
+//	phe = gethostbyname(host);
+//	if (phe == NULL) {
+//		return false;
+//	}
+//
+//	memcpy(&m_addr.sin_addr, phe->h_addr, sizeof(struct in_addr));
+//
+//	m_addr.sin_family = AF_INET;
+//	m_addr.sin_port = htons(port);
+//	m_lastCode = ::bind(m_sock, (struct sockaddr*)&m_addr, sizeof(m_addr));
+//
+//	return !m_lastCode;
+//}
+//
+//bool SocketUtility::Listen()
+//{
+//	m_lastCode = ::listen(m_sock, m_maxcon);
+//	if (m_lastCode == SOCKET_ERROR) 
+//    {
+//		return false;
+//	}
+//
+//	m_state = skLISTENING;
+//	m_valid = true;
+//	return true;
+//}
+//
+//bool SocketUtility::Accept(SocketUtility* socket)
+//{
+//	if (m_blocking == false && CanRead() == false) 
+//    {
+//		return false;
+//	}
+//
+//	int length = sizeof(socket->GetAddress());
+//	socket->SetSock((int)::accept(m_sock, (struct sockaddr*) &socket->m_addr, (socklen_t*)&length));
+//
+//	m_lastCode = socket->GetSock();
+//	if (socket->GetSock() == SOCKET_ERROR) 
+//    {
+//		return false;
+//	}
+//
+//	socket->SetState(skCONNECTED);
+//	return true;
+//}
+//
+//void SocketUtility::Close()
+//{
+//	m_state = skDISCONNECTED;
+//
+//#if defined NEXGEN_WIN
+//	::closesocket(m_sock);
+//#else
+//	::shutdown(sock, SHUT_RDWR);
+//	::close(sock);
+//#endif
+//
+//	m_sock = (int)INVALID_SOCKET;
+//}
+//
+//SocketUtility::SockState SocketUtility::GetState()
+//{
+//    return m_state;
+//}
+//
+//void SocketUtility::SetState(SocketUtility::SockState state)
+//{
+//    m_state = state;
+//}
+//
+//struct sockaddr_in SocketUtility::GetAddress()
+//{
+//    return m_addr;
+//}
+//
+//uint64_t SocketUtility::GetUAddress()
+//{
+//	return m_addr.sin_addr.s_addr;
+//}
+//
+//int SocketUtility::Connect(const char* host, unsigned short port)
+//{
+//	if (!Check()) 
+//    {
+//		if (!Create()) 
+//        {
+//			return 1;
+//		}
+//	}
+//
+//	struct hostent* phe;
+//	phe = gethostbyname(host);
+//	if (phe == NULL) 
+//    {
+//		return 2;
+//	}
+//
+//	memcpy(&m_addr.sin_addr, phe->h_addr, sizeof(struct in_addr));
+//
+//	m_addr.sin_family = AF_INET;
+//	m_addr.sin_port = htons(port);
+//
+//	if (::connect(m_sock, (struct sockaddr*)&m_addr, sizeof(m_addr)) == SOCKET_ERROR) 
+//    {
+//		if (m_blocking == true) 
+//        {
+//			return 3;
+//		}
+//	}
+//
+//	m_state = skCONNECTED;
+//	m_valid = true;
+//	return 0;
+//}
+//
+//bool SocketUtility::CanRead()
+//{
+//	FD_ZERO(&m_scks);
+//	FD_SET((unsigned)m_sock, &m_scks);
+//
+//	return select((int)m_sock + 1, &m_scks, NULL, NULL, &m_times) > 0;
+//}
+//
+//bool SocketUtility::CanWrite()
+//{
+//	FD_ZERO(&m_scks);
+//	FD_SET((unsigned)m_sock, &m_scks);
+//
+//	return select((int)m_sock + 1, NULL, &m_scks, NULL, &m_times) > 0;
+//}
+//
+//bool SocketUtility::IsError()
+//{
+//	if (m_state == skERROR || m_sock == -1) 
+//    {
+//		return true;
+//	}
+//
+//	FD_ZERO(&m_scks);
+//	FD_SET((unsigned)m_sock, &m_scks);
+//
+//	if (select((int)m_sock + 1, NULL, NULL, &m_scks, &m_times) >= 0) 
+//    {
+//		return false;
+//	}
+//
+//	m_state = skERROR;
+//	return true;
+//}
+//
+//uint32_t SocketUtility::GetSock()
+//{
+//    return m_sock;
+//}
+//
+//void SocketUtility::SetSock(uint32_t sock)
+//{
+//    m_sock = sock;
+//}
+//
+//int SocketUtility::ReceiveUDP(const void* buffer, uint32_t size, sockaddr_in* from)
+//{
+//#if defined NEXGEN_WIN
+//	int client_length = (int)sizeof(struct sockaddr_in);
+//#else
+//	unsigned int client_length = (unsigned int)sizeof(struct sockaddr_in);
+//#endif
+//	return recvfrom(m_sock, (char*)buffer, size, 0, (struct sockaddr*)from, &client_length);
+//}
+//
+//int SocketUtility::Receive(const void* buffer, uint32_t size, uint32_t spos)
+//{
+//	return recv(m_sock, (char*)buffer + spos, size, 0);
+//}
+//
+//int SocketUtility::SendUDP(const void* buffer, uint32_t size, sockaddr_in* to)
+//{
+//	return sendto(m_sock, (char*)buffer, size, 0, (struct sockaddr *)&to, sizeof(struct sockaddr_in));
+//}
+//
+//int SocketUtility::SendRaw(const void* data, uint32_t dataSize)
+//{
+//	return send(m_sock, (char*)data, dataSize, 0);
+//}
+//
+//// Privates
+//
+//bool SocketUtility::Check()
+//{
+//	return m_sock > SOCKET_NONE;
+//}

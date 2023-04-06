@@ -1,55 +1,96 @@
-#pragma once
-
-#include "Int.h"
-
-#if defined UWP_ANGLE || defined NEXGEN_WIN || defined NEXGEN_UWP
-#include <WinSock2.h>
-#include <Windows.h>
-#elif defined NEXGEN_360 || defined NEXGEN_OG
-#include <xtl.h>
-#include <winsockx.h>
-#endif	
-
-#define RECV_SOCKET_BUFFER_SIZE_IN_K 64
-#define RECV_SOCKET_BUFFER_SIZE RECV_SOCKET_BUFFER_SIZE_IN_K * 1024
-#define SEND_SOCKET_BUFFER_SIZE_IN_K 64
-#define SEND_SOCKET_BUFFER_SIZE SEND_SOCKET_BUFFER_SIZE_IN_K * 1024
-
-#ifdef MAC_ANGLE
-
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <unistd.h>
-#include <errno.h>
-
-//https://handsonnetworkprogramming.com/articles/differences-windows-winsock-linux-unix-bsd-sockets-compatibility/
-
-#endif // __unix__
-
-
-namespace Gensys
-{
-	class SocketUtility
-	{
-	public:
-		static bool CreateSocket(int af, int type, int protocol, uint64_t& result);
-		static bool ConnectSocket(uint64_t socket, sockaddr_in* socket_addr_in);
-		static bool ConnectSocket(uint64_t socket, sockaddr* socket_addr);
-		static bool AcceptSocket(uint64_t socket, uint64_t&result);
-		static bool AcceptSocket(uint64_t socket, sockaddr_in* socket_addr_in, uint64_t& result);
-		static bool AcceptSocket(uint64_t socket, sockaddr* socket_addr, uint64_t& result);
-		static bool SetSocketOptions(uint64_t socket);
-		static bool SetSocketRecvSize(uint64_t socket, int &recv_size);
-		static bool SetSocketSendSize(uint64_t socket, int &send_size);
-		static bool GetReadQueueLength(uint64_t socket, int &queue_length);
-		static bool BindSocket(uint64_t socket, sockaddr_in*socket_addr_in);
-		static bool BindSocket(uint64_t socket, sockaddr* socket_addr);
-		static bool ListenSocket(uint64_t socket, int count);
-		static bool CloseSocket(uint64_t& socket);
-		static bool GetSocketName(uint64_t socket, sockaddr_in* socket_addr_in);
-		static bool GetSocketName(uint64_t socket, sockaddr* socket_addr);
-	};
-}
+//#pragma once
+//
+//#define _WINSOCKAPI_
+//#define _WINSOCK_DEPRECATED_NO_WARNINGS
+//
+//#include "Int.h"
+//
+//#include <fcntl.h>
+//#include <cctype>
+//
+//#if defined NEXGEN_WIN
+//#include <winsock2.h>
+//#elif defined NEXGEN_OG || defined NEXGEN_360
+//#include <xtl.h>
+//#include <winsockx.h>
+//#else
+//#include <netinet/in.h>
+//#include <sys/ioctl.h>
+//#endif
+//
+//namespace Gensys
+//{
+//    class SocketUtility
+//    {
+//    public:
+//
+//        enum SockState
+//        {
+//            skDISCONNECTED = 0,
+//            skUNDEF1, //Not implemented
+//            skLISTENING,
+//            skUNDEF3, //Not implemented
+//            skUNDEF4, //Not implemented
+//            skUNDEF5, //Not implemented
+//            skUNDEF6, //Not implemented
+//            skCONNECTED,
+//            skERROR
+//        };
+//
+//        SocketUtility();
+//        ~SocketUtility();
+//
+//        bool Create();
+//        bool Create(int Protocol);
+//        bool Create(int Protocol, int Type);
+//        void Drop();
+//        bool GetValid();
+//        bool GetLastCode();
+//        bool GetBlocking();
+//        void SetBlocking(bool blocking);
+//        bool Bind(unsigned short port);
+//        bool Bind(const char* host, unsigned short port);
+//        bool Listen();
+//        bool Accept(SocketUtility* socket);
+//        int Connect(const char* host, unsigned short port);
+//        void Close();
+//
+//        SockState GetState();
+//        void SetState(SockState state);
+//
+//        struct sockaddr_in GetAddress();
+//        uint64_t GetUAddress();
+//        bool IsError();
+//
+//        bool CanRead();
+//        bool CanWrite();
+//
+//        uint32_t GetSock();
+//        void SetSock(uint32_t sock);
+//        int Receive(const void* buffer, uint32_t size, uint32_t spos = 0);
+//        int SendRaw(const void* data, uint32_t dataSize);
+//        int SendUDP(const void* buffer, uint32_t size, sockaddr_in* to);
+//        int ReceiveUDP(const void* buffer, uint32_t size, sockaddr_in* from);
+//
+//    private:
+//
+//        bool Check();
+//
+//    private:
+//
+//        bool m_blocking;
+//        bool m_valid;
+//        uint32_t m_lastCode;
+//        struct sockaddr_in m_addr;
+//
+//    #if defined NEXGEN_WIN
+//        WSADATA m_wsda;
+//    #endif
+//        uint32_t m_maxcon;
+//        SockState m_state;
+//        fd_set m_scks;
+//        timeval m_times;
+//        uint32_t m_totaldata;
+//        uint32_t m_sock;
+//    };
+//}

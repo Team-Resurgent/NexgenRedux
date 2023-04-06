@@ -88,7 +88,7 @@
     <None Include="..\Libraries\AngelScript\as_callfunc_x64_msvc_asm.asm">
       <Filter>Angelscript</Filter>
     </None>
-    <None Include="..\NexgenRedux-Shared\Media\Default\main.as">
+    <None Include="..\NexgenRedux-Shared\Media\Default\Main.as">
       <Filter>NexgenRedux-Shared\Media\Default</Filter>
     </None>
     <None Include="..\NexgenRedux-Shared\Media\config.ini">

@@ -170,8 +170,8 @@ void AngelScriptMethods::GetKeyPressed(asIScriptGeneric* gen)
 {
 	uint32_t key = gen->GetArgDWord(0);
 
-	uint32_t pressed;
-	if (WindowManager::GetInstance()->GetKeyPressed(key, pressed) == false) 
+	KeyButtonState state;
+	if (WindowManager::GetInstance()->GetKeyPressed(key, state) == false) 
 	{
 		asIScriptContext *context = asGetActiveContext();
 		if (context) 
@@ -180,15 +180,15 @@ void AngelScriptMethods::GetKeyPressed(asIScriptGeneric* gen)
 			return;
 		}
 	}
-	*(uint32_t*)gen->GetAddressOfReturnLocation() = pressed;
+	*(KeyButtonState*)gen->GetAddressOfReturnLocation() = state;
 }
 
 void AngelScriptMethods::GetMouseButtonPressed(asIScriptGeneric* gen)
 {
 	uint32_t button = gen->GetArgDWord(0);
 
-	uint32_t pressed;
-	if (WindowManager::GetInstance()->GetMouseButtonPressed(button, pressed) == false) 
+	MouseButtonState state;
+	if (WindowManager::GetInstance()->GetMouseButtonPressed(button, state) == false) 
 	{
 		asIScriptContext *context = asGetActiveContext();
 		if (context) 
@@ -197,7 +197,7 @@ void AngelScriptMethods::GetMouseButtonPressed(asIScriptGeneric* gen)
 			return;
 		}
 	}
-	*(uint32_t*)gen->GetAddressOfReturnLocation() = pressed;
+	*(MouseButtonState*)gen->GetAddressOfReturnLocation() = state;
 }
 
 void AngelScriptMethods::GetMouseCursorPosition(asIScriptGeneric* gen)

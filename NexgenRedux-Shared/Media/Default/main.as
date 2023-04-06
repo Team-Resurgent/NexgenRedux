@@ -290,21 +290,21 @@ void Render(double dt)
     textMem.SetText("free mem = " + (GetFreePhysicalMemory() / (1024 * 1024)) + "MB");
 
     JoystickButtonStates joystickButtonStates = GetJoystickButtonStates(0);
-	DebugPrintIf(joystickButtonStates.buttonA == 1, 1, "buttonA = " + joystickButtonStates.buttonA);
-	DebugPrintIf(joystickButtonStates.buttonB == 1, 1, "buttonB = " + joystickButtonStates.buttonB);
-	DebugPrintIf(joystickButtonStates.buttonX == 1, 1, "buttonX = " + joystickButtonStates.buttonX);
-	DebugPrintIf(joystickButtonStates.buttonY == 1, 1, "buttonY = " + joystickButtonStates.buttonY);
-	DebugPrintIf(joystickButtonStates.buttonLeftBumperOrWhite == 1, 1, "buttonLeftBumperOrWhite = " + joystickButtonStates.buttonLeftBumperOrWhite);
-	DebugPrintIf(joystickButtonStates.buttonRightBumperOrBlack == 1, 1, "buttonRightBumperOrBlack = " + joystickButtonStates.buttonRightBumperOrBlack);
-	DebugPrintIf(joystickButtonStates.buttonBack == 1, 1, "buttonBack = " + joystickButtonStates.buttonBack);
-	DebugPrintIf(joystickButtonStates.buttonStart == 1, 1, "buttonStart = " + joystickButtonStates.buttonStart);
-	DebugPrintIf(joystickButtonStates.buttonGuide == 1, 1, "buttonGuide = " + joystickButtonStates.buttonGuide);
-	DebugPrintIf(joystickButtonStates.buttonLeftThumb == 1, 1, "buttonLeftThumb = " + joystickButtonStates.buttonLeftThumb);
-	DebugPrintIf(joystickButtonStates.buttonRightThumb == 1, 1, "buttonRightThumb = " + joystickButtonStates.buttonRightThumb);
-	DebugPrintIf(joystickButtonStates.buttonDpadUp == 1, 1, "buttonDpadUp = " + joystickButtonStates.buttonDpadUp);
-	DebugPrintIf(joystickButtonStates.buttonDpadRight == 1, 1, "buttonDpadRight = " + joystickButtonStates.buttonDpadRight);
-	DebugPrintIf(joystickButtonStates.buttonDpadDown == 1, 1, "buttonDpadDown = " + joystickButtonStates.buttonDpadDown);
-	DebugPrintIf(joystickButtonStates.buttonDpadLeft == 1, 1, "buttonDpadLeft = " + joystickButtonStates.buttonDpadLeft);
+	DebugPrintIf(joystickButtonStates.buttonA == JoystickButtonStatePressed, 1, "buttonA = " + joystickButtonStates.buttonA);
+	DebugPrintIf(joystickButtonStates.buttonB == JoystickButtonStatePressed, 1, "buttonB = " + joystickButtonStates.buttonB);
+	DebugPrintIf(joystickButtonStates.buttonX == JoystickButtonStatePressed, 1, "buttonX = " + joystickButtonStates.buttonX);
+	DebugPrintIf(joystickButtonStates.buttonY == JoystickButtonStatePressed, 1, "buttonY = " + joystickButtonStates.buttonY);
+	DebugPrintIf(joystickButtonStates.buttonLeftBumperOrWhite == JoystickButtonStatePressed, 1, "buttonLeftBumperOrWhite = " + joystickButtonStates.buttonLeftBumperOrWhite);
+	DebugPrintIf(joystickButtonStates.buttonRightBumperOrBlack == JoystickButtonStatePressed, 1, "buttonRightBumperOrBlack = " + joystickButtonStates.buttonRightBumperOrBlack);
+	DebugPrintIf(joystickButtonStates.buttonBack == JoystickButtonStatePressed, 1, "buttonBack = " + joystickButtonStates.buttonBack);
+	DebugPrintIf(joystickButtonStates.buttonStart == JoystickButtonStatePressed, 1, "buttonStart = " + joystickButtonStates.buttonStart);
+	DebugPrintIf(joystickButtonStates.buttonGuide == JoystickButtonStatePressed, 1, "buttonGuide = " + joystickButtonStates.buttonGuide);
+	DebugPrintIf(joystickButtonStates.buttonLeftThumb == JoystickButtonStatePressed, 1, "buttonLeftThumb = " + joystickButtonStates.buttonLeftThumb);
+	DebugPrintIf(joystickButtonStates.buttonRightThumb == JoystickButtonStatePressed, 1, "buttonRightThumb = " + joystickButtonStates.buttonRightThumb);
+	DebugPrintIf(joystickButtonStates.buttonDpadUp == JoystickButtonStatePressed, 1, "buttonDpadUp = " + joystickButtonStates.buttonDpadUp);
+	DebugPrintIf(joystickButtonStates.buttonDpadRight == JoystickButtonStatePressed, 1, "buttonDpadRight = " + joystickButtonStates.buttonDpadRight);
+	DebugPrintIf(joystickButtonStates.buttonDpadDown == JoystickButtonStatePressed, 1, "buttonDpadDown = " + joystickButtonStates.buttonDpadDown);
+	DebugPrintIf(joystickButtonStates.buttonDpadLeft == JoystickButtonStatePressed, 1, "buttonDpadLeft = " + joystickButtonStates.buttonDpadLeft);
 
     JoystickAxisStates joystickAxisStates = GetJoystickAxisStates(0);
 	DebugPrintIf(abs(joystickAxisStates.axisLeftX) > 0.35, 1, "axisLeftX = " + joystickAxisStates.axisLeftX);
@@ -318,14 +318,13 @@ void Render(double dt)
     DebugPrintIf(joystickHatDirection > 0, 1, "joystickHatDirection = " + joystickHatDirection);
 
     // get space key state
-    uint keyPressed = GetKeyPressed(0x20);
-    DebugPrintIf(keyPressed > 0, 1, "keyPressed = " + keyPressed);
+    KeyButtonState keyPressed = GetKeyPressed(0x20);
+    DebugPrintIf(keyPressed == KeyButtonStatePressed, 1, "keyPressed = " + keyPressed);
 
-    uint mouseButtonPressed = GetMouseButtonPressed(0);
-    if (mouseButtonPressed == 1)
+    MouseButtonState mouseButtonPressed = GetMouseButtonPressed(0);
+    if (mouseButtonPressed == MouseButtonStatePressed)
     {
         Vec2D mousePos = GetMouseCursorPosition();
-        DebugPrint(1, "sprite mousePosx " + mousePos.x + " moy = " + + mousePos.y);
         if (sprite2.HitTest(mousePos.x, mousePos.y, orthoCamera) == true)
         {
             DebugPrint(1, "sprite clicked");

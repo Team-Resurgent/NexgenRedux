@@ -167,14 +167,14 @@ bool WindowManager::RenderLoop()
     return true;
 }
 
-bool WindowManager::GetKeyPressed(uint32_t key, uint32_t& pressed)
+bool WindowManager::GetKeyPressed(uint32_t key, KeyButtonState& state)
 {
-	return m_windowHelper->GetKeyPressed(key, pressed);
+	return m_windowHelper->GetKeyPressed(key, state);
 }
 
-bool WindowManager::GetMouseButtonPressed(uint32_t button, uint32_t& pressed)
+bool WindowManager::GetMouseButtonPressed(uint32_t button, MouseButtonState& state)
 {
-	return m_windowHelper->GetMouseButtonPressed(button, pressed);
+	return m_windowHelper->GetMouseButtonPressed(button, state);
 }
 
 bool WindowManager::GetMouseCursorPosition(double& xPos, double& yPos)

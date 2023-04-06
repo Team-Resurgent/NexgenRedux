@@ -314,7 +314,7 @@ bool OpenGLWindowHelper::WindowClose()
 	return true;
 }
 
-bool OpenGLWindowHelper::GetKeyPressed(uint32_t key, uint32_t& pressed)
+bool OpenGLWindowHelper::GetKeyPressed(uint32_t key, KeyButtonState& state)
 {
     if (Init() == false)
     {
@@ -326,11 +326,11 @@ bool OpenGLWindowHelper::GetKeyPressed(uint32_t key, uint32_t& pressed)
 		return false;
 	}
 
-    pressed = (uint32_t)glfwGetKey(m_window, key);
+    state = glfwGetKey(m_window, key) == 1 ? KeyButtonStatePressed : KeyButtonStateNone;
     return true;
 }
 
-bool OpenGLWindowHelper::GetMouseButtonPressed(uint32_t button, uint32_t& pressed)
+bool OpenGLWindowHelper::GetMouseButtonPressed(uint32_t button, MouseButtonState& state)
 {
     if (Init() == false)
     {
@@ -342,7 +342,7 @@ bool OpenGLWindowHelper::GetMouseButtonPressed(uint32_t button, uint32_t& presse
 		return false;
 	}
 
-    pressed = (uint32_t)glfwGetMouseButton(m_window, button);
+    state = glfwGetMouseButton(m_window, button) == 1 ? MouseButtonStatePressed : MouseButtonStateNone;
     return true;
 }
 
@@ -439,21 +439,21 @@ bool OpenGLWindowHelper::GetJoystickButtonStates(uint32_t joystickID, JoystickBu
     GLFWgamepadstate gamepadState;
     if (glfwGetGamepadState(joystickID, &gamepadState))
     {
-        joystickButtonStates.buttonA = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_A];
-        joystickButtonStates.buttonB = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_B];
-        joystickButtonStates.buttonX = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_X];
-        joystickButtonStates.buttonY = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_Y];
-        joystickButtonStates.buttonLeftBumperOrWhite = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_LEFT_BUMPER];
-        joystickButtonStates.buttonRightBumperOrBlack = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_RIGHT_BUMPER];
-        joystickButtonStates.buttonBack = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_BACK];
-        joystickButtonStates.buttonStart = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_START];
-        joystickButtonStates.buttonGuide = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_GUIDE];
-        joystickButtonStates.buttonLeftThumb = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_LEFT_THUMB];
-        joystickButtonStates.buttonRightThumb = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_RIGHT_THUMB];
-        joystickButtonStates.buttonDpadUp = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_DPAD_UP];
-        joystickButtonStates.buttonDpadRight = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_DPAD_RIGHT];
-        joystickButtonStates.buttonDpadDown = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_DPAD_DOWN];
-        joystickButtonStates.buttonDpadLeft = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_DPAD_LEFT];
+        joystickButtonStates.buttonA = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_A] == 1 ? JoystickButtonStatePressed : JoystickButtonStateNone;
+        joystickButtonStates.buttonB = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_B] == 1 ? JoystickButtonStatePressed : JoystickButtonStateNone;
+        joystickButtonStates.buttonX = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_X] == 1 ? JoystickButtonStatePressed : JoystickButtonStateNone;
+        joystickButtonStates.buttonY = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_Y] == 1 ? JoystickButtonStatePressed : JoystickButtonStateNone;
+        joystickButtonStates.buttonLeftBumperOrWhite = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_LEFT_BUMPER] == 1 ? JoystickButtonStatePressed : JoystickButtonStateNone;
+        joystickButtonStates.buttonRightBumperOrBlack = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_RIGHT_BUMPER] == 1 ? JoystickButtonStatePressed : JoystickButtonStateNone;
+        joystickButtonStates.buttonBack = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_BACK] == 1 ? JoystickButtonStatePressed : JoystickButtonStateNone;
+        joystickButtonStates.buttonStart = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_START] == 1 ? JoystickButtonStatePressed : JoystickButtonStateNone;
+        joystickButtonStates.buttonGuide = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_GUIDE] == 1 ? JoystickButtonStatePressed : JoystickButtonStateNone;
+        joystickButtonStates.buttonLeftThumb = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_LEFT_THUMB] == 1 ? JoystickButtonStatePressed : JoystickButtonStateNone;
+        joystickButtonStates.buttonRightThumb = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_RIGHT_THUMB] == 1 ? JoystickButtonStatePressed : JoystickButtonStateNone;
+        joystickButtonStates.buttonDpadUp = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_DPAD_UP] == 1 ? JoystickButtonStatePressed : JoystickButtonStateNone;
+        joystickButtonStates.buttonDpadRight = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_DPAD_RIGHT] == 1 ? JoystickButtonStatePressed : JoystickButtonStateNone;
+        joystickButtonStates.buttonDpadDown = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_DPAD_DOWN] == 1 ? JoystickButtonStatePressed : JoystickButtonStateNone;
+        joystickButtonStates.buttonDpadLeft = gamepadState.buttons[GLFW_GAMEPAD_BUTTON_DPAD_LEFT] == 1 ? JoystickButtonStatePressed : JoystickButtonStateNone;
     }
 	return true;
 }

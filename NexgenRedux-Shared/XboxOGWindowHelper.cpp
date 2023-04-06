@@ -411,7 +411,7 @@ bool XboxOGWindowHelper::WindowClose()
 	return true;
 }
 
-bool XboxOGWindowHelper::GetKeyPressed(uint32_t key, uint32_t& pressed)
+bool XboxOGWindowHelper::GetKeyPressed(uint32_t key, KeyButtonState& pressed)
 {
 	pressed = 0;
 
@@ -420,11 +420,11 @@ bool XboxOGWindowHelper::GetKeyPressed(uint32_t key, uint32_t& pressed)
 		return true;
 	}
 
-	pressed = m_keyboardKeys[key] == true ? 1 : 0;
+	state = m_keyboardKeys[key] == true ? KeyButtonStatePressed : KeyButtonStateNone;
 	return true;
 }
 
-bool XboxOGWindowHelper::GetMouseButtonPressed(uint32_t button, uint32_t& pressed)
+bool XboxOGWindowHelper::GetMouseButtonPressed(uint32_t button, MouseButtonState& pressed)
 {
 	pressed = 0;
 
@@ -433,7 +433,7 @@ bool XboxOGWindowHelper::GetMouseButtonPressed(uint32_t button, uint32_t& presse
 		return true;
 	}
 
-	pressed = m_mouseButtons[button] == true ? 1 : 0;
+	state = m_mouseButtons[button] == true ? MouseButtonStatePressed : MouseButtonStateNone;
     return true;
 }
 
@@ -514,21 +514,23 @@ bool XboxOGWindowHelper::GetJoystickButtonStates(uint32_t joystickID, JoystickBu
 	XINPUT_GAMEPAD gamePad;
 	memcpy(&gamePad, &inputStates.Gamepad, sizeof(XINPUT_GAMEPAD));
 
-	joystickButtonStates.buttonA = (gamePad.bAnalogButtons[XINPUT_GAMEPAD_A] > 30) ? 1 : 0;
-	joystickButtonStates.buttonB = (gamePad.bAnalogButtons[XINPUT_GAMEPAD_B] > 30) ? 1 : 0;
-	joystickButtonStates.buttonX = (gamePad.bAnalogButtons[XINPUT_GAMEPAD_X] > 30) ? 1 : 0;
-	joystickButtonStates.buttonY = (gamePad.bAnalogButtons[XINPUT_GAMEPAD_Y] > 30) ? 1 : 0;
-	joystickButtonStates.buttonLeftBumperOrWhite = (gamePad.bAnalogButtons[XINPUT_GAMEPAD_WHITE] > 30) ? 1 : 0;
-	joystickButtonStates.buttonRightBumperOrBlack = (gamePad.bAnalogButtons[XINPUT_GAMEPAD_BLACK] > 30) ? 1 : 0;
-	joystickButtonStates.buttonBack = (gamePad.wButtons & XINPUT_GAMEPAD_BACK) == XINPUT_GAMEPAD_BACK ? 1 : 0;
-	joystickButtonStates.buttonStart = (gamePad.wButtons & XINPUT_GAMEPAD_START) == XINPUT_GAMEPAD_START ? 1 : 0;
+ == 1 ? JoystickButtonStatePressed : JoystickButtonStateNode
+
+	joystickButtonStates.buttonA = (gamePad.bAnalogButtons[XINPUT_GAMEPAD_A] > 30) ? JoystickButtonStatePressed : JoystickButtonStateNode;
+	joystickButtonStates.buttonB = (gamePad.bAnalogButtons[XINPUT_GAMEPAD_B] > 30) ? JoystickButtonStatePressed : JoystickButtonStateNode;
+	joystickButtonStates.buttonX = (gamePad.bAnalogButtons[XINPUT_GAMEPAD_X] > 30) ? JoystickButtonStatePressed : JoystickButtonStateNode;
+	joystickButtonStates.buttonY = (gamePad.bAnalogButtons[XINPUT_GAMEPAD_Y] > 30) ? JoystickButtonStatePressed : JoystickButtonStateNode;
+	joystickButtonStates.buttonLeftBumperOrWhite = (gamePad.bAnalogButtons[XINPUT_GAMEPAD_WHITE] > 30) ? JoystickButtonStatePressed : JoystickButtonStateNode;
+	joystickButtonStates.buttonRightBumperOrBlack = (gamePad.bAnalogButtons[XINPUT_GAMEPAD_BLACK] > 30) ? JoystickButtonStatePressed : JoystickButtonStateNode;
+	joystickButtonStates.buttonBack = (gamePad.wButtons & XINPUT_GAMEPAD_BACK) == XINPUT_GAMEPAD_BACK ? JoystickButtonStatePressed : JoystickButtonStateNode;
+	joystickButtonStates.buttonStart = (gamePad.wButtons & XINPUT_GAMEPAD_START) == XINPUT_GAMEPAD_START ? JoystickButtonStatePressed : JoystickButtonStateNode;
 	joystickButtonStates.buttonGuide = 0;
-	joystickButtonStates.buttonLeftThumb = (gamePad.wButtons & XINPUT_GAMEPAD_LEFT_THUMB) == XINPUT_GAMEPAD_LEFT_THUMB ? 1 : 0;
-	joystickButtonStates.buttonRightThumb = (gamePad.wButtons & XINPUT_GAMEPAD_RIGHT_THUMB) == XINPUT_GAMEPAD_RIGHT_THUMB ? 1 : 0;
-	joystickButtonStates.buttonDpadUp = (gamePad.wButtons & XINPUT_GAMEPAD_DPAD_UP) == XINPUT_GAMEPAD_DPAD_UP ? 1 : 0;
-	joystickButtonStates.buttonDpadRight = (gamePad.wButtons & XINPUT_GAMEPAD_DPAD_RIGHT) == XINPUT_GAMEPAD_DPAD_RIGHT ? 1 : 0;
-	joystickButtonStates.buttonDpadDown = (gamePad.wButtons & XINPUT_GAMEPAD_DPAD_DOWN) == XINPUT_GAMEPAD_DPAD_DOWN ? 1 : 0;
-	joystickButtonStates.buttonDpadLeft = (gamePad.wButtons & XINPUT_GAMEPAD_DPAD_LEFT) == XINPUT_GAMEPAD_DPAD_LEFT ? 1 : 0;
+	joystickButtonStates.buttonLeftThumb = (gamePad.wButtons & XINPUT_GAMEPAD_LEFT_THUMB) == XINPUT_GAMEPAD_LEFT_THUMB ? JoystickButtonStatePressed : JoystickButtonStateNode;
+	joystickButtonStates.buttonRightThumb = (gamePad.wButtons & XINPUT_GAMEPAD_RIGHT_THUMB) == XINPUT_GAMEPAD_RIGHT_THUMB ? JoystickButtonStatePressed : JoystickButtonStateNode;
+	joystickButtonStates.buttonDpadUp = (gamePad.wButtons & XINPUT_GAMEPAD_DPAD_UP) == XINPUT_GAMEPAD_DPAD_UP ? JoystickButtonStatePressed : JoystickButtonStateNode;
+	joystickButtonStates.buttonDpadRight = (gamePad.wButtons & XINPUT_GAMEPAD_DPAD_RIGHT) == XINPUT_GAMEPAD_DPAD_RIGHT ? JoystickButtonStatePressed : JoystickButtonStateNode;
+	joystickButtonStates.buttonDpadDown = (gamePad.wButtons & XINPUT_GAMEPAD_DPAD_DOWN) == XINPUT_GAMEPAD_DPAD_DOWN ? JoystickButtonStatePressed : JoystickButtonStateNode;
+	joystickButtonStates.buttonDpadLeft = (gamePad.wButtons & XINPUT_GAMEPAD_DPAD_LEFT) == XINPUT_GAMEPAD_DPAD_LEFT ? JoystickButtonStatePressed : JoystickButtonStateNode;
 	return true;
 }
 

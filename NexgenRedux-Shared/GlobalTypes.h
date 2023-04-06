@@ -18,24 +18,39 @@ namespace NexgenRedux
 		uint32_t refreshRate;
 	} MonitorVideoMode;
 
+    typedef enum JoystickButtonState {
+		JoystickButtonStateNone,
+		JoystickButtonStatePressed
+	} JoystickButtonState;
+
 	typedef struct JoystickButtonStates
 	{
-		uint32_t buttonA;
-		uint32_t buttonB;
-		uint32_t buttonX;
-		uint32_t buttonY; 
-		uint32_t buttonLeftBumperOrWhite;
-		uint32_t buttonRightBumperOrBlack;
-		uint32_t buttonBack;
-		uint32_t buttonStart;
-		uint32_t buttonGuide;
-		uint32_t buttonLeftThumb;
-		uint32_t buttonRightThumb;
-		uint32_t buttonDpadUp;
-		uint32_t buttonDpadRight;
-		uint32_t buttonDpadDown;
-		uint32_t buttonDpadLeft;
+		JoystickButtonState buttonA;
+		JoystickButtonState buttonB;
+		JoystickButtonState buttonX;
+		JoystickButtonState buttonY; 
+		JoystickButtonState buttonLeftBumperOrWhite;
+		JoystickButtonState buttonRightBumperOrBlack;
+		JoystickButtonState buttonBack;
+		JoystickButtonState buttonStart;
+		JoystickButtonState buttonGuide;
+		JoystickButtonState buttonLeftThumb;
+		JoystickButtonState buttonRightThumb;
+		JoystickButtonState buttonDpadUp;
+		JoystickButtonState buttonDpadRight;
+		JoystickButtonState buttonDpadDown;
+		JoystickButtonState buttonDpadLeft;
 	} JoystickButtonStates;
+
+    typedef enum KeyButtonState {
+		KeyButtonStateNone,
+		KeyButtonStatePressed
+	} KeyButtonState;
+
+    typedef enum MousekButtonState {
+		MouseButtonStateNone,
+		MouseButtonStatePressed
+	} MouseButtonState;
 
 	typedef struct JoystickAxisStates
 	{

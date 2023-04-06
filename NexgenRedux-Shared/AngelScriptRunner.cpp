@@ -146,8 +146,6 @@ void DebugLineCallback(asIScriptContext *ctx, void* ptr)
 
 bool CompileScript(asIScriptEngine* engine, std::wstring launchFolder)
 {
-	int result;
-
 	std::wstring mediaDirectory;
 	if (FileSystem::GetMediaDirectory(mediaDirectory) == false)
 	{
@@ -392,6 +390,81 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 
 	result = m_engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL); if (result < 0) { return false; }
 
+	result = m_engine->RegisterEnum("JoystickButtonState"); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("JoystickButtonState", "JoystickButtonStateNone", JoystickButtonStateNone); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("JoystickButtonState", "JoystickButtonStatePressed", JoystickButtonStatePressed); if (result < 0) { return false; }
+
+	result = m_engine->RegisterEnum("KeyButtonState"); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("KeyButtonState", "KeyButtonStateNone", KeyButtonStateNone); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("KeyButtonState", "KeyButtonStatePressed", KeyButtonStatePressed); if (result < 0) { return false; }
+
+	result = m_engine->RegisterEnum("MouseButtonState"); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("MouseButtonState", "MouseButtonStateNone", MouseButtonStateNone); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("MouseButtonState", "MouseButtonStatePressed", MouseButtonStateNone); if (result < 0) { return false; }
+
+	result = m_engine->RegisterEnum("CursorMode"); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("CursorMode", "CursorModeNormal", CursorModeNormal); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("CursorMode", "CursorModeHidden", CursorModeHidden); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("CursorMode", "CursorModeDisabled", CursorModeDisabled); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("CursorMode", "CursorModeCaptured", CursorModeCaptured); if (result < 0) { return false; }
+
+	result = m_engine->RegisterEnum("BlendOperation"); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("BlendOperation", "BlendOperationDisabled", BlendOperationDisabled); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("BlendOperation", "BlendOperationAdd", BlendOperationAdd); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("BlendOperation", "BlendOperationSubtract", BlendOperationSubtract); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("BlendOperation", "BlendOperationReverseSubtract", BlendOperationReverseSubtract); if (result < 0) { return false; }
+
+	result = m_engine->RegisterEnum("BlendFactor"); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("BlendFactor", "BlendFactorZero", BlendFactorZero); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("BlendFactor", "BlendFactorOne", BlendFactorOne); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("BlendFactor", "BlendFactorSrcColor", BlendFactorSrcColor); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("BlendFactor", "BlendFactorOneMinusSrcColor", BlendFactorOneMinusSrcColor); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("BlendFactor", "BlendFactorDstColor", BlendFactorDstColor); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("BlendFactor", "BlendFactorOneMinusDstColor", BlendFactorOneMinusDstColor); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("BlendFactor", "BlendFactorSrcAlpha", BlendFactorSrcAlpha); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("BlendFactor", "BlendFactorOneMinusSrcAlpha", BlendFactorOneMinusSrcAlpha); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("BlendFactor", "BlendFactorDstAlpha", BlendFactorDstAlpha); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("BlendFactor", "BlendFactorOneMinusDstAlpha", BlendFactorOneMinusDstAlpha); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("BlendFactor", "BlendFactorConstantColor", BlendFactorConstantColor); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("BlendFactor", "BlendFactorOneMinusConstantColor", BlendFactorOneMinusConstantColor); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("BlendFactor", "BlendFactorConstantAlpha", BlendFactorConstantAlpha); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("BlendFactor", "BlendFactorOneMinusConstantAlpha", BlendFactorOneMinusConstantAlpha); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("BlendFactor", "BlendFactorSrcAlphaSaturate", BlendFactorSrcAlphaSaturate); if (result < 0) { return false; }
+
+	result = m_engine->RegisterEnum("DrawModeOperation"); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("DrawModeOperation", "DrawModeOperationTriangles", DrawModeOperationTriangles); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("DrawModeOperation", "DrawModeOperationLines", DrawModeOperationLines); if (result < 0) { return false; }
+
+	result = m_engine->RegisterEnum("CullingOperation"); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("CullingOperation", "CullingOperationDisabled", CullingOperationDisabled); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("CullingOperation", "CullingOperationFront", CullingOperationFront); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("CullingOperation", "CullingOperationBack", CullingOperationBack); if (result < 0) { return false; }
+
+	result = m_engine->RegisterEnum("DepthOperation"); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("DepthOperation", "DepthOperationDisabled", DepthOperationDisabled); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("DepthOperation", "DepthOperationNever", DepthOperationNever); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("DepthOperation", "DepthOperationLess", DepthOperationLess); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("DepthOperation", "DepthOperationEqual", DepthOperationEqual); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("DepthOperation", "DepthOperationLessOrEqual", DepthOperationLessOrEqual); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("DepthOperation", "DepthOperationGreater", DepthOperationGreater); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("DepthOperation", "DepthOperationNotEqual", DepthOperationNotEqual); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("DepthOperation", "DepthOperationGreaterOrEqual", DepthOperationGreaterOrEqual); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("DepthOperation", "DepthOperationAlways", DepthOperationAlways); if (result < 0) { return false; }
+
+	result = m_engine->RegisterEnum("FogOperation"); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("FogOperation", "FogOperationDisabled", FogOperationDisabled); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("FogOperation", "FogOperationExponent", FogOperationExponent); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("FogOperation", "FogOperationExponent2", FogOperationExponent2); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("FogOperation", "FogOperationLinear", FogOperationLinear); if (result < 0) { return false; }
+
+	result = m_engine->RegisterEnum("LightsOperation"); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("LightsOperation", "LightsOperationDisabled", LightsOperationDisabled); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("LightsOperation", "LightsOperationEnabled", LightsOperationEnabled); if (result < 0) { return false; }
+
+	result = m_engine->RegisterEnum("LightOperation"); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("LightOperation", "LightOperationDisabled", LightOperationDisabled); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("LightOperation", "LightOperationEnabled", LightOperationEnabled); if (result < 0) { return false; }
+
 	result = m_engine->RegisterObjectType("MonitorVideoMode", sizeof(MonitorVideoMode), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CAK); if (result < 0) { return false; } 
 	result = docGen.DocumentObjectType(result, "<b>MonitorVideoMode</b> is an object containing video mode properties."); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectProperty("MonitorVideoMode", "uint monitorIndex", asOFFSET(MonitorVideoMode, monitorIndex)); if (result < 0) { return false; }
@@ -404,21 +477,21 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 
 	result = m_engine->RegisterObjectType("JoystickButtonStates", sizeof(JoystickButtonStates), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CAK); if (result < 0) { return false; }
 	result = docGen.DocumentObjectType(result, "<b>JoystickButtonStates</b> is an object containing joystick button state properties."); if (result < 0) { return false; }
-    result = m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonA", asOFFSET(JoystickButtonStates, buttonA)); if (result < 0) { return false; }
-    result = m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonB", asOFFSET(JoystickButtonStates, buttonB)); if (result < 0) { return false; }
-    result = m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonX", asOFFSET(JoystickButtonStates, buttonX)); if (result < 0) { return false; }
-    result = m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonY", asOFFSET(JoystickButtonStates, buttonY)); if (result < 0) { return false; }
-    result = m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonLeftBumperOrWhite", asOFFSET(JoystickButtonStates, buttonLeftBumperOrWhite)); if (result < 0) { return false; }
-    result = m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonRightBumperOrBlack", asOFFSET(JoystickButtonStates, buttonRightBumperOrBlack)); if (result < 0) { return false; }
-    result = m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonBack", asOFFSET(JoystickButtonStates, buttonBack)); if (result < 0) { return false; }
-    result = m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonStart", asOFFSET(JoystickButtonStates, buttonStart)); if (result < 0) { return false; }
-    result = m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonGuide", asOFFSET(JoystickButtonStates, buttonGuide)); if (result < 0) { return false; }
-    result = m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonLeftThumb", asOFFSET(JoystickButtonStates, buttonLeftThumb)); if (result < 0) { return false; }
-    result = m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonRightThumb", asOFFSET(JoystickButtonStates, buttonRightThumb)); if (result < 0) { return false; }
-    result = m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonDpadUp", asOFFSET(JoystickButtonStates, buttonDpadUp)); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonDpadRight", asOFFSET(JoystickButtonStates, buttonDpadRight)); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonDpadDown", asOFFSET(JoystickButtonStates, buttonDpadDown)); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectProperty("JoystickButtonStates", "uint buttonDpadLeft", asOFFSET(JoystickButtonStates, buttonDpadLeft)); if (result < 0) { return false; }
+    result = m_engine->RegisterObjectProperty("JoystickButtonStates", "JoystickButtonState buttonA", asOFFSET(JoystickButtonStates, buttonA)); if (result < 0) { return false; }
+    result = m_engine->RegisterObjectProperty("JoystickButtonStates", "JoystickButtonState buttonB", asOFFSET(JoystickButtonStates, buttonB)); if (result < 0) { return false; }
+    result = m_engine->RegisterObjectProperty("JoystickButtonStates", "JoystickButtonState buttonX", asOFFSET(JoystickButtonStates, buttonX)); if (result < 0) { return false; }
+    result = m_engine->RegisterObjectProperty("JoystickButtonStates", "JoystickButtonState buttonY", asOFFSET(JoystickButtonStates, buttonY)); if (result < 0) { return false; }
+    result = m_engine->RegisterObjectProperty("JoystickButtonStates", "JoystickButtonState buttonLeftBumperOrWhite", asOFFSET(JoystickButtonStates, buttonLeftBumperOrWhite)); if (result < 0) { return false; }
+    result = m_engine->RegisterObjectProperty("JoystickButtonStates", "JoystickButtonState buttonRightBumperOrBlack", asOFFSET(JoystickButtonStates, buttonRightBumperOrBlack)); if (result < 0) { return false; }
+    result = m_engine->RegisterObjectProperty("JoystickButtonStates", "JoystickButtonState buttonBack", asOFFSET(JoystickButtonStates, buttonBack)); if (result < 0) { return false; }
+    result = m_engine->RegisterObjectProperty("JoystickButtonStates", "JoystickButtonState buttonStart", asOFFSET(JoystickButtonStates, buttonStart)); if (result < 0) { return false; }
+    result = m_engine->RegisterObjectProperty("JoystickButtonStates", "JoystickButtonState buttonGuide", asOFFSET(JoystickButtonStates, buttonGuide)); if (result < 0) { return false; }
+    result = m_engine->RegisterObjectProperty("JoystickButtonStates", "JoystickButtonState buttonLeftThumb", asOFFSET(JoystickButtonStates, buttonLeftThumb)); if (result < 0) { return false; }
+    result = m_engine->RegisterObjectProperty("JoystickButtonStates", "JoystickButtonState buttonRightThumb", asOFFSET(JoystickButtonStates, buttonRightThumb)); if (result < 0) { return false; }
+    result = m_engine->RegisterObjectProperty("JoystickButtonStates", "JoystickButtonState buttonDpadUp", asOFFSET(JoystickButtonStates, buttonDpadUp)); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectProperty("JoystickButtonStates", "JoystickButtonState buttonDpadRight", asOFFSET(JoystickButtonStates, buttonDpadRight)); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectProperty("JoystickButtonStates", "JoystickButtonState buttonDpadDown", asOFFSET(JoystickButtonStates, buttonDpadDown)); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectProperty("JoystickButtonStates", "JoystickButtonState buttonDpadLeft", asOFFSET(JoystickButtonStates, buttonDpadLeft)); if (result < 0) { return false; }
 
 	result = m_engine->RegisterObjectType("JoystickAxisStates", sizeof(JoystickAxisStates), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CAK); if (result < 0) { return false; }
 	result = docGen.DocumentObjectType(result, "<b>JoystickAxisStates</b> is an object containing joystick axis state properties."); if (result < 0) { return false; }
@@ -593,69 +666,6 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
     result = m_engine->RegisterObjectMethod("Color4F", "bool opEq(const Color4F &in) const", asMETHODPR(MathUtility::Color4F, operator==, (const MathUtility::Color4F &) const, bool), asCALL_THISCALL); if (result < 0) { return false; }
     result = m_engine->RegisterObjectMethod("Color4F", "bool opNotEq(const Color4F &in) const", asMETHODPR(MathUtility::Color4F, operator!=, (const MathUtility::Color4F &) const, bool), asCALL_THISCALL); if (result < 0) { return false; }
 
-	result = m_engine->RegisterEnum("CursorMode"); if (result < 0) { return false; }
-	result = m_engine->RegisterEnumValue("CursorMode", "CursorModeNormal", CursorModeNormal); if (result < 0) { return false; }
-	result = m_engine->RegisterEnumValue("CursorMode", "CursorModeHidden", CursorModeHidden); if (result < 0) { return false; }
-	result = m_engine->RegisterEnumValue("CursorMode", "CursorModeDisabled", CursorModeDisabled); if (result < 0) { return false; }
-	result = m_engine->RegisterEnumValue("CursorMode", "CursorModeCaptured", CursorModeCaptured); if (result < 0) { return false; }
-
-	result = m_engine->RegisterEnum("BlendOperation"); if (result < 0) { return false; }
-	result = m_engine->RegisterEnumValue("BlendOperation", "BlendOperationDisabled", BlendOperationDisabled); if (result < 0) { return false; }
-	result = m_engine->RegisterEnumValue("BlendOperation", "BlendOperationAdd", BlendOperationAdd); if (result < 0) { return false; }
-	result = m_engine->RegisterEnumValue("BlendOperation", "BlendOperationSubtract", BlendOperationSubtract); if (result < 0) { return false; }
-	result = m_engine->RegisterEnumValue("BlendOperation", "BlendOperationReverseSubtract", BlendOperationReverseSubtract); if (result < 0) { return false; }
-
-	result = m_engine->RegisterEnum("BlendFactor"); if (result < 0) { return false; }
-	result = m_engine->RegisterEnumValue("BlendFactor", "BlendFactorZero", BlendFactorZero); if (result < 0) { return false; }
-	result = m_engine->RegisterEnumValue("BlendFactor", "BlendFactorOne", BlendFactorOne); if (result < 0) { return false; }
-	result = m_engine->RegisterEnumValue("BlendFactor", "BlendFactorSrcColor", BlendFactorSrcColor); if (result < 0) { return false; }
-	result = m_engine->RegisterEnumValue("BlendFactor", "BlendFactorOneMinusSrcColor", BlendFactorOneMinusSrcColor); if (result < 0) { return false; }
-	result = m_engine->RegisterEnumValue("BlendFactor", "BlendFactorDstColor", BlendFactorDstColor); if (result < 0) { return false; }
-	result = m_engine->RegisterEnumValue("BlendFactor", "BlendFactorOneMinusDstColor", BlendFactorOneMinusDstColor); if (result < 0) { return false; }
-	result = m_engine->RegisterEnumValue("BlendFactor", "BlendFactorSrcAlpha", BlendFactorSrcAlpha); if (result < 0) { return false; }
-	result = m_engine->RegisterEnumValue("BlendFactor", "BlendFactorOneMinusSrcAlpha", BlendFactorOneMinusSrcAlpha); if (result < 0) { return false; }
-	result = m_engine->RegisterEnumValue("BlendFactor", "BlendFactorDstAlpha", BlendFactorDstAlpha); if (result < 0) { return false; }
-	result = m_engine->RegisterEnumValue("BlendFactor", "BlendFactorOneMinusDstAlpha", BlendFactorOneMinusDstAlpha); if (result < 0) { return false; }
-	result = m_engine->RegisterEnumValue("BlendFactor", "BlendFactorConstantColor", BlendFactorConstantColor); if (result < 0) { return false; }
-	result = m_engine->RegisterEnumValue("BlendFactor", "BlendFactorOneMinusConstantColor", BlendFactorOneMinusConstantColor); if (result < 0) { return false; }
-	result = m_engine->RegisterEnumValue("BlendFactor", "BlendFactorConstantAlpha", BlendFactorConstantAlpha); if (result < 0) { return false; }
-	result = m_engine->RegisterEnumValue("BlendFactor", "BlendFactorOneMinusConstantAlpha", BlendFactorOneMinusConstantAlpha); if (result < 0) { return false; }
-	result = m_engine->RegisterEnumValue("BlendFactor", "BlendFactorSrcAlphaSaturate", BlendFactorSrcAlphaSaturate); if (result < 0) { return false; }
-
-	result = m_engine->RegisterEnum("DrawModeOperation"); if (result < 0) { return false; }
-	result = m_engine->RegisterEnumValue("DrawModeOperation", "DrawModeOperationTriangles", DrawModeOperationTriangles); if (result < 0) { return false; }
-	result = m_engine->RegisterEnumValue("DrawModeOperation", "DrawModeOperationLines", DrawModeOperationLines); if (result < 0) { return false; }
-
-	result = m_engine->RegisterEnum("CullingOperation"); if (result < 0) { return false; }
-	result = m_engine->RegisterEnumValue("CullingOperation", "CullingOperationDisabled", CullingOperationDisabled); if (result < 0) { return false; }
-	result = m_engine->RegisterEnumValue("CullingOperation", "CullingOperationFront", CullingOperationFront); if (result < 0) { return false; }
-	result = m_engine->RegisterEnumValue("CullingOperation", "CullingOperationBack", CullingOperationBack); if (result < 0) { return false; }
-
-	result = m_engine->RegisterEnum("DepthOperation"); if (result < 0) { return false; }
-	result = m_engine->RegisterEnumValue("DepthOperation", "DepthOperationDisabled", DepthOperationDisabled); if (result < 0) { return false; }
-	result = m_engine->RegisterEnumValue("DepthOperation", "DepthOperationNever", DepthOperationNever); if (result < 0) { return false; }
-	result = m_engine->RegisterEnumValue("DepthOperation", "DepthOperationLess", DepthOperationLess); if (result < 0) { return false; }
-	result = m_engine->RegisterEnumValue("DepthOperation", "DepthOperationEqual", DepthOperationEqual); if (result < 0) { return false; }
-	result = m_engine->RegisterEnumValue("DepthOperation", "DepthOperationLessOrEqual", DepthOperationLessOrEqual); if (result < 0) { return false; }
-	result = m_engine->RegisterEnumValue("DepthOperation", "DepthOperationGreater", DepthOperationGreater); if (result < 0) { return false; }
-	result = m_engine->RegisterEnumValue("DepthOperation", "DepthOperationNotEqual", DepthOperationNotEqual); if (result < 0) { return false; }
-	result = m_engine->RegisterEnumValue("DepthOperation", "DepthOperationGreaterOrEqual", DepthOperationGreaterOrEqual); if (result < 0) { return false; }
-	result = m_engine->RegisterEnumValue("DepthOperation", "DepthOperationAlways", DepthOperationAlways); if (result < 0) { return false; }
-
-	result = m_engine->RegisterEnum("FogOperation"); if (result < 0) { return false; }
-	result = m_engine->RegisterEnumValue("FogOperation", "FogOperationDisabled", FogOperationDisabled); if (result < 0) { return false; }
-	result = m_engine->RegisterEnumValue("FogOperation", "FogOperationExponent", FogOperationExponent); if (result < 0) { return false; }
-	result = m_engine->RegisterEnumValue("FogOperation", "FogOperationExponent2", FogOperationExponent2); if (result < 0) { return false; }
-	result = m_engine->RegisterEnumValue("FogOperation", "FogOperationLinear", FogOperationLinear); if (result < 0) { return false; }
-
-	result = m_engine->RegisterEnum("LightsOperation"); if (result < 0) { return false; }
-	result = m_engine->RegisterEnumValue("LightsOperation", "LightsOperationDisabled", LightsOperationDisabled); if (result < 0) { return false; }
-	result = m_engine->RegisterEnumValue("LightsOperation", "LightsOperationEnabled", LightsOperationEnabled); if (result < 0) { return false; }
-
-	result = m_engine->RegisterEnum("LightOperation"); if (result < 0) { return false; }
-	result = m_engine->RegisterEnumValue("LightOperation", "LightOperationDisabled", LightOperationDisabled); if (result < 0) { return false; }
-	result = m_engine->RegisterEnumValue("LightOperation", "LightOperationEnabled", LightOperationEnabled); if (result < 0) { return false; }
-
 	result = m_engine->RegisterGlobalFunction("void SeedRandom()", asFUNCTION(MathUtility::SeedRandom), asCALL_CDECL); if (result < 0) { return false; }
 	result = m_engine->RegisterGlobalFunction("void SeedRandomWithValue(int value)", asFUNCTION(MathUtility::SeedRandomWithValue), asCALL_CDECL); if (result < 0) { return false; }
 	result = m_engine->RegisterGlobalFunction("double GetRandomDouble()", asFUNCTION(MathUtility::GetRandomDouble), asCALL_CDECL); if (result < 0) { return false; }
@@ -677,8 +687,8 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	result = m_engine->RegisterGlobalFunction("SizeI GetWindowSize()", asFUNCTION(AngelScriptMethods::GetWindowSize), asCALL_GENERIC); if (result < 0) { return false; }
 	result = m_engine->RegisterGlobalFunction("void SetCursorMode(CursorMode)", asFUNCTION(AngelScriptMethods::SetCursorMode), asCALL_GENERIC); if (result < 0) { return false; }
 	result = m_engine->RegisterGlobalFunction("void WindowClose()", asFUNCTION(AngelScriptMethods::WindowClose), asCALL_GENERIC); if (result < 0) { return false; }
-	result = m_engine->RegisterGlobalFunction("uint GetKeyPressed(uint key)", asFUNCTION(AngelScriptMethods::GetKeyPressed), asCALL_GENERIC); if (result < 0) { return false; }
-	result = m_engine->RegisterGlobalFunction("uint GetMouseButtonPressed(uint button)", asFUNCTION(AngelScriptMethods::GetMouseButtonPressed), asCALL_GENERIC); if (result < 0) { return false; }
+	result = m_engine->RegisterGlobalFunction("KeyButtonState GetKeyPressed(uint key)", asFUNCTION(AngelScriptMethods::GetKeyPressed), asCALL_GENERIC); if (result < 0) { return false; }
+	result = m_engine->RegisterGlobalFunction("MouseButtonState GetMouseButtonPressed(uint button)", asFUNCTION(AngelScriptMethods::GetMouseButtonPressed), asCALL_GENERIC); if (result < 0) { return false; }
 	result = m_engine->RegisterGlobalFunction("Vec2D GetMouseCursorPosition()", asFUNCTION(AngelScriptMethods::GetMouseCursorPosition), asCALL_GENERIC); if (result < 0) { return false; }
 	result = m_engine->RegisterGlobalFunction("void SetMouseCursorPosition(double xPos, double yPos)", asFUNCTION(AngelScriptMethods::SetMouseCursorPosition), asCALL_GENERIC); if (result < 0) { return false; }
 	result = m_engine->RegisterGlobalFunction("string GetClipboardString(void)", asFUNCTION(AngelScriptMethods::GetClipboardString), asCALL_GENERIC); if (result < 0) { return false; }

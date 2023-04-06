@@ -68,8 +68,8 @@ namespace NexgenRedux
 		bool WindowPostRender();
 		void PollEvents(void);
 		bool WindowClose();
-		bool GetKeyPressed(uint32_t key, uint32_t& pressed);
-		bool GetMouseButtonPressed(uint32_t button, uint32_t& pressed);
+		bool GetKeyPressed(uint32_t key, KeyButtonState& state);
+		bool GetMouseButtonPressed(uint32_t button, MouseButtonState& state);
 		bool GetMouseCursorPosition(double& xPos, double& yPos);
 		bool SetMouseCursorPosition(double xPos, double yPos);
 		bool GetClipboardString(std::string& value);

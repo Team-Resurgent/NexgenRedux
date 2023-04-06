@@ -76,7 +76,7 @@ void Text::Update(float dt)
 
 void Text::Render()
 {
-    if (m_visible = false || m_textureID == 0 || m_mesh.size() == 0) 
+    if (m_visible == false || m_textureID == 0 || m_mesh.size() == 0) 
     {
         return;
     }

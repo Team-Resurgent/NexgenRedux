@@ -71,7 +71,7 @@ void Sprite::Update(float dt)
 
 void Sprite::Render()
 {
-    if (m_visible = false || m_textureID == 0 || m_mesh.size() == 0) 
+    if (m_visible == false || m_textureID == 0 || m_mesh.size() == 0) 
     {
         return;
     }

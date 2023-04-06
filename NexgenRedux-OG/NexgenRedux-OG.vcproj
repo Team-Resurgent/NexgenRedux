@@ -234,11 +234,17 @@
 			<Filter
 				Name="Media"
 				Filter="">
+				<File
+					RelativePath="..\NexgenRedux-Shared\Media\config.ini">
+				</File>
 				<Filter
 					Name="Default"
 					Filter="">
 					<File
 						RelativePath="..\NexgenRedux-Shared\Media\Default\Main.as">
+					</File>
+					<File
+						RelativePath="..\NexgenRedux-Shared\Media\Default\util.as">
 					</File>
 				</Filter>
 			</Filter>

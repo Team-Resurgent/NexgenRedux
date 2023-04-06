@@ -2,6 +2,7 @@
 #include "AngelScriptMethods.h"
 #include "WindowManager.h"
 #include "MathUtility.h"
+#include "ConfigLoader.h"
 #include "EntityEngine/SceneManager.h"
 #include "EntityEngine/FontManager.h"
 #include "EntityEngine/NodeManager.h"
@@ -151,7 +152,31 @@ void DebugLineCallback(asIScriptContext *ctx, void* ptr)
 	DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, StringUtility::FormatString("Processing line %i, %s", line, scriptSection));
 }
 
-bool CompileScript(asIScriptEngine* engine, std::wstring launchFolder)
+  int IncludeHandler(const char *include, const char *from, CScriptBuilder* builder, void *user_data)
+  {
+	std::wstring mediaDirectory;
+	if (FileSystem::GetMediaDirectory(mediaDirectory) == false)
+	{
+		return -1;
+	}
+
+	std::wstring scriptFile = FileSystem::CombinePath(FileSystem::CombinePath(mediaDirectory, ConfigLoader::GetLaunchFolder()), StringUtility::ToWideString(include));
+
+	std::string script;
+	if (FileSystem::FileReadAllAsString(scriptFile, &script) == false)
+	{
+		return -1;
+	}
+
+
+	int result;
+
+	result = m_builder->AddSectionFromMemory(StringUtility::ToString(scriptFile).c_str(), script.c_str(), (unsigned int)script.size(), 0); if (result < 0) { return -1; }
+
+	return 0;
+}
+
+bool CompileScript(asIScriptEngine* engine)
 {
 	std::wstring mediaDirectory;
 	if (FileSystem::GetMediaDirectory(mediaDirectory) == false)
@@ -159,11 +184,21 @@ bool CompileScript(asIScriptEngine* engine, std::wstring launchFolder)
 		return false;
 	}
 
-	std::string scriptFile = StringUtility::ToString(FileSystem::CombinePath(FileSystem::CombinePath(mediaDirectory, launchFolder), L"Main.as"));
+	std::wstring scriptFile = FileSystem::CombinePath(FileSystem::CombinePath(mediaDirectory, ConfigLoader::GetLaunchFolder()), L"Main.as");
 
-	if (m_builder->StartNewModule(engine, "main") < 0) { return false; }
-	if (m_builder->AddSectionFromFile(scriptFile.c_str()) < 0) { return false; }
-	if (m_builder->BuildModule() < 0) { return false; }
+	std::string script;
+	if (FileSystem::FileReadAllAsString(scriptFile, &script) == false)
+	{
+		return false;
+	}
+
+	int result;
+
+	m_builder->SetIncludeCallback(IncludeHandler, NULL);
+
+	result = m_builder->StartNewModule(engine, "main"); if (result < 0) { return false; }
+	result = m_builder->AddSectionFromMemory(StringUtility::ToString(scriptFile).c_str(), script.c_str(), (unsigned int)script.size(), 0); if (result < 0) { return false; }
+	result = m_builder->BuildModule(); if (result < 0) { return false; }
 
 	return true;
 }
@@ -349,7 +384,7 @@ B* refCast(A* a)
     return b;
 }
 
-bool AngelScriptRunner::Init(std::wstring launchFolder)
+bool AngelScriptRunner::Init()
 {
 	m_engine = asCreateScriptEngine();
 	if (m_engine == NULL)
@@ -948,8 +983,6 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	result = m_engine->RegisterGlobalFunction("uint SceneManager::CreateScene(bool)", asFUNCTION(SceneManager::CreateScene), asCALL_CDECL); if (result < 0) { return false; }
 	result = m_engine->RegisterGlobalFunction("void SceneManager::SetCurrentScene(uint)", asFUNCTION(SceneManager::SetCurrentScene), asCALL_CDECL); if (result < 0) { return false; }
 	result = m_engine->RegisterGlobalFunction("bool SceneManager::AssignNode(Node@, uint)", asFUNCTION(SceneManager::AssignNode), asCALL_CDECL); if (result < 0) { return false; }
-	result = m_engine->RegisterGlobalFunction("bool SceneManager::Update(float)", asFUNCTION(SceneManager::Update), asCALL_CDECL); if (result < 0) { return false; }
-	result = m_engine->RegisterGlobalFunction("bool SceneManager::Render()", asFUNCTION(SceneManager::Render), asCALL_CDECL); if (result < 0) { return false; }
 
 	result = m_engine->SetDefaultNamespace("FontManager"); if (result < 0) { return false; }
 	result = m_engine->RegisterGlobalFunction("bool FontManager::LoadFont(string)", asFUNCTION(FontManager::LoadFont), asCALL_CDECL); if (result < 0) { return false; }
@@ -992,7 +1025,7 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	result = docGen.Generate(); if (result < 0) { return false; }
 #endif
 
-	if (CompileScript(m_engine, launchFolder) == false)
+	if (CompileScript(m_engine) == false)
 	{
 		m_engine->Release();
 		return false;

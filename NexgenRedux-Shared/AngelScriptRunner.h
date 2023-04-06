@@ -28,7 +28,7 @@ namespace NexgenRedux
 
 		static void Close();
 
-		static bool Init(std::wstring launchFolder);
+		static bool Init();
 		static bool ExecuteInit(void);
 		static bool ExecuteRender(double dt);
 		static bool ExecuteWindowIconifyCallback(uint32_t iconified);

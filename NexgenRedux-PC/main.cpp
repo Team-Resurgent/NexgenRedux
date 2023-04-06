@@ -28,7 +28,7 @@ int main(int argc, const char* argv[])
 		return 0;
 	}
 
-    if (AngelScriptRunner::Init(ConfigLoader::GetLaunchFolder()) == false)
+    if (AngelScriptRunner::Init() == false)
     {
         return 0;
     }

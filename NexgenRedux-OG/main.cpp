@@ -28,7 +28,7 @@ void __cdecl main(int, char **)
 		return;
 	}
 
-    if (AngelScriptRunner::Init(ConfigLoader::GetLaunchFolder()) == false)
+    if (AngelScriptRunner::Init() == false)
     {
         return;
     }

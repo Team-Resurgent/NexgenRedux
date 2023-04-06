@@ -59,9 +59,6 @@ namespace NexgenRedux
 		static void SetWindowDropCallback(asIScriptGeneric* gen);
 		static void SetJoystickConnectCallback(asIScriptGeneric* gen);
 
-		static void DebugPrint(asIScriptGeneric* gen);
-		static void DebugPrintIf(asIScriptGeneric* gen);
-
 		static void GetAvailableMonitorCount(asIScriptGeneric* gen);
 		static void GetMonitorVideoMode(asIScriptGeneric* gen);
 		static void GetMonitorVideoModes(asIScriptGeneric* gen);

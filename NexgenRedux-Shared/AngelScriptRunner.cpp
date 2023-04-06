@@ -389,7 +389,12 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	int result;
 
 	result = m_engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL); if (result < 0) { return false; }
-
+	
+	result = m_engine->RegisterEnum("LogLevel"); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("LogLevel", "LogLevelInfo", DebugUtility::LOGLEVEL_INFO); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("LogLevel", "LogLevelWarning", DebugUtility::LOGLEVEL_WARNING); if (result < 0) { return false; }
+	result = m_engine->RegisterEnumValue("LogLevel", "LogLevelError", DebugUtility::LOGLEVEL_ERROR); if (result < 0) { return false; }
+	
 	result = m_engine->RegisterEnum("JoystickButtonState"); if (result < 0) { return false; }
 	result = m_engine->RegisterEnumValue("JoystickButtonState", "JoystickButtonStateNone", JoystickButtonStateNone); if (result < 0) { return false; }
 	result = m_engine->RegisterEnumValue("JoystickButtonState", "JoystickButtonStatePressed", JoystickButtonStatePressed); if (result < 0) { return false; }
@@ -671,8 +676,8 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	result = m_engine->RegisterGlobalFunction("double GetRandomDouble()", asFUNCTION(MathUtility::GetRandomDouble), asCALL_CDECL); if (result < 0) { return false; }
 	result = m_engine->RegisterGlobalFunction("int GetRandomIntInRange(int start, int end)", asFUNCTION(MathUtility::GetRandomIntInRange), asCALL_CDECL); if (result < 0) { return false; }
 
-	result = m_engine->RegisterGlobalFunction("void DebugPrintIf(const bool condition, const int logLevel, const string message)", asFUNCTIONPR(DebugUtility::LogMessageIf, (const bool, const DebugUtility::LogLevel, const std::string), void), asCALL_CDECL); if (result < 0) { return false; }
-	result = m_engine->RegisterGlobalFunction("void DebugPrint(const int logLevel, const string message)", asFUNCTIONPR(DebugUtility::LogMessage, (const DebugUtility::LogLevel, const std::string), void), asCALL_CDECL); if (result < 0) { return false; }
+	result = m_engine->RegisterGlobalFunction("void DebugPrintIf(const bool condition, const LogLevel logLevel, const string message)", asFUNCTIONPR(DebugUtility::LogMessageIf, (const bool, const DebugUtility::LogLevel, const std::string), void), asCALL_CDECL); if (result < 0) { return false; }
+	result = m_engine->RegisterGlobalFunction("void DebugPrint(const LogLevel logLevel, const string message)", asFUNCTIONPR(DebugUtility::LogMessage, (const DebugUtility::LogLevel, const std::string), void), asCALL_CDECL); if (result < 0) { return false; }
 
 	result = m_engine->RegisterGlobalFunction("uint64 GetTotalVirtualMemory()", asFUNCTION(Memory::GetTotalVirtualMemory), asCALL_CDECL); if (result < 0) { return false; }
 	result = m_engine->RegisterGlobalFunction("uint64 GetFreeVirtualMemory()", asFUNCTION(Memory::GetFreeVirtualMemory), asCALL_CDECL); if (result < 0) { return false; }
@@ -954,7 +959,7 @@ bool AngelScriptRunner::Init(std::wstring launchFolder)
 	result = m_engine->RegisterObjectMethod("Node", "TextNode@ opImplCast()", asFUNCTION((refCast<Node, Text>)), asCALL_CDECL_OBJLAST); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("TextNode", "Node@ opImplCast()", asFUNCTION((refCast<Text, Node>)), asCALL_CDECL_OBJLAST); if (result < 0) { return false; }
 
-	docGen.Generate();
+	result = docGen.Generate(); if (result < 0) { return false; }
 
 	if (CompileScript(m_engine, launchFolder) == false)
 	{

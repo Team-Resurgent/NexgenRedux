@@ -7,66 +7,66 @@ TextNode@ textMem = NodeManager::CreateText();
 
 void OnWindowIconify(uint iconified)
 {
-    DebugPrint(0, "OnWindowIconify iconified = " + iconified);
+    DebugPrint(LogLevelInfo, "OnWindowIconify iconified = " + iconified);
 }
 
 void OnWindowMaximize(uint maximized)
 {
-    DebugPrint(0, "OnWindowMaximize maximized = " + maximized);
+    DebugPrint(LogLevelInfo, "OnWindowMaximize maximized = " + maximized);
 }
 
 void OnWindowSize(uint width, uint height)
 {
-    DebugPrint(0, "OnWindowSize width = " + width + ", height = " + height);
+    DebugPrint(LogLevelInfo, "OnWindowSize width = " + width + ", height = " + height);
 }
 
 void OnWindowFocus(uint focused)
 {
-    DebugPrint(0, "OnWindowFocus focused = " + focused);
+    DebugPrint(LogLevelInfo, "OnWindowFocus focused = " + focused);
 }
 
 void OnWindowKeyboardKey(uint key, uint scancode, uint action, uint modifier)
 {
-    DebugPrint(0, "OnWindowKeyboardKey key = " + key + ", scancode = " + scancode + ", action = " + action + ", modifier = " + modifier);
+    DebugPrint(LogLevelInfo, "OnWindowKeyboardKey key = " + key + ", scancode = " + scancode + ", action = " + action + ", modifier = " + modifier);
 }
 
 void OnWindowKeyboardCharacter(uint codepoint)
 {
-    DebugPrint(0, "OnWindowKeyboardCharacter codepoint = " + codepoint);
+    DebugPrint(LogLevelInfo, "OnWindowKeyboardCharacter codepoint = " + codepoint);
 }
 
 void OnWindowMouseCursorPosition(double xPos, double yPos)
 {
     // commented out to reduce noisey logging
-    //DebugPrint(0, "OnWindowMouseCursorPosition xPos = " + xPos + ", yPos = " + yPos);
+    //DebugPrint(LogLevelInfo, "OnWindowMouseCursorPosition xPos = " + xPos + ", yPos = " + yPos);
 }
 
 void OnWindowMouseCursorEnter(uint entered)
 {
-    DebugPrint(0, "OnWindowMouseCursorEnter entered = " + entered);
+    DebugPrint(LogLevelInfo, "OnWindowMouseCursorEnter entered = " + entered);
 }
 
 void OnWindowMouseButton(uint button, uint action, uint modifier)
 {
-    DebugPrint(0, "OnWindowMouseButton button = " + button + ", action = " + action + ", modifier = " + modifier);
+    DebugPrint(LogLevelInfo, "OnWindowMouseButton button = " + button + ", action = " + action + ", modifier = " + modifier);
 }
 
 void OnWindowMouseScroll(double xOffset, double yOffset)
 {
-    DebugPrint(0, "OnWindowMouseScroll xOffset = " + xOffset + ", yOffset = " + yOffset);
+    DebugPrint(LogLevelInfo, "OnWindowMouseScroll xOffset = " + xOffset + ", yOffset = " + yOffset);
 }
 
 void OnWindowDrop(array<string> paths)
 {
     for (uint i = 0; i < paths.length(); i++)
     {
-        DebugPrint(0, "OnWindowDrop paths" + i + " = " + paths[i]);
+        DebugPrint(LogLevelInfo, "OnWindowDrop paths" + i + " = " + paths[i]);
     }
 }
 
 void OnJoystickConnect(uint joystickID, uint connected)
 {
-    DebugPrint(0, "OnJoystickConnect joystickID = " + joystickID + ", connected = " + connected);
+    DebugPrint(LogLevelInfo, "OnJoystickConnect joystickID = " + joystickID + ", connected = " + connected);
 }
 
 uint64 currentTime;
@@ -171,21 +171,21 @@ void Init()
 
     //sprite.SetUV(rect);
 
-    DebugPrint(0, "Initializing...");
+    DebugPrint(LogLevelInfo, "Initializing...");
 
-    DebugPrint(0, "Getting default video modes for each monitor...");
+    DebugPrint(LogLevelInfo, "Getting default video modes for each monitor...");
     uint monitorCount = GetAvailableMonitorCount();
-    DebugPrint(0, "monitorCount = " + monitorCount);
+    DebugPrint(LogLevelInfo, "monitorCount = " + monitorCount);
     for (uint i = 0; i < monitorCount; i++)
     {
         MonitorVideoMode monitorVideoMode = GetMonitorVideoMode(i);
-        DebugPrint(0, "monitorIndex = " + monitorVideoMode.monitorIndex);
-        DebugPrint(0, "width = " + monitorVideoMode.width);
-        DebugPrint(0, "height = " + monitorVideoMode.height);
-        DebugPrint(0, "redBits = " + monitorVideoMode.redBits);
-        DebugPrint(0, "greenBits = " + monitorVideoMode.greenBits);
-        DebugPrint(0, "blueBits = " + monitorVideoMode.blueBits);
-        DebugPrint(0, "refreshRate = " + monitorVideoMode.refreshRate);
+        DebugPrint(LogLevelInfo, "monitorIndex = " + monitorVideoMode.monitorIndex);
+        DebugPrint(LogLevelInfo, "width = " + monitorVideoMode.width);
+        DebugPrint(LogLevelInfo, "height = " + monitorVideoMode.height);
+        DebugPrint(LogLevelInfo, "redBits = " + monitorVideoMode.redBits);
+        DebugPrint(LogLevelInfo, "greenBits = " + monitorVideoMode.greenBits);
+        DebugPrint(LogLevelInfo, "blueBits = " + monitorVideoMode.blueBits);
+        DebugPrint(LogLevelInfo, "refreshRate = " + monitorVideoMode.refreshRate);
     }
 
     // Create window example
@@ -231,39 +231,39 @@ void Init()
     SetCursorMode(CursorModeNormal);
 
     bool joystickIsPresent = JoystickIsPresent(0);
-    DebugPrint(1, "JoystickIsPresent = " + joystickIsPresent);
+    DebugPrint(LogLevelInfo, "JoystickIsPresent = " + joystickIsPresent);
     bool joystickIsGamepad = JoystickIsGamepad(0);
-    DebugPrint(1, "JoystickIsGamepad = " + joystickIsGamepad);
+    DebugPrint(LogLevelInfo, "JoystickIsGamepad = " + joystickIsGamepad);
     uint joystickHatCount = GetJoystickHatCount(0);
-    DebugPrint(1, "JoystickHatCount = " + joystickHatCount);
+    DebugPrint(LogLevelInfo, "JoystickHatCount = " + joystickHatCount);
 
     SetClipboardString("hello world");
     // string clipoard = GetClipboardString();
-    // DebugPrint(1, "clipoard = " + clipoard);
+    // DebugPrint(LogLevelInfo, "clipoard = " + clipoard);
 
     SizeI windowSize = GetWindowSize();
-    DebugPrint(1, "windowSizeHeight = " + windowSize.width + ", windowSizeHeight = " + windowSize.height);
+    DebugPrint(LogLevelInfo, "windowSizeHeight = " + windowSize.width + ", windowSizeHeight = " + windowSize.height);
 
     Time timeNow = GetTimeNow();
-    DebugPrint(1, "month = " + timeNow.month);
-    DebugPrint(1, "day = " + timeNow.day);
-    DebugPrint(1, "year = " + timeNow.year);
-    DebugPrint(1, "hour = " + timeNow.hour);
-    DebugPrint(1, "minute = " + timeNow.minute);
-    DebugPrint(1, "second = " + timeNow.second);
+    DebugPrint(LogLevelInfo, "month = " + timeNow.month);
+    DebugPrint(LogLevelInfo, "day = " + timeNow.day);
+    DebugPrint(LogLevelInfo, "year = " + timeNow.year);
+    DebugPrint(LogLevelInfo, "hour = " + timeNow.hour);
+    DebugPrint(LogLevelInfo, "minute = " + timeNow.minute);
+    DebugPrint(LogLevelInfo, "second = " + timeNow.second);
 
     uint64 millisecondsNowStart = GetMillisecondsNow();
     SleepMilliseconds(1000);
     uint64 millisecondsNowEnd = GetMillisecondsNow();
     double durationSeconds = GetDurationSeconds(millisecondsNowStart, millisecondsNowEnd);
-    DebugPrint(1, "durationSeconds = " + durationSeconds);
+    DebugPrint(LogLevelInfo, "durationSeconds = " + durationSeconds);
 
     SeedRandomWithValue(123); // use to get same sequence random values each application run
 	SeedRandom(); // use to get random values each application run
 	double randomDouble = GetRandomDouble();
-    DebugPrint(1, "randomDouble = " + randomDouble);
+    DebugPrint(LogLevelInfo, "randomDouble = " + randomDouble);
 	int randomRange = GetRandomIntInRange(-100, 100);
-    DebugPrint(1, "randomRange = " + randomRange);
+    DebugPrint(LogLevelInfo, "randomRange = " + randomRange);
 
     // initialize default for fps
     previousTime = GetMillisecondsNow();
@@ -282,7 +282,7 @@ void Render(double dt)
     {
         double fps = CalculateFramesPerSecond(frameCount, durationFPS);
         textFPS.SetText("fps = " + fps);
-        DebugPrint(1, "fps = " + fps);
+        DebugPrint(LogLevelInfo, "fps = " + fps);
         frameCount = 0;
         previousTime = currentTime;
     }
@@ -290,36 +290,36 @@ void Render(double dt)
     textMem.SetText("free mem = " + (GetFreePhysicalMemory() / (1024 * 1024)) + "MB");
 
     JoystickButtonStates joystickButtonStates = GetJoystickButtonStates(0);
-	DebugPrintIf(joystickButtonStates.buttonA == JoystickButtonStatePressed, 1, "buttonA = " + joystickButtonStates.buttonA);
-	DebugPrintIf(joystickButtonStates.buttonB == JoystickButtonStatePressed, 1, "buttonB = " + joystickButtonStates.buttonB);
-	DebugPrintIf(joystickButtonStates.buttonX == JoystickButtonStatePressed, 1, "buttonX = " + joystickButtonStates.buttonX);
-	DebugPrintIf(joystickButtonStates.buttonY == JoystickButtonStatePressed, 1, "buttonY = " + joystickButtonStates.buttonY);
-	DebugPrintIf(joystickButtonStates.buttonLeftBumperOrWhite == JoystickButtonStatePressed, 1, "buttonLeftBumperOrWhite = " + joystickButtonStates.buttonLeftBumperOrWhite);
-	DebugPrintIf(joystickButtonStates.buttonRightBumperOrBlack == JoystickButtonStatePressed, 1, "buttonRightBumperOrBlack = " + joystickButtonStates.buttonRightBumperOrBlack);
-	DebugPrintIf(joystickButtonStates.buttonBack == JoystickButtonStatePressed, 1, "buttonBack = " + joystickButtonStates.buttonBack);
-	DebugPrintIf(joystickButtonStates.buttonStart == JoystickButtonStatePressed, 1, "buttonStart = " + joystickButtonStates.buttonStart);
-	DebugPrintIf(joystickButtonStates.buttonGuide == JoystickButtonStatePressed, 1, "buttonGuide = " + joystickButtonStates.buttonGuide);
-	DebugPrintIf(joystickButtonStates.buttonLeftThumb == JoystickButtonStatePressed, 1, "buttonLeftThumb = " + joystickButtonStates.buttonLeftThumb);
-	DebugPrintIf(joystickButtonStates.buttonRightThumb == JoystickButtonStatePressed, 1, "buttonRightThumb = " + joystickButtonStates.buttonRightThumb);
-	DebugPrintIf(joystickButtonStates.buttonDpadUp == JoystickButtonStatePressed, 1, "buttonDpadUp = " + joystickButtonStates.buttonDpadUp);
-	DebugPrintIf(joystickButtonStates.buttonDpadRight == JoystickButtonStatePressed, 1, "buttonDpadRight = " + joystickButtonStates.buttonDpadRight);
-	DebugPrintIf(joystickButtonStates.buttonDpadDown == JoystickButtonStatePressed, 1, "buttonDpadDown = " + joystickButtonStates.buttonDpadDown);
-	DebugPrintIf(joystickButtonStates.buttonDpadLeft == JoystickButtonStatePressed, 1, "buttonDpadLeft = " + joystickButtonStates.buttonDpadLeft);
+	DebugPrintIf(joystickButtonStates.buttonA == JoystickButtonStatePressed, LogLevelInfo, "buttonA = " + joystickButtonStates.buttonA);
+	DebugPrintIf(joystickButtonStates.buttonB == JoystickButtonStatePressed, LogLevelInfo, "buttonB = " + joystickButtonStates.buttonB);
+	DebugPrintIf(joystickButtonStates.buttonX == JoystickButtonStatePressed, LogLevelInfo, "buttonX = " + joystickButtonStates.buttonX);
+	DebugPrintIf(joystickButtonStates.buttonY == JoystickButtonStatePressed, LogLevelInfo, "buttonY = " + joystickButtonStates.buttonY);
+	DebugPrintIf(joystickButtonStates.buttonLeftBumperOrWhite == JoystickButtonStatePressed, LogLevelInfo, "buttonLeftBumperOrWhite = " + joystickButtonStates.buttonLeftBumperOrWhite);
+	DebugPrintIf(joystickButtonStates.buttonRightBumperOrBlack == JoystickButtonStatePressed, LogLevelInfo, "buttonRightBumperOrBlack = " + joystickButtonStates.buttonRightBumperOrBlack);
+	DebugPrintIf(joystickButtonStates.buttonBack == JoystickButtonStatePressed, LogLevelInfo, "buttonBack = " + joystickButtonStates.buttonBack);
+	DebugPrintIf(joystickButtonStates.buttonStart == JoystickButtonStatePressed, LogLevelInfo, "buttonStart = " + joystickButtonStates.buttonStart);
+	DebugPrintIf(joystickButtonStates.buttonGuide == JoystickButtonStatePressed, LogLevelInfo, "buttonGuide = " + joystickButtonStates.buttonGuide);
+	DebugPrintIf(joystickButtonStates.buttonLeftThumb == JoystickButtonStatePressed, LogLevelInfo, "buttonLeftThumb = " + joystickButtonStates.buttonLeftThumb);
+	DebugPrintIf(joystickButtonStates.buttonRightThumb == JoystickButtonStatePressed, LogLevelInfo, "buttonRightThumb = " + joystickButtonStates.buttonRightThumb);
+	DebugPrintIf(joystickButtonStates.buttonDpadUp == JoystickButtonStatePressed, LogLevelInfo, "buttonDpadUp = " + joystickButtonStates.buttonDpadUp);
+	DebugPrintIf(joystickButtonStates.buttonDpadRight == JoystickButtonStatePressed, LogLevelInfo, "buttonDpadRight = " + joystickButtonStates.buttonDpadRight);
+	DebugPrintIf(joystickButtonStates.buttonDpadDown == JoystickButtonStatePressed, LogLevelInfo, "buttonDpadDown = " + joystickButtonStates.buttonDpadDown);
+	DebugPrintIf(joystickButtonStates.buttonDpadLeft == JoystickButtonStatePressed, LogLevelInfo, "buttonDpadLeft = " + joystickButtonStates.buttonDpadLeft);
 
     JoystickAxisStates joystickAxisStates = GetJoystickAxisStates(0);
-	DebugPrintIf(abs(joystickAxisStates.axisLeftX) > 0.35, 1, "axisLeftX = " + joystickAxisStates.axisLeftX);
-	DebugPrintIf(abs(joystickAxisStates.axisLeftY) > 0.35, 1, "axisLeftY = " + joystickAxisStates.axisLeftY);
-	DebugPrintIf(abs(joystickAxisStates.axisRightX) > 0.35, 1, "axisRightX = " + joystickAxisStates.axisRightX);
-	DebugPrintIf(abs(joystickAxisStates.axisRightY) > 0.35, 1, "axisRightY = " + joystickAxisStates.axisRightY);
-	DebugPrintIf(joystickAxisStates.axisLeftTrigger > -0.65, 1, "axisLeftTrigger = " + joystickAxisStates.axisLeftTrigger);
-	DebugPrintIf(joystickAxisStates.axisRightTrigger > -0.65, 1, "axisRightTrigger = " + joystickAxisStates.axisRightTrigger);
+	DebugPrintIf(abs(joystickAxisStates.axisLeftX) > 0.35, LogLevelInfo, "axisLeftX = " + joystickAxisStates.axisLeftX);
+	DebugPrintIf(abs(joystickAxisStates.axisLeftY) > 0.35, LogLevelInfo, "axisLeftY = " + joystickAxisStates.axisLeftY);
+	DebugPrintIf(abs(joystickAxisStates.axisRightX) > 0.35, LogLevelInfo, "axisRightX = " + joystickAxisStates.axisRightX);
+	DebugPrintIf(abs(joystickAxisStates.axisRightY) > 0.35, LogLevelInfo, "axisRightY = " + joystickAxisStates.axisRightY);
+	DebugPrintIf(joystickAxisStates.axisLeftTrigger > -0.65, LogLevelInfo, "axisLeftTrigger = " + joystickAxisStates.axisLeftTrigger);
+	DebugPrintIf(joystickAxisStates.axisRightTrigger > -0.65, LogLevelInfo, "axisRightTrigger = " + joystickAxisStates.axisRightTrigger);
 
     uint joystickHatDirection = GetJoystickHatDirection(0, 0);
-    DebugPrintIf(joystickHatDirection > 0, 1, "joystickHatDirection = " + joystickHatDirection);
+    DebugPrintIf(joystickHatDirection > 0, LogLevelInfo, "joystickHatDirection = " + joystickHatDirection);
 
     // get space key state
     KeyButtonState keyPressed = GetKeyPressed(0x20);
-    DebugPrintIf(keyPressed == KeyButtonStatePressed, 1, "keyPressed = " + keyPressed);
+    DebugPrintIf(keyPressed == KeyButtonStatePressed, LogLevelInfo, "keyPressed = " + keyPressed);
 
     MouseButtonState mouseButtonPressed = GetMouseButtonPressed(0);
     if (mouseButtonPressed == MouseButtonStatePressed)
@@ -327,7 +327,7 @@ void Render(double dt)
         Vec2D mousePos = GetMouseCursorPosition();
         if (sprite2.HitTest(mousePos.x, mousePos.y, orthoCamera) == true)
         {
-            DebugPrint(1, "sprite clicked");
+            DebugPrint(LogLevelInfo, "sprite clicked");
         }
     }
 

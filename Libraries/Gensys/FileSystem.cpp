@@ -13,6 +13,7 @@
 #include <windows.h>
 #elif defined NEXGEN_MAC
 #include <sys/stat.h>
+#include <sys/syslimits.h>
 #include <dirent.h>
 #include <unistd.h>
 #elif defined NEXGEN_LINUX

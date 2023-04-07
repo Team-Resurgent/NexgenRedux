@@ -151,7 +151,9 @@ list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/Libraries/AngelScript/addons/scrip
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/Libraries/AngelScript/addons/serializer/serializer.cpp")
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/Libraries/AngelScript/addons/weakref/weakref.cpp")
 # DocGen
-list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/Libraries/DocGen/docgen.cpp")
+if (${OperatingSystem} MATCHES "Win")
+    list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/Libraries/DocGen/docgen.cpp")
+endif()
 # Main
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/NexgenRedux-PC/main.cpp")
 if (${OperatingSystem} MATCHES "Win")

@@ -227,7 +227,10 @@ if (${CMAKE_BUILD_TYPE} MATCHES "Release")
         )
     elseif (${OperatingSystem} MATCHES "Mac")
         add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-            COMMAND ${PROJECT_SOURCE_DIR}/Tools/Packages/packagesbuild ${PROJECT_SOURCE_DIR}/Tools/Packages/NexgenRedux.pkgproj
+            COMMAND echo "hello" && chmod a+x ${PROJECT_SOURCE_DIR}/Tools/Packages/packagesbuild
+        )     
+        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+            COMMAND echo "hello2" && ${PROJECT_SOURCE_DIR}/Tools/Packages/packagesbuild ${PROJECT_SOURCE_DIR}/Tools/Packages/NexgenRedux.pkgproj
         )     
     elseif (${OperatingSystem} MATCHES "Linux")    
         add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD

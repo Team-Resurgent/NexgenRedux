@@ -954,11 +954,11 @@ bool OpenGLRenderingHelper::RenderMesh(const std::vector<MeshUtility::Vertex>& m
 
 	glBindBuffer(GL_ARRAY_BUFFER, m_dynamicBuffer);
 	glEnableVertexAttribArray(aPosition);
-	glVertexAttribPointer(aPosition, 3, GL_FLOAT, GL_FALSE, sizeof(MeshUtility::Vertex), (void*)offsetof(MeshUtility::Vertex, position));
+	glVertexAttribPointer(aPosition, 3, GL_FLOAT, GL_FALSE, sizeof(MeshUtility::Vertex), (void*)0);
 	glEnableVertexAttribArray(aNormal);
-	glVertexAttribPointer(aNormal, 3, GL_FLOAT, GL_FALSE, sizeof(MeshUtility::Vertex), (void*)offsetof(MeshUtility::Vertex, normal));
+	glVertexAttribPointer(aNormal, 3, GL_FLOAT, GL_FALSE, sizeof(MeshUtility::Vertex), (void*)12);
 	glEnableVertexAttribArray(aTexCoord);
-	glVertexAttribPointer(aTexCoord, 2, GL_FLOAT, GL_FALSE, sizeof(MeshUtility::Vertex), (void*)offsetof(MeshUtility::Vertex, texcoord));
+	glVertexAttribPointer(aTexCoord, 2, GL_FLOAT, GL_FALSE, sizeof(MeshUtility::Vertex), (void*)24);
 
 	uint32_t vertexCount = (uint32_t)mesh.size();
 	if (m_renderStateManager->GetRenderState()->drawModeState.operation == DrawModeOperationTriangles) 

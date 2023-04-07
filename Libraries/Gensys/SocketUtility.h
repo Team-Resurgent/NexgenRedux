@@ -8,6 +8,10 @@
 #include <fcntl.h>
 #include <cctype>
 
+#if defined NEXGEN_MAC
+#include <sys/_types/_timeval.h> 
+#endif
+
 #if defined NEXGEN_WIN
 #include <winsock2.h>
 #elif defined NEXGEN_OG || defined NEXGEN_360

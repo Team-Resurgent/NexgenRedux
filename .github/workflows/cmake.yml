@@ -8,7 +8,7 @@ on:
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
-  BUILD_TYPE: Debug
+  BUILD_TYPE: Release
 
 jobs:
   build:
@@ -29,12 +29,25 @@ jobs:
     - name: Build
       # Build your program with the given configuration
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
-
-    - name: Zip Release
-      uses: TheDoctor0/zip-release@0.7.1
+      
+    - name: Upload Build Artifact
+      uses: actions/upload-artifact@v3.1.2
       with:
-        filename: 'NexgenRedux-PC.zip'
-        type: 'zip'
+        name: NexgenReduxSetup
+        path: ${{ github.workspace }}/build/NexgenReduxSetup.exe
+        if-no-files-found: error
+      
+    - name: Create draft Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: latest
+        draft: true
+        files: 'build/NexgenReduxSetup.exe'
+          
+      
+
+
+
         
         
 

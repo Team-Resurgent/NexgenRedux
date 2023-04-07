@@ -51,9 +51,9 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "{#AppRepoPath}\build\{#AppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#AppRepoPath}\build\libEGL.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#AppRepoPath}\build\libGLESv2.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#AppRepoPath}\build\bin\Release\{#AppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#AppRepoPath}\build\bin\Release\libEGL.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#AppRepoPath}\build\bin\Release\libGLESv2.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#AppRepoPath}\Libraries\VisualC\VC_redist.x64.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall
 
 [Icons]

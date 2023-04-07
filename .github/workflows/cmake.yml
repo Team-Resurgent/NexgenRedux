@@ -40,7 +40,7 @@ jobs:
       uses: vimtor/action-zip@v1.1
       with:
         files: build/NexgenReduxSetup.exe
-        dest:  build/NexgenRedu-PC.zip
+        dest:  build/NexgenRedux-PC.zip
         recursive: false
 
     - name: Create draft Release Windows

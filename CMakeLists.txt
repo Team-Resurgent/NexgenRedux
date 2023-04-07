@@ -205,6 +205,7 @@ elseif (${OperatingSystem} MATCHES "Linux")
         TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libEGL.so" "${CMAKE_BINARY_DIR}/bin/$<CONFIG>/libEGL.so"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libGLESv2.so" "${CMAKE_BINARY_DIR}/bin/$<CONFIG>/libGLESv2.so"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/Artwork/Icon.png" "${CMAKE_BINARY_DIR}/bin/$<CONFIG>/Icon.png"
         COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/Media" "${CMAKE_BINARY_DIR}/bin/$<CONFIG>/Media/"
         COMMAND_EXPAND_LISTS
     )
@@ -227,7 +228,7 @@ if (${CMAKE_BUILD_TYPE} MATCHES "Release")
         )     
     elseif (${OperatingSystem} MATCHES "Linux")    
         add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-            COMMAND zip -j -r ${PROJECT_SOURCE_DIR}/build/NexgenRedux-Linux.zip ${PROJECT_SOURCE_DIR}/Artwork/Icon.png ${PROJECT_SOURCE_DIR}/build/bin/Release/libEGL.so ${PROJECT_SOURCE_DIR}/build/bin/Release/libGLESv2.so ${PROJECT_SOURCE_DIR}/build/bin/Release/Media      
+            COMMAND (cd ${PROJECT_SOURCE_DIR}/build && zip -r NexgenRedux-Linux.zip ${PROJECT_SOURCE_DIR}/Artwork/Icon.png libEGL.so libGLESv2.so Media)
         )   
     endif()
 else()

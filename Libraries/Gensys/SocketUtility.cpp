@@ -59,7 +59,7 @@ bool SocketUtility::Create()
 	return this->Create(IPPROTO_TCP, SOCK_STREAM);
 }
 
-bool SocketUtility::Create(int Protocol)
+bool SocketUtility::Create(uint32_t Protocol)
 {
 	switch (Protocol) 
     {
@@ -70,7 +70,7 @@ bool SocketUtility::Create(int Protocol)
 	}
 }
 
-bool SocketUtility::Create(int Protocol, int Type)
+bool SocketUtility::Create(uint32_t Protocol, uint32_t Type)
 {
 	if (this->Check()) 
     {
@@ -123,7 +123,7 @@ void SocketUtility::SetBlocking(bool blocking)
 	m_blocking = blocking;
 }
 
-bool SocketUtility::Bind(unsigned short port)
+bool SocketUtility::Bind(uint16_t port)
 {
 	if (Check() == false && Create() == false) 
     {
@@ -216,6 +216,46 @@ void SocketUtility::SetState(SocketUtility::SockState state)
 {
     m_state = state;
 }
+
+//struct hostent* SocketUtility::GetHostByName(const char* name)
+//{
+//	XNDNS *pxndns;
+//	static HOSTENT host;
+//	HOSTENT *rvalue;
+//
+//	if(XNetDnsLookup(name, NULL, &pxndns) != 0)
+//		return NULL;
+//
+//	while (pxndns->iStatus == WSAEINPROGRESS)
+//	{
+//		msleep(5);
+//	}
+//
+//	if ((pxndns->iStatus == 0) && (pxndns->cina > 0))
+//	{
+//		static char * ipPtrs[2];
+//		static IN_ADDR ip;
+//
+//		host.h_name = (char*)name;
+//		host.h_aliases = NULL;
+//		host.h_addrtype = AF_INET;
+//		host.h_length = (gsi_u16)sizeof(IN_ADDR);
+//		host.h_addr_list = (gsi_i8 **)ipPtrs;
+//
+//		ip = pxndns->aina[0];
+//		ipPtrs[0] = (char *)&ip;
+//		ipPtrs[1] = NULL;
+//
+//		rvalue = &host;
+//	}
+//	else
+//	{
+//		rvalue = NULL;
+//	}
+//	XNetDnsRelease(pxndns);
+//
+//	return rvalue;
+//}
 
 struct sockaddr_in SocketUtility::GetAddress()
 {

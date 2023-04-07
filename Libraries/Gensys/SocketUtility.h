@@ -41,14 +41,14 @@ namespace Gensys
         ~SocketUtility();
 
         bool Create();
-        bool Create(int Protocol);
-        bool Create(int Protocol, int Type);
+        bool Create(uint32_t Protocol);
+        bool Create(uint32_t Protocol, uint32_t Type);
         void Drop();
         bool GetValid();
         uint32_t GetLastCode();
         bool GetBlocking();
         void SetBlocking(bool blocking);
-        bool Bind(unsigned short port);
+        bool Bind(uint16_t port);
         //bool Bind(const char* host, unsigned short port);
         bool Listen();
         bool Accept(SocketUtility* socket);
@@ -58,6 +58,9 @@ namespace Gensys
         SockState GetState();
         void SetState(SockState state);
 
+		void DnsLookup();
+		
+		//struct hostent* GetHostByName(const char* name)
         struct sockaddr_in GetAddress();
         uint64_t GetUAddress();
         bool IsError();

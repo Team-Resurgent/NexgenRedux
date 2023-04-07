@@ -42,7 +42,7 @@ jobs:
       with:
         tag_name: latest
         draft: true
-        files: *.*
+        files: '*.*'
           
       
 

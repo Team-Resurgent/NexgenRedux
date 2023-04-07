@@ -227,7 +227,7 @@ if (${CMAKE_BUILD_TYPE} MATCHES "Release")
         )     
     elseif (${OperatingSystem} MATCHES "Linux")    
         add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-            COMMAND zip -j ${PROJECT_BINARY_DIR}/NexgenRedux.zip ${PROJECT_BINARY_DIR}/libEGL.so ${PROJECT_BINARY_DIR}/libGLESv2.so ${PROJECT_BINARY_DIR}/NexgenRedux            
+            COMMAND zip -j -r ${PROJECT_SOURCE_DIR}/build/NexgenRedux-Linux.zip ${PROJECT_SOURCE_DIR}/Artwork/Icon.png ${PROJECT_SOURCE_DIR}/build/bin/Release/libEGL.so ${PROJECT_SOURCE_DIR}/build/bin/Release/libGLESv2.so ${PROJECT_SOURCE_DIR}/build/bin/Release/Media      
         )   
     endif()
 else()

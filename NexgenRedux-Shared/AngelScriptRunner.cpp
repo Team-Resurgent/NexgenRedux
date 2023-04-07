@@ -581,10 +581,10 @@ bool AngelScriptRunner::Init()
 	result = m_engine->RegisterObjectMethod("Vec2D", "Vec2D opMul(const Vec2D &in) const", asMETHODPR(MathUtility::Vec2D, operator*, (const MathUtility::Vec2D &) const, MathUtility::Vec2D), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("Vec2D", "Vec2D opAdd(const Vec2D &in) const", asMETHODPR(MathUtility::Vec2D, operator+, (const MathUtility::Vec2D &) const, MathUtility::Vec2D), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("Vec2D", "Vec2D opSub(const Vec2D &in) const", asMETHODPR(MathUtility::Vec2D, operator-, (const MathUtility::Vec2D &) const, MathUtility::Vec2D), asCALL_THISCALL); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectMethod("Vec2D", "Vec2D &opDivAssign(const Vec2D &in)", asMETHODPR(MathUtility::Vec2D, operator/=, (const MathUtility::Vec2D &), void), asCALL_THISCALL); if (result < 0) { return false; }
-    result = m_engine->RegisterObjectMethod("Vec2D", "Vec2D& opMulAssign(const Vec2D &in)", asMETHODPR(MathUtility::Vec2D, operator*=, (const MathUtility::Vec2D &), void), asCALL_THISCALL); if (result < 0) { return false; }
-    result = m_engine->RegisterObjectMethod("Vec2D", "Vec2D& opAddAssign(const Vec2D &in)", asMETHODPR(MathUtility::Vec2D, operator+=, (const MathUtility::Vec2D &), void), asCALL_THISCALL); if (result < 0) { return false; }
-    result = m_engine->RegisterObjectMethod("Vec2D", "Vec2D& opSubAssign(const Vec2D &in)", asMETHODPR(MathUtility::Vec2D, operator-=, (const MathUtility::Vec2D &), void), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("Vec2D", "Vec2D opDivAssign(const Vec2D &in)", asMETHODPR(MathUtility::Vec2D, operator/=, (const MathUtility::Vec2D &), void), asCALL_THISCALL); if (result < 0) { return false; }
+    result = m_engine->RegisterObjectMethod("Vec2D", "Vec2D opMulAssign(const Vec2D &in)", asMETHODPR(MathUtility::Vec2D, operator*=, (const MathUtility::Vec2D &), void), asCALL_THISCALL); if (result < 0) { return false; }
+    result = m_engine->RegisterObjectMethod("Vec2D", "Vec2D opAddAssign(const Vec2D &in)", asMETHODPR(MathUtility::Vec2D, operator+=, (const MathUtility::Vec2D &), void), asCALL_THISCALL); if (result < 0) { return false; }
+    result = m_engine->RegisterObjectMethod("Vec2D", "Vec2D opSubAssign(const Vec2D &in)", asMETHODPR(MathUtility::Vec2D, operator-=, (const MathUtility::Vec2D &), void), asCALL_THISCALL); if (result < 0) { return false; }
     result = m_engine->RegisterObjectMethod("Vec2D", "bool opEq(const Vec2D &in) const", asMETHODPR(MathUtility::Vec2D, operator==, (const MathUtility::Vec2D &) const, bool), asCALL_THISCALL); if (result < 0) { return false; }
     result = m_engine->RegisterObjectMethod("Vec2D", "bool opNotEq(const Vec2D &in) const", asMETHODPR(MathUtility::Vec2D, operator!=, (const MathUtility::Vec2D &) const, bool), asCALL_THISCALL); if (result < 0) { return false; }
 
@@ -601,10 +601,10 @@ bool AngelScriptRunner::Init()
     result = m_engine->RegisterObjectMethod("Vec2F", "Vec2F opMul(const Vec2F &in) const", asMETHODPR(MathUtility::Vec2F, operator*, (const MathUtility::Vec2F &) const, MathUtility::Vec2F), asCALL_THISCALL); if (result < 0) { return false; }
     result = m_engine->RegisterObjectMethod("Vec2F", "Vec2F opAdd(const Vec2F &in) const", asMETHODPR(MathUtility::Vec2F, operator+, (const MathUtility::Vec2F &) const, MathUtility::Vec2F), asCALL_THISCALL); if (result < 0) { return false; }
     result = m_engine->RegisterObjectMethod("Vec2F", "Vec2F opSub(const Vec2F &in) const", asMETHODPR(MathUtility::Vec2F, operator-, (const MathUtility::Vec2F &) const, MathUtility::Vec2F), asCALL_THISCALL); if (result < 0) { return false; }
-    result = m_engine->RegisterObjectMethod("Vec2F", "Vec2F &opDivAssign(const Vec2F &in)", asMETHODPR(MathUtility::Vec2F, operator/=, (const MathUtility::Vec2F &), void), asCALL_THISCALL); if (result < 0) { return false; }
-    result = m_engine->RegisterObjectMethod("Vec2F", "Vec2F& opMulAssign(const Vec2F &in)", asMETHODPR(MathUtility::Vec2F, operator*=, (const MathUtility::Vec2F &), void), asCALL_THISCALL); if (result < 0) { return false; }
-    result = m_engine->RegisterObjectMethod("Vec2F", "Vec2F& opAddAssign(const Vec2F &in)", asMETHODPR(MathUtility::Vec2F, operator+=, (const MathUtility::Vec2F &), void), asCALL_THISCALL); if (result < 0) { return false; }
-    result = m_engine->RegisterObjectMethod("Vec2F", "Vec2F& opSubAssign(const Vec2F &in)", asMETHODPR(MathUtility::Vec2F, operator-=, (const MathUtility::Vec2F &), void), asCALL_THISCALL); if (result < 0) { return false; }
+    result = m_engine->RegisterObjectMethod("Vec2F", "Vec2F opDivAssign(const Vec2F &in)", asMETHODPR(MathUtility::Vec2F, operator/=, (const MathUtility::Vec2F &), void), asCALL_THISCALL); if (result < 0) { return false; }
+    result = m_engine->RegisterObjectMethod("Vec2F", "Vec2F opMulAssign(const Vec2F &in)", asMETHODPR(MathUtility::Vec2F, operator*=, (const MathUtility::Vec2F &), void), asCALL_THISCALL); if (result < 0) { return false; }
+    result = m_engine->RegisterObjectMethod("Vec2F", "Vec2F opAddAssign(const Vec2F &in)", asMETHODPR(MathUtility::Vec2F, operator+=, (const MathUtility::Vec2F &), void), asCALL_THISCALL); if (result < 0) { return false; }
+    result = m_engine->RegisterObjectMethod("Vec2F", "Vec2F opSubAssign(const Vec2F &in)", asMETHODPR(MathUtility::Vec2F, operator-=, (const MathUtility::Vec2F &), void), asCALL_THISCALL); if (result < 0) { return false; }
     result = m_engine->RegisterObjectMethod("Vec2F", "bool opEq(const Vec2F &in) const", asMETHODPR(MathUtility::Vec2F, operator==, (const MathUtility::Vec2F &) const, bool), asCALL_THISCALL); if (result < 0) { return false; }
     result = m_engine->RegisterObjectMethod("Vec2F", "bool opNotEq(const Vec2F &in) const", asMETHODPR(MathUtility::Vec2F, operator!=, (const MathUtility::Vec2F &) const, bool), asCALL_THISCALL); if (result < 0) { return false; }
 
@@ -622,10 +622,10 @@ bool AngelScriptRunner::Init()
     result = m_engine->RegisterObjectMethod("Vec3F", "Vec3F opMul(const Vec3F &in) const", asMETHODPR(MathUtility::Vec3F, operator*, (const MathUtility::Vec3F &) const, MathUtility::Vec3F), asCALL_THISCALL); if (result < 0) { return false; }
     result = m_engine->RegisterObjectMethod("Vec3F", "Vec3F opAdd(const Vec3F &in) const", asMETHODPR(MathUtility::Vec3F, operator+, (const MathUtility::Vec3F &) const, MathUtility::Vec3F), asCALL_THISCALL); if (result < 0) { return false; }
     result = m_engine->RegisterObjectMethod("Vec3F", "Vec3F opSub(const Vec3F &in) const", asMETHODPR(MathUtility::Vec3F, operator-, (const MathUtility::Vec3F &) const, MathUtility::Vec3F), asCALL_THISCALL); if (result < 0) { return false; }
-    result = m_engine->RegisterObjectMethod("Vec3F", "Vec3F &opDivAssign(const Vec3F &in)", asMETHODPR(MathUtility::Vec3F, operator/=, (const MathUtility::Vec3F &), void), asCALL_THISCALL); if (result < 0) { return false; }
-    result = m_engine->RegisterObjectMethod("Vec3F", "Vec3F& opMulAssign(const Vec3F &in)", asMETHODPR(MathUtility::Vec3F, operator*=, (const MathUtility::Vec3F &), void), asCALL_THISCALL); if (result < 0) { return false; }
-    result = m_engine->RegisterObjectMethod("Vec3F", "Vec3F& opAddAssign(const Vec3F &in)", asMETHODPR(MathUtility::Vec3F, operator+=, (const MathUtility::Vec3F &), void), asCALL_THISCALL); if (result < 0) { return false; }
-    result = m_engine->RegisterObjectMethod("Vec3F", "Vec3F& opSubAssign(const Vec3F &in)", asMETHODPR(MathUtility::Vec3F, operator-=, (const MathUtility::Vec3F &), void), asCALL_THISCALL); if (result < 0) { return false; }
+    result = m_engine->RegisterObjectMethod("Vec3F", "Vec3F opDivAssign(const Vec3F &in)", asMETHODPR(MathUtility::Vec3F, operator/=, (const MathUtility::Vec3F &), void), asCALL_THISCALL); if (result < 0) { return false; }
+    result = m_engine->RegisterObjectMethod("Vec3F", "Vec3F opMulAssign(const Vec3F &in)", asMETHODPR(MathUtility::Vec3F, operator*=, (const MathUtility::Vec3F &), void), asCALL_THISCALL); if (result < 0) { return false; }
+    result = m_engine->RegisterObjectMethod("Vec3F", "Vec3F opAddAssign(const Vec3F &in)", asMETHODPR(MathUtility::Vec3F, operator+=, (const MathUtility::Vec3F &), void), asCALL_THISCALL); if (result < 0) { return false; }
+    result = m_engine->RegisterObjectMethod("Vec3F", "Vec3F opSubAssign(const Vec3F &in)", asMETHODPR(MathUtility::Vec3F, operator-=, (const MathUtility::Vec3F &), void), asCALL_THISCALL); if (result < 0) { return false; }
     result = m_engine->RegisterObjectMethod("Vec3F", "bool opEq(const Vec3F &in) const", asMETHODPR(MathUtility::Vec3F, operator==, (const MathUtility::Vec3F &) const, bool), asCALL_THISCALL); if (result < 0) { return false; }
     result = m_engine->RegisterObjectMethod("Vec3F", "bool opNotEq(const Vec3F &in) const", asMETHODPR(MathUtility::Vec3F, operator!=, (const MathUtility::Vec3F &) const, bool), asCALL_THISCALL); if (result < 0) { return false; }
     result = m_engine->RegisterObjectMethod("Vec3F", "float Dot(const Vec3F &in)", asMETHOD(MathUtility::Vec3F, Dot), asCALL_THISCALL); if (result < 0) { return false; }
@@ -647,10 +647,10 @@ bool AngelScriptRunner::Init()
     result = m_engine->RegisterObjectMethod("Vec4F", "Vec4F opMul(const Vec4F &in) const", asMETHODPR(MathUtility::Vec4F, operator*, (const MathUtility::Vec4F &) const, MathUtility::Vec4F), asCALL_THISCALL); if (result < 0) { return false; }
     result = m_engine->RegisterObjectMethod("Vec4F", "Vec4F opAdd(const Vec4F &in) const", asMETHODPR(MathUtility::Vec4F, operator+, (const MathUtility::Vec4F &) const, MathUtility::Vec4F), asCALL_THISCALL); if (result < 0) { return false; }
     result = m_engine->RegisterObjectMethod("Vec4F", "Vec4F opSub(const Vec4F &in) const", asMETHODPR(MathUtility::Vec4F, operator-, (const MathUtility::Vec4F &) const, MathUtility::Vec4F), asCALL_THISCALL); if (result < 0) { return false; }
-    result = m_engine->RegisterObjectMethod("Vec4F", "Vec4F &opDivAssign(const Vec4F &in)", asMETHODPR(MathUtility::Vec4F, operator/=, (const MathUtility::Vec4F &), void), asCALL_THISCALL); if (result < 0) { return false; }
-    result = m_engine->RegisterObjectMethod("Vec4F", "Vec4F& opMulAssign(const Vec4F &in)", asMETHODPR(MathUtility::Vec4F, operator*=, (const MathUtility::Vec4F &), void), asCALL_THISCALL); if (result < 0) { return false; }
-    result = m_engine->RegisterObjectMethod("Vec4F", "Vec4F& opAddAssign(const Vec4F &in)", asMETHODPR(MathUtility::Vec4F, operator+=, (const MathUtility::Vec4F &), void), asCALL_THISCALL); if (result < 0) { return false; }
-    result = m_engine->RegisterObjectMethod("Vec4F", "Vec4F& opSubAssign(const Vec4F &in)", asMETHODPR(MathUtility::Vec4F, operator-=, (const MathUtility::Vec4F &), void), asCALL_THISCALL); if (result < 0) { return false; }
+    result = m_engine->RegisterObjectMethod("Vec4F", "Vec4F opDivAssign(const Vec4F &in)", asMETHODPR(MathUtility::Vec4F, operator/=, (const MathUtility::Vec4F &), void), asCALL_THISCALL); if (result < 0) { return false; }
+    result = m_engine->RegisterObjectMethod("Vec4F", "Vec4F opMulAssign(const Vec4F &in)", asMETHODPR(MathUtility::Vec4F, operator*=, (const MathUtility::Vec4F &), void), asCALL_THISCALL); if (result < 0) { return false; }
+    result = m_engine->RegisterObjectMethod("Vec4F", "Vec4F opAddAssign(const Vec4F &in)", asMETHODPR(MathUtility::Vec4F, operator+=, (const MathUtility::Vec4F &), void), asCALL_THISCALL); if (result < 0) { return false; }
+    result = m_engine->RegisterObjectMethod("Vec4F", "Vec4F opSubAssign(const Vec4F &in)", asMETHODPR(MathUtility::Vec4F, operator-=, (const MathUtility::Vec4F &), void), asCALL_THISCALL); if (result < 0) { return false; }
     result = m_engine->RegisterObjectMethod("Vec4F", "bool opEq(const Vec4F &in) const", asMETHODPR(MathUtility::Vec4F, operator==, (const MathUtility::Vec4F &) const, bool), asCALL_THISCALL); if (result < 0) { return false; }
     result = m_engine->RegisterObjectMethod("Vec4F", "bool opNotEq(const Vec4F &in) const", asMETHODPR(MathUtility::Vec4F, operator!=, (const MathUtility::Vec4F &) const, bool), asCALL_THISCALL); if (result < 0) { return false; }
 
@@ -705,10 +705,10 @@ bool AngelScriptRunner::Init()
     result = m_engine->RegisterObjectMethod("Color3F", "Color3F opMul(const Color3F &in) const", asMETHODPR(MathUtility::Color3F, operator*, (const MathUtility::Color3F &) const, MathUtility::Color3F), asCALL_THISCALL); if (result < 0) { return false; }
     result = m_engine->RegisterObjectMethod("Color3F", "Color3F opAdd(const Color3F &in) const", asMETHODPR(MathUtility::Color3F, operator+, (const MathUtility::Color3F &) const, MathUtility::Color3F), asCALL_THISCALL); if (result < 0) { return false; }
     result = m_engine->RegisterObjectMethod("Color3F", "Color3F opSub(const Color3F &in) const", asMETHODPR(MathUtility::Color3F, operator-, (const MathUtility::Color3F &) const, MathUtility::Color3F), asCALL_THISCALL); if (result < 0) { return false; }
-    result = m_engine->RegisterObjectMethod("Color3F", "Color3F &opDivAssign(const Color3F &in)", asMETHODPR(MathUtility::Color3F, operator/=, (const MathUtility::Color3F &), void), asCALL_THISCALL); if (result < 0) { return false; }
-    result = m_engine->RegisterObjectMethod("Color3F", "Color3F& opMulAssign(const Color3F &in)", asMETHODPR(MathUtility::Color3F, operator*=, (const MathUtility::Color3F &), void), asCALL_THISCALL); if (result < 0) { return false; }
-    result = m_engine->RegisterObjectMethod("Color3F", "Color3F& opAddAssign(const Color3F &in)", asMETHODPR(MathUtility::Color3F, operator+=, (const MathUtility::Color3F &), void), asCALL_THISCALL); if (result < 0) { return false; }
-    result = m_engine->RegisterObjectMethod("Color3F", "Color3F& opSubAssign(const Color3F &in)", asMETHODPR(MathUtility::Color3F, operator-=, (const MathUtility::Color3F &), void), asCALL_THISCALL); if (result < 0) { return false; }
+    result = m_engine->RegisterObjectMethod("Color3F", "Color3F opDivAssign(const Color3F &in)", asMETHODPR(MathUtility::Color3F, operator/=, (const MathUtility::Color3F &), void), asCALL_THISCALL); if (result < 0) { return false; }
+    result = m_engine->RegisterObjectMethod("Color3F", "Color3F opMulAssign(const Color3F &in)", asMETHODPR(MathUtility::Color3F, operator*=, (const MathUtility::Color3F &), void), asCALL_THISCALL); if (result < 0) { return false; }
+    result = m_engine->RegisterObjectMethod("Color3F", "Color3F opAddAssign(const Color3F &in)", asMETHODPR(MathUtility::Color3F, operator+=, (const MathUtility::Color3F &), void), asCALL_THISCALL); if (result < 0) { return false; }
+    result = m_engine->RegisterObjectMethod("Color3F", "Color3F opSubAssign(const Color3F &in)", asMETHODPR(MathUtility::Color3F, operator-=, (const MathUtility::Color3F &), void), asCALL_THISCALL); if (result < 0) { return false; }
     result = m_engine->RegisterObjectMethod("Color3F", "bool opEq(const Color3F &in) const", asMETHODPR(MathUtility::Color3F, operator==, (const MathUtility::Color3F &) const, bool), asCALL_THISCALL); if (result < 0) { return false; }
     result = m_engine->RegisterObjectMethod("Color3F", "bool opNotEq(const Color3F &in) const", asMETHODPR(MathUtility::Color3F, operator!=, (const MathUtility::Color3F &) const, bool), asCALL_THISCALL); if (result < 0) { return false; }
 
@@ -724,10 +724,10 @@ bool AngelScriptRunner::Init()
     result = m_engine->RegisterObjectMethod("Color4F", "Color4F opMul(const Color4F &in) const", asMETHODPR(MathUtility::Color4F, operator*, (const MathUtility::Color4F &) const, MathUtility::Color4F), asCALL_THISCALL); if (result < 0) { return false; }
     result = m_engine->RegisterObjectMethod("Color4F", "Color4F opAdd(const Color4F &in) const", asMETHODPR(MathUtility::Color4F, operator+, (const MathUtility::Color4F &) const, MathUtility::Color4F), asCALL_THISCALL); if (result < 0) { return false; }
     result = m_engine->RegisterObjectMethod("Color4F", "Color4F opSub(const Color4F &in) const", asMETHODPR(MathUtility::Color4F, operator-, (const MathUtility::Color4F &) const, MathUtility::Color4F), asCALL_THISCALL); if (result < 0) { return false; }
-    result = m_engine->RegisterObjectMethod("Color4F", "Color4F &opDivAssign(const Color4F &in)", asMETHODPR(MathUtility::Color4F, operator/=, (const MathUtility::Color4F &), void), asCALL_THISCALL); if (result < 0) { return false; }
-    result = m_engine->RegisterObjectMethod("Color4F", "Color4F& opMulAssign(const Color4F &in)", asMETHODPR(MathUtility::Color4F, operator*=, (const MathUtility::Color4F &), void), asCALL_THISCALL); if (result < 0) { return false; }
-    result = m_engine->RegisterObjectMethod("Color4F", "Color4F& opAddAssign(const Color4F &in)", asMETHODPR(MathUtility::Color4F, operator+=, (const MathUtility::Color4F &), void), asCALL_THISCALL); if (result < 0) { return false; }
-    result = m_engine->RegisterObjectMethod("Color4F", "Color4F& opSubAssign(const Color4F &in)", asMETHODPR(MathUtility::Color4F, operator-=, (const MathUtility::Color4F &), void), asCALL_THISCALL); if (result < 0) { return false; }
+    result = m_engine->RegisterObjectMethod("Color4F", "Color4F opDivAssign(const Color4F &in)", asMETHODPR(MathUtility::Color4F, operator/=, (const MathUtility::Color4F &), void), asCALL_THISCALL); if (result < 0) { return false; }
+    result = m_engine->RegisterObjectMethod("Color4F", "Color4F opMulAssign(const Color4F &in)", asMETHODPR(MathUtility::Color4F, operator*=, (const MathUtility::Color4F &), void), asCALL_THISCALL); if (result < 0) { return false; }
+    result = m_engine->RegisterObjectMethod("Color4F", "Color4F opAddAssign(const Color4F &in)", asMETHODPR(MathUtility::Color4F, operator+=, (const MathUtility::Color4F &), void), asCALL_THISCALL); if (result < 0) { return false; }
+    result = m_engine->RegisterObjectMethod("Color4F", "Color4F opSubAssign(const Color4F &in)", asMETHODPR(MathUtility::Color4F, operator-=, (const MathUtility::Color4F &), void), asCALL_THISCALL); if (result < 0) { return false; }
     result = m_engine->RegisterObjectMethod("Color4F", "bool opEq(const Color4F &in) const", asMETHODPR(MathUtility::Color4F, operator==, (const MathUtility::Color4F &) const, bool), asCALL_THISCALL); if (result < 0) { return false; }
     result = m_engine->RegisterObjectMethod("Color4F", "bool opNotEq(const Color4F &in) const", asMETHODPR(MathUtility::Color4F, operator!=, (const MathUtility::Color4F &) const, bool), asCALL_THISCALL); if (result < 0) { return false; }
 
@@ -801,23 +801,23 @@ bool AngelScriptRunner::Init()
 
 	result = m_engine->RegisterObjectType("OrthoCameraNode", sizeof(0), asOBJ_REF | asOBJ_NOCOUNT); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("OrthoCameraNode", "uint GetID()", asMETHOD(OrthoCamera, GetID), asCALL_THISCALL); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectMethod("OrthoCameraNode", "Vec3F& GetAnchor()", asMETHOD(OrthoCamera, GetAnchor), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("OrthoCameraNode", "Vec3F GetAnchor()", asMETHOD(OrthoCamera, GetAnchor), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("OrthoCameraNode", "void SetAnchor(Vec3F)", asMETHOD(OrthoCamera, SetAnchor), asCALL_THISCALL); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectMethod("OrthoCameraNode", "Vec3F& GetRotation()", asMETHOD(OrthoCamera, GetRotation), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("OrthoCameraNode", "Vec3F GetRotation()", asMETHOD(OrthoCamera, GetRotation), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("OrthoCameraNode", "void SetRotation(Vec3F)", asMETHOD(OrthoCamera, SetRotation), asCALL_THISCALL); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectMethod("OrthoCameraNode", "Vec3F& GetSkew()", asMETHOD(OrthoCamera, GetSkew), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("OrthoCameraNode", "Vec3F GetSkew()", asMETHOD(OrthoCamera, GetSkew), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("OrthoCameraNode", "void SetSkew(Vec3F)", asMETHOD(OrthoCamera, SetSkew), asCALL_THISCALL); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectMethod("OrthoCameraNode", "Vec3F& GetScale()", asMETHOD(OrthoCamera, GetScale), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("OrthoCameraNode", "Vec3F GetScale()", asMETHOD(OrthoCamera, GetScale), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("OrthoCameraNode", "void SetScale(Vec3F)", asMETHOD(OrthoCamera, SetScale), asCALL_THISCALL); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectMethod("OrthoCameraNode", "Vec3F& GetPosition()", asMETHOD(OrthoCamera, GetPosition), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("OrthoCameraNode", "Vec3F GetPosition()", asMETHOD(OrthoCamera, GetPosition), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("OrthoCameraNode", "void SetPosition(Vec3F)", asMETHOD(OrthoCamera, SetPosition), asCALL_THISCALL); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectMethod("OrthoCameraNode", "Color4F& GetClearColor()", asMETHOD(OrthoCamera, GetClearColor), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("OrthoCameraNode", "Color4F GetClearColor()", asMETHOD(OrthoCamera, GetClearColor), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("OrthoCameraNode", "void SetClearColor(Color4F)", asMETHOD(OrthoCamera, SetClearColor), asCALL_THISCALL); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectMethod("OrthoCameraNode", "Vec3F& GetEye()", asMETHOD(OrthoCamera, GetEye), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("OrthoCameraNode", "Vec3F GetEye()", asMETHOD(OrthoCamera, GetEye), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("OrthoCameraNode", "void SetEye(Vec3F)", asMETHOD(OrthoCamera, SetEye), asCALL_THISCALL); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectMethod("OrthoCameraNode", "Vec3F& GetTarget()", asMETHOD(OrthoCamera, GetTarget), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("OrthoCameraNode", "Vec3F GetTarget()", asMETHOD(OrthoCamera, GetTarget), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("OrthoCameraNode", "void SetTarget(Vec3F)", asMETHOD(OrthoCamera, SetTarget), asCALL_THISCALL); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectMethod("OrthoCameraNode", "Vec3F& GetUp()", asMETHOD(OrthoCamera, GetUp), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("OrthoCameraNode", "Vec3F GetUp()", asMETHOD(OrthoCamera, GetUp), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("OrthoCameraNode", "void SetUp(Vec3F)", asMETHOD(OrthoCamera, SetUp), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("OrthoCameraNode", "float GetLeft()", asMETHOD(OrthoCamera, GetLeft), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("OrthoCameraNode", "void SetLeft(float)", asMETHOD(OrthoCamera, SetLeft), asCALL_THISCALL); if (result < 0) { return false; }
@@ -834,25 +834,25 @@ bool AngelScriptRunner::Init()
 	
 	result = m_engine->RegisterObjectType("SpriteNode", sizeof(0), asOBJ_REF | asOBJ_NOCOUNT); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("SpriteNode", "uint GetID()", asMETHOD(Sprite, GetID), asCALL_THISCALL); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectMethod("SpriteNode", "Vec3F& GetAnchor()", asMETHOD(Sprite, GetAnchor), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("SpriteNode", "Vec3F GetAnchor()", asMETHOD(Sprite, GetAnchor), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("SpriteNode", "void SetAnchor(Vec3F)", asMETHOD(Sprite, SetAnchor), asCALL_THISCALL); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectMethod("SpriteNode", "Vec3F& GetRotation()", asMETHOD(Sprite, GetRotation), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("SpriteNode", "Vec3F GetRotation()", asMETHOD(Sprite, GetRotation), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("SpriteNode", "void SetRotation(Vec3F)", asMETHOD(Sprite, SetRotation), asCALL_THISCALL); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectMethod("SpriteNode", "Vec3F& GetSkew()", asMETHOD(Sprite, GetSkew), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("SpriteNode", "Vec3F GetSkew()", asMETHOD(Sprite, GetSkew), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("SpriteNode", "void SetSkew(Vec3F)", asMETHOD(Sprite, SetSkew), asCALL_THISCALL); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectMethod("SpriteNode", "Vec3F& GetScale()", asMETHOD(Sprite, GetScale), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("SpriteNode", "Vec3F GetScale()", asMETHOD(Sprite, GetScale), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("SpriteNode", "void SetScale(Vec3F)", asMETHOD(Sprite, SetScale), asCALL_THISCALL); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectMethod("SpriteNode", "Vec3F& GetPosition()", asMETHOD(Sprite, GetPosition), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("SpriteNode", "Vec3F GetPosition()", asMETHOD(Sprite, GetPosition), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("SpriteNode", "void SetPosition(Vec3F)", asMETHOD(Sprite, SetPosition), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("SpriteNode", "bool GetVisible()", asMETHOD(Sprite, GetVisible), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("SpriteNode", "void SetVisible(bool)", asMETHOD(Sprite, SetVisible), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("SpriteNode", "string GetTexturePath()", asMETHOD(Sprite, GetTexturePath), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("SpriteNode", "void SetTexturePath(string)", asMETHOD(Sprite, SetTexturePath), asCALL_THISCALL); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectMethod("SpriteNode", "RectF& GetUV()", asMETHOD(Sprite, GetUV), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("SpriteNode", "RectF GetUV()", asMETHOD(Sprite, GetUV), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("SpriteNode", "void SetUV(RectF)", asMETHOD(Sprite, SetUV), asCALL_THISCALL); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectMethod("SpriteNode", "SizeF& GetSize()", asMETHOD(Sprite, GetSize), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("SpriteNode", "SizeF GetSize()", asMETHOD(Sprite, GetSize), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("SpriteNode", "void SetSize(SizeF)", asMETHOD(Sprite, SetSize), asCALL_THISCALL); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectMethod("SpriteNode", "Color4F& GetTint()", asMETHOD(Sprite, GetTint), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("SpriteNode", "Color4F GetTint()", asMETHOD(Sprite, GetTint), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("SpriteNode", "void SetTint(Color4F)", asMETHOD(Sprite, SetTint), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("SpriteNode", "BlendOperation GetBlend()", asMETHOD(Sprite, GetBlend), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("SpriteNode", "void SetBlend(BlendOperation)", asMETHOD(Sprite, SetBlend), asCALL_THISCALL); if (result < 0) { return false; }
@@ -870,15 +870,15 @@ bool AngelScriptRunner::Init()
 
 	result = m_engine->RegisterObjectType("TextNode", sizeof(0), asOBJ_REF | asOBJ_NOCOUNT); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("TextNode", "uint GetID()", asMETHOD(Text, GetID), asCALL_THISCALL); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectMethod("TextNode", "Vec3F& GetAnchor()", asMETHOD(Text, GetAnchor), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("TextNode", "Vec3F GetAnchor()", asMETHOD(Text, GetAnchor), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("TextNode", "void SetAnchor(Vec3F)", asMETHOD(Text, SetAnchor), asCALL_THISCALL); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectMethod("TextNode", "Vec3F& GetRotation()", asMETHOD(Text, GetRotation), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("TextNode", "Vec3F GetRotation()", asMETHOD(Text, GetRotation), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("TextNode", "void SetRotation(Vec3F)", asMETHOD(Text, SetRotation), asCALL_THISCALL); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectMethod("TextNode", "Vec3F& GetSkew()", asMETHOD(Text, GetSkew), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("TextNode", "Vec3F GetSkew()", asMETHOD(Text, GetSkew), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("TextNode", "void SetSkew(Vec3F)", asMETHOD(Text, SetSkew), asCALL_THISCALL); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectMethod("TextNode", "Vec3F& GetScale()", asMETHOD(Text, GetScale), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("TextNode", "Vec3F GetScale()", asMETHOD(Text, GetScale), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("TextNode", "void SetScale(Vec3F)", asMETHOD(Text, SetScale), asCALL_THISCALL); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectMethod("TextNode", "Vec3F& GetPosition()", asMETHOD(Text, GetPosition), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("TextNode", "Vec3F GetPosition()", asMETHOD(Text, GetPosition), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("TextNode", "void SetPosition(Vec3F)", asMETHOD(Text, SetPosition), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("TextNode", "bool GetVisible()", asMETHOD(Text, GetVisible), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("TextNode", "void SetVisible(bool)", asMETHOD(Text, SetVisible), asCALL_THISCALL); if (result < 0) { return false; }
@@ -890,8 +890,8 @@ bool AngelScriptRunner::Init()
 	result = m_engine->RegisterObjectMethod("TextNode", "void SetFontStyle(uint)", asMETHOD(Text, SetFontStyle), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("TextNode", "uint GetFontSize()", asMETHOD(Text, GetFontSize), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("TextNode", "void SetFontSize(uint)", asMETHOD(Text, SetFontSize), asCALL_THISCALL); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectMethod("TextNode", "SizeF& GetTextSize()", asMETHOD(Text, GetTextSize), asCALL_THISCALL); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectMethod("TextNode", "Color4F& GetTint()", asMETHOD(Text, GetTint), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("TextNode", "SizeF GetTextSize()", asMETHOD(Text, GetTextSize), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("TextNode", "Color4F GetTint()", asMETHOD(Text, GetTint), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("TextNode", "void SetTint(Color4F)", asMETHOD(Text, SetTint), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("TextNode", "BlendOperation GetBlend()", asMETHOD(Text, GetBlend), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("TextNode", "void SetBlend(BlendOperation)", asMETHOD(Text, SetBlend), asCALL_THISCALL); if (result < 0) { return false; }
@@ -909,19 +909,19 @@ bool AngelScriptRunner::Init()
 
 	result = m_engine->RegisterObjectType("FogNode", sizeof(0), asOBJ_REF | asOBJ_NOCOUNT); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("FogNode", "uint GetID()", asMETHOD(Fog, GetID), asCALL_THISCALL); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectMethod("FogNode", "Vec3F& GetAnchor()", asMETHOD(Fog, GetAnchor), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("FogNode", "Vec3F GetAnchor()", asMETHOD(Fog, GetAnchor), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("FogNode", "void SetAnchor(Vec3F)", asMETHOD(Fog, SetAnchor), asCALL_THISCALL); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectMethod("FogNode", "Vec3F& GetRotation()", asMETHOD(Fog, GetRotation), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("FogNode", "Vec3F GetRotation()", asMETHOD(Fog, GetRotation), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("FogNode", "void SetRotation(Vec3F)", asMETHOD(Fog, SetRotation), asCALL_THISCALL); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectMethod("FogNode", "Vec3F& GetSkew()", asMETHOD(Fog, GetSkew), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("FogNode", "Vec3F GetSkew()", asMETHOD(Fog, GetSkew), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("FogNode", "void SetSkew(Vec3F)", asMETHOD(Fog, SetSkew), asCALL_THISCALL); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectMethod("FogNode", "Vec3F& GetScale()", asMETHOD(Fog, GetScale), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("FogNode", "Vec3F GetScale()", asMETHOD(Fog, GetScale), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("FogNode", "void SetScale(Vec3F)", asMETHOD(Fog, SetScale), asCALL_THISCALL); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectMethod("FogNode", "Vec3F& GetPosition()", asMETHOD(Fog, GetPosition), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("FogNode", "Vec3F GetPosition()", asMETHOD(Fog, GetPosition), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("FogNode", "void SetPosition(Vec3F)", asMETHOD(Fog, SetPosition), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("FogNode", "FogOperation GetFog()", asMETHOD(Fog, GetFog), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("FogNode", "void SetFog(FogOperation)", asMETHOD(Fog, SetFog), asCALL_THISCALL); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectMethod("FogNode", "Color3F& GetFogColor()", asMETHOD(Fog, GetFogColor), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("FogNode", "Color3F GetFogColor()", asMETHOD(Fog, GetFogColor), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("FogNode", "void SetFogColor(Color3F)", asMETHOD(Fog, SetFogColor), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("FogNode", "float GetFogStart()", asMETHOD(Fog, GetFogStart), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("FogNode", "void SetFogStart(float)", asMETHOD(Fog, SetFogStart), asCALL_THISCALL); if (result < 0) { return false; }
@@ -932,51 +932,51 @@ bool AngelScriptRunner::Init()
 
 	result = m_engine->RegisterObjectType("LightingNode", sizeof(0), asOBJ_REF | asOBJ_NOCOUNT); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("LightingNode", "uint GetID()", asMETHOD(Lighting, GetID), asCALL_THISCALL); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectMethod("LightingNode", "Vec3F& GetAnchor()", asMETHOD(Lighting, GetAnchor), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("LightingNode", "Vec3F GetAnchor()", asMETHOD(Lighting, GetAnchor), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("LightingNode", "void SetAnchor(Vec3F)", asMETHOD(Lighting, SetAnchor), asCALL_THISCALL); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectMethod("LightingNode", "Vec3F& GetRotation()", asMETHOD(Lighting, GetRotation), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("LightingNode", "Vec3F GetRotation()", asMETHOD(Lighting, GetRotation), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("LightingNode", "void SetRotation(Vec3F)", asMETHOD(Lighting, SetRotation), asCALL_THISCALL); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectMethod("LightingNode", "Vec3F& GetSkew()", asMETHOD(Lighting, GetSkew), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("LightingNode", "Vec3F GetSkew()", asMETHOD(Lighting, GetSkew), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("LightingNode", "void SetSkew(Vec3F)", asMETHOD(Lighting, SetSkew), asCALL_THISCALL); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectMethod("LightingNode", "Vec3F& GetScale()", asMETHOD(Lighting, GetScale), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("LightingNode", "Vec3F GetScale()", asMETHOD(Lighting, GetScale), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("LightingNode", "void SetScale(Vec3F)", asMETHOD(Lighting, SetScale), asCALL_THISCALL); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectMethod("LightingNode", "Vec3F& GetPosition()", asMETHOD(Lighting, GetPosition), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("LightingNode", "Vec3F GetPosition()", asMETHOD(Lighting, GetPosition), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("LightingNode", "void SetPosition(Vec3F)", asMETHOD(Lighting, SetPosition), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("LightingNode", "LightsOperation GetLights()", asMETHOD(Lighting, GetLights), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("LightingNode", "void SetLights(LightsOperation)", asMETHOD(Lighting, SetLights), asCALL_THISCALL); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectMethod("LightingNode", "Color3F& GetAmbientLight()", asMETHOD(Lighting, GetAmbientLight), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("LightingNode", "Color3F GetAmbientLight()", asMETHOD(Lighting, GetAmbientLight), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("LightingNode", "void SetAmbientLight(Color3F)", asMETHOD(Lighting, SetAmbientLight), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("LightingNode", "LightOperation GetLight1()", asMETHOD(Lighting, GetLight1), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("LightingNode", "void SetLight1(LightOperation)", asMETHOD(Lighting, SetLight1), asCALL_THISCALL); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectMethod("LightingNode", "Vec3F& GetLight1Position()", asMETHOD(Lighting, GetLight1Position), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("LightingNode", "Vec3F GetLight1Position()", asMETHOD(Lighting, GetLight1Position), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("LightingNode", "void SetLight1Position(Vec3F)", asMETHOD(Lighting, SetLight1Position), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("LightingNode", "float GetLight1Distance()", asMETHOD(Lighting, GetLight1Distance), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("LightingNode", "void SetLight1Distance(float)", asMETHOD(Lighting, SetLight1Distance), asCALL_THISCALL); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectMethod("LightingNode", "Color4F& GetLight1Diffuse()", asMETHOD(Lighting, GetLight1Diffuse), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("LightingNode", "Color4F GetLight1Diffuse()", asMETHOD(Lighting, GetLight1Diffuse), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("LightingNode", "void SetLight1Diffuse(Color4F)", asMETHOD(Lighting, SetLight1Diffuse), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("LightingNode", "LightOperation GetLight2()", asMETHOD(Lighting, GetLight2), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("LightingNode", "void SetLight2(LightOperation)", asMETHOD(Lighting, SetLight2), asCALL_THISCALL); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectMethod("LightingNode", "Vec3F& GetLight2Position()", asMETHOD(Lighting, GetLight2Position), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("LightingNode", "Vec3F GetLight2Position()", asMETHOD(Lighting, GetLight2Position), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("LightingNode", "void SetLight2Position(Vec3F)", asMETHOD(Lighting, SetLight2Position), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("LightingNode", "float GetLight2Distance()", asMETHOD(Lighting, GetLight2Distance), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("LightingNode", "void SetLight2Distance(float)", asMETHOD(Lighting, SetLight2Distance), asCALL_THISCALL); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectMethod("LightingNode", "Color4F& GetLight2Diffuse()", asMETHOD(Lighting, GetLight2Diffuse), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("LightingNode", "Color4F GetLight2Diffuse()", asMETHOD(Lighting, GetLight2Diffuse), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("LightingNode", "void SetLight2Diffuse(Color4F)", asMETHOD(Lighting, SetLight2Diffuse), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("LightingNode", "LightOperation GetLight3()", asMETHOD(Lighting, GetLight3), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("LightingNode", "void SetLight3(LightOperation)", asMETHOD(Lighting, SetLight3), asCALL_THISCALL); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectMethod("LightingNode", "Vec3F& GetLight3Position()", asMETHOD(Lighting, GetLight3Position), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("LightingNode", "Vec3F GetLight3Position()", asMETHOD(Lighting, GetLight3Position), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("LightingNode", "void SetLight3Position(Vec3F)", asMETHOD(Lighting, SetLight3Position), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("LightingNode", "float GetLight3Distance()", asMETHOD(Lighting, GetLight3Distance), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("LightingNode", "void SetLight3Distance(float)", asMETHOD(Lighting, SetLight3Distance), asCALL_THISCALL); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectMethod("LightingNode", "Color4F& GetLight3Diffuse()", asMETHOD(Lighting, GetLight3Diffuse), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("LightingNode", "Color4F GetLight3Diffuse()", asMETHOD(Lighting, GetLight3Diffuse), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("LightingNode", "void SetLight3Diffuse(Color4F)", asMETHOD(Lighting, SetLight3Diffuse), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("LightingNode", "LightOperation GetLight4()", asMETHOD(Lighting, GetLight4), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("LightingNode", "void SetLight4(LightOperation)", asMETHOD(Lighting, SetLight4), asCALL_THISCALL); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectMethod("LightingNode", "Vec3F& GetLight4Position()", asMETHOD(Lighting, GetLight4Position), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("LightingNode", "Vec3F GetLight4Position()", asMETHOD(Lighting, GetLight4Position), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("LightingNode", "void SetLight4Position(Vec3F)", asMETHOD(Lighting, SetLight4Position), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("LightingNode", "float GetLight4Distance()", asMETHOD(Lighting, GetLight4Distance), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("LightingNode", "void SetLight4Distance(float)", asMETHOD(Lighting, SetLight4Distance), asCALL_THISCALL); if (result < 0) { return false; }
-	result = m_engine->RegisterObjectMethod("LightingNode", "Color4F& GetLight4Diffuse()", asMETHOD(Lighting, GetLight4Diffuse), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("LightingNode", "Color4F GetLight4Diffuse()", asMETHOD(Lighting, GetLight4Diffuse), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("LightingNode", "void SetLight4Diffuse(Color4F)", asMETHOD(Lighting, SetLight4Diffuse), asCALL_THISCALL); if (result < 0) { return false; }
 
 	result = m_engine->SetDefaultNamespace("SceneManager"); if (result < 0) { return false; }

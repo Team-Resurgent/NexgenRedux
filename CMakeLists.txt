@@ -218,10 +218,6 @@ add_custom_target(ALWAYS_DO_POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E touch ${PROJECT_SOURCE_DIR}/NexgenRedux-PC/main.cpp
 )
 
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-COMMAND ${PROJECT_SOURCE_DIR}/Tools/Packages/packagesbuild ${PROJECT_SOURCE_DIR}/Tools/Packages/NexgenRedux.pkgproj
-)     
-
 # Create install package
 if (${CMAKE_BUILD_TYPE} MATCHES "Release")
     if (${OperatingSystem} MATCHES "Win")

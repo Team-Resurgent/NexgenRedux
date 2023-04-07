@@ -33,7 +33,7 @@ jobs:
     - name: Content list
       uses: enricomarino/actions@v2
       with:
-        source: ${{ github.workspace }}\build
+        source: ${{ github.workspace }}
       
     - name: Create draft Release
       uses: softprops/action-gh-release@v1

@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
 
 env:
-  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
+
   BUILD_TYPE: Release
 
 jobs:
@@ -18,9 +18,6 @@ jobs:
         os: [windows-latest, ubuntu-latest]
   
     runs-on: ${{ matrix.os }}
-
-    # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
-    # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idruns-on
 
     steps:
     - uses: actions/checkout@v3
@@ -35,16 +32,24 @@ jobs:
       if: ${{ matrix.os == 'ubuntu-latest' }}
       uses: montudor/action-zip@v1
 
-    - name: Zip Setup
+    - name: Zip Windows
       if: ${{ matrix.os == 'windows-latest' }}
       uses: vimtor/action-zip@v1.1
       with:
         files: build/NexgenReduxSetup.exe
         dest:  build/NexgenRedux-PC.zip
         recursive: false
+        
+    - name: Zip Mac
+      if: ${{ matrix.os == 'windows-latest' }}
+      uses: vimtor/action-zip@v1.1
+      with:
+        files: build/NexgenRedux.pkg
+        dest:  build/NexgenRedux-Mac.zip
+        recursive: false
 
     - name: Create draft Release Windows
-      if: ${{ matrix.os == 'windows-latest' }}
+      if: ${{ matrix.os == 'macos-latest' }}
       uses: softprops/action-gh-release@v1
       with:
         tag_name: latest
@@ -58,6 +63,14 @@ jobs:
         tag_name: latest
         draft: true
         files: 'build/NexgenRedux-Linux.zip'
+        
+    - name: Create draft Release Mac
+      if: ${{ matrix.os == 'macos-latest' }}
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: latest
+        draft: true
+        files: 'build/NexgenRedux-Mac.zip'
 
 
       

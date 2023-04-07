@@ -225,10 +225,10 @@ if (${CMAKE_BUILD_TYPE} MATCHES "Release")
         add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
             COMMAND ${PROJECT_SOURCE_DIR}/Tools/InnoSetup/iscc.exe ${PROJECT_SOURCE_DIR}/Tools/InnoSetup/NexgenRedux.iss /DAppRepoPath=${PROJECT_SOURCE_DIR} /DAppVersion=1.0.0
         )
-    elseif (${OperatingSystem} MATCHES "Mac")
-        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-            COMMAND ${PROJECT_SOURCE_DIR}/Tools/Packages/packagesbuild ${PROJECT_SOURCE_DIR}/Tools/Packages/NexgenRedux.pkgproj
-        )     
+    # elseif (${OperatingSystem} MATCHES "Mac")
+    #     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    #         COMMAND ${PROJECT_SOURCE_DIR}/Tools/Packages/packagesbuild ${PROJECT_SOURCE_DIR}/Tools/Packages/NexgenRedux.pkgproj
+    #     )     
     elseif (${OperatingSystem} MATCHES "Linux")    
         add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
             COMMAND cd ${PROJECT_SOURCE_DIR}/build/bin/Release && zip -r ${PROJECT_SOURCE_DIR}/build/NexgenRedux-Linux.zip Icon.png libEGL.so libGLESv2.so NexgenRedux Media

@@ -10,8 +10,6 @@
 #include "WindowManager.h"
 #include "RenderStateManager.h"
 
-#include "Windows.h"
-
 using namespace NexgenRedux;
 using namespace Gensys;
 using namespace AngelScript;

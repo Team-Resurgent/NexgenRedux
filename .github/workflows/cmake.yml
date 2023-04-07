@@ -43,7 +43,7 @@ jobs:
         tag_name: latest
         draft: true
         files: |
-          NexgenReduxSetup.exe
+          /build/NexgenReduxSetup.exe
           
       
 

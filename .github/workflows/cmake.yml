@@ -30,10 +30,19 @@ jobs:
       # Build your program with the given configuration
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
       
-    - name: Content list
-      uses: enricomarino/actions@v2
+    - name: Fetch action
+      id: pl
+      uses: Rishabh510/Path-lister-action@master
       with:
-        source: ${{ github.workspace }}
+        path: "."
+        type: "*.*"
+
+    - name: Output results
+      run: |
+        echo "Found ${{ steps.pl.outputs.path_count }} file(s) with this extension:"
+        for i in ${{ steps.pl.outputs.paths }}; do
+        echo $i
+        done
       
     - name: Create draft Release
       uses: softprops/action-gh-release@v1

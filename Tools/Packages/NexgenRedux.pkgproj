@@ -51,7 +51,7 @@
 															<key>GID</key>
 															<integer>80</integer>
 															<key>PATH</key>
-															<string>../../build/libEGL.dylib</string>
+															<string>../../build/bin/Release/libEGL.dylib</string>
 															<key>PATH_TYPE</key>
 															<integer>1</integer>
 															<key>PERMISSIONS</key>
@@ -67,7 +67,7 @@
 															<key>GID</key>
 															<integer>80</integer>
 															<key>PATH</key>
-															<string>../../build/libGLESv2.dylib</string>
+															<string>../../build/bin/Release/libGLESv2.dylib</string>
 															<key>PATH_TYPE</key>
 															<integer>1</integer>
 															<key>PERMISSIONS</key>
@@ -83,7 +83,7 @@
 															<key>GID</key>
 															<integer>80</integer>
 															<key>PATH</key>
-															<string>../../build/NexgenRedux</string>
+															<string>../../build/bin/Release/NexgenRedux</string>
 															<key>PATH_TYPE</key>
 															<integer>1</integer>
 															<key>PERMISSIONS</key>
@@ -158,7 +158,7 @@
 									<key>GID</key>
 									<integer>80</integer>
 									<key>PATH</key>
-									<string>Nexgen Redux.app</string>
+									<string>NexgenRedux.app</string>
 									<key>PATH_TYPE</key>
 									<integer>2</integer>
 									<key>PERMISSIONS</key>

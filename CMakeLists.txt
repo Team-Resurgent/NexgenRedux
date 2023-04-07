@@ -236,38 +236,3 @@ else()
 endif()
 
 add_dependencies(${PROJECT_NAME} ALWAYS_DO_POST_BUILD)
-
-# CPack settings
-# include(CPack)
-# install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)
-# if (${OperatingSystem} MATCHES "Win")
-#     install(FILES "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libEGL.dll" DESTINATION bin)
-#     install(FILES "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libGLESv2.dll" DESTINATION bin)
-#     install(FILES "${PROJECT_SOURCE_DIR}/Libraries/VisualC/VC_redist.x64.exe" DESTINATION bin)
-#     set(CPACK_GENERATOR NSIS)
-#     #set(CPACK_PACKAGE_INSTALL_DIRECTORY "Nexgen Redux")
-#     #set(CPACK_NSIS_IGNORE_LICENSE_PAGE 1)
-#     set(CPACK_NSIS_MUI_ICON "${PROJECT_SOURCE_DIR}/Artwork\\\\Icon.ico")
-#     set(CPACK_NSIS_MUI_UNIICON "${PROJECT_SOURCE_DIR}/Artwork\\\\Icon.ico")
-#     set(CPACK_NSIS_CREATE_ICONS_EXTRA "CreateShortCut '$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Nexgen Redux.lnk' '$INSTDIR\\\\bin\\\\NexgenRedux.exe' ''")
-#     set(CPACK_NSIS_DELETE_ICONS_EXTRA "Delete '$SMPROGRAMS\\\\$START_MENU\\\\Nexgen Redux.lnk'")
-#     set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "ExecWait '\\\\$INSTDIR\\\\bin\\\\VC_redist.x64.exe' ''")
-#     set(CPACK_NSIS_MODIFY_PATH "ON")
-#     set(CPACK_VERBATIM_VARIABLES TRUE)
-#     set(CPACK_PACKAGE_FILE_NAME \"yourpackagename_${BUILD_TYPE}\")
-#     #set(CPACK_SOURCE_PACKAGE_FILE_NAME "Nex")
-# elseif (${OperatingSystem} MATCHES "Mac")
-#     install(FILES "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libEGL.dylib" DESTINATION bin)
-#     install(FILES "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libGLESv2.dylib" DESTINATION bin)    
-# elseif (${OperatingSystem} MATCHES "Linux")
-#     install(FILES "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libEGL.so" DESTINATION bin)
-#     install(FILES "${PROJECT_SOURCE_DIR}/Libraries/Angle/Lib/${OperatingSystem}/libGLESv2.so" DESTINATION bin)
-#     set(CPACK_GENERATOR TGZ)
-# endif()
-
-# # After build run CPack
-# add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-#     COMMAND "${CMAKE_CPACK_COMMAND}" "-C" "Release"
-#     COMMENT "Packing"
-#     DEPENDS ${PROJECT_NAME}
-# )

@@ -40,16 +40,25 @@ jobs:
       uses: vimtor/action-zip@v1.1
       with:
         files: build/NexgenReduxSetup.exe
-        dest:  build/NexgenReduxSetup-PC.zip
+        dest:  build/NexgenRedux-PC.zip
         recursive: false
 
-    - name: Create draft Release
+    - name: Create draft Release Windows
       if: ${{ matrix.os == 'windows-latest' }}
       uses: softprops/action-gh-release@v1
       with:
         tag_name: latest
         draft: true
-        files: 'build/NexgenReduxSetup-PC.zip'
+        files: 'build/NexgenRedux-PC.zip'
+        
+    - name: Create draft Release Linux
+      if: ${{ matrix.os == 'ubuntu-latest' }}
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: latest
+        draft: true
+        files: 'build/NexgenRedux-Linux.zip'
+
 
       
 

@@ -49,7 +49,7 @@ jobs:
       with:
         tag_name: latest
         draft: true
-        files: 'build/NexgenReduxSetup-PC.zip'
+        files: 'build/NexgenRedux-PC.zip'
         
     - name: Create draft Release Linux
       if: ${{ matrix.os == 'ubuntu-latest' }}

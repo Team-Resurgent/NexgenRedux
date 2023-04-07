@@ -14,6 +14,7 @@ namespace
 
     typedef struct ConfigData 
     {
+        std::wstring MediaOverride;
         std::wstring LaunchFolder;
     } ConfigData;
 
@@ -49,7 +50,9 @@ namespace
         std::wstring param2 = StringUtility::ToWideString(params[1]);
         param2 = StringUtility::Trim(param2, ' ');
 
-        if (param1.compare(L"LAUNCHFOLDER") == 0) {
+        if (param1.compare(L"MEDIAOVERRIDE") == 0) {
+            configData.MediaOverride = std::wstring(param2);
+        } else if (param1.compare(L"LAUNCHFOLDER") == 0) {
             configData.LaunchFolder = std::wstring(param2);
         }
     }
@@ -57,6 +60,9 @@ namespace
 
 bool ConfigLoader::LoadConfig()
 {
+    m_config.MediaOverride = L"";
+    m_config.LaunchFolder = L"Default";
+
     std::wstring appPath;
 	if (FileSystem::GetAppDirectory(appPath) == false)
     {
@@ -113,42 +119,41 @@ bool ConfigLoader::LoadConfig()
 	return true;
 }
 
-std::wstring ConfigLoader::GetLaunchFolder()
-{
-    return m_config.LaunchFolder;
-}
-
 bool ConfigLoader::MapPath(const std::wstring& path, std::wstring& mappedPath)
 {
 	std::wstring mediaDirectory;
-    if (FileSystem::GetMediaDirectory(mediaDirectory) == false)
+    if (m_config.MediaOverride.length() > 0)
+    {
+        mediaDirectory = m_config.MediaOverride;
+    }
+    else if (FileSystem::GetMediaDirectory(mediaDirectory) == false)
     {
         return false;
     }
 
 	if (StringUtility::StartsWith(path, L"skin:", true))
 	{
-		std::wstring skinPath = FileSystem::CombinePath(mediaDirectory, GetLaunchFolder());
+		std::wstring skinPath = FileSystem::CombinePath(mediaDirectory, m_config.LaunchFolder);
 		mappedPath = FileSystem::CombinePath(skinPath, path.substr(5));			
 		return true;
 	}
 	if (StringUtility::StartsWith(path, L"script:", true))
 	{
-		std::wstring scriptPath = FileSystem::CombinePath(mediaDirectory, GetLaunchFolder());
+		std::wstring scriptPath = FileSystem::CombinePath(mediaDirectory, m_config.LaunchFolder);
 		scriptPath = FileSystem::CombinePath(scriptPath, L"Scripts");
 		mappedPath = FileSystem::CombinePath(scriptPath, path.substr(7));
 		return true;
 	}
 	if (StringUtility::StartsWith(path, L"asset:", true))
 	{
-		std::wstring assetPath = FileSystem::CombinePath(mediaDirectory, GetLaunchFolder());		
+		std::wstring assetPath = FileSystem::CombinePath(mediaDirectory, m_config.LaunchFolder);		
 		assetPath = FileSystem::CombinePath(assetPath, L"Asset");
 		mappedPath = FileSystem::CombinePath(assetPath, path.substr(6));
 		return true;
 	}
 	if (StringUtility::StartsWith(path, L"audio:", true))
 	{
-		std::wstring audioPath = FileSystem::CombinePath(mediaDirectory, GetLaunchFolder());		
+		std::wstring audioPath = FileSystem::CombinePath(mediaDirectory, m_config.LaunchFolder);		
 		audioPath = FileSystem::CombinePath(audioPath, L"Audio");
 		mappedPath = FileSystem::CombinePath(audioPath, path.substr(6));
 		return true;

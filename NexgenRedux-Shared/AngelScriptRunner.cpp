@@ -160,7 +160,12 @@ void DebugLineCallback(asIScriptContext *ctx, void* ptr)
 		return -1;
 	}
 
-	std::wstring scriptFile = FileSystem::CombinePath(FileSystem::CombinePath(mediaDirectory, ConfigLoader::GetLaunchFolder()), StringUtility::ToWideString(include));
+	std::wstring scriptFile;
+	if (ConfigLoader::MapPath(L"skin:", scriptFile) == false)
+	{
+		return false;
+	}
+	scriptFile = FileSystem::CombinePath(scriptFile, StringUtility::ToWideString(include));
 
 	std::string script;
 	if (FileSystem::FileReadAllAsString(scriptFile, &script) == false)
@@ -184,7 +189,12 @@ bool CompileScript(asIScriptEngine* engine)
 		return false;
 	}
 
-	std::wstring scriptFile = FileSystem::CombinePath(FileSystem::CombinePath(mediaDirectory, ConfigLoader::GetLaunchFolder()), L"Main.as");
+	std::wstring scriptFile;
+	if (ConfigLoader::MapPath(L"skin:", scriptFile) == false)
+	{
+		return false;
+	}
+	scriptFile = FileSystem::CombinePath(scriptFile, L"Main.as");
 
 	std::string script;
 	if (FileSystem::FileReadAllAsString(scriptFile, &script) == false)

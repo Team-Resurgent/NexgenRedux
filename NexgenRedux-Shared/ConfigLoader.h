@@ -14,7 +14,6 @@ namespace NexgenRedux
 		} ConfigData;
 
 		static bool LoadConfig();
-		static std::wstring GetLaunchFolder();
 		static bool MapPath(const std::wstring& path, std::wstring& mappedPath);
 	};
 }

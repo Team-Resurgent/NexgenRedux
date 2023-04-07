@@ -23,6 +23,7 @@ SolidCompression=yes
 WizardStyle=modern
 WizardImageFile="{#AppRepoPath}\Artwork\InnoSetupTeamResurgentBanner.bmp"
 WizardSmallImageFile="{#AppRepoPath}\Artwork\InnoSetupTeamResurgentIcon.bmp"
+ArchitecturesInstallIn64BitMode=x64
 
 [Code]
 function VCRedistNeedsInstall: Boolean;
@@ -54,6 +55,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Source: "{#AppRepoPath}\build\bin\Release\{#AppExeName}"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#AppRepoPath}\build\bin\Release\libEGL.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#AppRepoPath}\build\bin\Release\libGLESv2.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#AppRepoPath}\build\bin\Release\Media\*"; DestDir: "{app}\Media"; Flags: ignoreversion recursesubdirs
 Source: "{#AppRepoPath}\Libraries\VisualC\VC_redist.x64.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall
 
 [Icons]

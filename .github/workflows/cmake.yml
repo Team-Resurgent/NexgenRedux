@@ -43,7 +43,7 @@ jobs:
         tag_name: latest
         draft: true
         files: |
-          ${{ github.workspace }}\build\NexgenReduxSetup.exe
+          ${{ github.workspace }}\NexgenReduxSetup.exe
           
       
 

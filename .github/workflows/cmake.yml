@@ -52,7 +52,7 @@ jobs:
         files: 'build/NexgenReduxSetup-PC.zip'
         
     - name: Create draft Release Linux
-      if: ${{ matrix.os == 'windows-latest' }}
+      if: ${{ matrix.os == 'ubuntu-latest' }}
       uses: softprops/action-gh-release@v1
       with:
         tag_name: latest

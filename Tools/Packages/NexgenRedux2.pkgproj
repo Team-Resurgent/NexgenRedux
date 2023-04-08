@@ -981,7 +981,7 @@
 					<key>GID</key>
 					<integer>0</integer>
 					<key>PATH</key>
-					<string>../../Tools/Packages/Info.plist</string>
+					<string>/Users/petertribe/Code/NexgenRedux/Tools/Packages/Info.plist</string>
 					<key>PATH_TYPE</key>
 					<integer>0</integer>
 					<key>PERMISSIONS</key>
@@ -997,7 +997,7 @@
 					<key>GID</key>
 					<integer>0</integer>
 					<key>PATH</key>
-					<string>../../Artwork/Icon.icns</string>
+					<string>/Users/petertribe/Code/NexgenRedux/Artwork/Icon.icns</string>
 					<key>PATH_TYPE</key>
 					<integer>0</integer>
 					<key>PERMISSIONS</key>
@@ -1013,7 +1013,7 @@
 					<key>GID</key>
 					<integer>0</integer>
 					<key>PATH</key>
-					<string>../../Libraries/Angle/Lib/Mac/libEGL.dylib</string>
+					<string>/Users/petertribe/Code/NexgenRedux/Libraries/Angle/Lib/Mac/libEGL.dylib</string>
 					<key>PATH_TYPE</key>
 					<integer>0</integer>
 					<key>PERMISSIONS</key>
@@ -1029,7 +1029,7 @@
 					<key>GID</key>
 					<integer>0</integer>
 					<key>PATH</key>
-					<string>../../Libraries/Angle/Lib/Mac/libGLESv2.dylib</string>
+					<string>/Users/petertribe/Code/NexgenRedux/Libraries/Angle/Lib/Mac/libGLESv2.dylib</string>
 					<key>PATH_TYPE</key>
 					<integer>0</integer>
 					<key>PERMISSIONS</key>

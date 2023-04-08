@@ -59,7 +59,7 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         tag_name: latest
-        draft: true
+        draft: false
         files: 'build/NexgenRedux-PC.zip'
         
     - name: Create draft Release Linux
@@ -67,7 +67,7 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         tag_name: latest
-        draft: true
+        draft: false
         files: 'build/NexgenRedux-Linux.zip'
         
     - name: Create draft Release Mac
@@ -75,5 +75,5 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         tag_name: latest
-        draft: true
+        draft: false
         files: 'build/NexgenRedux-Mac.zip'

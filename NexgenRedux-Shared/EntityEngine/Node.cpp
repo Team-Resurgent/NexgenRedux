@@ -170,11 +170,7 @@ void Node::CalculateTransforms()
     }
     
     MathUtility::Matrix4x4 inverseAnchorMatrix = MathUtility::Matrix4x4::Translate(MathUtility::Vec3F() - m_anchor);
-#if defined NEXGEN_WIN || defined NEXGEN_LINUX || defined NEXGEN_MAC || defined NEXGEN_UWP
     MathUtility::Matrix4x4 rotationMatrix = MathUtility::Matrix4x4::Rotation(MathUtility::Vec3F(m_rotation.x, m_rotation.y, -m_rotation.z));
-#else defined NEXGEN_OG || defined NEXGEN_360
-    MathUtility::Matrix4x4 rotationMatrix = MathUtility::Matrix4x4::Rotation(MathUtility::Vec3F(m_rotation.x, m_rotation.y, m_rotation.z));
-#endif
     MathUtility::Matrix4x4 scaleMatrix = MathUtility::Matrix4x4::Scale(m_scale);
     MathUtility::Matrix4x4 skewMatrix = MathUtility::Matrix4x4::Skew(m_skew);
     MathUtility::Matrix4x4 anchorPositionMatrix = MathUtility::Matrix4x4::Translate(m_anchor + m_position);

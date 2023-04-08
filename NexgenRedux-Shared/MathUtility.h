@@ -580,44 +580,50 @@ namespace NexgenRedux
 
 			static Matrix4x4 OrthoOffCenterRH(const float& left, const float& right, const float& bottom, const float& top, const float& znear, const float& zfar)
 			{
+				float wInv = 1.0f / (right - left);
+				float hInv = 1.0f / (top - bottom);
+
 				Matrix4x4 result;
-				result.values[0] = 2.0f / (right - left);
+				result.values[0] = 2.0f * wInv;
 				result.values[1] = 0.0f;
 				result.values[2] = 0.0f;
 				result.values[3] = 0.0f;
 				result.values[4] = 0.0f;
-				result.values[5] = 2.0f / (top - bottom);
+				result.values[5] = 2.0f * hInv;
 				result.values[6] = 0.0f;
 				result.values[7] = 0.0f;
 				result.values[8] = 0.0f;			
 				result.values[9] = 0.0f;
 				result.values[10] = 1.0f / (znear - zfar);
 				result.values[11] = 0.0f;
-				result.values[12] = (left + right) / (left - right);
-				result.values[13] = (top + bottom) / (bottom - top);
-				result.values[14] = znear / (znear - zfar);
+				result.values[12] = -(left + right) * wInv;
+				result.values[13] = -(top + bottom) * hInv;
+				result.values[14] = result.values[10] * znear;;
 				result.values[15] = 1.0f;
 				return result;
 			}
 
 			static Matrix4x4 OrthoOffCenterLH(const float& left, const float& right, const float& bottom, const float& top, const float& znear, const float& zfar)
 			{
+				float wInv = 1.0f / (right - left);
+				float hInv = 1.0f / (top - bottom);
+
 				Matrix4x4 result;
-				result.values[0] = 2.0f / (right - left);
+				result.values[0] = 2.0f * wInv;
 				result.values[1] = 0.0f;
 				result.values[2] = 0.0f;
 				result.values[3] = 0.0f;
 				result.values[4] = 0.0f;
-				result.values[5] = 2.0f / (top - bottom);
+				result.values[5] = 2.0f * hInv;
 				result.values[6] = 0.0f;
 				result.values[7] = 0.0f;
 				result.values[8] = 0.0f;
 				result.values[9] = 0.0f;
 				result.values[10] = 1.0f / (zfar - znear);
 				result.values[11] = 0.0f;
-				result.values[12] = (left + right) / (left - right);
-				result.values[13] = (top + bottom) / (bottom - top);
-				result.values[14] = znear / (znear - zfar);
+				result.values[12] = -(left + right) * wInv;
+				result.values[13] = -(top + bottom) * hInv;
+				result.values[14] = -result.values[10] * znear;;
 				result.values[15] = 1.0f;
 				return result;
 			}

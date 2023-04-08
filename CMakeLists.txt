@@ -4,7 +4,6 @@ set(NEXGEN_VERSION_MINOR 0)
 set(NEXGEN_VERSION_PATCH 0)
 project(NexgenRedux VERSION ${NEXGEN_VERSION_MAJOR}.${NEXGEN_VERSION_MINOR}.${NEXGEN_VERSION_PATCH})
 
-set(CMAKE_WARN_DEPRECATED OFF CACHE BOOL "" FORCE)
 set(CMAKE_CXX_STANDARD 11)
 
 # Detect operating system
@@ -228,7 +227,7 @@ if (${CMAKE_BUILD_TYPE} MATCHES "Release")
         )
     elseif (${OperatingSystem} MATCHES "Mac")
         add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-            COMMAND ${PROJECT_SOURCE_DIR}/Tools/Packages/packagesbuild --verbose --project ${PROJECT_SOURCE_DIR}/Tools/Packages/NexgenRedux.pkgproj
+            COMMAND ${PROJECT_SOURCE_DIR}/Tools/Packages/packagesbuild --project ${PROJECT_SOURCE_DIR}/Tools/Packages/NexgenRedux.pkgproj
         )     
     elseif (${OperatingSystem} MATCHES "Linux")    
         add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD

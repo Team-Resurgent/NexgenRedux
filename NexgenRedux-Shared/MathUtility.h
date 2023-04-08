@@ -819,6 +819,7 @@ namespace NexgenRedux
 
 		};
 
+		static float PI();
 		static float DegreesToRadians(float const degrees);
 
 		static void SeedRandom();

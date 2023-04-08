@@ -746,8 +746,8 @@ bool AngelScriptRunner::Init()
 	result = m_engine->RegisterGlobalFunction("void SeedRandomWithValue(int value)", asFUNCTION(MathUtility::SeedRandomWithValue), asCALL_CDECL); if (result < 0) { return false; }
 	result = m_engine->RegisterGlobalFunction("double GetRandomDouble()", asFUNCTION(MathUtility::GetRandomDouble), asCALL_CDECL); if (result < 0) { return false; }
 	result = m_engine->RegisterGlobalFunction("int GetRandomIntInRange(int start, int end)", asFUNCTION(MathUtility::GetRandomIntInRange), asCALL_CDECL); if (result < 0) { return false; }
+	result = m_engine->RegisterGlobalFunction("float PI(float degrees)", asFUNCTION(MathUtility::PI), asCALL_CDECL); if (result < 0) { return false; }
 	result = m_engine->RegisterGlobalFunction("float DegreesToRadians(float degrees)", asFUNCTION(MathUtility::DegreesToRadians), asCALL_CDECL); if (result < 0) { return false; }
-
 
 	result = m_engine->RegisterGlobalFunction("void DebugPrintIf(const bool condition, const LogLevel logLevel, const string message)", asFUNCTIONPR(DebugUtility::LogMessageIf, (const bool, const DebugUtility::LogLevel, const std::string), void), asCALL_CDECL); if (result < 0) { return false; }
 	result = m_engine->RegisterGlobalFunction("void DebugPrint(const LogLevel logLevel, const string message)", asFUNCTIONPR(DebugUtility::LogMessage, (const DebugUtility::LogLevel, const std::string), void), asCALL_CDECL); if (result < 0) { return false; }

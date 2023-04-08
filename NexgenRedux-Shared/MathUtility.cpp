@@ -748,9 +748,14 @@ bool MathUtility::Color4F::operator!=(const MathUtility::Color4F& other) const
 
 // Methods
 
+float MathUtility::PI()
+{
+    return 3.14159265358979323846f;
+}
+
 float MathUtility::DegreesToRadians(float const degrees)
 {
-    return degrees * (3.14159265358979323846f / 180.0f);
+    return degrees * (PI() / 180.0f);
 }
 
 void MathUtility::SeedRandom()

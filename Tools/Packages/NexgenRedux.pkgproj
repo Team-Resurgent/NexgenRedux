@@ -98,9 +98,9 @@
 																	<key>GID</key>
 																	<integer>80</integer>
 																	<key>PATH</key>
-																	<string>/Users/petertribe/Code/NexgenRedux/NexgenRedux-Shared/Media/config.ini</string>
+																	<string>../../NexgenRedux-Shared/Media/config.ini</string>
 																	<key>PATH_TYPE</key>
-																	<integer>0</integer>
+																	<integer>1</integer>
 																	<key>PERMISSIONS</key>
 																	<integer>420</integer>
 																	<key>TYPE</key>
@@ -117,9 +117,9 @@
 																			<key>GID</key>
 																			<integer>80</integer>
 																			<key>PATH</key>
-																			<string>/Users/petertribe/Code/NexgenRedux/NexgenRedux-Shared/Media/Default/background.png</string>
+																			<string>../../NexgenRedux-Shared/Media/Default/background.png</string>
 																			<key>PATH_TYPE</key>
-																			<integer>0</integer>
+																			<integer>1</integer>
 																			<key>PERMISSIONS</key>
 																			<integer>420</integer>
 																			<key>TYPE</key>
@@ -133,9 +133,9 @@
 																			<key>GID</key>
 																			<integer>80</integer>
 																			<key>PATH</key>
-																			<string>/Users/petertribe/Code/NexgenRedux/NexgenRedux-Shared/Media/Default/freesans.sfn</string>
+																			<string>../../NexgenRedux-Shared/Media/Default/freesans.sfn</string>
 																			<key>PATH_TYPE</key>
-																			<integer>0</integer>
+																			<integer>1</integer>
 																			<key>PERMISSIONS</key>
 																			<integer>420</integer>
 																			<key>TYPE</key>
@@ -149,9 +149,9 @@
 																			<key>GID</key>
 																			<integer>80</integer>
 																			<key>PATH</key>
-																			<string>/Users/petertribe/Code/NexgenRedux/NexgenRedux-Shared/Media/Default/main.as</string>
+																			<string>../../NexgenRedux-Shared/Media/Default/main.as</string>
 																			<key>PATH_TYPE</key>
-																			<integer>0</integer>
+																			<integer>1</integer>
 																			<key>PERMISSIONS</key>
 																			<integer>420</integer>
 																			<key>TYPE</key>
@@ -165,9 +165,9 @@
 																			<key>GID</key>
 																			<integer>80</integer>
 																			<key>PATH</key>
-																			<string>/Users/petertribe/Code/NexgenRedux/NexgenRedux-Shared/Media/Default/sprite.png</string>
+																			<string>../../NexgenRedux-Shared/Media/Default/sprite.png</string>
 																			<key>PATH_TYPE</key>
-																			<integer>0</integer>
+																			<integer>1</integer>
 																			<key>PERMISSIONS</key>
 																			<integer>420</integer>
 																			<key>TYPE</key>
@@ -181,9 +181,9 @@
 																			<key>GID</key>
 																			<integer>80</integer>
 																			<key>PATH</key>
-																			<string>/Users/petertribe/Code/NexgenRedux/NexgenRedux-Shared/Media/Default/util.as</string>
+																			<string>../../NexgenRedux-Shared/Media/Default/util.as</string>
 																			<key>PATH_TYPE</key>
-																			<integer>0</integer>
+																			<integer>1</integer>
 																			<key>PERMISSIONS</key>
 																			<integer>420</integer>
 																			<key>TYPE</key>

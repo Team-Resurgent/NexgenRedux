@@ -54,15 +54,15 @@ jobs:
         dest:  build/NexgenRedux-Mac.zip
         recursive: false
 
-    - name: Create draft Release Windows
-      if: ${{ matrix.os == 'macos-latest' }}
+    - name: Create Release Windows
+      if: ${{ matrix.os == 'windows-latest' }}
       uses: softprops/action-gh-release@v1
       with:
         tag_name: latest
         draft: false
         files: 'build/NexgenRedux-PC.zip'
         
-    - name: Create draft Release Linux
+    - name: Create Release Linux
       if: ${{ matrix.os == 'ubuntu-latest' }}
       uses: softprops/action-gh-release@v1
       with:
@@ -70,7 +70,7 @@ jobs:
         draft: false
         files: 'build/NexgenRedux-Linux.zip'
         
-    - name: Create draft Release Mac
+    - name: Create Release Mac
       if: ${{ matrix.os == 'macos-latest' }}
       uses: softprops/action-gh-release@v1
       with:

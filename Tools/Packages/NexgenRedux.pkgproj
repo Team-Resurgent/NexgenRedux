@@ -983,7 +983,7 @@
 					<key>PATH</key>
 					<string>../../Tools/Packages/Info.plist</string>
 					<key>PATH_TYPE</key>
-					<integer>0</integer>
+					<integer>1</integer>
 					<key>PERMISSIONS</key>
 					<integer>436</integer>
 					<key>TYPE</key>
@@ -999,7 +999,7 @@
 					<key>PATH</key>
 					<string>../../Artwork/Icon.icns</string>
 					<key>PATH_TYPE</key>
-					<integer>0</integer>
+					<integer>1</integer>
 					<key>PERMISSIONS</key>
 					<integer>420</integer>
 					<key>TYPE</key>
@@ -1015,7 +1015,7 @@
 					<key>PATH</key>
 					<string>../../Libraries/Angle/Lib/Mac/libEGL.dylib</string>
 					<key>PATH_TYPE</key>
-					<integer>0</integer>
+					<integer>1</integer>
 					<key>PERMISSIONS</key>
 					<integer>420</integer>
 					<key>TYPE</key>
@@ -1031,7 +1031,7 @@
 					<key>PATH</key>
 					<string>../../Libraries/Angle/Lib/Mac/libGLESv2.dylib</string>
 					<key>PATH_TYPE</key>
-					<integer>0</integer>
+					<integer>1</integer>
 					<key>PERMISSIONS</key>
 					<integer>420</integer>
 					<key>TYPE</key>

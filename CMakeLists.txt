@@ -228,7 +228,7 @@ if (${CMAKE_BUILD_TYPE} MATCHES "Release")
         )
     elseif (${OperatingSystem} MATCHES "Mac")
         add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-            COMMAND ${PROJECT_SOURCE_DIR}/Tools/Packages/packagesbuild --verbose --project ${PROJECT_SOURCE_DIR}/Tools/Packages/NexgenRedux.pkgproj
+            COMMAND cd ${PROJECT_SOURCE_DIR}/Tools/Packages && ${PROJECT_SOURCE_DIR}/Tools/Packages/packagesbuild --verbose --project ${PROJECT_SOURCE_DIR}/Tools/Packages/NexgenRedux.pkgproj
         )     
     elseif (${OperatingSystem} MATCHES "Linux")    
         add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD

@@ -560,10 +560,10 @@ bool XboxOGWindowHelper::GetJoystickAxisStates(uint32_t joystickID, JoystickAxis
 	XINPUT_GAMEPAD gamePad;
 	memcpy(&gamePad, &inputStates.Gamepad, sizeof(XINPUT_GAMEPAD));
 
-	joystickAxisStates.axisLeftX = -(gamePad.sThumbLX > 0 ? gamePad.sThumbLX / (float)32768 : gamePad.sThumbLX / (float)32767);
-	joystickAxisStates.axisLeftY = -(gamePad.sThumbLY > 0 ? gamePad.sThumbLY / (float)32768 : gamePad.sThumbLY / (float)32767);
-	joystickAxisStates.axisRightX = -(gamePad.sThumbRX > 0 ? gamePad.sThumbRX / (float)32768 : gamePad.sThumbRX / (float)32767);
-	joystickAxisStates.axisRightY = -(gamePad.sThumbRY > 0 ? gamePad.sThumbRY / (float)32768 : gamePad.sThumbRY / (float)32767);
+	joystickAxisStates.axisLeftX = gamePad.sThumbLX > 0 ? gamePad.sThumbLX / (float)32768 : gamePad.sThumbLX / (float)32767;
+	joystickAxisStates.axisLeftY = gamePad.sThumbLY > 0 ? gamePad.sThumbLY / -(float)32768 : gamePad.sThumbLY / -(float)32767;
+	joystickAxisStates.axisRightX = gamePad.sThumbRX > 0 ? gamePad.sThumbRX / (float)32768 : gamePad.sThumbRX / (float)32767;
+	joystickAxisStates.axisRightY = gamePad.sThumbRY > 0 ? gamePad.sThumbRY / -(float)32768 : gamePad.sThumbRY / -(float)32767;
 	joystickAxisStates.axisLeftTrigger = ((gamePad.bAnalogButtons[XINPUT_GAMEPAD_LEFT_TRIGGER] / 255.0f) * 2) - 1;
 	joystickAxisStates.axisRightTrigger = ((gamePad.bAnalogButtons[XINPUT_GAMEPAD_RIGHT_TRIGGER] / 255.0f) * 2) - 1;
 	return true;

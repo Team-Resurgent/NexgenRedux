@@ -1,5 +1,6 @@
 #include "NodeManager.h"
 #include "OrthoCamera.h"
+#include "PerspectiveCamera.h"
 #include "Fog.h"
 #include "Lighting.h"
 #include "Sprite.h"
@@ -34,6 +35,14 @@ OrthoCamera* NodeManager::CreateOrthoCamera()
 {
     uint32_t nodeID = ++m_maxNodeID;
     OrthoCamera* node = new OrthoCamera(nodeID);
+    m_nodeMap.insert(std::pair<uint32_t, Node*>(nodeID, node));
+    return node;
+}
+
+PerspectiveCamera* NodeManager::CreatePerspectiveCamera()
+{
+    uint32_t nodeID = ++m_maxNodeID;
+    PerspectiveCamera* node = new PerspectiveCamera(nodeID);
     m_nodeMap.insert(std::pair<uint32_t, Node*>(nodeID, node));
     return node;
 }

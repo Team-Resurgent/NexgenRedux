@@ -4,6 +4,7 @@
 #include "GlobalTypes.h"
 #include "Node.h"
 #include "EntityEngine/OrthoCamera.h"
+#include "EntityEngine/PerspectiveCamera.h"
 #include "EntityEngine/Fog.h"
 #include "EntityEngine/Lighting.h"
 #include "EntityEngine/Sprite.h"
@@ -24,6 +25,7 @@ namespace NexgenRedux
 
         static void Close(void);
         static OrthoCamera* CreateOrthoCamera();
+        static PerspectiveCamera* CreatePerspectiveCamera();
         static Fog* CreateFog();
         static Lighting* CreateLighting();
         static Sprite* CreateSprite();

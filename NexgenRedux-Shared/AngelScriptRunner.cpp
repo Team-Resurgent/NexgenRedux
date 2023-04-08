@@ -7,6 +7,7 @@
 #include "EntityEngine/FontManager.h"
 #include "EntityEngine/NodeManager.h"
 #include "EntityEngine/OrthoCamera.h"
+#include "EntityEngine/PerspectiveCamera.h"
 #include "EntityEngine/Fog.h"
 #include "EntityEngine/Lighting.h"
 #include "EntityEngine/Sprite.h"
@@ -841,6 +842,35 @@ bool AngelScriptRunner::Init()
 	result = m_engine->RegisterObjectMethod("OrthoCameraNode", "void SetZNear(float)", asMETHOD(OrthoCamera, SetZNear), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("OrthoCameraNode", "float GetZFar()", asMETHOD(OrthoCamera, GetZFar), asCALL_THISCALL); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("OrthoCameraNode", "void SetZFar(float)", asMETHOD(OrthoCamera, SetZFar), asCALL_THISCALL); if (result < 0) { return false; }
+
+	result = m_engine->RegisterObjectType("PerspectiveCameraNode", sizeof(0), asOBJ_REF | asOBJ_NOCOUNT); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("PerspectiveCameraNode", "uint GetID()", asMETHOD(PerspectiveCamera, GetID), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("PerspectiveCameraNode", "Vec3F GetAnchor()", asMETHOD(PerspectiveCamera, GetAnchor), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("PerspectiveCameraNode", "void SetAnchor(Vec3F)", asMETHOD(PerspectiveCamera, SetAnchor), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("PerspectiveCameraNode", "Vec3F GetRotation()", asMETHOD(PerspectiveCamera, GetRotation), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("PerspectiveCameraNode", "void SetRotation(Vec3F)", asMETHOD(PerspectiveCamera, SetRotation), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("PerspectiveCameraNode", "Vec3F GetSkew()", asMETHOD(PerspectiveCamera, GetSkew), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("PerspectiveCameraNode", "void SetSkew(Vec3F)", asMETHOD(PerspectiveCamera, SetSkew), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("PerspectiveCameraNode", "Vec3F GetScale()", asMETHOD(PerspectiveCamera, GetScale), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("PerspectiveCameraNode", "void SetScale(Vec3F)", asMETHOD(PerspectiveCamera, SetScale), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("PerspectiveCameraNode", "Vec3F GetPosition()", asMETHOD(PerspectiveCamera, GetPosition), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("PerspectiveCameraNode", "void SetPosition(Vec3F)", asMETHOD(PerspectiveCamera, SetPosition), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("PerspectiveCameraNode", "Color4F GetClearColor()", asMETHOD(PerspectiveCamera, GetClearColor), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("PerspectiveCameraNode", "void SetClearColor(Color4F)", asMETHOD(PerspectiveCamera, SetClearColor), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("PerspectiveCameraNode", "Vec3F GetEye()", asMETHOD(PerspectiveCamera, GetEye), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("PerspectiveCameraNode", "void SetEye(Vec3F)", asMETHOD(PerspectiveCamera, SetEye), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("PerspectiveCameraNode", "Vec3F GetTarget()", asMETHOD(PerspectiveCamera, GetTarget), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("PerspectiveCameraNode", "void SetTarget(Vec3F)", asMETHOD(PerspectiveCamera, SetTarget), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("PerspectiveCameraNode", "Vec3F GetUp()", asMETHOD(PerspectiveCamera, GetUp), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("PerspectiveCameraNode", "void SetUp(Vec3F)", asMETHOD(PerspectiveCamera, SetUp), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("PerspectiveCameraNode", "float GetFOV()", asMETHOD(PerspectiveCamera, GetFOV), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("PerspectiveCameraNode", "void SetFOV(float)", asMETHOD(PerspectiveCamera, SetFOV), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("PerspectiveCameraNode", "float GetAspectRatio()", asMETHOD(PerspectiveCamera, GetAspectRatio), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("PerspectiveCameraNode", "void SetAspectRatio(float)", asMETHOD(PerspectiveCamera, SetAspectRatio), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("PerspectiveCameraNode", "float GetZNear()", asMETHOD(PerspectiveCamera, GetZNear), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("PerspectiveCameraNode", "void SetZNear(float)", asMETHOD(PerspectiveCamera, SetZNear), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("PerspectiveCameraNode", "float GetZFar()", asMETHOD(PerspectiveCamera, GetZFar), asCALL_THISCALL); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("PerspectiveCameraNode", "void SetZFar(float)", asMETHOD(PerspectiveCamera, SetZFar), asCALL_THISCALL); if (result < 0) { return false; }
 	
 	result = m_engine->RegisterObjectType("SpriteNode", sizeof(0), asOBJ_REF | asOBJ_NOCOUNT); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("SpriteNode", "uint GetID()", asMETHOD(Sprite, GetID), asCALL_THISCALL); if (result < 0) { return false; }
@@ -999,6 +1029,7 @@ bool AngelScriptRunner::Init()
 
 	result = m_engine->SetDefaultNamespace("NodeManager"); if (result < 0) { return false; }
 	result = m_engine->RegisterGlobalFunction("OrthoCameraNode& NodeManager::CreateOrthoCamera()", asFUNCTION(NodeManager::CreateOrthoCamera), asCALL_CDECL); if (result < 0) { return false; }
+	result = m_engine->RegisterGlobalFunction("PerspectiveCameraNode& NodeManager::CreatePerspectiveCamera()", asFUNCTION(NodeManager::CreatePerspectiveCamera), asCALL_CDECL); if (result < 0) { return false; }
 	result = m_engine->RegisterGlobalFunction("FogNode@ NodeManager::CreateFog()", asFUNCTION(NodeManager::CreateFog), asCALL_CDECL); if (result < 0) { return false; }
 	result = m_engine->RegisterGlobalFunction("LightingNode@ NodeManager::CreateLighting()", asFUNCTION(NodeManager::CreateLighting), asCALL_CDECL); if (result < 0) { return false; }
 	result = m_engine->RegisterGlobalFunction("SpriteNode@ NodeManager::CreateSprite()", asFUNCTION(NodeManager::CreateSprite), asCALL_CDECL); if (result < 0) { return false; }
@@ -1011,6 +1042,7 @@ bool AngelScriptRunner::Init()
 	result = m_engine->RegisterGlobalFunction("void NodeManager::CheckForOrphans()", asFUNCTION(NodeManager::CheckForOrphans), asCALL_CDECL); if (result < 0) { return false; }
 
 	result = m_engine->RegisterObjectMethod("Node", "OrthoCameraNode@ opCast()", asFUNCTION((refCast<Node ,OrthoCamera>)), asCALL_CDECL_OBJLAST); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("Node", "PerspectiveCameraNode@ opCast()", asFUNCTION((refCast<Node ,PerspectiveCamera>)), asCALL_CDECL_OBJLAST); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("Node", "FogNode@ opCast()", asFUNCTION((refCast<Node, Fog>)), asCALL_CDECL_OBJLAST); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("Node", "LightingNode@ opCast()", asFUNCTION((refCast<Node, Lighting>)), asCALL_CDECL_OBJLAST); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("Node", "SpriteNode@ opCast()", asFUNCTION((refCast<Node, Sprite>)), asCALL_CDECL_OBJLAST); if (result < 0) { return false; }
@@ -1018,6 +1050,9 @@ bool AngelScriptRunner::Init()
 
 	result = m_engine->RegisterObjectMethod("Node", "OrthoCameraNode@ opImplCast()", asFUNCTION((refCast<Node, OrthoCamera>)), asCALL_CDECL_OBJLAST); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("OrthoCameraNode", "Node@ opImplCast()", asFUNCTION((refCast<OrthoCamera, Node>)), asCALL_CDECL_OBJLAST); if (result < 0) { return false; }
+
+	result = m_engine->RegisterObjectMethod("Node", "PerspectiveCameraNode@ opImplCast()", asFUNCTION((refCast<Node, PerspectiveCamera>)), asCALL_CDECL_OBJLAST); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectMethod("PerspectiveCameraNode", "Node@ opImplCast()", asFUNCTION((refCast<PerspectiveCamera, Node>)), asCALL_CDECL_OBJLAST); if (result < 0) { return false; }
 
 	result = m_engine->RegisterObjectMethod("Node", "FogNode@ opImplCast()", asFUNCTION((refCast<Node, Fog>)), asCALL_CDECL_OBJLAST); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("FogNode", "Node@ opImplCast()", asFUNCTION((refCast<Fog, Node>)), asCALL_CDECL_OBJLAST); if (result < 0) { return false; }

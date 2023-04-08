@@ -75,6 +75,7 @@ list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/EntityEngine/Sc
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/EntityEngine/NodeManager.cpp")
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/EntityEngine/Node.cpp")
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/EntityEngine/OrthoCamera.cpp")
+list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/EntityEngine/PerspectiveCamera.cpp")
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/EntityEngine/Fog.cpp")
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/EntityEngine/Lighting.cpp")
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/EntityEngine/Sprite.cpp")

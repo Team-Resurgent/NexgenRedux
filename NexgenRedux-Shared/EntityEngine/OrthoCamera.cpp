@@ -29,7 +29,6 @@ OrthoCamera::OrthoCamera(uint32_t nodeID) : Node(nodeID)
 
 OrthoCamera::~OrthoCamera(void)
 {
-    DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, StringUtility::FormatString("Deleting node '%i'", GetID()));
 }
 
 void OrthoCamera::Update(float dt)

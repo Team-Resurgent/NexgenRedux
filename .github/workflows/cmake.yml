@@ -40,21 +40,13 @@ jobs:
         dest:  build/NexgenRedux-PC.zip
         recursive: false
         
-    - name: Create Mac Installer
-      if: ${{ matrix.os == 'macos-latest' }}
-      uses: akiojin/generate-mac-installer-github-action@v0.1.0
-      with:
-        root-directory: 'build/bin/Release'
-        bundle-path: 'build/NexgenRedux.app'
-        identifier: com.teamresurgent.NexgenRedux
-        
     - name: Zip Mac
-      if: ${{ matrix.os == 'windows-latest' }}
+      if: ${{ matrix.os == 'macos-latest' }}
       uses: vimtor/action-zip@v1.1
       with:
-        files: build/NexgenRedux.app
+        files: build/NexgenRedux.pkg
         dest:  build/NexgenRedux-Mac.zip
-        recursive: true
+        recursive: false
 
     - name: Create draft Release Windows
       if: ${{ matrix.os == 'macos-latest' }}
@@ -79,12 +71,3 @@ jobs:
         tag_name: latest
         draft: true
         files: 'build/NexgenRedux-Mac.zip'
-
-
-      
-
-
-
-        
-        
-

@@ -122,8 +122,8 @@ SocketUtility::SocketUtility()
 #endif
 
 	m_sock = (uint32_t)INVALID_SOCKET;
-	m_blocking = false;
-	m_valid = false;
+	m_isBlocking = false;
+	m_isValid = false;
 	m_times.tv_sec = 0;
 	m_times.tv_usec = 0;
 	m_state = skDISCONNECTED;
@@ -178,17 +178,17 @@ uint32_t SocketUtility::GetLastCode()
     return m_lastCode;
 }
 
-bool SocketUtility::GetValid()
+bool SocketUtility::GetIsValid()
 {
-    return m_valid;
+    return m_isValid;
 }
 
-bool SocketUtility::GetBlocking()
+bool SocketUtility::GetIsBlocking()
 {
-    return m_blocking;
+    return m_isBlocking;
 }
 
-void SocketUtility::SetBlocking(bool blocking)
+void SocketUtility::SetIsBlocking(bool blocking)
 {
 	if (Check() == false) 
     {
@@ -204,7 +204,7 @@ void SocketUtility::SetBlocking(bool blocking)
 #else
 	ioctl(m_sock, O_NONBLOCK, &nonblocking);
 #endif
-	m_blocking = blocking;
+	m_isBlocking = blocking;
 }
 
 bool SocketUtility::Bind(uint16_t port)
@@ -253,13 +253,13 @@ bool SocketUtility::Listen()
 	}
 
 	m_state = skLISTENING;
-	m_valid = true;
+	m_isValid = true;
 	return true;
 }
 
 bool SocketUtility::Accept(SocketUtility* socket)
 {
-	if (m_blocking == false && CanRead() == false) 
+	if (m_isBlocking == false && CanRead() == false) 
     {
 		return false;
 	}
@@ -312,11 +312,11 @@ uint64_t SocketUtility::GetUAddress()
 	return m_addr.sin_addr.s_addr;
 }
 
-int SocketUtility::Connect(const char* host, unsigned short port)
+uint32_t SocketUtility::Connect(const char* host, unsigned short port)
 {
 	if (Check() == false && Create() == false) 
     {
-		return false;
+		return 1;
 	}
 
 	struct hostent* phe;
@@ -333,14 +333,14 @@ int SocketUtility::Connect(const char* host, unsigned short port)
 
 	if (::connect(m_sock, (struct sockaddr*)&m_addr, sizeof(m_addr)) == SOCKET_ERROR) 
     {
-		if (m_blocking == true) 
+		if (m_isBlocking == true) 
         {
 			return 3;
 		}
 	}
 
 	m_state = skCONNECTED;
-	m_valid = true;
+	m_isValid = true;
 	return 0;
 }
 

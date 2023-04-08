@@ -48,35 +48,31 @@ namespace Gensys
         bool Create(uint32_t Protocol);
         bool Create(uint32_t Protocol, uint32_t Type);
         void Drop();
-        bool GetValid();
-        uint32_t GetLastCode();
-        bool GetBlocking();
-        void SetBlocking(bool blocking);
         bool Bind(uint16_t port);
         bool Bind(const char* host, unsigned short port);
         bool Listen();
         bool Accept(SocketUtility* socket);
-        int Connect(const char* host, unsigned short port);
+        uint32_t Connect(const char* host, unsigned short port);
         void Close();
 
-        SockState GetState();
-        void SetState(SockState state);
-
-		void DnsLookup();
-		
-        struct sockaddr_in GetAddress();
-        uint64_t GetUAddress();
-        bool IsError();
-
-        bool CanRead();
-        bool CanWrite();
-
-        uint32_t GetSock();
-        void SetSock(uint32_t sock);
         int Receive(const void* buffer, uint32_t size, uint32_t spos = 0);
         int SendRaw(const void* data, uint32_t dataSize);
         int SendUDP(const void* buffer, uint32_t size, sockaddr_in* to);
         int ReceiveUDP(const void* buffer, uint32_t size, sockaddr_in* from);
+
+        struct sockaddr_in GetAddress();
+        uint64_t GetUAddress();
+        bool IsError();
+        bool CanRead();
+        bool CanWrite();
+        bool GetIsValid();
+        uint32_t GetLastCode();
+        uint32_t GetSock();
+        void SetSock(uint32_t sock);
+        bool GetIsBlocking();
+        void SetIsBlocking(bool blocking);
+        SockState GetState();
+        void SetState(SockState state);
 
     private:
 
@@ -84,8 +80,8 @@ namespace Gensys
 
     private:
 
-        bool m_blocking;
-        bool m_valid;
+        bool m_isBlocking;
+        bool m_isValid;
         uint32_t m_lastCode;
         struct sockaddr_in m_addr;
 

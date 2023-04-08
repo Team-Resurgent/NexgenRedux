@@ -24,13 +24,19 @@ jobs:
 
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+    
+    - name: Install Packages for Mac
+      if: ${{ matrix.os == 'ubuntu-latest' }}
+      uses: ConorMacBride/install-package@v1
+      with:
+        brew-cask: packages
+        
+    - name: Install Zip for Linux
+      if: ${{ matrix.os == 'ubuntu-latest' }}
+      uses: montudor/action-zip@v1
 
     - name: Build
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
-      
-    - name: Install Zip
-      if: ${{ matrix.os == 'ubuntu-latest' }}
-      uses: montudor/action-zip@v1
 
     - name: Zip Windows
       if: ${{ matrix.os == 'windows-latest' }}

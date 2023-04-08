@@ -53,10 +53,10 @@ namespace Gensys
         bool GetBlocking();
         void SetBlocking(bool blocking);
         bool Bind(uint16_t port);
-        //bool Bind(const char* host, unsigned short port);
+        bool Bind(const char* host, unsigned short port);
         bool Listen();
         bool Accept(SocketUtility* socket);
-        //int Connect(const char* host, unsigned short port);
+        int Connect(const char* host, unsigned short port);
         void Close();
 
         SockState GetState();
@@ -64,7 +64,6 @@ namespace Gensys
 
 		void DnsLookup();
 		
-		//struct hostent* GetHostByName(const char* name)
         struct sockaddr_in GetAddress();
         uint64_t GetUAddress();
         bool IsError();

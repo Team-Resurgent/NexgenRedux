@@ -26,6 +26,90 @@ typedef int socklen_t;
 
 using namespace Gensys;
 
+#if defined NEXGEN_OG
+
+struct hostent 
+{
+	char FAR * h_name;
+	char FAR * FAR * h_aliases;
+	short h_addrtype;
+	short h_length;
+	char FAR * FAR * h_addr_list;
+	#define h_addr h_addr_list[0]
+};
+
+typedef struct 
+{
+	struct hostent server;
+	char name[128];
+	char addr[16];
+	char* addr_list[4];
+} HostEnt;
+
+struct hostent* gethostbyname(const char* name)
+{
+	HostEnt* server = (HostEnt*)malloc(sizeof(HostEnt));
+
+	strcpy(server->name, "xbox");
+	if(!strcmp(server->name, name))
+	{
+		XNADDR xna;
+		DWORD dwState;
+		do
+		{
+			dwState = XNetGetTitleXnAddr(&xna);
+		} while (dwState==XNET_GET_XNADDR_PENDING);
+
+		server->addr_list[0] = server->addr;
+		memcpy(server->addr, &(xna.ina.s_addr), 4);
+		server->server.h_name = server->name;
+		server->server.h_aliases = 0;
+		server->server.h_addrtype = AF_INET;
+		server->server.h_length = 4;
+		server->server.h_addr_list = (char**)malloc(sizeof(char*)*4);
+		server->server.h_addr_list[0] = server->addr_list[0];
+		server->server.h_addr_list[1] = 0;
+		return (struct hostent*)server;
+	}
+
+	WSAEVENT hEvent = WSACreateEvent();
+	XNDNS* pDns = NULL;
+	INT err = XNetDnsLookup(name, hEvent, &pDns);
+	WaitForSingleObject(hEvent, INFINITE);
+	if (pDns && pDns->iStatus == 0)
+	{
+		strcpy(server->name, name);
+		server->addr_list[0] = server->addr;
+		memcpy(server->addr, &(pDns->aina[0].s_addr), 4);
+		server->server.h_name = server->name;
+		server->server.h_aliases = 0;
+		server->server.h_addrtype = AF_INET;
+		server->server.h_length = 4;
+		server->server.h_addr_list = (char**)malloc(sizeof(char*)*4);
+
+		server->server.h_addr_list[0] = server->addr_list[0];
+		server->server.h_addr_list[1] = 0;
+		XNetDnsRelease(pDns);
+		WSACloseEvent(hEvent);
+		return (struct hostent*)server;
+	}
+
+	if (pDns)
+	{
+		XNetDnsRelease(pDns);
+	}
+
+	if (hEvent)
+	{
+		WSACloseEvent(hEvent);
+	}
+
+	free(server);
+	return NULL;
+}
+
+#endif
+
 //WSACleanup( );
 
 SocketUtility::SocketUtility()
@@ -138,27 +222,27 @@ bool SocketUtility::Bind(uint16_t port)
 	return !m_lastCode;
 }
 
-//bool SocketUtility::Bind(const char* host, unsigned short port)
-//{
-//	if (Check() == false && Create() == false) 
-//    {
-//		return false;
-//	}
-//
-//	struct hostent* phe;
-//	phe = gethostbyname(host);
-//	if (phe == NULL) {
-//		return false;
-//	}
-//
-//	memcpy(&m_addr.sin_addr, phe->h_addr, sizeof(struct in_addr));
-//
-//	m_addr.sin_family = AF_INET;
-//	m_addr.sin_port = htons(port);
-//	m_lastCode = ::bind(m_sock, (struct sockaddr*)&m_addr, sizeof(m_addr));
-//
-//	return !m_lastCode;
-//}
+bool SocketUtility::Bind(const char* host, unsigned short port)
+{
+	if (Check() == false && Create() == false) 
+    {
+		return false;
+	}
+
+	struct hostent* phe;
+	phe = gethostbyname(host);
+	if (phe == NULL) {
+		return false;
+	}
+
+	memcpy(&m_addr.sin_addr, phe->h_addr, sizeof(struct in_addr));
+
+	m_addr.sin_family = AF_INET;
+	m_addr.sin_port = htons(port);
+	m_lastCode = ::bind(m_sock, (struct sockaddr*)&m_addr, sizeof(m_addr));
+
+	return !m_lastCode;
+}
 
 bool SocketUtility::Listen()
 {
@@ -217,45 +301,6 @@ void SocketUtility::SetState(SocketUtility::SockState state)
     m_state = state;
 }
 
-//struct hostent* SocketUtility::GetHostByName(const char* name)
-//{
-//	XNDNS *pxndns;
-//	static HOSTENT host;
-//	HOSTENT *rvalue;
-//
-//	if(XNetDnsLookup(name, NULL, &pxndns) != 0)
-//		return NULL;
-//
-//	while (pxndns->iStatus == WSAEINPROGRESS)
-//	{
-//		msleep(5);
-//	}
-//
-//	if ((pxndns->iStatus == 0) && (pxndns->cina > 0))
-//	{
-//		static char * ipPtrs[2];
-//		static IN_ADDR ip;
-//
-//		host.h_name = (char*)name;
-//		host.h_aliases = NULL;
-//		host.h_addrtype = AF_INET;
-//		host.h_length = (gsi_u16)sizeof(IN_ADDR);
-//		host.h_addr_list = (gsi_i8 **)ipPtrs;
-//
-//		ip = pxndns->aina[0];
-//		ipPtrs[0] = (char *)&ip;
-//		ipPtrs[1] = NULL;
-//
-//		rvalue = &host;
-//	}
-//	else
-//	{
-//		rvalue = NULL;
-//	}
-//	XNetDnsRelease(pxndns);
-//
-//	return rvalue;
-//}
 
 struct sockaddr_in SocketUtility::GetAddress()
 {
@@ -267,37 +312,37 @@ uint64_t SocketUtility::GetUAddress()
 	return m_addr.sin_addr.s_addr;
 }
 
-//int SocketUtility::Connect(const char* host, unsigned short port)
-//{
-//	if (Check() == false && Create() == false) 
-//    {
-//		return false;
-//	}
-//
-//	struct hostent* phe;
-//	phe = gethostbyname(host);
-//	if (phe == NULL) 
-//    {
-//		return 2;
-//	}
-//
-//	memcpy(&m_addr.sin_addr, phe->h_addr, sizeof(struct in_addr));
-//
-//	m_addr.sin_family = AF_INET;
-//	m_addr.sin_port = htons(port);
-//
-//	if (::connect(m_sock, (struct sockaddr*)&m_addr, sizeof(m_addr)) == SOCKET_ERROR) 
-//    {
-//		if (m_blocking == true) 
-//        {
-//			return 3;
-//		}
-//	}
-//
-//	m_state = skCONNECTED;
-//	m_valid = true;
-//	return 0;
-//}
+int SocketUtility::Connect(const char* host, unsigned short port)
+{
+	if (Check() == false && Create() == false) 
+    {
+		return false;
+	}
+
+	struct hostent* phe;
+	phe = gethostbyname(host);
+	if (phe == NULL) 
+    {
+		return 2;
+	}
+
+	memcpy(&m_addr.sin_addr, phe->h_addr, sizeof(struct in_addr));
+
+	m_addr.sin_family = AF_INET;
+	m_addr.sin_port = htons(port);
+
+	if (::connect(m_sock, (struct sockaddr*)&m_addr, sizeof(m_addr)) == SOCKET_ERROR) 
+    {
+		if (m_blocking == true) 
+        {
+			return 3;
+		}
+	}
+
+	m_state = skCONNECTED;
+	m_valid = true;
+	return 0;
+}
 
 bool SocketUtility::CanRead()
 {

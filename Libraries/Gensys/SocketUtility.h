@@ -28,7 +28,7 @@ namespace Gensys
     {
     public:
 
-        enum SockState
+        typedef enum SockState
         {
             skDISCONNECTED = 0,
             skUNDEF1, //Not implemented
@@ -39,36 +39,36 @@ namespace Gensys
             skUNDEF6, //Not implemented
             skCONNECTED,
             skERROR
-        };
+        } SockState;
 
         SocketUtility();
         ~SocketUtility();
 
         bool Create();
-        bool Create(uint32_t Protocol);
-        bool Create(uint32_t Protocol, uint32_t Type);
+        bool Create(uint32_t protocol);
+        bool Create(uint32_t protocol, uint32_t type);
+        bool EnableBroadcast();
         void Drop();
         bool Bind(uint16_t port);
-        bool Bind(const char* host, unsigned short port);
+        bool Bind(const char* host, uint16_t port);
         bool Listen();
         bool Accept(SocketUtility* socket);
-        uint32_t Connect(const char* host, unsigned short port);
+        int32_t Connect(const char* host, uint16_t port);
         void Close();
 
-        int Receive(const void* buffer, uint32_t size, uint32_t spos = 0);
-        int SendRaw(const void* data, uint32_t dataSize);
-        int SendUDP(const void* buffer, uint32_t size, sockaddr_in* to);
-        int ReceiveUDP(const void* buffer, uint32_t size, sockaddr_in* from);
+        int32_t Receive(const void* buffer, uint32_t size, uint32_t spos = 0);
+        int32_t ReceiveUDP(const void* buffer, uint32_t size, sockaddr_in& from);
+        int32_t Send(const void* data, uint32_t dataSize);
+        int32_t SendUDP(const void* buffer, uint32_t size, sockaddr_in& to);
 
         struct sockaddr_in GetAddress();
         uint64_t GetUAddress();
         bool IsError();
+        bool IsValid();
         bool CanRead();
         bool CanWrite();
-        bool GetIsValid();
-        uint32_t GetLastCode();
-        uint32_t GetSock();
-        void SetSock(uint32_t sock);
+        int32_t GetLastCode();
+        int32_t GetSock();
         bool GetIsBlocking();
         void SetIsBlocking(bool blocking);
         SockState GetState();
@@ -76,13 +76,14 @@ namespace Gensys
 
     private:
 
+        void SetSock(int32_t sock);
         bool Check();
 
     private:
 
         bool m_isBlocking;
         bool m_isValid;
-        uint32_t m_lastCode;
+        int32_t m_lastCode;
         struct sockaddr_in m_addr;
 
     #if defined NEXGEN_WIN || defined NEXGEN_OG
@@ -93,6 +94,6 @@ namespace Gensys
         fd_set m_scks;
         timeval m_times;
         uint32_t m_totaldata;
-        uint32_t m_sock;
+        int32_t m_sock;
     };
 }

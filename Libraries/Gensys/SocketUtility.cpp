@@ -118,7 +118,11 @@ SocketUtility::SocketUtility()
 	memset(&m_addr, 0, sizeof(m_addr));
 
 #if defined NEXGEN_WIN || defined NEXGEN_OG
-	WSAStartup(MAKEWORD(1, 1), &m_wsda);
+	int result = WSAStartup(MAKEWORD(1, 1), &m_wsda);
+	if (result != 0)
+	{
+		//error
+	}
 #endif
 
 	m_sock = (uint32_t)INVALID_SOCKET;
@@ -143,18 +147,18 @@ bool SocketUtility::Create()
 	return this->Create(IPPROTO_TCP, SOCK_STREAM);
 }
 
-bool SocketUtility::Create(uint32_t Protocol)
+bool SocketUtility::Create(uint32_t protocol)
 {
-	switch (Protocol) 
+	switch (protocol) 
     {
-        case IPPROTO_UDP: 
-            return this->Create(IPPROTO_UDP, SOCK_DGRAM);
+        case IPPROTO_TCP: 
+            return this->Create(IPPROTO_TCP, SOCK_DGRAM);
         default:          
-            return this->Create(IPPROTO_TCP, SOCK_STREAM);
+            return this->Create(IPPROTO_UDP, SOCK_STREAM);
 	}
 }
 
-bool SocketUtility::Create(uint32_t Protocol, uint32_t Type)
+bool SocketUtility::Create(uint32_t protocol, uint32_t type)
 {
 	if (this->Check()) 
     {
@@ -162,10 +166,22 @@ bool SocketUtility::Create(uint32_t Protocol, uint32_t Type)
 	}
 
 	m_state = skDISCONNECTED;
-	m_sock = (int)::socket(AF_INET, Type, Protocol);
+	m_sock = (int)::socket(AF_INET, type, protocol);
 	m_lastCode = m_sock;
 
 	return m_sock > SOCKET_NONE;
+}
+
+bool SocketUtility::EnableBroadcast()
+{
+	if (this->Check() == false) 
+    {
+		return false;
+	}
+
+	BOOL bOptVal = TRUE;
+    int bOptLen = sizeof(BOOL);
+    return setsockopt(m_sock, SOL_SOCKET, SO_BROADCAST, (char*)&bOptVal, bOptLen) != SOCKET_ERROR;
 }
 
 void SocketUtility::Drop()
@@ -173,39 +189,6 @@ void SocketUtility::Drop()
 	m_sock = SOCKET_NONE;
 }
 
-uint32_t SocketUtility::GetLastCode()
-{
-    return m_lastCode;
-}
-
-bool SocketUtility::GetIsValid()
-{
-    return m_isValid;
-}
-
-bool SocketUtility::GetIsBlocking()
-{
-    return m_isBlocking;
-}
-
-void SocketUtility::SetIsBlocking(bool blocking)
-{
-	if (Check() == false) 
-    {
-		if (Create() == false) 
-        {
-			return;
-		}
-	}
-
-	u_long nonblocking = (blocking ? 0 : 1);
-#if defined NEXGEN_WIN || defined NEXGEN_OG
-	ioctlsocket(m_sock, FIONBIO, &nonblocking);
-#else
-	ioctl(m_sock, O_NONBLOCK, &nonblocking);
-#endif
-	m_isBlocking = blocking;
-}
 
 bool SocketUtility::Bind(uint16_t port)
 {
@@ -222,7 +205,7 @@ bool SocketUtility::Bind(uint16_t port)
 	return !m_lastCode;
 }
 
-bool SocketUtility::Bind(const char* host, unsigned short port)
+bool SocketUtility::Bind(const char* host, uint16_t port)
 {
 	if (Check() == false && Create() == false) 
     {
@@ -277,42 +260,8 @@ bool SocketUtility::Accept(SocketUtility* socket)
 	return true;
 }
 
-void SocketUtility::Close()
-{
-	m_state = skDISCONNECTED;
 
-#if defined NEXGEN_WIN || defined NEXGEN_OG
-	::closesocket(m_sock);
-#else
-	::shutdown(m_sock, SHUT_RDWR);
-	::close(m_sock);
-#endif
-
-	m_sock = (int)INVALID_SOCKET;
-}
-
-SocketUtility::SockState SocketUtility::GetState()
-{
-    return m_state;
-}
-
-void SocketUtility::SetState(SocketUtility::SockState state)
-{
-    m_state = state;
-}
-
-
-struct sockaddr_in SocketUtility::GetAddress()
-{
-    return m_addr;
-}
-
-uint64_t SocketUtility::GetUAddress()
-{
-	return m_addr.sin_addr.s_addr;
-}
-
-uint32_t SocketUtility::Connect(const char* host, unsigned short port)
+int32_t SocketUtility::Connect(const char* host, uint16_t port)
 {
 	if (Check() == false && Create() == false) 
     {
@@ -344,20 +293,53 @@ uint32_t SocketUtility::Connect(const char* host, unsigned short port)
 	return 0;
 }
 
-bool SocketUtility::CanRead()
+void SocketUtility::Close()
 {
-	FD_ZERO(&m_scks);
-	FD_SET((unsigned)m_sock, &m_scks);
+	m_state = skDISCONNECTED;
 
-	return select((int)m_sock + 1, &m_scks, NULL, NULL, &m_times) > 0;
+#if defined NEXGEN_WIN || defined NEXGEN_OG
+	::closesocket(m_sock);
+#else
+	::shutdown(m_sock, SHUT_RDWR);
+	::close(m_sock);
+#endif
+
+	m_sock = (int)INVALID_SOCKET;
 }
 
-bool SocketUtility::CanWrite()
+int32_t SocketUtility::Receive(const void* buffer, uint32_t size, uint32_t spos)
 {
-	FD_ZERO(&m_scks);
-	FD_SET((unsigned)m_sock, &m_scks);
+	return recv(m_sock, (char*)buffer + spos, size, 0);
+}
 
-	return select((int)m_sock + 1, NULL, &m_scks, NULL, &m_times) > 0;
+int32_t SocketUtility::ReceiveUDP(const void* buffer, uint32_t size, sockaddr_in& from)
+{
+#if defined NEXGEN_WIN || defined NEXGEN_OG || defined NEXGEN_360 || defined NEXGEN_UWP
+	int client_length = (int)sizeof(from);
+#else
+	unsigned int client_length = (unsigned int)sizeof(from);
+#endif
+	return recvfrom(m_sock, (char*)buffer, size, 0, (struct sockaddr*)&from, &client_length);
+}
+
+int32_t SocketUtility::Send(const void* data, uint32_t dataSize)
+{
+	return send(this->m_sock, (char*)data, dataSize, 0);
+}
+
+int32_t SocketUtility::SendUDP(const void* buffer, uint32_t size, sockaddr_in& to)
+{
+	return sendto(m_sock, (char*)buffer, size + 1, 0, (struct sockaddr *)&to, sizeof(to));
+}
+
+struct sockaddr_in SocketUtility::GetAddress()
+{
+    return m_addr;
+}
+
+uint64_t SocketUtility::GetUAddress()
+{
+	return m_addr.sin_addr.s_addr;
 }
 
 bool SocketUtility::IsError()
@@ -379,42 +361,74 @@ bool SocketUtility::IsError()
 	return true;
 }
 
-uint32_t SocketUtility::GetSock()
+bool SocketUtility::IsValid()
+{
+    return m_isValid;
+}
+
+bool SocketUtility::CanRead()
+{
+	FD_ZERO(&m_scks);
+	FD_SET((unsigned)m_sock, &m_scks);
+
+	return select((int)m_sock + 1, &m_scks, NULL, NULL, &m_times) > 0;
+}
+
+bool SocketUtility::CanWrite()
+{
+	FD_ZERO(&m_scks);
+	FD_SET((unsigned)m_sock, &m_scks);
+
+	return select((int)m_sock + 1, NULL, &m_scks, NULL, &m_times) > 0;
+}
+
+int32_t SocketUtility::GetLastCode()
+{
+    return m_lastCode;
+}
+
+int32_t SocketUtility::GetSock()
 {
     return m_sock;
 }
 
-void SocketUtility::SetSock(uint32_t sock)
+bool SocketUtility::GetIsBlocking()
 {
-    m_sock = sock;
+    return m_isBlocking;
 }
 
-int SocketUtility::ReceiveUDP(const void* buffer, uint32_t size, sockaddr_in* from)
+void SocketUtility::SetIsBlocking(bool blocking)
 {
+	if (Check() == false && Create() == false) 
+    {
+		return;
+	}
+
+	u_long nonblocking = (blocking ? 0 : 1);
 #if defined NEXGEN_WIN || defined NEXGEN_OG
-	int client_length = (int)sizeof(struct sockaddr_in);
+	ioctlsocket(m_sock, FIONBIO, &nonblocking);
 #else
-	unsigned int client_length = (unsigned int)sizeof(struct sockaddr_in);
+	ioctl(m_sock, O_NONBLOCK, &nonblocking);
 #endif
-	return recvfrom(m_sock, (char*)buffer, size, 0, (struct sockaddr*)from, &client_length);
+	m_isBlocking = blocking;
 }
 
-int SocketUtility::Receive(const void* buffer, uint32_t size, uint32_t spos)
+SocketUtility::SockState SocketUtility::GetState()
 {
-	return recv(m_sock, (char*)buffer + spos, size, 0);
+    return m_state;
 }
 
-int SocketUtility::SendUDP(const void* buffer, uint32_t size, sockaddr_in* to)
+void SocketUtility::SetState(SocketUtility::SockState state)
 {
-	return sendto(m_sock, (char*)buffer, size, 0, (struct sockaddr *)&to, sizeof(struct sockaddr_in));
-}
-
-int SocketUtility::SendRaw(const void* data, uint32_t dataSize)
-{
-	return send(m_sock, (char*)data, dataSize, 0);
+    m_state = state;
 }
 
 // Privates
+
+void SocketUtility::SetSock(int32_t sock)
+{
+    m_sock = sock;
+}
 
 bool SocketUtility::Check()
 {

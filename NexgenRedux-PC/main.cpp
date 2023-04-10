@@ -5,6 +5,8 @@
 #include <Gensys/FileSystem.h>
 #include <Gensys/Test.h>
 
+#include <Gensys/SocketUtility.h>
+
 #include "ConfigLoader.h"
 #include "AngelScriptRunner.h"
 #include "WindowManager.h"
@@ -18,14 +20,22 @@ using namespace AngelScript;
 
 int main(int argc, const char* argv[])
 {
-    WindowManager *windowManager = WindowManager::GetInstance();
-    RenderStateManager *renderStateManager = RenderStateManager::GetInstance();
-    
-	if (ConfigLoader::LoadConfig() == false) 
+    if (ConfigLoader::LoadConfig() == false) 
 	{
 		return 0;
 	}
 
+    std::wstring appPath;
+	if (FileSystem::GetAppDirectory(appPath) == false)
+    {
+        return 0;
+    }
+    DebugUtility::Init(FileSystem::CombinePath(appPath, L"log.txt"), 17745);
+	DebugUtility::DeleteLogFile();
+
+    WindowManager *windowManager = WindowManager::GetInstance();
+    RenderStateManager *renderStateManager = RenderStateManager::GetInstance();
+    
     if (AngelScriptRunner::Init() == false)
     {
         return 0;
@@ -47,6 +57,7 @@ int main(int argc, const char* argv[])
     RenderStateManager::Close();
     WindowManager::Close();
     AngelScriptRunner::Close();
+    DebugUtility::Close();
 
     return 0;
 }

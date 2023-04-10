@@ -1,6 +1,7 @@
 #include "DebugUtility.h"
 #include "StringUtility.h"
 #include "FileSystem.h"
+#include "SocketUtility.h"
 #include <fstream>
 #include <vector>
 #include <iostream>
@@ -19,14 +20,43 @@ using namespace Gensys;
 namespace {
 
 	std::wstring m_LogFile = L"logFile.log";
-
+	SocketUtility* m_SocketUtility = NULL;
+	uint16_t m_port = 8008;
 }
 
 #define MIN_LOGLEVEL LOGLEVEL_INFO
 
-void DebugUtility::SetLogFile(std::wstring const logFile)
+bool DebugUtility::Init(std::wstring const logFile, uint16_t port)
 {
 	m_LogFile = logFile;
+	m_port = port;
+
+	m_SocketUtility = new SocketUtility();
+	if (m_SocketUtility->Create(IPPROTO_UDP) == false)
+	{
+		Close();
+		return false;
+	}
+    if (m_SocketUtility->EnableBroadcast() == false)
+	{
+		Close();
+		return false;
+	}
+	if (m_SocketUtility->Bind(0) == false)
+	{
+		Close();
+		return false;
+	}
+	return true;
+}
+
+void DebugUtility::Close()
+{
+	if (m_SocketUtility != NULL)
+	{
+		delete m_SocketUtility;
+		m_SocketUtility == NULL;
+	}
 }
 
 void DebugUtility::DeleteLogFile()
@@ -36,12 +66,6 @@ void DebugUtility::DeleteLogFile()
 
 void DebugUtility::LogMessage(DebugUtility::LogLevel const logLevel, const std::string message)
 {
-	// char buffer[1024];
-	// vsprintf(buffer, format.c_str(), args);	
-	// va_end(args);
-
-	// std::string message = std::string(buffer);
-		
 	if (logLevel < DebugUtility::MIN_LOGLEVEL)
 	{
 		return;
@@ -81,20 +105,12 @@ void DebugUtility::LogMessage(DebugUtility::LogLevel const logLevel, const std::
 	printf("\n");
 #endif
 
-// #ifdef NEXGEN_WIN
-
-// 	HANDLE stdOutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-// 	if (stdOutHandle <= 0) {
-// 		return;
-// 	}
-
-// 	DWORD dwCharsWritten;
-// 	WriteConsole(stdOutHandle, level.c_str(), (DWORD)level.length(), &dwCharsWritten, NULL);
-// 	WriteConsole(stdOutHandle, L": ", 2, &dwCharsWritten, NULL);
-// 	WriteConsole(stdOutHandle, message.c_str(), (DWORD)message.length(), &dwCharsWritten, NULL);
-// 	WriteConsole(stdOutHandle, L"\n", 1, &dwCharsWritten, NULL);
-
-// #endif
+    sockaddr_in remoteAddr;
+    memset(&remoteAddr, 0, sizeof(remoteAddr));
+    remoteAddr.sin_family = AF_INET;
+    remoteAddr.sin_addr.s_addr = htonl(INADDR_BROADCAST);
+    remoteAddr.sin_port = htons(m_port);
+    m_SocketUtility->SendUDP(message.c_str(), (uint32_t)message.length(), remoteAddr);
 }
 
 void DebugUtility::LogMessageIf(const bool condition, const LogLevel logLevel, const std::string message)

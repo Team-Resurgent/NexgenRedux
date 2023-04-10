@@ -152,9 +152,9 @@ bool SocketUtility::Create(uint32_t protocol)
 	switch (protocol) 
     {
         case IPPROTO_TCP: 
-            return this->Create(IPPROTO_TCP, SOCK_DGRAM);
+            return this->Create(IPPROTO_TCP, SOCK_STREAM);
         default:          
-            return this->Create(IPPROTO_UDP, SOCK_STREAM);
+            return this->Create(IPPROTO_UDP, SOCK_DGRAM);
 	}
 }
 

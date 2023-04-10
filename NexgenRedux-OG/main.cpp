@@ -18,16 +18,22 @@ using namespace AngelScript;
 
 void __cdecl main(int, char **)
 {
-	//Gensys::Test::RunTests();
-
-    WindowManager *windowManager = WindowManager::GetInstance();
-    RenderStateManager *renderStateManager = RenderStateManager::GetInstance();
-    
-	if (ConfigLoader::LoadConfig() == false) 
+	    if (ConfigLoader::LoadConfig() == false) 
 	{
 		return;
 	}
 
+    std::wstring appPath;
+	if (FileSystem::GetAppDirectory(appPath) == false)
+    {
+        return;
+    }
+    DebugUtility::Init(FileSystem::CombinePath(appPath, L"log.txt"), 17745);
+	DebugUtility::DeleteLogFile();
+
+    WindowManager *windowManager = WindowManager::GetInstance();
+    RenderStateManager *renderStateManager = RenderStateManager::GetInstance();
+    
     if (AngelScriptRunner::Init() == false)
     {
         return;
@@ -45,8 +51,9 @@ void __cdecl main(int, char **)
 
     NodeManager::Close();
     FontManager::Close();
-
+    
     RenderStateManager::Close();
     WindowManager::Close();
     AngelScriptRunner::Close();
+    DebugUtility::Close();
 }

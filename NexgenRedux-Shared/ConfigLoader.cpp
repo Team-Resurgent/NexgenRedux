@@ -63,15 +63,6 @@ bool ConfigLoader::LoadConfig()
     m_config.MediaOverride = L"";
     m_config.LaunchFolder = L"Default";
 
-    std::wstring appPath;
-	if (FileSystem::GetAppDirectory(appPath) == false)
-    {
-        return false;
-    }
-
-    DebugUtility::SetLogFile(FileSystem::CombinePath(appPath, L"log.txt"));
-	DebugUtility::DeleteLogFile();
-
 	std::wstring mediaPath;
 	if (FileSystem::GetMediaDirectory(mediaPath) == false)
 	{

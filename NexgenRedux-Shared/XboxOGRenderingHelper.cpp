@@ -16,6 +16,7 @@
 #include <map>
 
 #define STB_IMAGE_IMPLEMENTATION
+#define STBI_FAILURE_USERMSG
 #define STBI_ASSERT(x)
 #include <STB/stb_image.h>
 
@@ -982,7 +983,7 @@ void XboxOGRenderingHelper::SetScissor(const ScissorOperation& operation, const 
 bool XboxOGRenderingHelper::LoadTexture(const std::wstring& path, uint32_t& textureID)
 {	
 	std::wstring mappedPath;
-	if (ConfigLoader::MapPath(path, mappedPath) == 0)
+	if (path.length() == 0 || ConfigLoader::MapPath(path, mappedPath) == false)
 	{
 		return false;
 	}

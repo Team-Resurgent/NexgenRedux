@@ -822,7 +822,7 @@ void OpenGLRenderingHelper::SetScissor(const ScissorOperation& operation, const 
 bool OpenGLRenderingHelper::LoadTexture(const std::wstring& path, uint32_t& textureID)
 {	
 	std::wstring mappedPath;
-	if (ConfigLoader::MapPath(path, mappedPath) == 0)
+	if (path.length() == 0 || ConfigLoader::MapPath(path, mappedPath) == false)
 	{
 		return false;
 	}

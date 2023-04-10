@@ -105,12 +105,15 @@ void DebugUtility::LogMessage(DebugUtility::LogLevel const logLevel, const std::
 	printf("\n");
 #endif
 
-    sockaddr_in remoteAddr;
-    memset(&remoteAddr, 0, sizeof(remoteAddr));
-    remoteAddr.sin_family = AF_INET;
-    remoteAddr.sin_addr.s_addr = htonl(INADDR_BROADCAST);
-    remoteAddr.sin_port = htons(m_port);
-    m_SocketUtility->SendUDP(message.c_str(), (uint32_t)message.length(), remoteAddr);
+	if (m_SocketUtility != NULL)
+	{
+		sockaddr_in remoteAddr;
+		memset(&remoteAddr, 0, sizeof(remoteAddr));
+		remoteAddr.sin_family = AF_INET;
+		remoteAddr.sin_addr.s_addr = htonl(INADDR_BROADCAST);
+		remoteAddr.sin_port = htons(m_port);
+		m_SocketUtility->SendUDP(message.c_str(), (uint32_t)message.length(), remoteAddr);
+	}
 }
 
 void DebugUtility::LogMessageIf(const bool condition, const LogLevel logLevel, const std::string message)

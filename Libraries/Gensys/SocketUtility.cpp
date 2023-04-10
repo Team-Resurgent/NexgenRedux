@@ -112,20 +112,76 @@ struct hostent* gethostbyname(const char* name)
 
 //WSACleanup( );
 
+#define RECV_SOCKET_BUFFER_SIZE_IN_K 64
+#define RECV_SOCKET_BUFFER_SIZE RECV_SOCKET_BUFFER_SIZE_IN_K * 1024
+#define SEND_SOCKET_BUFFER_SIZE_IN_K 64
+#define SEND_SOCKET_BUFFER_SIZE SEND_SOCKET_BUFFER_SIZE_IN_K * 1024
+
 SocketUtility::SocketUtility()
 {
 	m_maxcon = 64;
 	memset(&m_addr, 0, sizeof(m_addr));
 
+
+
+#if defined NEXGEN_OG || defined NEXGEN_360
+
+	if (!(XNetGetEthernetLinkStatus() & XNET_ETHERNET_LINK_ACTIVE))
+	{
+		//DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, L"Ethernet not connected");
+		return;
+	}
+
+	XNetStartupParams xnsp;
+	memset(&xnsp, 0, sizeof(xnsp));
+	xnsp.cfgSizeOfStruct = sizeof(XNetStartupParams);
+	xnsp.cfgFlags = XNET_STARTUP_BYPASS_SECURITY;
+
+#if defined NEXGEN_OG 
+	xnsp.cfgPrivatePoolSizeInPages = 64;
+	xnsp.cfgEnetReceiveQueueLength = 16;
+	xnsp.cfgIpFragMaxSimultaneous = 16;
+	xnsp.cfgIpFragMaxPacketDiv256 = 32;
+	xnsp.cfgSockMaxSockets = 64;
+#endif
+
+	xnsp.cfgSockDefaultRecvBufsizeInK = RECV_SOCKET_BUFFER_SIZE_IN_K;
+	xnsp.cfgSockDefaultSendBufsizeInK = SEND_SOCKET_BUFFER_SIZE_IN_K;
+
+	XNetStartup(&xnsp);
+
+	XNADDR addr;
+	DWORD dwState;
+	do
+	{
+		dwState = XNetGetTitleXnAddr(&addr);
+		Sleep(500);
+	} while (dwState == XNET_GET_XNADDR_PENDING);
+
+	if (XNetStartup(&xnsp))
+	{
+		//DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, L"Network startup failed");
+		return;
+	}
+
+	//DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, L"IP = %i.%i.%i.%i", 
+	//	addr.ina.S_un.S_un_b.s_b1,
+	//	addr.ina.S_un.S_un_b.s_b2,
+	//	addr.ina.S_un.S_un_b.s_b3,
+	//	addr.ina.S_un.S_un_b.s_b4);
+
+#endif
+	
+
 #if defined NEXGEN_WIN || defined NEXGEN_OG
-	int result = WSAStartup(MAKEWORD(1, 1), &m_wsda);
+	int result = WSAStartup(MAKEWORD(2, 2), &m_wsda);
 	if (result != 0)
 	{
 		//error
 	}
 #endif
 
-	m_sock = (uint32_t)INVALID_SOCKET;
+	m_sock = (SOCKET)SOCKET_NONE;
 	m_isBlocking = false;
 	m_isValid = false;
 	m_times.tv_sec = 0;
@@ -144,7 +200,7 @@ SocketUtility::~SocketUtility()
 
 bool SocketUtility::Create()
 {
-	return this->Create(IPPROTO_TCP, SOCK_STREAM);
+	return Create(IPPROTO_TCP, SOCK_STREAM);
 }
 
 bool SocketUtility::Create(uint32_t protocol)
@@ -152,43 +208,33 @@ bool SocketUtility::Create(uint32_t protocol)
 	switch (protocol) 
     {
         case IPPROTO_TCP: 
-            return this->Create(IPPROTO_TCP, SOCK_STREAM);
+            return Create(IPPROTO_TCP, SOCK_STREAM);
         default:          
-            return this->Create(IPPROTO_UDP, SOCK_DGRAM);
+            return Create(IPPROTO_UDP, SOCK_DGRAM);
 	}
 }
 
 bool SocketUtility::Create(uint32_t protocol, uint32_t type)
 {
-	if (this->Check()) 
+	if (Check()) 
     {
 		return false;
 	}
-
 	m_state = skDISCONNECTED;
-	m_sock = (int)::socket(AF_INET, type, protocol);
-	m_lastCode = m_sock;
-
-	return m_sock > SOCKET_NONE;
+	m_sock = ::socket(AF_INET, type, protocol);
+	return (int32_t)m_sock != SOCKET_ERROR;
 }
 
 bool SocketUtility::EnableBroadcast()
 {
-	if (this->Check() == false) 
+	if (Check() == false) 
     {
 		return false;
 	}
-
 	BOOL bOptVal = TRUE;
     int bOptLen = sizeof(BOOL);
     return setsockopt(m_sock, SOL_SOCKET, SO_BROADCAST, (char*)&bOptVal, bOptLen) != SOCKET_ERROR;
 }
-
-void SocketUtility::Drop()
-{
-	m_sock = SOCKET_NONE;
-}
-
 
 bool SocketUtility::Bind(uint16_t port)
 {
@@ -196,13 +242,10 @@ bool SocketUtility::Bind(uint16_t port)
     {
 		return false;
 	}
-
 	m_addr.sin_family = AF_INET;
 	m_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	m_addr.sin_port = htons(port);
-	m_lastCode = ::bind(m_sock, (struct sockaddr*)&m_addr, sizeof(m_addr));
-
-	return !m_lastCode;
+	return ::bind(m_sock, (struct sockaddr*)&m_addr, sizeof(m_addr)) != SOCKET_ERROR;
 }
 
 bool SocketUtility::Bind(const char* host, uint16_t port)
@@ -212,9 +255,9 @@ bool SocketUtility::Bind(const char* host, uint16_t port)
 		return false;
 	}
 
-	struct hostent* phe;
-	phe = gethostbyname(host);
-	if (phe == NULL) {
+	struct hostent* phe = gethostbyname(host);
+	if (phe == NULL) 
+	{
 		return false;
 	}
 
@@ -222,41 +265,33 @@ bool SocketUtility::Bind(const char* host, uint16_t port)
 
 	m_addr.sin_family = AF_INET;
 	m_addr.sin_port = htons(port);
-	m_lastCode = ::bind(m_sock, (struct sockaddr*)&m_addr, sizeof(m_addr));
-
-	return !m_lastCode;
+	return ::bind(m_sock, (struct sockaddr*)&m_addr, sizeof(m_addr)) != SOCKET_ERROR;
 }
 
 bool SocketUtility::Listen()
 {
-	m_lastCode = ::listen(m_sock, m_maxcon);
-	if (m_lastCode == SOCKET_ERROR) 
+	if (::listen(m_sock, m_maxcon) == SOCKET_ERROR)
     {
 		return false;
 	}
-
 	m_state = skLISTENING;
 	m_isValid = true;
 	return true;
 }
 
-bool SocketUtility::Accept(SocketUtility* socket)
+bool SocketUtility::Accept(SocketUtility* socketUtility)
 {
 	if (m_isBlocking == false && CanRead() == false) 
     {
 		return false;
 	}
-
-	int length = sizeof(socket->GetAddress());
-	socket->SetSock((int)::accept(m_sock, (struct sockaddr*) &socket->m_addr, (socklen_t*)&length));
-
-	m_lastCode = socket->GetSock();
-	if (socket->GetSock() == SOCKET_ERROR) 
+	int length = sizeof(socketUtility->GetAddress());
+	socketUtility->SetSock(::accept(m_sock, (struct sockaddr*) &socketUtility->m_addr, (socklen_t*)&length));
+	if ((int32_t)socketUtility->GetSock() == SOCKET_ERROR) 
     {
 		return false;
 	}
-
-	socket->SetState(skCONNECTED);
+	socketUtility->SetState(skCONNECTED);
 	return true;
 }
 
@@ -268,8 +303,7 @@ int32_t SocketUtility::Connect(const char* host, uint16_t port)
 		return 1;
 	}
 
-	struct hostent* phe;
-	phe = gethostbyname(host);
+	struct hostent* phe = gethostbyname(host);
 	if (phe == NULL) 
     {
 		return 2;
@@ -280,12 +314,9 @@ int32_t SocketUtility::Connect(const char* host, uint16_t port)
 	m_addr.sin_family = AF_INET;
 	m_addr.sin_port = htons(port);
 
-	if (::connect(m_sock, (struct sockaddr*)&m_addr, sizeof(m_addr)) == SOCKET_ERROR) 
+	if (::connect(m_sock, (struct sockaddr*)&m_addr, sizeof(m_addr)) == SOCKET_ERROR && m_isBlocking == true) 
     {
-		if (m_isBlocking == true) 
-        {
-			return 3;
-		}
+		return 3;
 	}
 
 	m_state = skCONNECTED;
@@ -304,7 +335,7 @@ void SocketUtility::Close()
 	::close(m_sock);
 #endif
 
-	m_sock = (int)INVALID_SOCKET;
+	m_sock = (SOCKET)INVALID_SOCKET;
 }
 
 int32_t SocketUtility::Receive(const void* buffer, uint32_t size, uint32_t spos)
@@ -344,7 +375,7 @@ uint64_t SocketUtility::GetUAddress()
 
 bool SocketUtility::IsError()
 {
-	if (m_state == skERROR || m_sock == -1) 
+	if (m_state == skERROR || (int32_t)m_sock == SOCKET_ERROR) 
     {
 		return true;
 	}
@@ -352,7 +383,7 @@ bool SocketUtility::IsError()
 	FD_ZERO(&m_scks);
 	FD_SET((unsigned)m_sock, &m_scks);
 
-	if (select((int)m_sock + 1, NULL, NULL, &m_scks, &m_times) >= 0) 
+	if (select((int)m_sock + 1, NULL, NULL, &m_scks, &m_times) != SOCKET_ERROR) 
     {
 		return false;
 	}
@@ -370,24 +401,17 @@ bool SocketUtility::CanRead()
 {
 	FD_ZERO(&m_scks);
 	FD_SET((unsigned)m_sock, &m_scks);
-
-	return select((int)m_sock + 1, &m_scks, NULL, NULL, &m_times) > 0;
+	return select((int32_t)m_sock + 1, &m_scks, NULL, NULL, &m_times) > 0;
 }
 
 bool SocketUtility::CanWrite()
 {
 	FD_ZERO(&m_scks);
 	FD_SET((unsigned)m_sock, &m_scks);
-
-	return select((int)m_sock + 1, NULL, &m_scks, NULL, &m_times) > 0;
+	return select((int32_t)m_sock + 1, NULL, &m_scks, NULL, &m_times) > 0;
 }
 
-int32_t SocketUtility::GetLastCode()
-{
-    return m_lastCode;
-}
-
-int32_t SocketUtility::GetSock()
+SOCKET SocketUtility::GetSock()
 {
     return m_sock;
 }
@@ -425,7 +449,7 @@ void SocketUtility::SetState(SocketUtility::SockState state)
 
 // Privates
 
-void SocketUtility::SetSock(int32_t sock)
+void SocketUtility::SetSock(SOCKET sock)
 {
     m_sock = sock;
 }

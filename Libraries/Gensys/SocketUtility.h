@@ -48,11 +48,10 @@ namespace Gensys
         bool Create(uint32_t protocol);
         bool Create(uint32_t protocol, uint32_t type);
         bool EnableBroadcast();
-        void Drop();
         bool Bind(uint16_t port);
         bool Bind(const char* host, uint16_t port);
         bool Listen();
-        bool Accept(SocketUtility* socket);
+        bool Accept(SocketUtility* socketUtility);
         int32_t Connect(const char* host, uint16_t port);
         void Close();
 
@@ -67,8 +66,7 @@ namespace Gensys
         bool IsValid();
         bool CanRead();
         bool CanWrite();
-        int32_t GetLastCode();
-        int32_t GetSock();
+        SOCKET GetSock();
         bool GetIsBlocking();
         void SetIsBlocking(bool blocking);
         SockState GetState();
@@ -76,14 +74,13 @@ namespace Gensys
 
     private:
 
-        void SetSock(int32_t sock);
+        void SetSock(SOCKET sock);
         bool Check();
 
     private:
 
         bool m_isBlocking;
         bool m_isValid;
-        int32_t m_lastCode;
         struct sockaddr_in m_addr;
 
     #if defined NEXGEN_WIN || defined NEXGEN_OG
@@ -94,6 +91,6 @@ namespace Gensys
         fd_set m_scks;
         timeval m_times;
         uint32_t m_totaldata;
-        int32_t m_sock;
+        SOCKET m_sock;
     };
 }

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Int.h"
+
 #include <string>
 
 namespace Gensys

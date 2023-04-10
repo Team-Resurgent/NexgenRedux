@@ -288,6 +288,12 @@
 					RelativePath="..\NexgenRedux-Shared\EntityEngine\OrthoCamera.h">
 				</File>
 				<File
+					RelativePath="..\NexgenRedux-Shared\EntityEngine\PerspectiveCamera.cpp">
+				</File>
+				<File
+					RelativePath="..\NexgenRedux-Shared\EntityEngine\PerspectiveCamera.h">
+				</File>
+				<File
 					RelativePath="..\NexgenRedux-Shared\EntityEngine\SceneManager.cpp">
 				</File>
 				<File

@@ -55,7 +55,7 @@ void DebugUtility::Close()
 	if (m_SocketUtility != NULL)
 	{
 		delete m_SocketUtility;
-		m_SocketUtility == NULL;
+		m_SocketUtility = NULL;
 	}
 }
 

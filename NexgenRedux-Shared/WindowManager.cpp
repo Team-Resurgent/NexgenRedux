@@ -124,12 +124,12 @@ bool WindowManager::RenderLoop()
 {
 	RenderStateManager* renderStateManager = RenderStateManager::GetInstance();
 
-	renderStateManager->Init();
-
 	float f = 0;
 
 	if (m_windowHelper->GetWindowPtr() != NULL) 
 	{
+		renderStateManager->Init();
+
 		uint64_t now = TimeUtility::GetMillisecondsNow();
 		uint64_t previousNow = now;
 

@@ -47,6 +47,7 @@ using namespace AngelScript;
 namespace {
 
 	asIScriptEngine* m_engine = NULL;
+	asIScriptContext *m_context = NULL;
 	CScriptBuilder* m_builder = NULL;
 
 	asIScriptFunction *m_windowIconifyCallback = NULL;
@@ -1088,65 +1089,60 @@ bool AngelScriptRunner::ExecuteInit(void)
 	{
 		return false;
 	}
+	m_context = context;
 
 #ifdef ANGELSCRIPT_DEBUG
-	context->SetLineCallback(asFUNCTION(DebugLineCallback), NULL, asCALL_CDECL);
+	m_context->SetLineCallback(asFUNCTION(DebugLineCallback), NULL, asCALL_CDECL);
 #endif
 
 	asIScriptFunction *initFunction = m_engine->GetModule("main")->GetFunctionByDecl("void Init()");
 	if (initFunction == NULL)
 	{
-		context->Release();
+		m_context->Release();
 		return false;
 	}
 
-	if (context->Prepare(initFunction) < 0) 
+	if (m_context->Prepare(initFunction) < 0) 
 	{
-		context->Release();
+		m_context->Release();
 		return false;
 	}
 
-	bool success = Execute(context);
-	context->Release();
+	bool success = Execute(m_context);
 	return success;
 }
 
 bool AngelScriptRunner::ExecuteRender(double dt)
 {
-	asIScriptContext *context = m_engine->CreateContext();
-	if (context == NULL) 
+	if (m_context == NULL) 
 	{
 		return false;
 	}
 
 #ifdef ANGELSCRIPT_DEBUG
-	context->SetLineCallback(asFUNCTION(DebugLineCallback), NULL, asCALL_CDECL);
+	m_context->SetLineCallback(asFUNCTION(DebugLineCallback), NULL, asCALL_CDECL);
 #endif
 
 	asIScriptFunction *renderFunction = m_engine->GetModule("main")->GetFunctionByDecl("void Render(double)");
 	if (renderFunction == NULL)
 	{
-		context->Release();
 		return false;
 	}
 
-	if (context->Prepare(renderFunction) < 0) 
+	if (m_context->Prepare(renderFunction) < 0) 
 	{
-		context->Release();
 		return false;
 	}
 
-	context->SetArgDouble(0, dt);
+	m_context->SetArgDouble(0, dt);
 
-	bool success = Execute(context);
-	context->Release();
+	bool success = Execute(m_context);
 	return success;
 }
 
 bool AngelScriptRunner::ExecuteWindowIconifyCallback(uint32_t iconified)
 {
-	asIScriptContext *context = m_engine->CreateContext();
-	if (context == NULL) 
+	if (m_context == NULL) 
 	{
 		return false;
 	}
@@ -1157,331 +1153,289 @@ bool AngelScriptRunner::ExecuteWindowIconifyCallback(uint32_t iconified)
 
 	if (m_windowIconifyCallback == NULL)
 	{
-		context->Release();
 		return false;
 	}
 
-	if (context->Prepare(m_windowIconifyCallback) < 0) 
+	if (m_context->Prepare(m_windowIconifyCallback) < 0) 
 	{
-		context->Release();
 		return false;
 	}
 
-	context->SetArgDWord(0, iconified);
+	m_context->SetArgDWord(0, iconified);
 
-	bool success = Execute(context);
-	context->Release();
+	bool success = Execute(m_context);
 	return success;
 }
 
 bool AngelScriptRunner::ExecuteWindowMaximizeCallback(uint32_t maximized)
 {
-	asIScriptContext *context = m_engine->CreateContext();
-	if (context == NULL) 
+	if (m_context == NULL) 
 	{
 		return false;
 	}
 
 #ifdef ANGELSCRIPT_DEBUG
-	context->SetLineCallback(asFUNCTION(DebugLineCallback), NULL, asCALL_CDECL);
+	m_context->SetLineCallback(asFUNCTION(DebugLineCallback), NULL, asCALL_CDECL);
 #endif
 
 	if (m_windowMaximizeCallback == NULL)
 	{
-		context->Release();
 		return false;
 	}
 
-	if (context->Prepare(m_windowMaximizeCallback) < 0) 
+	if (m_context->Prepare(m_windowMaximizeCallback) < 0) 
 	{
-		context->Release();
 		return false;
 	}
 
-	context->SetArgDWord(0, maximized);
+	m_context->SetArgDWord(0, maximized);
 
-	bool success = Execute(context);
-	context->Release();
+	bool success = Execute(m_context);
 	return success;
 }
 
 bool AngelScriptRunner::ExecuteWindowSizeCallback(uint32_t width, uint32_t height)
 {
-	asIScriptContext *context = m_engine->CreateContext();
-	if (context == NULL) 
+	if (m_context == NULL) 
 	{
 		return false;
 	}
 
 #ifdef ANGELSCRIPT_DEBUG
-	context->SetLineCallback(asFUNCTION(DebugLineCallback), NULL, asCALL_CDECL);
+	m_context->SetLineCallback(asFUNCTION(DebugLineCallback), NULL, asCALL_CDECL);
 #endif
 
 	if (m_windowSizeCallback == NULL)
 	{
-		context->Release();
 		return false;
 	}
 
-	if (context->Prepare(m_windowSizeCallback) < 0) 
+	if (m_context->Prepare(m_windowSizeCallback) < 0) 
 	{
-		context->Release();
 		return false;
 	}
 
-	context->SetArgDWord(0, width);
-	context->SetArgDWord(1, height);
+	m_context->SetArgDWord(0, width);
+	m_context->SetArgDWord(1, height);
 
-	bool success = Execute(context);
-	context->Release();
+	bool success = Execute(m_context);
 	return success;
 }
 
 bool AngelScriptRunner::ExecuteWindowFocusCallback(uint32_t focused)
 {
-	asIScriptContext *context = m_engine->CreateContext();
-	if (context == NULL) 
+	if (m_context == NULL) 
 	{
 		return false;
 	}
 
 #ifdef ANGELSCRIPT_DEBUG
-	context->SetLineCallback(asFUNCTION(DebugLineCallback), NULL, asCALL_CDECL);
+	m_context->SetLineCallback(asFUNCTION(DebugLineCallback), NULL, asCALL_CDECL);
 #endif
 
 	if (m_windowFocusCallback == NULL)
 	{
-		context->Release();
 		return false;
 	}
 
-	if (context->Prepare(m_windowFocusCallback) < 0) 
+	if (m_context->Prepare(m_windowFocusCallback) < 0) 
 	{
-		context->Release();
 		return false;
 	}
 
-	context->SetArgDWord(0, focused);
+	m_context->SetArgDWord(0, focused);
 
-	bool success = Execute(context);
-	context->Release();
+	bool success = Execute(m_context);
 	return success;
 }
 
 bool AngelScriptRunner::ExecuteWindowKeyboardKeyCallback(uint32_t key, uint32_t scancode, uint32_t action, uint32_t modifier)
 {
-	asIScriptContext *context = m_engine->CreateContext();
-	if (context == NULL) 
+	if (m_context == NULL) 
 	{
 		return false;
 	}
 
 #ifdef ANGELSCRIPT_DEBUG
-	context->SetLineCallback(asFUNCTION(DebugLineCallback), NULL, asCALL_CDECL);
+	m_context->SetLineCallback(asFUNCTION(DebugLineCallback), NULL, asCALL_CDECL);
 #endif
 
 	if (m_windowKeyboardKeyCallback == NULL)
 	{
-		context->Release();
 		return false;
 	}
 
-	if (context->Prepare(m_windowKeyboardKeyCallback) < 0) 
+	if (m_context->Prepare(m_windowKeyboardKeyCallback) < 0) 
 	{
-		context->Release();
 		return false;
 	}
 
-	context->SetArgDWord(0, key);
-	context->SetArgDWord(1, scancode);
-	context->SetArgDWord(2, action);
-	context->SetArgDWord(3, modifier);
+	m_context->SetArgDWord(0, key);
+	m_context->SetArgDWord(1, scancode);
+	m_context->SetArgDWord(2, action);
+	m_context->SetArgDWord(3, modifier);
 
-	bool success = Execute(context);
-	context->Release();
+	bool success = Execute(m_context);
 	return success;
 }
 
 bool AngelScriptRunner::ExecuteWindowKeyboardCharacterCallback(uint32_t codepoint)
 {
-	asIScriptContext *context = m_engine->CreateContext();
-	if (context == NULL) 
+	if (m_context == NULL) 
 	{
 		return false;
 	}
 
 #ifdef ANGELSCRIPT_DEBUG
-	context->SetLineCallback(asFUNCTION(DebugLineCallback), NULL, asCALL_CDECL);
+	m_context->SetLineCallback(asFUNCTION(DebugLineCallback), NULL, asCALL_CDECL);
 #endif
 
 	if (m_windowKeyboardCharacterCallback == NULL)
 	{
-		context->Release();
 		return false;
 	}
 
-	if (context->Prepare(m_windowKeyboardCharacterCallback) < 0) 
+	if (m_context->Prepare(m_windowKeyboardCharacterCallback) < 0) 
 	{
-		context->Release();
 		return false;
 	}
 
-	context->SetArgDWord(0, codepoint);
+	m_context->SetArgDWord(0, codepoint);
 
-	bool success = Execute(context);
-	context->Release();
+	bool success = Execute(m_context);
 	return success;
 }
 
 bool AngelScriptRunner::ExecuteWindowMouseCursorPositionCallback(double xPos, double yPos)
 {
-	asIScriptContext *context = m_engine->CreateContext();
-	if (context == NULL) 
+	if (m_context == NULL) 
 	{
 		return false;
 	}
 
 #ifdef ANGELSCRIPT_DEBUG
-	context->SetLineCallback(asFUNCTION(DebugLineCallback), NULL, asCALL_CDECL);
+	m_context->SetLineCallback(asFUNCTION(DebugLineCallback), NULL, asCALL_CDECL);
 #endif
 
 	if (m_windowMouseCursorPositionCallback == NULL)
 	{
-		context->Release();
 		return false;
 	}
 
-	if (context->Prepare(m_windowMouseCursorPositionCallback) < 0) 
+	if (m_context->Prepare(m_windowMouseCursorPositionCallback) < 0) 
 	{
-		context->Release();
 		return false;
 	}
 
-	context->SetArgDouble(0, xPos);
-	context->SetArgDouble(1, yPos);
+	m_context->SetArgDouble(0, xPos);
+	m_context->SetArgDouble(1, yPos);
 
-	bool success = Execute(context);
-	context->Release();
+	bool success = Execute(m_context);
 	return success;
 }
 
 bool AngelScriptRunner::ExecuteWindowMouseCursorEnterCallback(uint32_t entered)
 {
-	asIScriptContext *context = m_engine->CreateContext();
-	if (context == NULL) 
+	if (m_context == NULL) 
 	{
 		return false;
 	}
 
 #ifdef ANGELSCRIPT_DEBUG
-	context->SetLineCallback(asFUNCTION(DebugLineCallback), NULL, asCALL_CDECL);
+	m_context->SetLineCallback(asFUNCTION(DebugLineCallback), NULL, asCALL_CDECL);
 #endif
 
 	if (m_windowMouseCursorEnterCallback == NULL)
 	{
-		context->Release();
 		return false;
 	}
 
-	if (context->Prepare(m_windowMouseCursorEnterCallback) < 0) 
+	if (m_context->Prepare(m_windowMouseCursorEnterCallback) < 0) 
 	{
-		context->Release();
 		return false;
 	}
 
-	context->SetArgDWord(0, entered);
+	m_context->SetArgDWord(0, entered);
 
-	bool success = Execute(context);
-	context->Release();
+	bool success = Execute(m_context);
 	return success;
 }
 
 bool AngelScriptRunner::ExecuteWindowMouseButtonCallback(uint32_t button, uint32_t action, uint32_t modifier)
 {
-	asIScriptContext *context = m_engine->CreateContext();
-	if (context == NULL) 
+	if (m_context == NULL) 
 	{
 		return false;
 	}
 	
 #ifdef ANGELSCRIPT_DEBUG
-	context->SetLineCallback(asFUNCTION(DebugLineCallback), NULL, asCALL_CDECL);
+	m_context->SetLineCallback(asFUNCTION(DebugLineCallback), NULL, asCALL_CDECL);
 #endif
 
 	if (m_windowMouseButtonCallback == NULL)
 	{
-		context->Release();
 		return false;
 	}
 
-	if (context->Prepare(m_windowMouseButtonCallback) < 0) 
+	if (m_context->Prepare(m_windowMouseButtonCallback) < 0) 
 	{
-		context->Release();
 		return false;
 	}
 
-	context->SetArgDWord(0, button);
-	context->SetArgDWord(1, action);
-	context->SetArgDWord(2, modifier);
+	m_context->SetArgDWord(0, button);
+	m_context->SetArgDWord(1, action);
+	m_context->SetArgDWord(2, modifier);
 
-	bool success = Execute(context);
-	context->Release();
+	bool success = Execute(m_context);
 	return success;
 }
 
 bool AngelScriptRunner::ExecuteWindowMouseScrollCallback(double xOffset, double yOffset)
 {
-	asIScriptContext *context = m_engine->CreateContext();
-	if (context == NULL) 
+	if (m_context == NULL) 
 	{
 		return false;
 	}
 
 #ifdef ANGELSCRIPT_DEBUG
-	context->SetLineCallback(asFUNCTION(DebugLineCallback), NULL, asCALL_CDECL);
+	m_context->SetLineCallback(asFUNCTION(DebugLineCallback), NULL, asCALL_CDECL);
 #endif
 
 	if (m_windowMouseScrollCallback == NULL)
 	{
-		context->Release();
 		return false;
 	}
 
-	if (context->Prepare(m_windowMouseScrollCallback) < 0) 
+	if (m_context->Prepare(m_windowMouseScrollCallback) < 0) 
 	{
-		context->Release();
 		return false;
 	}
 
-	context->SetArgDouble(0, xOffset);
-	context->SetArgDouble(1, yOffset);
+	m_context->SetArgDouble(0, xOffset);
+	m_context->SetArgDouble(1, yOffset);
 
-	bool success = Execute(context);
-	context->Release();
+	bool success = Execute(m_context);
 	return success;
 }
 
 bool AngelScriptRunner::ExecuteWindowDropCallback(std::vector<std::string> paths)
 {
-	asIScriptContext *context = m_engine->CreateContext();
-	if (context == NULL) 
+	if (m_context == NULL) 
 	{
 		return false;
 	}
 
 #ifdef ANGELSCRIPT_DEBUG
-	context->SetLineCallback(asFUNCTION(DebugLineCallback), NULL, asCALL_CDECL);
+	m_context->SetLineCallback(asFUNCTION(DebugLineCallback), NULL, asCALL_CDECL);
 #endif
 
 	if (m_windowDropCallback == NULL)
 	{
-		context->Release();
 		return false;
 	}
 
-	if (context->Prepare(m_windowDropCallback) < 0) 
+	if (m_context->Prepare(m_windowDropCallback) < 0) 
 	{
-		context->Release();
 		return false;
 	}
 
@@ -1492,18 +1446,16 @@ bool AngelScriptRunner::ExecuteWindowDropCallback(std::vector<std::string> paths
 		((std::string*)(array->At(i)))->assign(paths.at(i));
 	}
 
-	context->SetArgObject(1, array);
+	m_context->SetArgObject(1, array);
 
-	bool success = Execute(context);
-	context->Release();
+	bool success = Execute(m_context);
 	array->Release();
 	return success;
 }
 
 bool AngelScriptRunner::ExecuteJoystickConnectCallback(uint32_t joystickID, uint32_t connected)
 {
-	asIScriptContext *context = m_engine->CreateContext();
-	if (context == NULL) 
+	if (m_context == NULL) 
 	{
 		return false;
 	}
@@ -1514,21 +1466,18 @@ bool AngelScriptRunner::ExecuteJoystickConnectCallback(uint32_t joystickID, uint
 
 	if (m_joystickConnectCallback == NULL)
 	{
-		context->Release();
 		return false;
 	}
 
-	if (context->Prepare(m_joystickConnectCallback) < 0) 
+	if (m_context->Prepare(m_joystickConnectCallback) < 0) 
 	{
-		context->Release();
 		return false;
 	}
 
-	context->SetArgDWord(0, joystickID);
-	context->SetArgDWord(1, connected);
+	m_context->SetArgDWord(0, joystickID);
+	m_context->SetArgDWord(1, connected);
 
-	bool success = Execute(context);
-	context->Release();
+	bool success = Execute(m_context);
 	return success;
 }
 

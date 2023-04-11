@@ -89,6 +89,7 @@ list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/Libraries/Gensys/DriveManager.cpp"
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/Libraries/Gensys/FileSystem.cpp")
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/Libraries/Gensys/FtpServer.cpp")
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/Libraries/Gensys/Memory.cpp")
+list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/Libraries/Gensys/NetworkManager.cpp")
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/Libraries/Gensys/SocketUtility.cpp")
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/Libraries/Gensys/StringUtility.cpp")
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/Libraries/Gensys/TimeUtility.cpp")

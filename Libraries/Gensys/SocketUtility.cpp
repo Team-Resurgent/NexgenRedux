@@ -110,77 +110,10 @@ struct hostent* gethostbyname(const char* name)
 
 #endif
 
-//WSACleanup( );
-
-#define RECV_SOCKET_BUFFER_SIZE_IN_K 64
-#define RECV_SOCKET_BUFFER_SIZE RECV_SOCKET_BUFFER_SIZE_IN_K * 1024
-#define SEND_SOCKET_BUFFER_SIZE_IN_K 64
-#define SEND_SOCKET_BUFFER_SIZE SEND_SOCKET_BUFFER_SIZE_IN_K * 1024
-
 SocketUtility::SocketUtility()
 {
 	m_maxcon = 64;
 	memset(&m_addr, 0, sizeof(m_addr));
-
-
-
-#if defined NEXGEN_OG || defined NEXGEN_360
-
-	if (!(XNetGetEthernetLinkStatus() & XNET_ETHERNET_LINK_ACTIVE))
-	{
-		//DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, L"Ethernet not connected");
-		return;
-	}
-
-	XNetStartupParams xnsp;
-	memset(&xnsp, 0, sizeof(xnsp));
-	xnsp.cfgSizeOfStruct = sizeof(XNetStartupParams);
-	xnsp.cfgFlags = XNET_STARTUP_BYPASS_SECURITY;
-
-#if defined NEXGEN_OG 
-	xnsp.cfgPrivatePoolSizeInPages = 64;
-	xnsp.cfgEnetReceiveQueueLength = 16;
-	xnsp.cfgIpFragMaxSimultaneous = 16;
-	xnsp.cfgIpFragMaxPacketDiv256 = 32;
-	xnsp.cfgSockMaxSockets = 64;
-#endif
-
-	xnsp.cfgSockDefaultRecvBufsizeInK = RECV_SOCKET_BUFFER_SIZE_IN_K;
-	xnsp.cfgSockDefaultSendBufsizeInK = SEND_SOCKET_BUFFER_SIZE_IN_K;
-
-	XNetStartup(&xnsp);
-
-	XNADDR addr;
-	DWORD dwState;
-	do
-	{
-		dwState = XNetGetTitleXnAddr(&addr);
-		Sleep(500);
-	} while (dwState == XNET_GET_XNADDR_PENDING);
-
-	if (XNetStartup(&xnsp))
-	{
-		//DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, L"Network startup failed");
-		return;
-	}
-
-	//DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, L"IP = %i.%i.%i.%i", 
-	//	addr.ina.S_un.S_un_b.s_b1,
-	//	addr.ina.S_un.S_un_b.s_b2,
-	//	addr.ina.S_un.S_un_b.s_b3,
-	//	addr.ina.S_un.S_un_b.s_b4);
-
-#endif
-	
-
-#if defined NEXGEN_WIN || defined NEXGEN_OG
-	int result = WSAStartup(MAKEWORD(2, 2), &m_wsda);
-	if (result != 0)
-	{
-		//error
-	}
-#endif
-
 	m_sock = (SOCKET)SOCKET_NONE;
 	m_isBlocking = false;
 	m_isValid = false;

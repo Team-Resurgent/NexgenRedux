@@ -4,6 +4,7 @@
 #include "EntityEngine/FontManager.h"
 #include "RenderStateManager.h"
 
+#include <Gensys/NetworkManager.h>
 #include <Gensys/DebugUtility.h>
 #include <Gensys/StringUtility.h>
 #include <Gensys/FileSystem.h>
@@ -18,10 +19,12 @@ using namespace AngelScript;
 
 void __cdecl main(int, char **)
 {
-	    if (ConfigLoader::LoadConfig() == false) 
+	if (ConfigLoader::LoadConfig() == false) 
 	{
 		return;
 	}
+
+    NetworkManager::Init();
 
     std::wstring appPath;
 	if (FileSystem::GetAppDirectory(appPath) == false)
@@ -56,4 +59,5 @@ void __cdecl main(int, char **)
     WindowManager::Close();
     AngelScriptRunner::Close();
     DebugUtility::Close();
+    NetworkManager::Close();
 }

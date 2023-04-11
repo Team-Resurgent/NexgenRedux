@@ -4,7 +4,7 @@
 #include <Gensys/StringUtility.h>
 #include <Gensys/FileSystem.h>
 #include <Gensys/Test.h>
-
+#include <Gensys/NetworkManager.h>
 #include <Gensys/SocketUtility.h>
 
 #include "ConfigLoader.h"
@@ -24,6 +24,8 @@ int main(int argc, const char* argv[])
 	{
 		return 0;
 	}
+
+    NetworkManager::Init();
 
     std::wstring appPath;
 	if (FileSystem::GetAppDirectory(appPath) == false)
@@ -58,6 +60,7 @@ int main(int argc, const char* argv[])
     WindowManager::Close();
     AngelScriptRunner::Close();
     DebugUtility::Close();
+    NetworkManager::Close();
 
     return 0;
 }

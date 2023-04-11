@@ -83,9 +83,6 @@ namespace Gensys
         bool m_isValid;
         struct sockaddr_in m_addr;
 
-    #if defined NEXGEN_WIN || defined NEXGEN_OG
-        WSADATA m_wsda;
-    #endif
         uint32_t m_maxcon;
         SockState m_state;
         fd_set m_scks;

@@ -21,7 +21,7 @@ namespace {
 
 	std::wstring m_LogFile = L"logFile.log";
 	SocketUtility* m_SocketUtility = NULL;
-	uint16_t m_port = 8008;
+	uint16_t m_port = 17745;
 }
 
 #define MIN_LOGLEVEL LOGLEVEL_INFO

@@ -365,6 +365,12 @@
 				RelativePath="..\Libraries\Gensys\Memory.h">
 			</File>
 			<File
+				RelativePath="..\Libraries\Gensys\NetworkManager.cpp">
+			</File>
+			<File
+				RelativePath="..\Libraries\Gensys\NetworkManager.h">
+			</File>
+			<File
 				RelativePath="..\Libraries\Gensys\SocketUtility.cpp">
 			</File>
 			<File

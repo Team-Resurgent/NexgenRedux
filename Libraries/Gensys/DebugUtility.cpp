@@ -6,6 +6,7 @@
 #include <vector>
 #include <iostream>
 #include <stdarg.h>
+#include <cstring>
 
 #if defined UWP_ANGLE || defined NEXGEN_WIN
 #include <WinSock2.h>

@@ -517,7 +517,7 @@ bool FileSystem::FileReadAllAsString(std::wstring const path, std::string* buffe
 #elif defined NEXGEN_WIN || defined NEXGEN_UWP
 	fopen_s(&file, StringUtility::ToString(path).c_str(), "rb");
 #endif
-	if(file == NULL)
+	if (file == NULL)
 	{
 		return false;
 	}

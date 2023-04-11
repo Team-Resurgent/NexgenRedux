@@ -581,7 +581,7 @@
     <None Include="..\NexgenRedux-Shared\Media\config.ini">
       <Filter>NexgenRedux-Shared\Media</Filter>
     </None>
-    <None Include="..\NexgenRedux-Shared\Media\Default\Main.as">
+    <None Include="..\NexgenRedux-Shared\Media\Default\main.as">
       <Filter>NexgenRedux-Shared\Media\Default</Filter>
     </None>
   </ItemGroup>

@@ -241,7 +241,7 @@
 					Name="Default"
 					Filter="">
 					<File
-						RelativePath="..\NexgenRedux-Shared\Media\Default\Main.as">
+						RelativePath="..\NexgenRedux-Shared\Media\Default\main.as">
 					</File>
 					<File
 						RelativePath="..\NexgenRedux-Shared\Media\Default\util.as">

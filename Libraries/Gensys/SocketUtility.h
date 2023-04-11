@@ -20,6 +20,7 @@
 #else
 #include <netinet/in.h>
 #include <sys/ioctl.h>
+#define SOCKET int
 #endif
 
 namespace Gensys

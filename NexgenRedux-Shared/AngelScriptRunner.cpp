@@ -195,7 +195,7 @@ bool CompileScript(asIScriptEngine* engine)
 	{
 		return false;
 	}
-	scriptFile = FileSystem::CombinePath(scriptFile, L"Main.as");
+	scriptFile = FileSystem::CombinePath(scriptFile, L"main.as");
 
 	std::string script;
 	if (FileSystem::FileReadAllAsString(scriptFile, &script) == false)

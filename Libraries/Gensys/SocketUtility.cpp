@@ -164,8 +164,8 @@ bool SocketUtility::EnableBroadcast()
     {
 		return false;
 	}
-	BOOL bOptVal = TRUE;
-    int bOptLen = sizeof(BOOL);
+	int bOptVal = 1;
+    int bOptLen = sizeof(int);
     return setsockopt(m_sock, SOL_SOCKET, SO_BROADCAST, (char*)&bOptVal, bOptLen) != SOCKET_ERROR;
 }
 

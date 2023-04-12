@@ -1,3 +1,37 @@
+#pragma once
+
+#include "AngelScriptDebuggerCore.h"
+
+#include <AngelScript/angelscript.h>
+
+#include <vector>
+
+using namespace AngelScript;
+
+namespace NexgenRedux
+{
+	class AngelScriptDebugger
+	{
+	public:
+		
+		static void Init(asIScriptEngine *engine);
+		static void Close();
+
+		static asIScriptContext* RequestContextCallback(asIScriptEngine *engine, void * /*param*/);
+		static void ReturnContextCallback(asIScriptEngine *engine, asIScriptContext *context, void * /*param*/);
+
+	private:
+
+		static std::string AngelScriptDebugger::StringToString(void *obj, int /* expandMembers */, AngelScriptDebuggerCore * /* dbg */);
+		static std::string AngelScriptDebugger::ArrayToString(void *obj, int expandMembers, AngelScriptDebuggerCore *dbg);
+		static std::string AngelScriptDebugger::DictionaryToString(void *obj, int expandMembers, AngelScriptDebuggerCore *dbg);
+
+	private:
+
+
+    };
+}
+
 // #pragma once
 
 // #include <AngelScript/angelscript.h>

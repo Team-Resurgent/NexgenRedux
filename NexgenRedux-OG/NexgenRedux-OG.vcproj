@@ -148,6 +148,18 @@
 			Name="NexgenRedux-Shared"
 			Filter="">
 			<File
+				RelativePath="..\NexgenRedux-Shared\AngelScriptDebugger.cpp">
+			</File>
+			<File
+				RelativePath="..\NexgenRedux-Shared\AngelScriptDebugger.h">
+			</File>
+			<File
+				RelativePath="..\NexgenRedux-Shared\AngelScriptDebuggerCore.cpp">
+			</File>
+			<File
+				RelativePath="..\NexgenRedux-Shared\AngelScriptDebuggerCore.h">
+			</File>
+			<File
 				RelativePath="..\NexgenRedux-Shared\AngelScriptMethods.cpp">
 			</File>
 			<File

@@ -45,6 +45,7 @@ namespace NexgenRedux
 		static bool ExecuteJoystickConnectCallback(uint32_t joystickID, uint32_t connected);
 
 	private:
+
 		static bool Execute(asIScriptContext *context);	
 		static void SetWindowIconifyCallback(asIScriptGeneric* gen);
 		static void SetWindowMaximizeCallback(asIScriptGeneric* gen);

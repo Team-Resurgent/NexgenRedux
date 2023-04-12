@@ -1,6 +1,157 @@
-// #include "AngelScriptDebugHost.h"
+#include "AngelScriptDebugger.h"
+#include "AngelScriptDebuggerCore.h"
 
-// using namespace NexgenRedux;
+#include <AngelScript/angelscript.h>
+#include <AngelScript/addons/scriptarray/scriptarray.h>
+#include <AngelScript/addons/scriptdictionary/scriptdictionary.h>
+
+#include <sstream>
+#include <iostream>
+
+using namespace AngelScript;
+using namespace NexgenRedux;
+
+namespace
+{
+    AngelScriptDebuggerCore* m_debugger;
+    std::vector<asIScriptContext*> m_contextPool;
+}
+
+void AngelScriptDebugger::Init(asIScriptEngine *engine)
+{
+	// it to the scripts contexts that will be used to execute the scripts
+	m_debugger = new AngelScriptDebuggerCore();
+	m_debugger->SetEngine(engine);
+	m_debugger->RegisterToStringCallback(engine->GetTypeInfoByName("string"), StringToString);
+	m_debugger->RegisterToStringCallback(engine->GetTypeInfoByName("array"), ArrayToString);
+	m_debugger->RegisterToStringCallback(engine->GetTypeInfoByName("dictionary"), DictionaryToString);
+
+	std::cout << "Debugging, waiting for commands. Type 'h' for help." << std::endl;
+	m_debugger->TakeCommands(0);
+}
+
+void AngelScriptDebugger::Close()
+{
+    if (m_debugger != NULL)
+    {
+        delete m_debugger;
+    }
+}
+
+// Privates
+
+std::string AngelScriptDebugger::StringToString(void *obj, int /* expandMembers */, AngelScriptDebuggerCore * /* dbg */)
+{
+	// We know the received object is a string
+	std::string *val = reinterpret_cast<std::string*>(obj);
+
+	// Format the output string
+	// TODO: Should convert non-readable characters to escape sequences
+	std::stringstream s;
+	s << "(len=" << val->length() << ") \"";
+	if( val->length() < 20 )
+		s << *val << "\"";
+	else
+		s << val->substr(0, 20) << "...";
+
+	return s.str();
+}
+
+std::string AngelScriptDebugger::ArrayToString(void *obj, int expandMembers, AngelScriptDebuggerCore *dbg)
+{
+	CScriptArray *arr = reinterpret_cast<CScriptArray*>(obj);
+
+	std::stringstream s;
+	s << "(len=" << arr->GetSize() << ")";
+	
+	if( expandMembers > 0 )
+	{
+		s << " [";
+		for( asUINT n = 0; n < arr->GetSize(); n++ )
+		{
+			s << dbg->ToString(arr->At(n), arr->GetElementTypeId(), expandMembers - 1, arr->GetArrayObjectType()->GetEngine());
+			if( n < arr->GetSize()-1 )
+				s << ", ";
+		}
+		s << "]";
+	}
+
+	return s.str();
+}
+
+std::string AngelScriptDebugger::DictionaryToString(void *obj, int expandMembers, AngelScriptDebuggerCore *dbg)
+{
+	CScriptDictionary *dic = reinterpret_cast<CScriptDictionary*>(obj);
+ 
+	std::stringstream s;
+	s << "(len=" << dic->GetSize() << ")";
+ 
+	if( expandMembers > 0 )
+	{
+		s << " [";
+		asUINT n = 0;
+		for( CScriptDictionary::CIterator it = dic->begin(); it != dic->end(); it++, n++ )
+		{
+			s << "[" << it.GetKey() << "] = ";
+
+			// Get the type and address of the value
+			const void *val = it.GetAddressOfValue();
+			int typeId = it.GetTypeId();
+
+			// Use the engine from the currently active context (if none is active, the debugger
+			// will use the engine held inside it by default, but in an environment where there
+			// multiple engines this might not be the correct instance).
+			asIScriptContext *ctx = asGetActiveContext();
+
+			s << dbg->ToString(const_cast<void*>(val), typeId, expandMembers - 1, ctx ? ctx->GetEngine() : 0);
+			
+			if( n < dic->GetSize() - 1 )
+				s << ", ";
+		}
+		s << "]";
+	}
+ 
+	return s.str();
+}
+
+// std::string AngelScriptDebugger::DateTimeToString(void *obj, int expandMembers, CDebugger *dbg)
+// {
+// 	CDateTime *dt = reinterpret_cast<CDateTime*>(obj);
+	
+// 	std::stringstream s;
+// 	s << "{" << dt->getYear() << "-" << dt->getMonth() << "-" << dt->getDay() << " ";
+// 	s << dt->getHour() << ":" << dt->getMinute() << ":" << dt->getSecond() << "}";
+	
+// 	return s.str(); 
+// }
+
+asIScriptContext* AngelScriptDebugger::RequestContextCallback(asIScriptEngine *engine, void * /*param*/)
+{
+	asIScriptContext *context = NULL;
+
+	if (m_contextPool.size())
+	{
+		context = m_contextPool.back();
+		m_contextPool.pop_back();
+	}
+	else
+	{
+		context = engine->CreateContext();
+	}
+
+	if (context != NULL && m_debugger != NULL)
+	{
+		context->SetLineCallback(asMETHOD(AngelScriptDebuggerCore, LineCallback), m_debugger, asCALL_THISCALL);
+	}
+
+	return context;
+}
+
+void AngelScriptDebugger::ReturnContextCallback(asIScriptEngine *engine, asIScriptContext *context, void * /*param*/)
+{
+	context->Unprepare();
+	m_contextPool.push_back(context);
+}
 
 // void AngelScriptDebugHost::Send_Path(SocketUtility* sock)
 // {

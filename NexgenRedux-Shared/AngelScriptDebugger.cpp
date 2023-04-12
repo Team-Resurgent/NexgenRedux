@@ -19,7 +19,6 @@ namespace
 
 void AngelScriptDebugger::Init(asIScriptEngine *engine)
 {
-	// it to the scripts contexts that will be used to execute the scripts
 	m_debugger = new AngelScriptDebuggerCore();
 	m_debugger->SetEngine(engine);
 	m_debugger->RegisterToStringCallback(engine->GetTypeInfoByName("string"), StringToString);
@@ -113,17 +112,6 @@ std::string AngelScriptDebugger::DictionaryToString(void *obj, int expandMembers
  
 	return s.str();
 }
-
-// std::string AngelScriptDebugger::DateTimeToString(void *obj, int expandMembers, CDebugger *dbg)
-// {
-// 	CDateTime *dt = reinterpret_cast<CDateTime*>(obj);
-	
-// 	std::stringstream s;
-// 	s << "{" << dt->getYear() << "-" << dt->getMonth() << "-" << dt->getDay() << " ";
-// 	s << dt->getHour() << ":" << dt->getMinute() << ":" << dt->getSecond() << "}";
-	
-// 	return s.str(); 
-// }
 
 asIScriptContext* AngelScriptDebugger::RequestContextCallback(asIScriptEngine *engine, void * /*param*/)
 {

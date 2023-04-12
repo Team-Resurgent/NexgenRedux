@@ -1,5 +1,8 @@
 #include "AngelScriptDebuggerCore.h"
 
+#include <Gensys/DebugUtility.h>
+#include <Gensys/StringUtility.h>
+
 #include <iostream>  // cout
 #include <sstream>   // stringstream
 #include <stdlib.h>  // atoi
@@ -7,7 +10,10 @@
 #include <cstring>   // strlen
 
 using namespace std;
+using namespace Gensys;
 using namespace NexgenRedux;
+
+// #define ANGELSCRIPT_DEBUG
 
 AngelScriptDebuggerCore::AngelScriptDebuggerCore()
 {
@@ -163,44 +169,57 @@ void AngelScriptDebuggerCore::RegisterToStringCallback(const asITypeInfo *ot, To
 		m_toStringCallbacks.insert(map<const asITypeInfo*, ToStringCallback>::value_type(ot, callback));
 }
 
-void AngelScriptDebuggerCore::LineCallback(asIScriptContext *ctx)
+void AngelScriptDebuggerCore::LineCallback(asIScriptContext *context)
 {
-	assert( ctx );
-
-	// This should never happen, but it doesn't hurt to validate it
-	if( ctx == 0 )
+	if (context == NULL)
+	{
 		return;
+	}
+
+#if defined ANGELSCRIPT_DEBUG
+	const char *scriptSection;
+	int line = context->GetLineNumber(0, 0, &scriptSection);
+	DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, StringUtility::FormatString("Processing line %i, %s", line, scriptSection));
+#endif
 
 	// By default we ignore callbacks when the context is not active.
 	// An application might override this to for example disconnect the
 	// debugger as the execution finished.
-	if( ctx->GetState() != asEXECUTION_ACTIVE )
+	if (context->GetState() != asEXECUTION_ACTIVE)
+	{
 		return;
+	}
 
 	if( m_action == CONTINUE )
 	{
-		if( !CheckBreakPoint(ctx) )
+		if (!CheckBreakPoint(context))
+		{
 			return;
+		}
 	}
 	else if( m_action == STEP_OVER )
 	{
-		if( ctx->GetCallstackSize() > m_lastCommandAtStackLevel )
+		if (context->GetCallstackSize() > m_lastCommandAtStackLevel)
 		{
-			if( !CheckBreakPoint(ctx) )
+			if (!CheckBreakPoint(context))
+			{
 				return;
+			}
 		}
 	}
 	else if( m_action == STEP_OUT )
 	{
-		if( ctx->GetCallstackSize() >= m_lastCommandAtStackLevel )
+		if (context->GetCallstackSize() >= m_lastCommandAtStackLevel)
 		{
-			if( !CheckBreakPoint(ctx) )
+			if (!CheckBreakPoint(context))
+			{
 				return;
+			}
 		}
 	}
 	else if( m_action == STEP_INTO )
 	{
-		CheckBreakPoint(ctx);
+		CheckBreakPoint(context);
 
 		// Always break, but we call the check break point anyway 
 		// to tell user when break point has been reached
@@ -208,11 +227,11 @@ void AngelScriptDebuggerCore::LineCallback(asIScriptContext *ctx)
 
 	stringstream s;
 	const char *file = 0;
-	int lineNbr = ctx->GetLineNumber(0, 0, &file);
-	s << (file ? file : "{unnamed}") << ":" << lineNbr << "; " << ctx->GetFunction()->GetDeclaration() << endl;
+	int lineNbr = context->GetLineNumber(0, 0, &file);
+	s << (file ? file : "{unnamed}") << ":" << lineNbr << "; " << context->GetFunction()->GetDeclaration() << endl;
 	Output(s.str());
 
-	TakeCommands(ctx);
+	TakeCommands(context);
 }
 
 bool AngelScriptDebuggerCore::CheckBreakPoint(asIScriptContext *ctx)

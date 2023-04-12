@@ -162,8 +162,6 @@ void Init()
 
 
     // NodeManager::DeleteNode(sprite2.GetID());
-    // NodeManager::PurgeNodes();
-    // NodeManager::CheckForOrphans();
 
     // uint nodeID1 = nodeManager.AddSceneNode(sprite1, sceneID);
 

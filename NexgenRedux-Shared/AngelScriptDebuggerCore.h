@@ -28,7 +28,7 @@ class AngelScriptDebuggerCore
 		virtual void Output(const std::string &str);
 
 		// Line callback invoked by context
-		virtual void LineCallback(asIScriptContext *ctx);
+		virtual void LineCallback(asIScriptContext *context);
 
 		// Commands
 		virtual void PrintHelp();

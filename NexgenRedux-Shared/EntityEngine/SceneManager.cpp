@@ -21,6 +21,8 @@ namespace
 
 void SceneManager::Update(float dt) 
 {
+    NodeManager::PurgeNodes();
+
     std::map<uint32_t, std::vector<uint32_t> >::iterator itScene = m_sceneMap.find(m_currentSceneID);
 	if (itScene != m_sceneMap.end()) 
 	{

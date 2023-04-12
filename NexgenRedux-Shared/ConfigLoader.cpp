@@ -11,16 +11,9 @@ using namespace NexgenRedux;
 
 namespace 
 {
+    ConfigLoader::ConfigData m_config = {};
 
-    typedef struct ConfigData 
-    {
-        std::wstring MediaOverride;
-        std::wstring LaunchFolder;
-    } ConfigData;
-
-    ConfigData m_config = {};
-
-    void ParseConfigLine(ConfigData& configData, std::string line)
+    void ParseConfigLine(ConfigLoader::ConfigData& configData, std::string line)
     {
         std::string params[2];
         params[0] = "";
@@ -54,6 +47,8 @@ namespace
             configData.MediaOverride = std::wstring(param2);
         } else if (param1.compare(L"LAUNCHFOLDER") == 0) {
             configData.LaunchFolder = std::wstring(param2);
+        } else if (param1.compare(L"DEBUG") == 0) {
+            configData.Debug = StringUtility::UpperCase(param2) == L"TRUE";
         }
     }
 }
@@ -157,4 +152,9 @@ bool ConfigLoader::MapPath(const std::wstring& path, std::wstring& mappedPath)
 	}
     mappedPath = path;
 	return true;
+}
+
+bool ConfigLoader::Debug()
+{
+    return m_config.Debug;
 }

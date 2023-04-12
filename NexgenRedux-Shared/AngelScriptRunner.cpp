@@ -38,8 +38,6 @@
 
 // TODO: add node defaults to documenation
 
-// #define ANGELSCRIPT_DEBUG
-
 #include <cstring>
 #include <vector>
 
@@ -90,15 +88,8 @@ void MessageCallback(asSMessageInfo* msg, void* param)
 	}
 }
 
-void DebugLineCallback(asIScriptContext *ctx, void* ptr)
+int IncludeHandler(const char *include, const char *from, CScriptBuilder* builder, void *user_data)
 {
-	const char *scriptSection;
-	int line = ctx->GetLineNumber(0, 0, &scriptSection);
-	DebugUtility::LogMessage(DebugUtility::LOGLEVEL_INFO, StringUtility::FormatString("Processing line %i, %s", line, scriptSection));
-}
-
-  int IncludeHandler(const char *include, const char *from, CScriptBuilder* builder, void *user_data)
-  {
 	std::wstring mediaDirectory;
 	if (FileSystem::GetMediaDirectory(mediaDirectory) == false)
 	{
@@ -984,8 +975,6 @@ bool AngelScriptRunner::Init()
 	result = m_engine->RegisterGlobalFunction("bool NodeManager::AssignNodeAt(Node@, uint, uint)", asFUNCTION(NodeManager::AssignNodeAt), asCALL_CDECL); if (result < 0) { return false; }
 	result = m_engine->RegisterGlobalFunction("void NodeManager::DeleteNode(uint)", asFUNCTION(NodeManager::DeleteNode), asCALL_CDECL); if (result < 0) { return false; }
 	result = m_engine->RegisterGlobalFunction("Node@ NodeManager::GetNode(uint)", asFUNCTION(NodeManager::GetNode), asCALL_CDECL); if (result < 0) { return false; }
-	result = m_engine->RegisterGlobalFunction("void NodeManager::PurgeNodes()", asFUNCTION(NodeManager::PurgeNodes), asCALL_CDECL); if (result < 0) { return false; }
-	result = m_engine->RegisterGlobalFunction("void NodeManager::CheckForOrphans()", asFUNCTION(NodeManager::CheckForOrphans), asCALL_CDECL); if (result < 0) { return false; }
 
 	result = m_engine->RegisterObjectMethod("Node", "OrthoCameraNode@ opCast()", asFUNCTION((refCast<Node ,OrthoCamera>)), asCALL_CDECL_OBJLAST); if (result < 0) { return false; }
 	result = m_engine->RegisterObjectMethod("Node", "PerspectiveCameraNode@ opCast()", asFUNCTION((refCast<Node ,PerspectiveCamera>)), asCALL_CDECL_OBJLAST); if (result < 0) { return false; }
@@ -1098,10 +1087,6 @@ void AngelScriptRunner::Close()
 
 bool AngelScriptRunner::ExecuteInit(void)
 {
-// #ifdef ANGELSCRIPT_DEBUG
-// 	context->SetLineCallback(asFUNCTION(DebugLineCallback), NULL, asCALL_CDECL);
-// #endif
-
 	asIScriptModule *module = m_engine->GetModule("main");
 	if (module == NULL)
 	{
@@ -1114,7 +1099,10 @@ bool AngelScriptRunner::ExecuteInit(void)
 		return false;
 	}
 
-	AngelScriptDebugger::Init(m_engine);
+	if (ConfigLoader::Debug() == true)
+	{
+		AngelScriptDebugger::Init(m_engine);
+	}
 
 	if (module->ResetGlobalVars(0) < 0)
 	{

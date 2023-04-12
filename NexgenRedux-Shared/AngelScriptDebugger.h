@@ -22,9 +22,9 @@ namespace NexgenRedux
 
 	private:
 
-		static std::string AngelScriptDebugger::StringToString(void *obj, int /* expandMembers */, AngelScriptDebuggerCore * /* dbg */);
-		static std::string AngelScriptDebugger::ArrayToString(void *obj, int expandMembers, AngelScriptDebuggerCore *dbg);
-		static std::string AngelScriptDebugger::DictionaryToString(void *obj, int expandMembers, AngelScriptDebuggerCore *dbg);
+		static std::string StringToString(void *obj, int /* expandMembers */, AngelScriptDebuggerCore * /* dbg */);
+		static std::string ArrayToString(void *obj, int expandMembers, AngelScriptDebuggerCore *dbg);
+		static std::string DictionaryToString(void *obj, int expandMembers, AngelScriptDebuggerCore *dbg);
 
 	private:
 

@@ -57,6 +57,8 @@ include_directories(${INCLUDE_DIRS})
 
 # Define source code files
 set(APP_SOURCE ${PROJECT_NAME})
+# MinAudio
+#list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/Libraries/MinAudio.h")
 # Shared
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/AngelScriptRunner.cpp")
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/MathUtility.cpp")
@@ -82,7 +84,6 @@ list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/EntityEngine/Fo
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/EntityEngine/Lighting.cpp")
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/EntityEngine/Sprite.cpp")
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/NexgenRedux-Shared/EntityEngine/Text.cpp")
-
 # Gensys
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/Libraries/Gensys/Crc32.cpp")
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/Libraries/Gensys/DebugUtility.cpp")

@@ -9,12 +9,9 @@
 
 #include "ConfigLoader.h"
 #include "AngelScriptRunner.h"
+#include "AudioManager.h"
 #include "WindowManager.h"
 #include "RenderStateManager.h"
-
-#define MINIAUDIO_IMPLEMENTATION
-   // #include "miniaudio.h"
-#include <MinAudio/miniaudio.h>
 
 using namespace NexgenRedux;
 using namespace Gensys;
@@ -29,6 +26,7 @@ int main(int argc, const char* argv[])
 		return 0;
 	}
 
+    AudioManager::Init();
     NetworkManager::Init();
 
     std::wstring appPath;
@@ -38,25 +36,6 @@ int main(int argc, const char* argv[])
     }
     DebugUtility::Init(FileSystem::CombinePath(appPath, L"log.txt"), 17745);
 	DebugUtility::DeleteLogFile();
-
-    ma_result result;
-    ma_engine engine;
-
-
-    result = ma_engine_init(NULL, &engine);
-    if (result != MA_SUCCESS) {
-        printf("Failed to initialize audio engine.");
-        return -1;
-    }
-
-
-    std::wstring mediaPath;
-	if (FileSystem::GetMediaDirectory(mediaPath) == false)
-    {
-        return 0;
-    }
-    result = ma_engine_play_sound(&engine, StringUtility::ToString(FileSystem::CombinePath(mediaPath, L"comic.mp3")).c_str(), NULL);
-    //ma_engine_uninit(&engine);
 
     WindowManager *windowManager = WindowManager::GetInstance();
     RenderStateManager *renderStateManager = RenderStateManager::GetInstance();
@@ -84,6 +63,7 @@ int main(int argc, const char* argv[])
     AngelScriptRunner::Close();
     DebugUtility::Close();
     NetworkManager::Close();
+    AudioManager::Close();
 
     return 0;
 }

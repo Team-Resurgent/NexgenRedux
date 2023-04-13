@@ -4,6 +4,7 @@
 #include "WindowManager.h"
 #include "MathUtility.h"
 #include "ConfigLoader.h"
+#include "AudioManager.h"
 #include "EntityEngine/SceneManager.h"
 #include "EntityEngine/FontManager.h"
 #include "EntityEngine/NodeManager.h"
@@ -963,6 +964,9 @@ bool AngelScriptRunner::Init()
 
 	result = m_engine->SetDefaultNamespace("FontManager"); if (result < 0) { return false; }
 	result = m_engine->RegisterGlobalFunction("bool FontManager::LoadFont(string)", asFUNCTION(FontManager::LoadFont), asCALL_CDECL); if (result < 0) { return false; }
+
+	result = m_engine->SetDefaultNamespace("AudioManager"); if (result < 0) { return false; }
+	result = m_engine->RegisterGlobalFunction("uint AudioManager::PlayAudio(string, bool)", asFUNCTION(AudioManager::PlayAudio), asCALL_CDECL); if (result < 0) { return false; }
 
 	result = m_engine->SetDefaultNamespace("NodeManager"); if (result < 0) { return false; }
 	result = m_engine->RegisterGlobalFunction("OrthoCameraNode& NodeManager::CreateOrthoCamera()", asFUNCTION(NodeManager::CreateOrthoCamera), asCALL_CDECL); if (result < 0) { return false; }

@@ -867,7 +867,7 @@ bool OpenGLRenderingHelper::LoadTexture(const std::wstring& path, uint32_t& text
 	textureContainer.height = height;
 	textureContainer.key = path;
 	textureContainer.refCount = 1;
-	m_textureContainerMap.insert(std::pair<int, TextureContainer>(textureContainerID, textureContainer));
+	m_textureContainerMap.insert(std::pair<uint32_t, TextureContainer>(textureContainerID, textureContainer));
 	textureID = textureContainerID;
 	return true;
 }
@@ -900,7 +900,7 @@ bool OpenGLRenderingHelper::LoadOrReplaceTextureData(const uint8_t* data, const 
 	textureContainer.height = height;
 	textureContainer.key = L"";
 	textureContainer.refCount = 1;
-	m_textureContainerMap.insert(std::pair<int, TextureContainer>(textureID, textureContainer));
+	m_textureContainerMap.insert(std::pair<uint32_t, TextureContainer>(textureID, textureContainer));
 	return true;
 }
 

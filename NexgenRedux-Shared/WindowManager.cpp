@@ -3,6 +3,7 @@
 #include "XboxOGWindowHelper.h"
 #include "OpenGLWindowHelper.h"
 #include "RenderStateManager.h"
+#include "AudioManager.h"
 #include "MeshUtility.h"
 #include "IWindowHelper.h"
 
@@ -143,6 +144,7 @@ bool WindowManager::RenderLoop()
 				return false;
 			}
 
+			AudioManager::Update();
 			SceneManager::Update((float)dt);
 
 			if (AngelScriptRunner::ExecuteRender(dt) == false)

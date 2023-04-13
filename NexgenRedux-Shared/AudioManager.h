@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Gensys/Int.h>
+
 #include <string>
 
 namespace NexgenRedux
@@ -8,10 +10,12 @@ namespace NexgenRedux
 	{		
 	public:
 
-                static void Init();
-                static void Close();
-                static void Update();
-                static uint32_t PlayAudio(const std::string path, bool loop);
-                static void PlayAudiox();
+		static AudioManager* GetInstance();
+		
+		void Init();
+		void Close();
+		void Update();
+		uint32_t PlayAudio(const std::string path, bool loop);
+
 	};
 }

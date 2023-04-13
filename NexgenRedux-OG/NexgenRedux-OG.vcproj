@@ -172,6 +172,12 @@
 				RelativePath="..\NexgenRedux-Shared\AngelScriptRunner.h">
 			</File>
 			<File
+				RelativePath="..\NexgenRedux-Shared\AudioManager.cpp">
+			</File>
+			<File
+				RelativePath="..\NexgenRedux-Shared\AudioManager.h">
+			</File>
+			<File
 				RelativePath="..\NexgenRedux-Shared\ConfigLoader.cpp">
 			</File>
 			<File

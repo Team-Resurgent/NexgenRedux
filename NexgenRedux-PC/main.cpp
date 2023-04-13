@@ -26,7 +26,7 @@ int main(int argc, const char* argv[])
 		return 0;
 	}
 
-    AudioManager::Init();
+    AudioManager::GetInstance()->Init();
     NetworkManager::Init();
 
     std::wstring appPath;
@@ -63,7 +63,7 @@ int main(int argc, const char* argv[])
     AngelScriptRunner::Close();
     DebugUtility::Close();
     NetworkManager::Close();
-    AudioManager::Close();
+    AudioManager::GetInstance()->Close();
 
     return 0;
 }

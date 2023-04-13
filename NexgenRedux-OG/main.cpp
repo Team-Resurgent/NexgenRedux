@@ -1,5 +1,6 @@
 #include "ConfigLoader.h"
 #include "AngelScriptRunner.h"
+#include "AudioManager.h"
 #include "WindowManager.h"
 #include "EntityEngine/FontManager.h"
 #include "RenderStateManager.h"
@@ -24,6 +25,7 @@ void __cdecl main(int, char **)
 		return;
 	}
 
+	AudioManager::GetInstance()->Init();
     NetworkManager::Init();
 
     std::wstring appPath;
@@ -60,4 +62,5 @@ void __cdecl main(int, char **)
     AngelScriptRunner::Close();
     DebugUtility::Close();
     NetworkManager::Close();
+	AudioManager::GetInstance()->Close();
 }

@@ -144,7 +144,7 @@ bool WindowManager::RenderLoop()
 				return false;
 			}
 
-			AudioManager::Update();
+			AudioManager::GetInstance()->Update();
 			SceneManager::Update((float)dt);
 
 			if (AngelScriptRunner::ExecuteRender(dt) == false)

@@ -320,6 +320,11 @@ void AngelScriptRunner::Color4FConstructorCopy(const MathUtility::Color4F& other
     new (color4F)MathUtility::Color4F(other);
 }
 
+uint32_t AngelScriptRunner::PlayAudio(std::string path, bool loop)
+{
+	return AudioManager::GetInstance()->PlayAudio(path, loop);
+}
+
 template<class A, class B>
 B* refCast(A* a)
 {
@@ -966,7 +971,7 @@ bool AngelScriptRunner::Init()
 	result = m_engine->RegisterGlobalFunction("bool FontManager::LoadFont(string)", asFUNCTION(FontManager::LoadFont), asCALL_CDECL); if (result < 0) { return false; }
 
 	result = m_engine->SetDefaultNamespace("AudioManager"); if (result < 0) { return false; }
-	result = m_engine->RegisterGlobalFunction("uint AudioManager::PlayAudio(string, bool)", asFUNCTION(AudioManager::PlayAudio), asCALL_CDECL); if (result < 0) { return false; }
+	result = m_engine->RegisterGlobalFunction("uint AudioManager::PlayAudio(string, bool)", asFUNCTION(PlayAudio), asCALL_CDECL); if (result < 0) { return false; }
 
 	result = m_engine->SetDefaultNamespace("NodeManager"); if (result < 0) { return false; }
 	result = m_engine->RegisterGlobalFunction("OrthoCameraNode& NodeManager::CreateOrthoCamera()", asFUNCTION(NodeManager::CreateOrthoCamera), asCALL_CDECL); if (result < 0) { return false; }

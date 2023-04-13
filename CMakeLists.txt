@@ -154,6 +154,8 @@ list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/Libraries/AngelScript/addons/scrip
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/Libraries/AngelScript/addons/scriptstdstring/scriptstdstring_utils.cpp")
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/Libraries/AngelScript/addons/serializer/serializer.cpp")
 list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/Libraries/AngelScript/addons/weakref/weakref.cpp")
+# STB
+list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/Libraries/STB/stb_vorbis.c")
 # DocGen
 if (${OperatingSystem} MATCHES "Win")
     list(APPEND APP_SOURCE "${PROJECT_SOURCE_DIR}/Libraries/DocGen/docgen.cpp")

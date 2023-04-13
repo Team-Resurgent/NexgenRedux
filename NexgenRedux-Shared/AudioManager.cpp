@@ -5,12 +5,10 @@
 #include <Gensys/FileSystem.h>
 #include <Gensys/StringUtility.h>
 
-// #define STB_VORBIS_HEADER_ONLY
-// #include <STB/stb_vorbis.c>
+#define STB_VORBIS_HEADER_ONLY
+#include <STB/stb_vorbis.c>
 #define MINIAUDIO_IMPLEMENTATION
 #include <MinAudio/miniaudio.h>
-// #undef STB_VORBIS_HEADER_ONLY
-// #include <STB/stb_vorbis.c>
 
 #include <string>
 #include <vector>

@@ -1135,7 +1135,7 @@ void XboxOGRenderingHelper::DeleteTexture(const uint32_t& textureID)
 		return;
 	}
 
-	//it->second.refCount--;
+	it->second.refCount--;
 	if (it->second.refCount > 0)
 	{
 		return;

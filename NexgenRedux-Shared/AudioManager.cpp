@@ -218,6 +218,12 @@ uint32_t AudioManager::PlayAudio(const std::string path, bool loop)
 
 #define DR_WAV_IMPLEMENTATION
 #include <MinAudio/dr_wav.h>
+#define DR_MP3_IMPLEMENTATION
+#include <MinAudio/dr_mp3.h>
+#define DR_FLAC_IMPLEMENTATION
+#include <MinAudio/dr_flac.h>
+#define STB_VORBIS_HEADER_ONLY
+#include <STB/stb_vorbis.c>
 
 #include <dmusici.h>
 #include <dsound.h>
@@ -230,25 +236,38 @@ namespace
 {
 	AudioManager* m_instance = NULL;
 
-    #define AUDIO_PACKETS 64
+    #define AUDIO_PACKETS 16
     #define AUDIO_FRAME_SAMPLES 2048
 
     LPDIRECTSOUND8 m_directSoundDevice;
+
+	typedef enum AudioDecoderType
+	{
+		AudioDecoderTypeWav,
+		AudioDecoderTypeMp3,
+		AudioDecoderTypeFlac,
+		AudioDecoderTypeOgg
+	} AudioDecoderType;
 	
 	typedef struct AudioContainer {	
-		//AudioPlayer::AudioFormat audioFormat;
+		
 		bool finished;
 		bool loop;
 		bool stopRequested;
+		bool canDelete;
 		float volume;
 		uint32_t channels;
 		uint32_t sampleRate;
 		uint32_t bitsPerSample;
+		uint32_t frameByteSize;
 
 		LPDIRECTSOUNDSTREAM	directSoundStream;	
 		DWORD packetStatus[AUDIO_PACKETS];
 		DWORD completedSize[AUDIO_PACKETS];
-		char *decodeBuffer;
+
+		AudioDecoderType decoderType;
+		void* decoder;
+		char* decodeBuffer;
 
 	} AudioContainer;
 
@@ -302,7 +321,150 @@ void AudioManager::Close()
 
 void AudioManager::Update()
 {
+    for (std::map<uint32_t, AudioContainer>::iterator it = m_audioContainerMap.begin(); it != m_audioContainerMap.end();)
+    {
+        if (it->second.canDelete == true)
+        {
+            std::map<uint32_t, AudioContainer>::iterator itErase = it;
+            ++it;
 
+            m_audioContainerMap.erase(itErase);
+            continue;
+        }
+        ++it;
+    }
+}
+
+void PlayAudioContainer(uint32_t audioContainerID)
+{
+	std::map<uint32_t, AudioContainer>::iterator it = m_audioContainerMap.find(audioContainerID);
+	if (it == m_audioContainerMap.end()) {
+		return;
+	}
+
+	AudioContainer* audioContainer = &it->second;
+
+	while (audioContainer->stopRequested == false)
+	{
+		char* decodeBuffer = audioContainer->decodeBuffer;
+		for(int i = 0; i < AUDIO_PACKETS; i++)
+		{
+			if(audioContainer->packetStatus[i] != XMEDIAPACKET_STATUS_PENDING)
+			{
+				if (audioContainer->finished == true) 
+				{
+					if (audioContainer->loop == true)
+					{
+						if (audioContainer->decoderType == AudioDecoderTypeWav)
+						{
+							drwav_seek_to_pcm_frame((drwav*)audioContainer->decoder, 0);
+						}
+						else if (audioContainer->decoderType == AudioDecoderTypeMp3)
+						{
+							drmp3_seek_to_pcm_frame((drmp3*)audioContainer->decoder, 0);
+						}
+						else if (audioContainer->decoderType == AudioDecoderTypeFlac)
+						{
+							drflac_seek_to_pcm_frame((drflac*)audioContainer->decoder, 0);
+						}
+						else if (audioContainer->decoderType == AudioDecoderTypeOgg)
+						{
+							stb_vorbis_seek((stb_vorbis*)audioContainer->decoder, 0);
+						}
+						audioContainer->finished = false;
+					}
+					else
+					{
+						audioContainer->stopRequested = true;
+						break;
+					} 
+				}
+				uint64_t framesRead = 0;
+
+				if (audioContainer->decoderType == AudioDecoderTypeWav)
+				{
+					framesRead = (uint64_t)drwav_read_pcm_frames_s16((drwav*)audioContainer->decoder, AUDIO_FRAME_SAMPLES, (drwav_int16*)decodeBuffer);
+				}
+				else if (audioContainer->decoderType == AudioDecoderTypeMp3)
+				{
+					framesRead = (uint64_t)drmp3_read_pcm_frames_s16((drmp3*)audioContainer->decoder, AUDIO_FRAME_SAMPLES, (drmp3_int16*)decodeBuffer);
+				}
+				else if (audioContainer->decoderType == AudioDecoderTypeFlac)
+				{
+					framesRead = (uint64_t)drflac_read_pcm_frames_s16((drflac*)audioContainer->decoder, AUDIO_FRAME_SAMPLES, (drwav_int16*)decodeBuffer);
+				}
+				else if (audioContainer->decoderType == AudioDecoderTypeOgg)
+				{
+					framesRead = (uint64_t)stb_vorbis_get_samples_short_interleaved((stb_vorbis*)audioContainer->decoder, audioContainer->channels, (short*)decodeBuffer, audioContainer->channels * AUDIO_FRAME_SAMPLES);
+				}
+
+				if (framesRead < AUDIO_FRAME_SAMPLES)
+				{
+					uint64_t bytesRead = framesRead * audioContainer->channels * (audioContainer->bitsPerSample >> 3);
+					memset(decodeBuffer + bytesRead, 0, (size_t)(audioContainer->frameByteSize - bytesRead));
+					audioContainer->finished = true;
+				}
+
+				XMEDIAPACKET mediaPacket;
+				memset(&mediaPacket, 0, sizeof(mediaPacket));
+				mediaPacket.pvBuffer = decodeBuffer;
+				mediaPacket.dwMaxSize = (DWORD)audioContainer->frameByteSize;
+				mediaPacket.pdwCompletedSize = &audioContainer->completedSize[i];
+				mediaPacket.pdwStatus = &audioContainer->packetStatus[i];
+ 				audioContainer->directSoundStream->Process(&mediaPacket, NULL);
+			}
+			decodeBuffer += audioContainer->frameByteSize;
+		}
+
+		DirectSoundDoWork();
+		Sleep(10);
+
+		if (audioContainer->stopRequested == true)
+		{
+			bool hasPending = true;
+			while (hasPending == true)
+			{
+				DirectSoundDoWork();
+				Sleep(10);
+
+				hasPending = false;
+				for(int i = 0; i < AUDIO_PACKETS; i++)
+				{
+					if(audioContainer->packetStatus[i] == XMEDIAPACKET_STATUS_PENDING)
+					{
+						hasPending = true;
+						break;
+					}
+				}
+			}
+			audioContainer->directSoundStream->FlushEx(0, DSSTREAMFLUSHEX_ASYNC);
+			DirectSoundDoWork();
+			Sleep(10);
+		}
+	}
+
+	if (audioContainer->decoderType == AudioDecoderTypeWav)
+	{
+		drwav_uninit((drwav*)audioContainer->decoder);
+		free(audioContainer->decoder);
+	}
+	else if (audioContainer->decoderType == AudioDecoderTypeMp3)
+	{
+		drmp3_uninit((drmp3*)audioContainer->decoder);
+		free(audioContainer->decoder);
+	}
+	else if (audioContainer->decoderType == AudioDecoderTypeMp3)
+	{
+		drflac_close((drflac*)audioContainer->decoder);
+	}
+	else if (audioContainer->decoderType == AudioDecoderTypeOgg)
+	{
+		stb_vorbis_close((stb_vorbis*)audioContainer->decoder);
+	}
+
+	audioContainer->directSoundStream->Release();
+	free(audioContainer->decodeBuffer);
+	audioContainer->canDelete = true;
 }
 
 uint32_t AudioManager::PlayAudio(const std::string path, bool loop)
@@ -313,18 +475,77 @@ uint32_t AudioManager::PlayAudio(const std::string path, bool loop)
 		return 0;
 	}
 
-	drwav wav;
-    if (drwav_init_file(&wav, StringUtility::ToString(mappedPath).c_str(), NULL) != 1) 
+	uint32_t channels;
+	uint32_t sampleRate;
+	uint32_t bitsPerSample;
+	void* decoder;
+	AudioDecoderType decoderType;
+
+	std::wstring extension = StringUtility::UpperCase(FileSystem::GetExtension(mappedPath));
+	if (extension == L".WAV")
 	{
-        return 0;
-    }
+		drwav* wav = (drwav*)malloc(sizeof(drwav));
+		if (drwav_init_file(wav, StringUtility::ToString(mappedPath).c_str(), NULL) != 1) 
+		{
+			return 0;
+		}
+		channels = wav->channels;
+		sampleRate = wav->sampleRate;
+		bitsPerSample = 16;
+		decoderType = AudioDecoderTypeWav;
+		decoder = wav;
+	}
+	else if (extension == L".MP3")
+	{
+		drmp3* mp3 = (drmp3*)malloc(sizeof(drmp3));
+		if (drmp3_init_file(mp3, StringUtility::ToString(mappedPath).c_str(), NULL) != 1) 
+		{
+			return 0;
+		}
+		channels = mp3->channels;
+		sampleRate = mp3->sampleRate;
+		bitsPerSample = 16;
+		decoderType = AudioDecoderTypeMp3;
+		decoder = mp3;
+	}
+	else if (extension == L".FLAC")
+	{
+		drflac* flac = drflac_open_file(StringUtility::ToString(mappedPath).c_str(), NULL);
+		if (flac == NULL) 
+		{
+			return 0;
+		}
+		channels = flac->channels;
+		sampleRate = flac->sampleRate;
+		bitsPerSample = 16;
+		decoderType = AudioDecoderTypeFlac;
+		decoder = flac;
+	}
+	else if (extension == L".OGG")
+	{
+		stb_vorbis* ogg = stb_vorbis_open_filename(StringUtility::ToString(mappedPath).c_str(), NULL, NULL);
+		if (ogg == NULL)
+		{
+			return 0;
+		}
+		stb_vorbis_info oggInfo = stb_vorbis_get_info(ogg);
+		channels = oggInfo.channels;
+		sampleRate = oggInfo.sample_rate;
+		bitsPerSample = 16;
+		decoderType = AudioDecoderTypeOgg;
+		decoder = ogg;
+	}
+	else
+	{
+		return 0;
+	}
 
 	WAVEFORMATEX waveFormat;
 	memset(&waveFormat, 0, sizeof(waveFormat));
 	waveFormat.wFormatTag = WAVE_FORMAT_PCM;
-	waveFormat.nChannels = (WORD)wav.channels;
-	waveFormat.nSamplesPerSec = wav.sampleRate;
-	waveFormat.wBitsPerSample = (WORD)wav.bitsPerSample;
+	waveFormat.nChannels = (WORD)channels;
+	waveFormat.nSamplesPerSec = sampleRate;
+	waveFormat.wBitsPerSample = (WORD)bitsPerSample;
 	waveFormat.nBlockAlign = (waveFormat.wBitsPerSample >> 3) * waveFormat.nChannels;
 	waveFormat.nAvgBytesPerSec = waveFormat.nBlockAlign * waveFormat.nSamplesPerSec;
 
@@ -360,15 +581,18 @@ uint32_t AudioManager::PlayAudio(const std::string path, bool loop)
 
 	AudioContainer audioContainer;
 	audioContainer.finished = false;
-	audioContainer.loop = false;
+	audioContainer.loop = loop;
 	audioContainer.stopRequested = false;
-	audioContainer.channels = waveFormat.nChannels;
-	audioContainer.sampleRate = waveFormat.nSamplesPerSec;
-	audioContainer.bitsPerSample = waveFormat.wBitsPerSample;
+	audioContainer.canDelete = false;
+	audioContainer.channels = channels;
+	audioContainer.sampleRate = sampleRate;
+	audioContainer.bitsPerSample = bitsPerSample;
+	audioContainer.frameByteSize = channels * (bitsPerSample >> 3) * AUDIO_FRAME_SAMPLES;
 	audioContainer.volume = 1.0f;
 	audioContainer.directSoundStream = directSoundStream;
-	uint64_t frameByteSize = audioContainer.channels * (audioContainer.bitsPerSample >> 3) * AUDIO_FRAME_SAMPLES;
-	audioContainer.decodeBuffer = (char *)malloc((size_t)(AUDIO_PACKETS * frameByteSize));
+	audioContainer.decoderType = decoderType;
+	audioContainer.decoder = decoder;
+	audioContainer.decodeBuffer = (char *)malloc((size_t)(AUDIO_PACKETS * audioContainer.frameByteSize));
 	
 	for (uint32_t i = 0; i < AUDIO_PACKETS; i++) 
 	{
@@ -377,60 +601,7 @@ uint32_t AudioManager::PlayAudio(const std::string path, bool loop)
 
     uint32_t audioContainerID = ++m_maxAudioContainerID;
     m_audioContainerMap.insert(std::pair<uint32_t, AudioContainer>(audioContainerID, audioContainer));
-
-	while (audioContainer.stopRequested == false)
-	{
-		char* decodeBuffer = audioContainer.decodeBuffer;
-		for(int i = 0; i < AUDIO_PACKETS; i++)
-		{
-			if(audioContainer.packetStatus[i] != XMEDIAPACKET_STATUS_PENDING)
-			{
-				if (audioContainer.finished == true) 
-				{
-					if (audioContainer.loop == true)
-					{
-						drwav_bool32 wavResult = drwav_seek_to_pcm_frame(&wav, 0);
-						audioContainer.finished = false;
-					}
-					else
-					{
-						audioContainer.stopRequested = true;
-						break;
-					} 
-				}
-				drwav_uint64 framesRead = drwav_read_pcm_frames_s16(&wav, AUDIO_FRAME_SAMPLES, (drwav_int16*)decodeBuffer);
-				if (framesRead < AUDIO_FRAME_SAMPLES)
-				{
-					uint64_t bytesRead = framesRead * audioContainer.channels * (audioContainer.bitsPerSample >> 3);
-					memset(decodeBuffer + bytesRead, 0, (size_t)(frameByteSize - bytesRead));
-					audioContainer.finished = true;
-				}
-
-				XMEDIAPACKET mediaPacket;
-				memset(&mediaPacket, 0, sizeof(mediaPacket));
-				mediaPacket.pvBuffer = decodeBuffer;
-				mediaPacket.dwMaxSize = (DWORD)frameByteSize;
-				mediaPacket.pdwCompletedSize = &audioContainer.completedSize[i];
-				mediaPacket.pdwStatus = &audioContainer.packetStatus[i];
- 				audioContainer.directSoundStream->Process(&mediaPacket, NULL);
-			}
-			decodeBuffer += frameByteSize;
-		}
-
-		DirectSoundDoWork();
-		Sleep(100);
-
-		if (audioContainer.stopRequested == true)
-		{
-			audioContainer.directSoundStream->FlushEx( 0, DSSTREAMFLUSHEX_ASYNC);
-			DirectSoundDoWork();
-			Sleep(100);
-		}
-	}
-
-	audioContainer.directSoundStream->Release();
-	free(audioContainer.decodeBuffer);
-	drwav_uninit(&wav);
+	CreateThread(NULL, 128, (LPTHREAD_START_ROUTINE)PlayAudioContainer, (void*)audioContainerID, 0, NULL);
 	return audioContainerID;
 }
 

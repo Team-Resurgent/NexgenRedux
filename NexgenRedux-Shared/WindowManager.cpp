@@ -147,9 +147,9 @@ bool WindowManager::RenderLoop()
 			AudioManager::GetInstance()->Update();
 			SceneManager::Update((float)dt);
 
-			if (AngelScriptRunner::ExecuteRender(dt) == false)
+			if (AngelScriptRunner::ExecuteUpdate(dt) == false)
 			{
-				DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteRender failed.");
+				DebugUtility::LogMessage(DebugUtility::LOGLEVEL_ERROR, "ExecuteUpdate failed.");
 				return false;
 			}
 

@@ -1129,7 +1129,7 @@ bool AngelScriptRunner::ExecuteInit(void)
 	return success;
 }
 
-bool AngelScriptRunner::ExecuteRender(double dt)
+bool AngelScriptRunner::ExecuteUpdate(double dt)
 {
 	asIScriptModule *module = m_engine->GetModule("main");
 	if (module == NULL)
@@ -1137,13 +1137,13 @@ bool AngelScriptRunner::ExecuteRender(double dt)
 		return false;
 	}
 
-	asIScriptFunction *renderFunction = module->GetFunctionByDecl("void Render(double)");
-	if (renderFunction == NULL)
+	asIScriptFunction *updateFunction = module->GetFunctionByDecl("void Update(double)");
+	if (updateFunction == NULL)
 	{
 		return false;
 	}
 
-	asIScriptContext *context = contextMgr->AddContext(m_engine, renderFunction, true);
+	asIScriptContext *context = contextMgr->AddContext(m_engine, updateFunction, true);
 	if (context == NULL) 
 	{
 		return false;

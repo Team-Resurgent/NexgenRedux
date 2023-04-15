@@ -269,7 +269,7 @@ void Init()
     //NOTE: since we created a window the program will wait for window to be closed
 }
 
-void Render(double dt)
+void Update(double dt)
 {
     sprite2.SetRotation(Vec3F(0, 0, spriteRotate));
     spriteRotate += float(dt) * 90;

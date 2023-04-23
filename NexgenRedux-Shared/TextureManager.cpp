@@ -10,7 +10,11 @@
 #define STBI_ASSERT(x)
 #include <STB/stb_image.h>
 
+#if defined NEXGEN_PC
 #include <windows.h>
+#elif defined NEXGEN_OG
+#include <xtl.h>
+#endif
 
 using namespace Gensys;
 using namespace NexgenRedux;

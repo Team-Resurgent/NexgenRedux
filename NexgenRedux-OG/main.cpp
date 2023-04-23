@@ -25,7 +25,6 @@ void __cdecl main(int, char **)
 		return;
 	}
 
-    Tex
 	AudioManager::GetInstance()->Init();
     NetworkManager::Init();
 

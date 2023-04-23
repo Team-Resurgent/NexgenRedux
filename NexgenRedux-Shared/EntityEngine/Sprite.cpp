@@ -1,5 +1,6 @@
 #include "Sprite.h"
 #include "RenderStateManager.h"
+#include "TextureManager.h"
 
 #include <Gensys/DebugUtility.h>
 #include <Gensys/StringUtility.h>
@@ -16,6 +17,9 @@ Sprite::Sprite(uint32_t nodeID) : Node(nodeID)
     m_textureIsDirty = true;
     m_texturePath = "";
     m_textureID = 0;
+
+    m_textureLoaded = false;
+
 
     m_meshIsDirty = true;
     m_uv = MathUtility::RectF(0, 0, 1, 1);
@@ -39,18 +43,40 @@ Sprite::~Sprite(void)
     }
 }
 
+void Sprite::TextureLoaded(void* instance, const uint32_t& width, const uint32_t& height, uint8_t* data)
+{
+    RenderStateManager* renderStateManager = RenderStateManager::GetInstance();
+
+    Sprite* sprite = (Sprite*)instance;
+
+        // if (m_textureID != 0)
+        // {
+        //     renderStateManager->DeleteTexture(m_textureID);
+        // }
+        // renderStateManager->LoadTexture(StringUtility::ToWideString(m_texturePath), m_textureID);
+
+    sprite->m_data = data;
+    sprite->m_width = width;
+    sprite->m_height = height;
+    sprite->m_textureLoaded = true;
+}
+
 void Sprite::Update(float dt)
 {
     RenderStateManager* renderStateManager = RenderStateManager::GetInstance();
 
     if (m_textureIsDirty == true)
     {
-        if (m_textureID != 0)
-        {
-            renderStateManager->DeleteTexture(m_textureID);
-        }
-        renderStateManager->LoadTexture(StringUtility::ToWideString(m_texturePath), m_textureID);
+        TextureManager::Request(StringUtility::ToWideString(m_texturePath), this, TextureLoaded);
         m_textureIsDirty = false;
+    }
+
+    if (m_textureLoaded == true)
+    {
+        renderStateManager->LoadOrReplaceTextureData(m_data, m_width, m_height, m_textureID);
+        TextureManager::FreeData(m_data);
+        m_textureLoaded = false;
+        m_meshIsDirty = true;
     }
 
     if (m_meshIsDirty == true)

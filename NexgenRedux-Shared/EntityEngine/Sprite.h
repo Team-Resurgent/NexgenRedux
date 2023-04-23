@@ -48,11 +48,20 @@ namespace NexgenRedux
 
     private:
 
+        static void TextureLoaded(void* instance, const uint32_t& width, const uint32_t& height, uint8_t* data);
+
+    private:
+
         bool m_visible;
 
         bool m_textureIsDirty;
         std::string m_texturePath;
         uint32_t m_textureID;
+
+        bool m_textureLoaded;
+        uint32_t m_width;
+        uint32_t m_height;
+        uint8_t* m_data;
 
         bool m_meshIsDirty;
         MathUtility::RectF m_uv;

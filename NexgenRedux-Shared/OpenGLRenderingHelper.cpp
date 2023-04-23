@@ -10,9 +10,9 @@
 #include <map>
 #include <string>
 
-#define STB_IMAGE_IMPLEMENTATION
-#define STBI_ASSERT(x)
-#include <STB/stb_image.h>
+// #define STB_IMAGE_IMPLEMENTATION
+// #define STBI_ASSERT(x)
+// #include <STB/stb_image.h>
 
 using namespace Gensys;
 using namespace NexgenRedux;
@@ -821,55 +821,57 @@ void OpenGLRenderingHelper::SetScissor(const ScissorOperation& operation, const 
 
 bool OpenGLRenderingHelper::LoadTexture(const std::wstring& path, uint32_t& textureID)
 {	
-	std::wstring mappedPath;
-	if (path.length() == 0 || ConfigLoader::MapPath(path, mappedPath) == false)
-	{
-		return false;
-	}
+	// std::wstring mappedPath;
+	// if (path.length() == 0 || ConfigLoader::MapPath(path, mappedPath) == false)
+	// {
+	// 	return false;
+	// }
 
-	for (std::map<uint32_t, TextureContainer>::iterator it = m_textureContainerMap.begin(); it != m_textureContainerMap.end(); ++it)
-	{
-		if (it->second.key != path)
-		{
-			continue;
-		}
-		it->second.refCount++;
-		textureID = it->first;
-		return true;
-	}
+	// for (std::map<uint32_t, TextureContainer>::iterator it = m_textureContainerMap.begin(); it != m_textureContainerMap.end(); ++it)
+	// {
+	// 	if (it->second.key != path)
+	// 	{
+	// 		continue;
+	// 	}
+	// 	it->second.refCount++;
+	// 	textureID = it->first;
+	// 	return true;
+	// }
 	
-	int width;
-	int height;
-	int channels;
-	unsigned char* data = stbi_load(StringUtility::ToString(mappedPath).c_str(), &width, &height, &channels, STBI_rgb_alpha);
-	if (!data)
-	{
-		return false;
-	}
+	// int width;
+	// int height;
+	// int channels;
+	// unsigned char* data = stbi_load(StringUtility::ToString(mappedPath).c_str(), &width, &height, &channels, STBI_rgb_alpha);
+	// if (!data)
+	// {
+	// 	return false;
+	// }
 
-	GLuint textureId;
-	glGenTextures(1, &textureId);
-	glBindTexture(GL_TEXTURE_2D, textureId);		
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+	// GLuint textureId;
+	// glGenTextures(1, &textureId);
+	// glBindTexture(GL_TEXTURE_2D, textureId);		
+	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	// glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 	
-	stbi_image_free(data);
+	// stbi_image_free(data);
 
-	uint32_t textureContainerID = ++m_maxTextureContainerID;
-	TextureContainer textureContainer;
-	textureContainer.texture = textureId;
-	textureContainer.maxUVX = 1;
-	textureContainer.maxUVY = 1;
-	textureContainer.width = width;
-	textureContainer.height = height;
-	textureContainer.key = path;
-	textureContainer.refCount = 1;
-	m_textureContainerMap.insert(std::pair<uint32_t, TextureContainer>(textureContainerID, textureContainer));
-	textureID = textureContainerID;
-	return true;
+	// uint32_t textureContainerID = ++m_maxTextureContainerID;
+	// TextureContainer textureContainer;
+	// textureContainer.texture = textureId;
+	// textureContainer.maxUVX = 1;
+	// textureContainer.maxUVY = 1;
+	// textureContainer.width = width;
+	// textureContainer.height = height;
+	// textureContainer.key = path;
+	// textureContainer.refCount = 1;
+	// m_textureContainerMap.insert(std::pair<uint32_t, TextureContainer>(textureContainerID, textureContainer));
+	// textureID = textureContainerID;
+	// return true;
+
+	return false;
 }
 
 bool OpenGLRenderingHelper::LoadOrReplaceTextureData(const uint8_t* data, const uint32_t& width, const uint32_t& height, uint32_t& textureID)

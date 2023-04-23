@@ -3,6 +3,8 @@
 #include "XboxOGWindowHelper.h"
 #include "OpenGLWindowHelper.h"
 #include "RenderStateManager.h"
+#include "EntityEngine/NodeManager.h"
+#include "TextureManager.h"
 #include "AudioManager.h"
 #include "MeshUtility.h"
 #include "IWindowHelper.h"
@@ -131,6 +133,8 @@ bool WindowManager::RenderLoop()
 	{
 		renderStateManager->Init();
 
+		TextureManager::Init();
+
 		uint64_t now = TimeUtility::GetMillisecondsNow();
 		uint64_t previousNow = now;
 
@@ -154,6 +158,7 @@ bool WindowManager::RenderLoop()
 			}
 
 			SceneManager::Render();
+			NodeManager::PurgeNodes();
 
 			if (WindowPostRender() == false)
 			{
@@ -165,6 +170,8 @@ bool WindowManager::RenderLoop()
 			previousNow = now;
 			now = TimeUtility::GetMillisecondsNow();
 		}
+
+		TextureManager::Close();
 	}
     return true;
 }

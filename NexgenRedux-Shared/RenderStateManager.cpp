@@ -189,9 +189,14 @@ bool RenderStateManager::LoadTexture(const std::wstring& path, uint32_t& texture
     return m_renderingHelper->LoadTexture(path, textureID);
 }
 
-bool RenderStateManager::LoadOrReplaceTextureData(const uint8_t* data, const uint32_t& width, const uint32_t& height, uint32_t& textureID)
+bool RenderStateManager::IfTextureExistsIncrementRefCount(const std::wstring& path, const uint32_t& textureID)
 {
-    return m_renderingHelper->LoadOrReplaceTextureData(data, width, height, textureID);
+    return m_renderingHelper->IfTextureExistsIncrementRefCount(path, textureID);
+}
+
+bool RenderStateManager::LoadOrReplaceTextureData(const std::wstring& key, const uint8_t* data, const uint32_t& width, const uint32_t& height, uint32_t& textureID)
+{
+    return m_renderingHelper->LoadOrReplaceTextureData(key, data, width, height, textureID);
 }
 
 bool RenderStateManager::GetTexureMaxUV(const uint32_t& textureID, MathUtility::Vec2F& maxUV)

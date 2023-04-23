@@ -59,7 +59,7 @@ void Text::Update(float dt)
 
 				if (pixelBuffer != NULL) 
 				{
-					renderStateManager->LoadOrReplaceTextureData(pixelBuffer, width, height, m_textureID);
+					renderStateManager->LoadOrReplaceTextureData(L"", pixelBuffer, width, height, m_textureID);
 					
 					MathUtility::Vec2F maxUV;
 					renderStateManager->GetTexureMaxUV(m_textureID, maxUV);

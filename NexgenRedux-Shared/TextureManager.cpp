@@ -10,7 +10,7 @@
 #define STBI_ASSERT(x)
 #include <STB/stb_image.h>
 
-#if defined NEXGEN_PC
+#if defined NEXGEN_WIN
 #include <windows.h>
 #elif defined NEXGEN_OG
 #include <xtl.h>

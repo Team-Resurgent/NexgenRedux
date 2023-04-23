@@ -1060,7 +1060,21 @@ bool XboxOGRenderingHelper::LoadTexture(const std::wstring& path, uint32_t& text
 	return false;
 }
 
-bool XboxOGRenderingHelper::LoadOrReplaceTextureData(const uint8_t* data, const uint32_t& width, const uint32_t& height, uint32_t& textureID)
+bool XboxOGRenderingHelper::IfTextureExistsIncrementRefCount(const std::wstring& path, const uint32_t& textureID)
+{
+	for (std::map<uint32_t, TextureContainer>::iterator it = m_textureContainerMap.begin(); it != m_textureContainerMap.end(); ++it)
+	{
+		if (it->second.key != path || it->first != textureID)
+		{
+			continue;
+		}
+		it->second.refCount++;
+		return true;
+	}
+	return false;
+}
+
+bool XboxOGRenderingHelper::LoadOrReplaceTextureData(const std::wstring& key, const uint8_t* data, const uint32_t& width, const uint32_t& height, uint32_t& textureID)
 {
 	if (textureID != 0)
 	{
@@ -1110,7 +1124,7 @@ bool XboxOGRenderingHelper::LoadOrReplaceTextureData(const uint8_t* data, const 
 	textureContainer.maxUVY = height / (float)surfaceDesc.Height;
 	textureContainer.width = width;
 	textureContainer.height = height;
-	textureContainer.key = L"";
+	textureContainer.key = key;
 	textureContainer.refCount = 1;
 	m_textureContainerMap.insert(std::pair<uint32_t, TextureContainer>(textureID, textureContainer));
 	return true;

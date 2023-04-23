@@ -67,13 +67,18 @@ void Sprite::Update(float dt)
 
     if (m_textureIsDirty == true)
     {
-        TextureManager::Request(StringUtility::ToWideString(m_texturePath), this, TextureLoaded);
+        if (renderStateManager->IfTextureExistsIncrementRefCount(StringUtility::ToWideString(m_texturePath), m_textureID) == false)
+        {
+            renderStateManager->DeleteTexture(m_textureID);
+            m_textureID = 0;
+            TextureManager::Request(StringUtility::ToWideString(m_texturePath), this, TextureLoaded);
+        }
         m_textureIsDirty = false;
     }
 
     if (m_textureLoaded == true)
     {
-        renderStateManager->LoadOrReplaceTextureData(m_data, m_width, m_height, m_textureID);
+        renderStateManager->LoadOrReplaceTextureData(StringUtility::ToWideString(m_texturePath), m_data, m_width, m_height, m_textureID);
         TextureManager::FreeData(m_data);
         m_textureLoaded = false;
         m_meshIsDirty = true;

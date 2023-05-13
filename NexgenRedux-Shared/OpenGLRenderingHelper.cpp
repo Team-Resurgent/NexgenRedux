@@ -874,50 +874,103 @@ bool OpenGLRenderingHelper::LoadTexture(const std::wstring& path, uint32_t& text
 	return false;
 }
 
-bool OpenGLRenderingHelper::IfTextureExistsIncrementRefCount(const std::wstring& path, const uint32_t& textureID)
+bool OpenGLRenderingHelper::TextureExists(const std::wstring& key)
 {
 	for (std::map<uint32_t, TextureContainer>::iterator it = m_textureContainerMap.begin(); it != m_textureContainerMap.end(); ++it)
 	{
-		if (it->second.key != path || it->first != textureID)
+		if (it->second.key != key)
 		{
 			continue;
 		}
-		it->second.refCount++;
 		return true;
 	}
 	return false;
 }
 
-bool OpenGLRenderingHelper::LoadOrReplaceTextureData(const std::wstring& key, const uint8_t* data, const uint32_t& width, const uint32_t& height, uint32_t& textureID)
+bool OpenGLRenderingHelper::CreateTextureReference(const std::wstring& key, uint32_t& textureID)
 {
-	if (textureID != 0)
+	for (std::map<uint32_t, TextureContainer>::iterator it = m_textureContainerMap.begin(); it != m_textureContainerMap.end(); ++it)
 	{
-		DeleteTexture(textureID);
-	}
-	else
-	{
-		textureID = ++m_maxTextureContainerID;
+		if (it->second.key != key)
+		{
+			continue;
+		}
+		it->second.refCount++;
+		textureID = it->first;
+		return true;
 	}
 
-	GLuint texture;
-	glGenTextures(1, &texture);
-	glBindTexture(GL_TEXTURE_2D, texture);		
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-
+	uint32_t textureContainerID = ++m_maxTextureContainerID;
 	TextureContainer textureContainer;
-	textureContainer.texture = texture;
-	textureContainer.maxUVX = 1;
-	textureContainer.maxUVY = 1;
-	textureContainer.width = width;
-	textureContainer.height = height;
+	textureContainer.texture = NULL;
+	textureContainer.maxUVX = 0;
+	textureContainer.maxUVY = 0;
+	textureContainer.width = 0;
+	textureContainer.height = 0;
 	textureContainer.key = key;
 	textureContainer.refCount = 1;
-	m_textureContainerMap.insert(std::pair<uint32_t, TextureContainer>(textureID, textureContainer));
-	return true;
+	m_textureContainerMap.insert(std::pair<uint32_t, TextureContainer>(textureContainerID, textureContainer));
+	textureID = textureContainerID;
+	return false;
+}
+
+bool OpenGLRenderingHelper::DeleteTextureReference(const uint32_t& textureID) 
+{
+	for (std::map<uint32_t, TextureContainer>::iterator it = m_textureContainerMap.begin(); it != m_textureContainerMap.end(); ++it)
+	{
+		if (it->first != textureID)
+		{
+			continue;
+		}
+		if (it->second.refCount > 0) 
+		{
+			it->second.refCount--;
+		}
+		return true;
+	}
+	return false;
+}
+
+bool OpenGLRenderingHelper::IsTextureLoaded(const uint32_t& textureID)
+{
+	for (std::map<uint32_t, TextureContainer>::iterator it = m_textureContainerMap.begin(); it != m_textureContainerMap.end(); ++it)
+	{
+		if (it->first != textureID)
+		{
+			continue;
+		}
+		return it->second.texture != 0;
+	}
+	return false;
+}
+
+bool OpenGLRenderingHelper::LoadTextureData(const uint32_t& textureID, const uint8_t* data, const uint32_t& width, const uint32_t& height)
+{
+	for (std::map<uint32_t, TextureContainer>::iterator it = m_textureContainerMap.begin(); it != m_textureContainerMap.end(); ++it)
+	{
+		if (it->first != textureID)
+		{
+			continue;
+		}
+
+		GLuint texture;
+		glGenTextures(1, &texture);
+		glBindTexture(GL_TEXTURE_2D, texture);		
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+
+		it->second.texture = texture;
+		it->second.maxUVX = 1;
+		it->second.maxUVY = 1;
+		it->second.width = width;
+		it->second.height = height;
+
+		return true;
+	}
+	return false;
 }
 
 bool OpenGLRenderingHelper::GetTexureMaxUV(const uint32_t& textureID, MathUtility::Vec2F& maxUV)
@@ -933,24 +986,22 @@ bool OpenGLRenderingHelper::GetTexureMaxUV(const uint32_t& textureID, MathUtilit
 	return true;
 }
 
-void OpenGLRenderingHelper::DeleteTexture(const uint32_t& textureID)
+void OpenGLRenderingHelper::PurgeTextures()
 {
-    std::map<uint32_t, TextureContainer>::iterator it = m_textureContainerMap.find(textureID);
-	if (it == m_textureContainerMap.end()) 
-	{
-		return;
-	}
+	for (std::map<uint32_t, TextureContainer>::iterator it = m_textureContainerMap.begin(); it != m_textureContainerMap.end();)
+    {
+        if (it->second.refCount == 0)
+        { 
+            std::map<uint32_t, TextureContainer>::iterator itErase = it;
+            ++it;
 
-	it->second.refCount--;
-	if (it->second.refCount > 0)
-	{
-		return;
-	}
-	
-	TextureContainer* textureContainer = (TextureContainer*)&it->second;
-	uint32_t texture = it->second.texture;
-	glDeleteTextures(1, &texture);
-	m_textureContainerMap.erase(it);
+			uint32_t texture = itErase->second.texture;
+			glDeleteTextures(1, &texture);
+            m_textureContainerMap.erase(itErase);
+            continue;
+        }
+        ++it;
+    }
 }
 
 bool OpenGLRenderingHelper::RenderMesh(const std::vector<MeshUtility::Vertex>& mesh)

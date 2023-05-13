@@ -25,11 +25,14 @@ namespace NexgenRedux
 		RenderState* GetRenderState(void);
 		bool CanBatch(void);
 		bool LoadTexture(const std::wstring& path, uint32_t& textureID);
-		bool IfTextureExistsIncrementRefCount(const std::wstring& path, const uint32_t& textureID);
-		bool LoadOrReplaceTextureData(const std::wstring& key, const uint8_t* data, const uint32_t& width, const uint32_t& height, uint32_t& textureID);
+		bool TextureExists(const std::wstring& key);
+		bool CreateTextureReference(const std::wstring& key, uint32_t& textureID);
+		bool DeleteTextureReference(const uint32_t& textureID);
+		bool IsTextureLoaded(const uint32_t& textureID);
+		bool LoadTextureData(const uint32_t& textureID, const uint8_t* data, const uint32_t& width, const uint32_t& height);
 		bool GetTexureMaxUV(const uint32_t& textureID, MathUtility::Vec2F& maxUV);
 
-		void DeleteTexture(const uint32_t& textureID);
+		void PurgeTextures();
 		bool RenderMesh(const std::vector<MeshUtility::Vertex>& mesh);
 		void Clear(const MathUtility::Color4F& color);
 

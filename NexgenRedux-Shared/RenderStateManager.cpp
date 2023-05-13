@@ -189,14 +189,29 @@ bool RenderStateManager::LoadTexture(const std::wstring& path, uint32_t& texture
     return m_renderingHelper->LoadTexture(path, textureID);
 }
 
-bool RenderStateManager::IfTextureExistsIncrementRefCount(const std::wstring& path, const uint32_t& textureID)
+bool RenderStateManager::TextureExists(const std::wstring& key)
 {
-    return m_renderingHelper->IfTextureExistsIncrementRefCount(path, textureID);
+    return m_renderingHelper->TextureExists(key);
 }
 
-bool RenderStateManager::LoadOrReplaceTextureData(const std::wstring& key, const uint8_t* data, const uint32_t& width, const uint32_t& height, uint32_t& textureID)
+bool RenderStateManager::CreateTextureReference(const std::wstring& key, uint32_t& textureID)
 {
-    return m_renderingHelper->LoadOrReplaceTextureData(key, data, width, height, textureID);
+    return m_renderingHelper->CreateTextureReference(key, textureID);
+}
+
+bool RenderStateManager::DeleteTextureReference(const uint32_t& textureID)
+{
+    return m_renderingHelper->DeleteTextureReference(textureID);
+}
+
+bool RenderStateManager::IsTextureLoaded(const uint32_t& textureID)
+{
+     return m_renderingHelper->IsTextureLoaded(textureID);
+}
+
+bool RenderStateManager::LoadTextureData(const uint32_t& textureID, const uint8_t* data, const uint32_t& width, const uint32_t& height)
+{
+    return m_renderingHelper->LoadTextureData(textureID, data, width, height);
 }
 
 bool RenderStateManager::GetTexureMaxUV(const uint32_t& textureID, MathUtility::Vec2F& maxUV)
@@ -204,9 +219,9 @@ bool RenderStateManager::GetTexureMaxUV(const uint32_t& textureID, MathUtility::
 	return m_renderingHelper->GetTexureMaxUV(textureID, maxUV);
 }
 
-void RenderStateManager::DeleteTexture(const uint32_t& textureID)
+void RenderStateManager::PurgeTextures()
 {
-    m_renderingHelper->DeleteTexture(textureID);
+    m_renderingHelper->PurgeTextures();
 }
 
 bool RenderStateManager::RenderMesh(const std::vector<MeshUtility::Vertex>& mesh)

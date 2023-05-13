@@ -14,17 +14,18 @@ namespace NexgenRedux
     	typedef struct TextureRequest
 		{
             std::wstring path;
-			void* instance;
-            void* callback;
+			bool processed;
+			uint32_t textureID;
+			uint8_t* data;
+			int width;
+			int height;
 		} TextureRequest;
-
-        typedef void (*TextureLoadedCallback)(void* instance, const uint32_t& width, const uint32_t& height, uint8_t* data);
 
 		static void Init();
 		static void Close();
-        static void TestThread();
-        static void Request(const std::wstring& path, void* instance, TextureLoadedCallback textureLoadedCallback);
-        static void FreeData(uint8_t* data);
+        static void ProcessThread();
+        static void Request(const std::wstring& path, uint32_t textureID);
+		static void ApplyTextures();
 
 	};
 }

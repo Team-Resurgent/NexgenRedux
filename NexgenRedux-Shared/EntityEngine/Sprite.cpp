@@ -18,7 +18,7 @@ Sprite::Sprite(uint32_t nodeID) : Node(nodeID)
     m_texturePath = "";
     m_textureID = 0;
 
-    m_textureLoaded = false;
+    m_wantsTexture = false;
 
 
     m_meshIsDirty = true;
@@ -39,26 +39,8 @@ Sprite::~Sprite(void)
     RenderStateManager* renderStateManager = RenderStateManager::GetInstance();
     if (m_textureID != 0)
     {
-        renderStateManager->DeleteTexture(m_textureID);
+        renderStateManager->DeleteTextureReference(m_textureID);
     }
-}
-
-void Sprite::TextureLoaded(void* instance, const uint32_t& width, const uint32_t& height, uint8_t* data)
-{
-    RenderStateManager* renderStateManager = RenderStateManager::GetInstance();
-
-    Sprite* sprite = (Sprite*)instance;
-
-        // if (m_textureID != 0)
-        // {
-        //     renderStateManager->DeleteTexture(m_textureID);
-        // }
-        // renderStateManager->LoadTexture(StringUtility::ToWideString(m_texturePath), m_textureID);
-
-    sprite->m_data = data;
-    sprite->m_width = width;
-    sprite->m_height = height;
-    sprite->m_textureLoaded = true;
 }
 
 void Sprite::Update(float dt)
@@ -67,21 +49,25 @@ void Sprite::Update(float dt)
 
     if (m_textureIsDirty == true)
     {
-        if (renderStateManager->IfTextureExistsIncrementRefCount(StringUtility::ToWideString(m_texturePath), m_textureID) == false)
+        // TODO share this code as will be used elsewhere
+        if (m_textureID > 0)
         {
-            renderStateManager->DeleteTexture(m_textureID);
-            m_textureID = 0;
-            TextureManager::Request(StringUtility::ToWideString(m_texturePath), this, TextureLoaded);
+            renderStateManager->DeleteTextureReference(m_textureID);
         }
+        bool textureExists = renderStateManager->TextureExists(StringUtility::ToWideString(m_texturePath));
+        renderStateManager->CreateTextureReference(StringUtility::ToWideString(m_texturePath), m_textureID);
+        if (textureExists == false)
+        {
+            TextureManager::Request(StringUtility::ToWideString(m_texturePath), m_textureID);
+        }
+        m_wantsTexture = true;
         m_textureIsDirty = false;
     }
 
-    if (m_textureLoaded == true)
+    if (m_wantsTexture == true && renderStateManager->IsTextureLoaded(m_textureID) == true)
     {
-        renderStateManager->LoadOrReplaceTextureData(StringUtility::ToWideString(m_texturePath), m_data, m_width, m_height, m_textureID);
-        TextureManager::FreeData(m_data);
-        m_textureLoaded = false;
         m_meshIsDirty = true;
+        m_wantsTexture = false;   
     }
 
     if (m_meshIsDirty == true)

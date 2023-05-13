@@ -1060,74 +1060,127 @@ bool XboxOGRenderingHelper::LoadTexture(const std::wstring& path, uint32_t& text
 	return false;
 }
 
-bool XboxOGRenderingHelper::IfTextureExistsIncrementRefCount(const std::wstring& path, const uint32_t& textureID)
+bool XboxOGRenderingHelper::TextureExists(const std::wstring& key)
 {
 	for (std::map<uint32_t, TextureContainer>::iterator it = m_textureContainerMap.begin(); it != m_textureContainerMap.end(); ++it)
 	{
-		if (it->second.key != path || it->first != textureID)
+		if (it->second.key != key)
 		{
 			continue;
 		}
-		it->second.refCount++;
 		return true;
 	}
 	return false;
 }
 
-bool XboxOGRenderingHelper::LoadOrReplaceTextureData(const std::wstring& key, const uint8_t* data, const uint32_t& width, const uint32_t& height, uint32_t& textureID)
+bool XboxOGRenderingHelper::CreateTextureReference(const std::wstring& key, uint32_t& textureID)
 {
-	if (textureID != 0)
+	for (std::map<uint32_t, TextureContainer>::iterator it = m_textureContainerMap.begin(); it != m_textureContainerMap.end(); ++it)
 	{
-		DeleteTexture(textureID);
-	}
-	else
-	{
-		textureID = ++m_maxTextureContainerID;
+		if (it->second.key != key)
+		{
+			continue;
+		}
+		it->second.refCount++;
+		textureID = it->first;
+		return true;
 	}
 
+	uint32_t textureContainerID = ++m_maxTextureContainerID;
+	TextureContainer textureContainer;
+	textureContainer.texture = 0;
+	textureContainer.maxUVX = 0;
+	textureContainer.maxUVY = 0;
+	textureContainer.width = 0;
+	textureContainer.height = 0;
+	textureContainer.key = key;
+	textureContainer.refCount = 1;
+	m_textureContainerMap.insert(std::pair<uint32_t, TextureContainer>(textureContainerID, textureContainer));
+	textureID = textureContainerID;
+	return false;
+}
+
+bool XboxOGRenderingHelper::DeleteTextureReference(const uint32_t& textureID) 
+{
+	for (std::map<uint32_t, TextureContainer>::iterator it = m_textureContainerMap.begin(); it != m_textureContainerMap.end(); ++it)
+	{
+		if (it->first != textureID)
+		{
+			continue;
+		}
+		if (it->second.refCount > 0) 
+		{
+			it->second.refCount--;
+		}
+		return true;
+	}
+	return false;
+}
+
+bool XboxOGRenderingHelper::IsTextureLoaded(const uint32_t& textureID)
+{
+	for (std::map<uint32_t, TextureContainer>::iterator it = m_textureContainerMap.begin(); it != m_textureContainerMap.end(); ++it)
+	{
+		if (it->first != textureID)
+		{
+			continue;
+		}
+		return it->second.texture != NULL;
+	}
+	return false;
+}
+
+bool XboxOGRenderingHelper::LoadTextureData(const uint32_t& textureID, const uint8_t* data, const uint32_t& width, const uint32_t& height)
+{
 	IDirect3DDevice8* d3dDevice = (IDirect3DDevice8*)WindowManager::GetInstance()->GetWindowPtr();
 	if (d3dDevice == NULL)
 	{
 		return false;
 	}
 
-	IDirect3DTexture8 *texture;
-	if (FAILED(D3DXCreateTexture(d3dDevice, width, height, 1, 0, D3DFMT_A8B8G8R8, D3DPOOL_DEFAULT, &texture)))
+	for (std::map<uint32_t, TextureContainer>::iterator it = m_textureContainerMap.begin(); it != m_textureContainerMap.end(); ++it)
 	{
-		return false;
-	}
-
-	D3DSURFACE_DESC surfaceDesc;
-	texture->GetLevelDesc(0, &surfaceDesc);
-
-	D3DLOCKED_RECT lockedRect;
-    if (SUCCEEDED(texture->LockRect(0, &lockedRect, NULL, 0)))
-    {
-		uint8_t* tempBuffer = (uint8_t*)malloc(surfaceDesc.Size);
-		memset(tempBuffer, 0, surfaceDesc.Size);
-		uint8_t* src = (uint8_t*)data;
-		uint8_t* dst = tempBuffer;
-		for (uint32_t y = 0; y < height; y++)
+		if (it->first != textureID)
 		{
-			memcpy(dst, src, width * 4);
-			src += width * 4;
-			dst += surfaceDesc.Width * 4;
+			continue;
 		}
-		Swizzle(tempBuffer, 4, surfaceDesc.Width, surfaceDesc.Height, lockedRect.pBits);
-		free(tempBuffer);
-		texture->UnlockRect(0);
+
+		IDirect3DTexture8 *texture;
+		if (FAILED(D3DXCreateTexture(d3dDevice, width, height, 1, 0, D3DFMT_A8B8G8R8, D3DPOOL_DEFAULT, &texture)))
+		{
+			return false;
+		}
+
+		D3DSURFACE_DESC surfaceDesc;
+		texture->GetLevelDesc(0, &surfaceDesc);
+
+		D3DLOCKED_RECT lockedRect;
+		if (SUCCEEDED(texture->LockRect(0, &lockedRect, NULL, 0)))
+		{
+			uint8_t* tempBuffer = (uint8_t*)malloc(surfaceDesc.Size);
+			memset(tempBuffer, 0, surfaceDesc.Size);
+			uint8_t* src = (uint8_t*)data;
+			uint8_t* dst = tempBuffer;
+			for (uint32_t y = 0; y < height; y++)
+			{
+				memcpy(dst, src, width * 4);
+				src += width * 4;
+				dst += surfaceDesc.Width * 4;
+			}
+			Swizzle(tempBuffer, 4, surfaceDesc.Width, surfaceDesc.Height, lockedRect.pBits);
+			free(tempBuffer);
+			texture->UnlockRect(0);
+		}
+
+		it->second.texture = texture;
+		it->second.maxUVX = 1;
+		it->second.maxUVY = 1;
+		it->second.width = width;
+		it->second.height = height;
+		return true;
 	}
 
-	TextureContainer textureContainer;
-	textureContainer.texture = texture;
-	textureContainer.maxUVX = width / (float)surfaceDesc.Width;
-	textureContainer.maxUVY = height / (float)surfaceDesc.Height;
-	textureContainer.width = width;
-	textureContainer.height = height;
-	textureContainer.key = key;
-	textureContainer.refCount = 1;
-	m_textureContainerMap.insert(std::pair<uint32_t, TextureContainer>(textureID, textureContainer));
-	return true;
+	return false;
 }
 
 bool XboxOGRenderingHelper::GetTexureMaxUV(const uint32_t& textureID, MathUtility::Vec2F& maxUV)
@@ -1143,24 +1196,24 @@ bool XboxOGRenderingHelper::GetTexureMaxUV(const uint32_t& textureID, MathUtilit
 	return true;
 }
 
-void XboxOGRenderingHelper::DeleteTexture(const uint32_t& textureID)
+void XboxOGRenderingHelper::PurgeTextures()
 {
-    std::map<uint32_t, TextureContainer>::iterator it = m_textureContainerMap.find(textureID);
-	if (it == m_textureContainerMap.end()) 
-	{
-		return;
-	}
+	for (std::map<uint32_t, TextureContainer>::iterator it = m_textureContainerMap.begin(); it != m_textureContainerMap.end();)
+    {
+        if (it->second.refCount == 0)
+        { 
+            std::map<uint32_t, TextureContainer>::iterator itErase = it;
+            ++it;
 
-	it->second.refCount--;
-	if (it->second.refCount > 0)
-	{
-		return;
-	}
-	
-	TextureContainer* textureContainer = (TextureContainer*)&it->second;
-	IDirect3DTexture8* texture = textureContainer->texture;
-	texture->Release();
-	m_textureContainerMap.erase(it);
+			if (itErase->second.texture != NULL)
+			{
+				itErase->second.texture->Release();
+			}
+            m_textureContainerMap.erase(itErase);
+            continue;
+        }
+        ++it;
+    }
 }
 
 bool XboxOGRenderingHelper::RenderMesh(const std::vector<MeshUtility::Vertex>& mesh)

@@ -51,7 +51,7 @@
 				LinkIncremental="2"
 				SuppressStartupBanner="TRUE"
 				GenerateDebugInformation="TRUE"
-				ProgramDatabaseFile="$(OutDir)/Nexgen.pdb"
+				ProgramDatabaseFile="$(OutDir)/NexgenRedux.pdb"
 				GenerateMapFile="TRUE"/>
 			<Tool
 				Name="VCPostBuildEventTool"/>
@@ -138,6 +138,136 @@
 				DontMountUD="TRUE"
 				TitleID="0xffffaa02"
 				TitleName="Nexgen"
+				XBEVersion="4096"/>
+		</Configuration>
+		<Configuration
+			Name="Profile|Xbox"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="1"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="FALSE">
+			<Tool
+				Name="VCCLCompilerTool"
+				AdditionalOptions="/GR"
+				Optimization="0"
+				OptimizeForProcessor="2"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)\NexgenRedux-Shared&quot;;&quot;$(SolutionDir)\Libraries\AngelScript&quot;;&quot;$(SolutionDir)\Libraries&quot;"
+				PreprocessorDefinitions="NDEBUG;PROFILE;UNICODE;_USE_XGMATH;_XBOX;XBOX_SAMPLE;_DEBUG;DEBUG_MOUSE;DEBUG_KEYBOARD;NEXGEN_OG;AS_XBOX;AS_NO_THREADS;AS_USE_NAMESPACE"
+				BasicRuntimeChecks="3"
+				RuntimeLibrary="1"
+				BufferSecurityCheck="TRUE"
+				EnableEnhancedInstructionSet="1"
+				RuntimeTypeInfo="TRUE"
+				UsePrecompiledHeader="0"
+				PrecompiledHeaderThrough=""
+				PrecompiledHeaderFile=""
+				AssemblerListingLocation="$(IntDir)/"
+				ObjectFile="$(IntDir)/"
+				ProgramDataBaseFileName="$(IntDir)/"
+				WarningLevel="3"
+				SuppressStartupBanner="TRUE"
+				DebugInformationFormat="4"
+				CallingConvention="0"
+				CompileAs="0"/>
+			<Tool
+				Name="VCCustomBuildTool"/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalOptions="/MACHINE:I386 /FIXED:NO"
+				AdditionalDependencies="xbdm.lib dsoundd.lib xnetd.lib xperf.lib xapilibd.lib d3d8d.lib d3dx8d.lib xgraphicsd.lib xboxkrnl.lib xkbd.lib"
+				OutputFile="$(OutDir)/NexgenRedux.exe"
+				LinkIncremental="2"
+				SuppressStartupBanner="TRUE"
+				GenerateDebugInformation="TRUE"
+				ProgramDatabaseFile="$(OutDir)/Nexgen.pdb"
+				GenerateMapFile="TRUE"/>
+			<Tool
+				Name="VCPostBuildEventTool"/>
+			<Tool
+				Name="VCPreBuildEventTool"/>
+			<Tool
+				Name="VCPreLinkEventTool"/>
+			<Tool
+				Name="XboxDeploymentTool"
+				RemotePath="xe:\$(ProjectName)\$(TargetName).xbe"
+				AdditionalFiles="$(SolutionDir)\NexgenRedux-Shared\Media"
+				Progress="TRUE"
+				ForceCopy="TRUE"/>
+			<Tool
+				Name="XboxImageTool"
+				StackSize="0x20000"
+				IncludeDebugInfo="TRUE"
+				SuppressStartupBanner="TRUE"
+				DontMountUD="TRUE"
+				NoLibWarn="TRUE"
+				TitleID="0x54520001"
+				TitleName="NexgenRedux"
+				XBEVersion="4096"/>
+		</Configuration>
+		<Configuration
+			Name="ProfileFastcap|Xbox"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="1"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="FALSE">
+			<Tool
+				Name="VCCLCompilerTool"
+				AdditionalOptions="/GR"
+				Optimization="0"
+				OptimizeForProcessor="2"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)\NexgenRedux-Shared&quot;;&quot;$(SolutionDir)\Libraries\AngelScript&quot;;&quot;$(SolutionDir)\Libraries&quot;"
+				PreprocessorDefinitions="NDEBUG;PROFILE;FASTCAP;UNICODE;_USE_XGMATH;_XBOX;XBOX_SAMPLE;_DEBUG;DEBUG_MOUSE;DEBUG_KEYBOARD;NEXGEN_OG;AS_XBOX;AS_NO_THREADS;AS_USE_NAMESPACE"
+				BasicRuntimeChecks="3"
+				RuntimeLibrary="1"
+				BufferSecurityCheck="TRUE"
+				EnableEnhancedInstructionSet="1"
+				RuntimeTypeInfo="TRUE"
+				UsePrecompiledHeader="0"
+				PrecompiledHeaderThrough=""
+				PrecompiledHeaderFile=""
+				AssemblerListingLocation="$(IntDir)/"
+				ObjectFile="$(IntDir)/"
+				ProgramDataBaseFileName="$(IntDir)/"
+				WarningLevel="3"
+				SuppressStartupBanner="TRUE"
+				DebugInformationFormat="4"
+				CallingConvention="0"
+				CompileAs="0"/>
+			<Tool
+				Name="VCCustomBuildTool"/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalOptions="/MACHINE:I386 /FIXED:NO"
+				AdditionalDependencies="xbdm.lib dsoundd.lib xnetd.lib xperf.lib xapilibd.lib d3d8d.lib d3dx8d.lib xgraphicsd.lib xboxkrnl.lib xkbd.lib"
+				OutputFile="$(OutDir)/NexgenRedux.exe"
+				LinkIncremental="2"
+				SuppressStartupBanner="TRUE"
+				GenerateDebugInformation="TRUE"
+				ProgramDatabaseFile="$(OutDir)/Nexgen.pdb"
+				GenerateMapFile="TRUE"/>
+			<Tool
+				Name="VCPostBuildEventTool"/>
+			<Tool
+				Name="VCPreBuildEventTool"/>
+			<Tool
+				Name="VCPreLinkEventTool"/>
+			<Tool
+				Name="XboxDeploymentTool"
+				RemotePath="xe:\$(ProjectName)\$(TargetName).xbe"
+				AdditionalFiles="$(SolutionDir)\NexgenRedux-Shared\Media"
+				Progress="TRUE"
+				ForceCopy="TRUE"/>
+			<Tool
+				Name="XboxImageTool"
+				StackSize="0x20000"
+				IncludeDebugInfo="TRUE"
+				SuppressStartupBanner="TRUE"
+				DontMountUD="TRUE"
+				NoLibWarn="TRUE"
+				TitleID="0x54520001"
+				TitleName="NexgenRedux"
 				XBEVersion="4096"/>
 		</Configuration>
 	</Configurations>

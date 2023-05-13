@@ -157,7 +157,7 @@ std::wstring StringUtility::ToWideString(std::string const value)
 	size_t length = value.length();
 	std::wstring result(length, L'#');
 	mbstowcs(&result[0], value_char, length);
-	return result;
+	return std::wstring(result);
 }
 
 std::string StringUtility::ToString(std::wstring const value)
@@ -170,7 +170,7 @@ std::string StringUtility::ToString(std::wstring const value)
 	size_t length = wcslen(value_char);
 	std::string result(length, '#');
 	wcstombs(&result[0], value_char, length);
-	return result;
+	return std::string(result);
 }
 
 uint32_t StringUtility::ToInt(std::wstring const value)

@@ -37,7 +37,7 @@ Text::~Text(void)
     RenderStateManager* renderStateManager = RenderStateManager::GetInstance();
     if (m_textureID != 0)
     {
-        renderStateManager->DeleteTexture(m_textureID);
+        renderStateManager->DeleteTextureReference(m_textureID);
     }
 }
 
@@ -47,6 +47,12 @@ void Text::Update(float dt)
 
     if (m_textIsDirty == true)
     {
+        if (m_textureID > 0)
+        {
+            renderStateManager->DeleteTextureReference(m_textureID);
+        }
+        renderStateManager->CreateTextureReference(StringUtility::ToWideString(m_text), m_textureID);
+        
         if (FontManager::SelectFont(m_fontName, m_fontStyle, m_fontSize) == true)
         {
             void* textHandle;
@@ -59,7 +65,7 @@ void Text::Update(float dt)
 
 				if (pixelBuffer != NULL) 
 				{
-					renderStateManager->LoadOrReplaceTextureData(L"", pixelBuffer, width, height, m_textureID);
+					renderStateManager->LoadTextureData(m_textureID, pixelBuffer, width, height);
 					
 					MathUtility::Vec2F maxUV;
 					renderStateManager->GetTexureMaxUV(m_textureID, maxUV);

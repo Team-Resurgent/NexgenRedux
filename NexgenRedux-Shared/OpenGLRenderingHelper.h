@@ -68,10 +68,14 @@ namespace NexgenRedux
 		void SetScissor(const ScissorOperation& operation, const MathUtility::RectI& rect) override;
 
 		bool LoadTexture(const std::wstring& path, uint32_t& textureID) override;
-		bool IfTextureExistsIncrementRefCount(const std::wstring& path, const uint32_t& textureID);
-		bool LoadOrReplaceTextureData(const std::wstring& key, const uint8_t* data, const uint32_t& width, const uint32_t& height, uint32_t& textureID) override;
+		bool TextureExists(const std::wstring& key) override;
+		bool CreateTextureReference(const std::wstring& key, uint32_t& textureID) override;
+		bool DeleteTextureReference(const uint32_t& textureID) override;
+		bool IsTextureLoaded(const uint32_t& textureID);
+
+		bool LoadTextureData(const uint32_t& textureID, const uint8_t* data, const uint32_t& width, const uint32_t& height) override;
 		bool GetTexureMaxUV(const uint32_t& textureID, MathUtility::Vec2F& maxUV) override;
-		void DeleteTexture(const uint32_t& textureID) override;
+		void PurgeTextures() override;
 		bool RenderMesh(const std::vector<MeshUtility::Vertex>& mesh) override;
 		void Clear(const MathUtility::Color4F& color) override;
 		

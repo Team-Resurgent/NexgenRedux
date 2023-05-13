@@ -159,6 +159,8 @@ bool WindowManager::RenderLoop()
 
 			SceneManager::Render();
 			NodeManager::PurgeNodes();
+			renderStateManager->PurgeTextures();
+			TextureManager::ApplyTextures();
 
 			if (WindowPostRender() == false)
 			{

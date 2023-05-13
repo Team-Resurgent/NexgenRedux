@@ -6,11 +6,17 @@ EndProject
 Global
 	GlobalSection(SolutionConfiguration) = preSolution
 		Debug = Debug
+		Profile = Profile
+		ProfileFastcap = ProfileFastcap
 		Release = Release
 	EndGlobalSection
 	GlobalSection(ProjectConfiguration) = postSolution
 		{652C7D60-BC02-4E09-96DD-9300FFFFAA02}.Debug.ActiveCfg = Debug|Xbox
 		{652C7D60-BC02-4E09-96DD-9300FFFFAA02}.Debug.Build.0 = Debug|Xbox
+		{652C7D60-BC02-4E09-96DD-9300FFFFAA02}.Profile.ActiveCfg = Profile|Xbox
+		{652C7D60-BC02-4E09-96DD-9300FFFFAA02}.Profile.Build.0 = Profile|Xbox
+		{652C7D60-BC02-4E09-96DD-9300FFFFAA02}.ProfileFastcap.ActiveCfg = ProfileFastcap|Xbox
+		{652C7D60-BC02-4E09-96DD-9300FFFFAA02}.ProfileFastcap.Build.0 = ProfileFastcap|Xbox
 		{652C7D60-BC02-4E09-96DD-9300FFFFAA02}.Release.ActiveCfg = Release|Xbox
 		{652C7D60-BC02-4E09-96DD-9300FFFFAA02}.Release.Build.0 = Release|Xbox
 	EndGlobalSection

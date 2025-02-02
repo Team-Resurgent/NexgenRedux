@@ -84,6 +84,10 @@ std::wstring DriveManager::MapSystemPath(std::wstring const path)
 
 void DriveManager::InitOrRefresh()
 {
+	if (m_initialized == true)
+	{
+		return;
+	}
 
 #if defined NEXGEN_OG
 

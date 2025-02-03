@@ -969,9 +969,9 @@ bool AngelScriptRunner::Init()
 	result = m_engine->RegisterGlobalFunction("bool SceneManager::AssignNode(Node@, uint)", asFUNCTION(SceneManager::AssignNode), asCALL_CDECL); if (result < 0) { return false; }
 
 	result = m_engine->SetDefaultNamespace("PreLoader"); if (result < 0) { return false; }
-	result = m_engine->RegisterGlobalFunction("void LoadTexture(string)", asFUNCTION(PreLoader::LoadTexture), asCALL_CDECL); if (result < 0) { return false; }
-	result = m_engine->RegisterGlobalFunction("void UnLoadTexture(string)", asFUNCTION(PreLoader::UnLoadTexture), asCALL_CDECL); if (result < 0) { return false; }
-	result = m_engine->RegisterGlobalFunction("void WaitTexturesLoaded()", asFUNCTION(PreLoader::WaitTexturesLoaded), asCALL_CDECL); if (result < 0) { return false; }
+	result = m_engine->RegisterGlobalFunction("bool PreLoader::LoadTexture(string)", asFUNCTION(PreLoader::LoadTexture), asCALL_CDECL); if (result < 0) { return false; }
+	result = m_engine->RegisterGlobalFunction("bool PreLoader::UnLoadTexture(string)", asFUNCTION(PreLoader::UnLoadTexture), asCALL_CDECL); if (result < 0) { return false; }
+	result = m_engine->RegisterGlobalFunction("bool PreLoader::AllTexturesLoaded()", asFUNCTION(PreLoader::AllTexturesLoaded), asCALL_CDECL); if (result < 0) { return false; }
 
 	result = m_engine->SetDefaultNamespace("FontManager"); if (result < 0) { return false; }
 	result = m_engine->RegisterGlobalFunction("bool FontManager::LoadFont(string)", asFUNCTION(FontManager::LoadFont), asCALL_CDECL); if (result < 0) { return false; }

@@ -819,6 +819,11 @@ bool XboxOGWindowHelper::InitMouse(void)
 
 void XboxOGWindowHelper::ProcessController()
 {
+	if (Init() == false)
+    {
+        return;
+    }
+
     DWORD insertions;
 	DWORD removals;
     XGetDeviceChanges(XDEVICE_TYPE_GAMEPAD, &insertions, &removals);

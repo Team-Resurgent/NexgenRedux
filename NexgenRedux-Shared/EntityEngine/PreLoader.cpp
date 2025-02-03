@@ -35,13 +35,15 @@ void PreLoader::Close(void)
     }
 }
 
-void PreLoader::LoadTexture(const std::string value)
+bool PreLoader::LoadTexture(const std::string value)
 {
 	// Only load if we dont a ref to key ourselves
 	if (std::find(m_textureKeys.begin(), m_textureKeys.end(), value) != m_textureKeys.end()) 
 	{
-        return;
+        return false;
     }
+
+	m_textureKeys.push_back(value);
 
 	RenderStateManager* renderStateManager = RenderStateManager::GetInstance();
 
@@ -53,15 +55,20 @@ void PreLoader::LoadTexture(const std::string value)
 	{
 		TextureManager::Request(StringUtility::ToWideString(value), textureID);
 	}
+
+	return true;
 }
 
-void PreLoader::UnLoadTexture(const std::string value)
+bool PreLoader::UnLoadTexture(const std::string value)
 {
 	// Only unload if we have a ref to key ourselves
-	if (std::find(m_textureKeys.begin(), m_textureKeys.end(), value) == m_textureKeys.end()) 
+	std::vector<std::string>::iterator it = std::find(m_textureKeys.begin(), m_textureKeys.end(), value);
+	if (it == m_textureKeys.end()) 
 	{
-        return;
+        return false;
     }
+
+	m_textureKeys.erase(it);
 
 	RenderStateManager* renderStateManager = RenderStateManager::GetInstance();
 
@@ -72,11 +79,13 @@ void PreLoader::UnLoadTexture(const std::string value)
 	{
 		renderStateManager->DeleteTextureReference(textureID);
 	}
+
+	return true;
 }
 
-void PreLoader::WaitTexturesLoaded()
+bool PreLoader::AllTexturesLoaded()
 {
-	// This should not be called until render engine / window created
+	// This should only be called from render loop otherwise texture will be waiting to load for ever
 
 	RenderStateManager* renderStateManager = RenderStateManager::GetInstance();
 
@@ -90,8 +99,10 @@ void PreLoader::WaitTexturesLoaded()
 		{
 			while (renderStateManager->IsTextureLoaded(textureID) == false)
 			{
-				TimeUtility::SleepMilliseconds(100);
+				return false;
 			}
 		}
     }
+
+	return true;
 }

@@ -8,8 +8,8 @@ namespace NexgenRedux
     {
     public:
         static void Close(void);
-        static void LoadTexture(const std::string value);
-		static void UnLoadTexture(const std::string value);
-		static void WaitTexturesLoaded();
+        static bool LoadTexture(const std::string value);
+		static bool UnLoadTexture(const std::string value);
+		static bool AllTexturesLoaded();
     };
 }

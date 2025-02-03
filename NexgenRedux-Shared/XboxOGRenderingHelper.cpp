@@ -1058,7 +1058,7 @@ bool XboxOGRenderingHelper::LoadTexture(const std::wstring& path, uint32_t& text
 	return true;
 }
 
-bool XboxOGRenderingHelper::TextureExists(const std::wstring& key)
+bool XboxOGRenderingHelper::TextureExists(const std::wstring& key, uint32_t& textureID)
 {
 	for (std::map<uint32_t, TextureContainer>::iterator it = m_textureContainerMap.begin(); it != m_textureContainerMap.end(); ++it)
 	{
@@ -1066,6 +1066,7 @@ bool XboxOGRenderingHelper::TextureExists(const std::wstring& key)
 		{
 			continue;
 		}
+		textureID = it->first;
 		return true;
 	}
 	return false;

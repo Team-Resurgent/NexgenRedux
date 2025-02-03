@@ -448,6 +448,12 @@
 					RelativePath="..\NexgenRedux-Shared\EntityEngine\PerspectiveCamera.h">
 				</File>
 				<File
+					RelativePath="..\NexgenRedux-Shared\EntityEngine\PreLoader.cpp">
+				</File>
+				<File
+					RelativePath="..\NexgenRedux-Shared\EntityEngine\PreLoader.h">
+				</File>
+				<File
 					RelativePath="..\NexgenRedux-Shared\EntityEngine\SceneManager.cpp">
 				</File>
 				<File
@@ -523,6 +529,9 @@
 			</File>
 			<File
 				RelativePath="..\Libraries\Gensys\NetworkManager.h">
+			</File>
+			<File
+				RelativePath="..\Libraries\Gensys\PointerVector.h">
 			</File>
 			<File
 				RelativePath="..\Libraries\Gensys\SocketUtility.cpp">

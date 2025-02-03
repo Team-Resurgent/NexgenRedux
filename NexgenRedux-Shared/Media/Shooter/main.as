@@ -663,6 +663,13 @@ void UpdateBackground(double dt)
 void Init()
 {
     FontManager::LoadFont("skin:asset\\fonts\\freesans.sfn");
+	//PreLoader::LoadTexture("asset:images\\TR_Banner_Background.jpg");
+	//PreLoader::LoadTexture("asset:images\\game\\playerbullet.png");
+	//PreLoader::LoadTexture("asset:images\\game\\boss.png");
+	//PreLoader::LoadTexture("asset:images\\game\\PineappleShip.png");
+	//PreLoader::LoadTexture("asset:images\\backgrounds\\Nebula Aqua-Pink.png");
+	//PreLoader::LoadTexture("asset:images\\backgrounds\\Stars-Big_1_2_PC.png");
+	//PreLoader::LoadTexture("asset:images\\backgrounds\\Stars-Big_1_1_PC.png");
 
     uint sceneID = SceneManager::CreateScene(true);
     SceneManager::SetCurrentScene(sceneID);
@@ -706,6 +713,8 @@ void Init()
 
     // Create window example
     WindowCreateWithSize(640, 480, "Nexgen Redux - Shooter Demo");
+	
+	PreLoader::WaitTexturesLoaded();
 
 
     SetWindowIconifyCallback(OnWindowIconify);

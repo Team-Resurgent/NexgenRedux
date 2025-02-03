@@ -54,7 +54,7 @@ void Sprite::Update(float dt)
         {
             renderStateManager->DeleteTextureReference(m_textureID);
         }
-        bool textureExists = renderStateManager->TextureExists(StringUtility::ToWideString(m_texturePath));
+        bool textureExists = renderStateManager->TextureExists(StringUtility::ToWideString(m_texturePath), m_textureID);
         renderStateManager->CreateTextureReference(StringUtility::ToWideString(m_texturePath), m_textureID);
         if (textureExists == false)
         {

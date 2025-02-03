@@ -13,6 +13,7 @@
 #include "EntityEngine/Fog.h"
 #include "EntityEngine/Lighting.h"
 #include "EntityEngine/Sprite.h"
+#include "EntityEngine/PreLoader.h"
 #include "EntityEngine/Text.h"
 
 #include <Gensys/DebugUtility.h>
@@ -966,6 +967,11 @@ bool AngelScriptRunner::Init()
 	result = m_engine->RegisterGlobalFunction("uint SceneManager::CreateScene(bool)", asFUNCTION(SceneManager::CreateScene), asCALL_CDECL); if (result < 0) { return false; }
 	result = m_engine->RegisterGlobalFunction("void SceneManager::SetCurrentScene(uint)", asFUNCTION(SceneManager::SetCurrentScene), asCALL_CDECL); if (result < 0) { return false; }
 	result = m_engine->RegisterGlobalFunction("bool SceneManager::AssignNode(Node@, uint)", asFUNCTION(SceneManager::AssignNode), asCALL_CDECL); if (result < 0) { return false; }
+
+	result = m_engine->SetDefaultNamespace("PreLoader"); if (result < 0) { return false; }
+	result = m_engine->RegisterGlobalFunction("void LoadTexture(string)", asFUNCTION(PreLoader::LoadTexture), asCALL_CDECL); if (result < 0) { return false; }
+	result = m_engine->RegisterGlobalFunction("void UnLoadTexture(string)", asFUNCTION(PreLoader::UnLoadTexture), asCALL_CDECL); if (result < 0) { return false; }
+	result = m_engine->RegisterGlobalFunction("void WaitTexturesLoaded()", asFUNCTION(PreLoader::WaitTexturesLoaded), asCALL_CDECL); if (result < 0) { return false; }
 
 	result = m_engine->SetDefaultNamespace("FontManager"); if (result < 0) { return false; }
 	result = m_engine->RegisterGlobalFunction("bool FontManager::LoadFont(string)", asFUNCTION(FontManager::LoadFont), asCALL_CDECL); if (result < 0) { return false; }

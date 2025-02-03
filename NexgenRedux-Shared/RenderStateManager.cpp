@@ -189,9 +189,9 @@ bool RenderStateManager::LoadTexture(const std::wstring& path, uint32_t& texture
     return m_renderingHelper->LoadTexture(path, textureID);
 }
 
-bool RenderStateManager::TextureExists(const std::wstring& key)
+bool RenderStateManager::TextureExists(const std::wstring& key, uint32_t& textureID)
 {
-    return m_renderingHelper->TextureExists(key);
+    return m_renderingHelper->TextureExists(key, textureID);
 }
 
 bool RenderStateManager::CreateTextureReference(const std::wstring& key, uint32_t& textureID)

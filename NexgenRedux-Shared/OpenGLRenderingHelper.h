@@ -68,7 +68,7 @@ namespace NexgenRedux
 		void SetScissor(const ScissorOperation& operation, const MathUtility::RectI& rect) override;
 
 		bool LoadTexture(const std::wstring& path, uint32_t& textureID) override;
-		bool TextureExists(const std::wstring& key) override;
+		bool TextureExists(const std::wstring& key, uint32_t& textureID) override;
 		bool CreateTextureReference(const std::wstring& key, uint32_t& textureID) override;
 		bool DeleteTextureReference(const uint32_t& textureID) override;
 		bool IsTextureLoaded(const uint32_t& textureID);

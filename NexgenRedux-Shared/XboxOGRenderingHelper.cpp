@@ -16,9 +16,9 @@
 #include <map>
 
 //#define STB_IMAGE_IMPLEMENTATION
-//#define STBI_FAILURE_USERMSG
-//#define STBI_ASSERT(x)
-//#include <STB/stb_image.h>
+#define STBI_FAILURE_USERMSG
+#define STBI_ASSERT(x)
+#include <STB/stb_image.h>
 
 using namespace Gensys;
 using namespace NexgenRedux;
@@ -982,7 +982,7 @@ void XboxOGRenderingHelper::SetScissor(const ScissorOperation& operation, const 
 
 bool XboxOGRenderingHelper::LoadTexture(const std::wstring& path, uint32_t& textureID)
 {	
-	/*std::wstring mappedPath;
+	std::wstring mappedPath;
 	if (path.length() == 0 || ConfigLoader::MapPath(path, mappedPath) == false)
 	{
 		return false;
@@ -1055,9 +1055,7 @@ bool XboxOGRenderingHelper::LoadTexture(const std::wstring& path, uint32_t& text
 	textureContainer.refCount = 1;
 	m_textureContainerMap.insert(std::pair<uint32_t, TextureContainer>(textureContainerID, textureContainer));
 	textureID = textureContainerID;
-	return true;*/
-
-	return false;
+	return true;
 }
 
 bool XboxOGRenderingHelper::TextureExists(const std::wstring& key)

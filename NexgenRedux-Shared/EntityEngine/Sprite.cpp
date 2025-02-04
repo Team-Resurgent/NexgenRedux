@@ -88,12 +88,12 @@ void Sprite::Update(float dt)
 
 void Sprite::Render()
 {
-    if (m_visible == false || m_textureID == 0 || m_mesh.size() == 0) 
+	RenderStateManager* renderStateManager = RenderStateManager::GetInstance();
+
+    if (m_visible == false || m_textureID == 0 || m_mesh.size() == 0 || renderStateManager->IsTextureLoaded(m_textureID) == false) 
     {
         return;
     }
-
-    RenderStateManager* renderStateManager = RenderStateManager::GetInstance();
 
     renderStateManager->SetModelMatrix(GetTransform());
 	renderStateManager->SetTexture(m_textureID, TextureFilterLinear);

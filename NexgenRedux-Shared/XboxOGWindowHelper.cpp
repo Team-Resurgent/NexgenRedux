@@ -195,7 +195,7 @@ bool XboxOGWindowHelper::GetMonitorVideoModes(uint32_t monitorIndex, std::vector
 	return true;
 }
 
-bool XboxOGWindowHelper::WindowCreateWithVideoMode(MonitorVideoMode monitorVideoMode, std::string title)
+bool XboxOGWindowHelper::WindowCreateWithVideoMode(MonitorVideoMode monitorVideoMode)
 {
 	if (m_d3dDevice != NULL)
 	{
@@ -294,7 +294,7 @@ void* XboxOGWindowHelper::GetWindowPtr()
     return m_d3dDevice;
 }
 
-bool XboxOGWindowHelper::WindowCreateWithSize(uint32_t width, uint32_t height, std::string title)
+bool XboxOGWindowHelper::WindowCreateWithSize(uint32_t width, uint32_t height)
 {
 	if (m_d3dDevice != NULL)
 	{
@@ -365,6 +365,11 @@ bool XboxOGWindowHelper::WindowCreateWithSize(uint32_t width, uint32_t height, s
 
 	m_width = selectedDisplayMode.Width;
     m_height = selectedDisplayMode.Height;
+	return true;
+}
+
+bool XboxOGWindowHelper::WindowSetTitle(std::string title)
+{
 	return true;
 }
 

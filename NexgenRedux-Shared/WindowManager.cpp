@@ -78,14 +78,19 @@ bool WindowManager::GetMonitorVideoModes(uint32_t monitorIndex, std::vector<Moni
 	return m_windowHelper->GetMonitorVideoModes(monitorIndex, monitorVideoModes);
 }
 
-bool WindowManager::WindowCreateWithVideoMode(MonitorVideoMode monitorVideoMode, std::string title)
+bool WindowManager::WindowCreateWithVideoMode(MonitorVideoMode monitorVideoMode)
 {
-	return m_windowHelper->WindowCreateWithVideoMode(monitorVideoMode, title);
+	return m_windowHelper->WindowCreateWithVideoMode(monitorVideoMode);
 }
 
-bool WindowManager::WindowCreateWithSize(uint32_t width, uint32_t height, std::string title)
+bool WindowManager::WindowCreateWithSize(uint32_t width, uint32_t height)
 {
-	return m_windowHelper->WindowCreateWithSize(width, height, title);
+	return m_windowHelper->WindowCreateWithSize(width, height);
+}
+
+bool WindowManager::WindowSetTitle(std::string title)
+{
+	return m_windowHelper->WindowSetTitle(title);
 }
 
 void* WindowManager::GetWindowPtr()

@@ -20,8 +20,9 @@ namespace NexgenRedux
 		virtual bool GetAvailableMonitorCount(uint32_t& monitorCount) = 0;
 		virtual bool GetMonitorVideoMode(uint32_t monitorIndex, MonitorVideoMode& monitorVideoMode) = 0;
 		virtual bool GetMonitorVideoModes(uint32_t monitorIndex, std::vector<MonitorVideoMode>& monitorVideoModes) = 0;
-		virtual bool WindowCreateWithVideoMode(MonitorVideoMode monitorVideoMode, std::string title) = 0;
-		virtual bool WindowCreateWithSize(uint32_t width, uint32_t height, std::string title) = 0;
+		virtual bool WindowCreateWithVideoMode(MonitorVideoMode monitorVideoMode) = 0;
+		virtual bool WindowCreateWithSize(uint32_t width, uint32_t height) = 0;
+		virtual bool WindowSetTitle(std::string title) = 0;
 		virtual void* GetWindowPtr() = 0;
 		virtual bool GetWindowSize(uint32_t& width, uint32_t& height) = 0;
 		virtual bool WindowPreRender(bool& exitRequested) = 0;

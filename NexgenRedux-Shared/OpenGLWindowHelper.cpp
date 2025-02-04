@@ -116,7 +116,7 @@ bool OpenGLWindowHelper::GetMonitorVideoModes(uint32_t monitorIndex, std::vector
     return true;
 }
 
-bool OpenGLWindowHelper::WindowCreateWithVideoMode(MonitorVideoMode monitorVideoMode, std::string title)
+bool OpenGLWindowHelper::WindowCreateWithVideoMode(MonitorVideoMode monitorVideoMode)
 {
 	if (Init() == false)
     {
@@ -141,7 +141,7 @@ bool OpenGLWindowHelper::WindowCreateWithVideoMode(MonitorVideoMode monitorVideo
     glfwWindowHint(GLFW_BLUE_BITS, monitorVideoMode.blueBits);
     glfwWindowHint(GLFW_REFRESH_RATE, monitorVideoMode.refreshRate);
     
-    GLFWwindow* window = glfwCreateWindow(monitorVideoMode.width, monitorVideoMode.height, title.c_str(), monitors[monitorVideoMode.monitorIndex], nullptr);
+    GLFWwindow* window = glfwCreateWindow(monitorVideoMode.width, monitorVideoMode.height, "", monitors[monitorVideoMode.monitorIndex], nullptr);
     if (window == nullptr)
     {
         glfwTerminate();
@@ -180,7 +180,7 @@ void* OpenGLWindowHelper::GetWindowPtr()
     return m_window;
 }
 
-bool OpenGLWindowHelper::WindowCreateWithSize(uint32_t width, uint32_t height, std::string title)
+bool OpenGLWindowHelper::WindowCreateWithSize(uint32_t width, uint32_t height)
 {
 	if (Init() == false)
     {
@@ -194,7 +194,7 @@ bool OpenGLWindowHelper::WindowCreateWithSize(uint32_t width, uint32_t height, s
 
 	glfwWindowHint(GLFW_SAMPLES, 0);
     
-    GLFWwindow* window = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(width, height, "", nullptr, nullptr);
     if (window == nullptr)
     {
         glfwTerminate();
@@ -225,6 +225,17 @@ bool OpenGLWindowHelper::WindowCreateWithSize(uint32_t width, uint32_t height, s
     m_window = window;
 
 	return Init();
+}
+
+bool OpenGLWindowHelper::WindowSetTitle(std::string title)
+{
+	if (m_window == NULL) 
+	{
+		return false;
+	}
+
+	glfwSetWindowTitle(m_window, title.c_str());
+	return true;
 }
 
 bool OpenGLWindowHelper::GetWindowSize(uint32_t& width, uint32_t& height)

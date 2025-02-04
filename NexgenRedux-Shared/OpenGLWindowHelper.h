@@ -28,8 +28,9 @@ namespace NexgenRedux
 		bool GetAvailableMonitorCount(uint32_t& monitorCount) override;
 		bool GetMonitorVideoMode(uint32_t monitorIndex, MonitorVideoMode& monitorVideoMode) override;
 		bool GetMonitorVideoModes(uint32_t monitorIndex, std::vector<MonitorVideoMode>& monitorVideoModes) override;
-		bool WindowCreateWithVideoMode(MonitorVideoMode monitorVideoMode, std::string title) override;
-		bool WindowCreateWithSize(uint32_t width, uint32_t height, std::string title) override;
+		bool WindowCreateWithVideoMode(MonitorVideoMode monitorVideoMode) override;
+		bool WindowCreateWithSize(uint32_t width, uint32_t height) override;
+		bool WindowSetTitle(std::string title) override;
 		void* GetWindowPtr() override;
 		bool GetWindowSize(uint32_t& width, uint32_t& height) override;
 		bool WindowPreRender(bool& exitRequested) override;

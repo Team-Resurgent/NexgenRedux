@@ -467,6 +467,14 @@ bool AngelScriptRunner::Init()
 	result = m_engine->RegisterEnumValue("LightOperation", "LightOperationDisabled", LightOperationDisabled); if (result < 0) { return false; }
 	result = m_engine->RegisterEnumValue("LightOperation", "LightOperationEnabled", LightOperationEnabled); if (result < 0) { return false; }
 
+	result = m_engine->RegisterObjectType("WindowDetails", sizeof(WindowDetails), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CAK); if (result < 0) { return false; } 
+#if defined NEXGEN_WIN
+	result = docGen.DocumentObjectType(result, "<b>WindowDetails</b> is an object containing window properties."); if (result < 0) { return false; }
+#endif
+	result = m_engine->RegisterObjectProperty("WindowDetails", "uint monitorIndex", asOFFSET(WindowDetails, monitorIndex)); if (result < 0) { return false; }
+    result = m_engine->RegisterObjectProperty("WindowDetails", "uint width", asOFFSET(WindowDetails, width)); if (result < 0) { return false; }
+	result = m_engine->RegisterObjectProperty("WindowDetails", "uint height", asOFFSET(WindowDetails, height)); if (result < 0) { return false; }
+
 	result = m_engine->RegisterObjectType("MonitorVideoMode", sizeof(MonitorVideoMode), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CAK); if (result < 0) { return false; } 
 #if defined NEXGEN_WIN
 	result = docGen.DocumentObjectType(result, "<b>MonitorVideoMode</b> is an object containing video mode properties."); if (result < 0) { return false; }
@@ -702,8 +710,9 @@ bool AngelScriptRunner::Init()
 	result = m_engine->RegisterGlobalFunction("uint GetAvailableMonitorCount(void)", asFUNCTION(AngelScriptMethods::GetAvailableMonitorCount), asCALL_GENERIC); if (result < 0) { return false; }
 	result = m_engine->RegisterGlobalFunction("MonitorVideoMode GetMonitorVideoMode(uint monitorIndex)", asFUNCTION(AngelScriptMethods::GetMonitorVideoMode), asCALL_GENERIC); if (result < 0) { return false; }
 	result = m_engine->RegisterGlobalFunction("array<MonitorVideoMode> @GetMonitorVideoModes(uint monitorIndex)", asFUNCTION(AngelScriptMethods::GetMonitorVideoModes), asCALL_GENERIC); if (result < 0) { return false; }
-	result = m_engine->RegisterGlobalFunction("void WindowCreateWithVideoMode(MonitorVideoMode monitorVideoMode, string &in title)", asFUNCTION(AngelScriptMethods::WindowCreateWithVideoMode), asCALL_GENERIC); if (result < 0) { return false; }
-	result = m_engine->RegisterGlobalFunction("void WindowCreateWithSize(uint width, uint height, string &in title)", asFUNCTION(AngelScriptMethods::WindowCreateWithSize), asCALL_GENERIC); if (result < 0) { return false; }
+	result = m_engine->RegisterGlobalFunction("void WindowCreateWithVideoMode(MonitorVideoMode monitorVideoMode)", asFUNCTION(AngelScriptMethods::WindowCreateWithVideoMode), asCALL_GENERIC); if (result < 0) { return false; }
+	result = m_engine->RegisterGlobalFunction("void WindowCreateWithSize(uint width, uint height)", asFUNCTION(AngelScriptMethods::WindowCreateWithSize), asCALL_GENERIC); if (result < 0) { return false; }
+	result = m_engine->RegisterGlobalFunction("void WindowSetTitle(string &in title)", asFUNCTION(AngelScriptMethods::WindowSetTitle), asCALL_GENERIC); if (result < 0) { return false; }
 	result = m_engine->RegisterGlobalFunction("SizeI GetWindowSize()", asFUNCTION(AngelScriptMethods::GetWindowSize), asCALL_GENERIC); if (result < 0) { return false; }
 	result = m_engine->RegisterGlobalFunction("void SetCursorMode(CursorMode)", asFUNCTION(AngelScriptMethods::SetCursorMode), asCALL_GENERIC); if (result < 0) { return false; }
 	result = m_engine->RegisterGlobalFunction("void WindowClose()", asFUNCTION(AngelScriptMethods::WindowClose), asCALL_GENERIC); if (result < 0) { return false; }
@@ -1098,6 +1107,47 @@ void AngelScriptRunner::Close()
 	}
 
 	AngelScriptDebugger::Close();
+}
+
+bool AngelScriptRunner::ExecuteOnWindowCreate(WindowDetails& windowDetails)
+{
+	asIScriptModule *module = m_engine->GetModule("main");
+	if (module == NULL)
+	{
+		return false;
+	}
+
+	asIScriptFunction *initFunction = module->GetFunctionByDecl("WindowDetails OnWindowCreate()");
+	if (initFunction == NULL)
+	{
+		return false;
+	}
+
+	if (ConfigLoader::Debug() == true)
+	{
+		AngelScriptDebugger::Init(m_engine);
+	}
+
+	if (module->ResetGlobalVars(0) < 0)
+	{
+		return false;
+	}
+
+	asIScriptContext *context = contextMgr->AddContext(m_engine, initFunction, true);
+	if (context == NULL) 
+	{
+		return false;
+	}
+
+	bool success = Execute(context);
+	void* q = context->GetReturnAddress();
+
+	WindowDetails* returnObject = (WindowDetails*)context->GetReturnObject();
+	windowDetails.monitorIndex = returnObject->monitorIndex;
+	windowDetails.width = returnObject->width;
+	windowDetails.height = returnObject->height;
+	contextMgr->DoneWithContext(context);
+	return success;
 }
 
 bool AngelScriptRunner::ExecuteInit(void)

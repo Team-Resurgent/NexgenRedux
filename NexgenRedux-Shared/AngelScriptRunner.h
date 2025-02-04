@@ -29,6 +29,7 @@ namespace NexgenRedux
 		static void Close();
 
 		static bool Init();
+		static bool ExecuteOnWindowCreate(WindowDetails& windowDetails);
 		static bool ExecuteInit(void);
 		static bool ExecuteUpdate(double dt);
 		static bool ExecuteWindowIconifyCallback(uint32_t iconified);

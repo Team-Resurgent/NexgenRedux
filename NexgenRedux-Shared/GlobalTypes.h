@@ -7,6 +7,13 @@
 
 namespace NexgenRedux
 {
+    typedef struct WindowDetails
+	{
+		uint32_t monitorIndex;
+		uint32_t width;
+		uint32_t height; 
+	} WindowDetails;
+
     typedef struct MonitorVideoMode
 	{
 		uint32_t monitorIndex;

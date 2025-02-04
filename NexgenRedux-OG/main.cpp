@@ -44,6 +44,17 @@ void __cdecl main(int, char **)
         return;
     }
 
+	WindowDetails windowDetails;
+	if (AngelScriptRunner::ExecuteOnWindowCreate(windowDetails) == false)
+    {
+        return;
+    }
+
+	if (WindowManager::GetInstance()->WindowCreateWithSize(windowDetails.width, windowDetails.height) == false)
+	{
+		return;
+	}
+
     if (AngelScriptRunner::ExecuteInit() == false)
     {
         return;

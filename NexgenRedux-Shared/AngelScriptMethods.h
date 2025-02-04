@@ -15,6 +15,7 @@ namespace NexgenRedux
 		static void GetMonitorVideoModes(asIScriptGeneric* gen);
 		static void WindowCreateWithVideoMode(asIScriptGeneric* gen);
 		static void WindowCreateWithSize(asIScriptGeneric* gen);
+		static void WindowSetTitle(asIScriptGeneric* gen);
 		static void GetWindowSize(asIScriptGeneric* gen);
 		static void SetCursorMode(asIScriptGeneric* gen);
 		static void WindowClose(asIScriptGeneric* gen);

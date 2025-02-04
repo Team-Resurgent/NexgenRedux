@@ -78,8 +78,7 @@ void AngelScriptMethods::WindowCreateWithSize(asIScriptGeneric* gen)
 {
 	uint32_t width = gen->GetArgDWord(0);
 	uint32_t height = gen->GetArgDWord(1);
-	std::string* title = (std::string*)gen->GetArgAddress(2);
-	if (WindowManager::GetInstance()->WindowCreateWithSize(width, height, *title) == false) 
+	if (WindowManager::GetInstance()->WindowCreateWithSize(width, height) == false) 
 	{
 		asIScriptContext *context = asGetActiveContext();
 		if (context) 
@@ -112,13 +111,26 @@ void AngelScriptMethods::GetWindowSize(asIScriptGeneric* gen)
 void AngelScriptMethods::WindowCreateWithVideoMode(asIScriptGeneric* gen)
 {
 	MonitorVideoMode* monitorVideoMode = (MonitorVideoMode*)gen->GetArgObject(0);
-	std::string* title = (std::string*)gen->GetArgAddress(1);
-	if (WindowManager::GetInstance()->WindowCreateWithVideoMode(*monitorVideoMode, *title) == false) 
+	if (WindowManager::GetInstance()->WindowCreateWithVideoMode(*monitorVideoMode) == false) 
 	{
 		asIScriptContext *context = asGetActiveContext();
 		if (context) 
 		{
 			context->SetException("WindowCreateWithVideoMode failed.");
+			return;
+		}
+	}
+}
+
+void AngelScriptMethods::WindowSetTitle(asIScriptGeneric* gen)
+{
+	std::string* title = (std::string*)gen->GetArgAddress(0);
+	if (WindowManager::GetInstance()->WindowSetTitle(*title) == false) 
+	{
+		asIScriptContext *context = asGetActiveContext();
+		if (context) 
+		{
+			context->SetException("WindowSetTitle failed.");
 			return;
 		}
 	}

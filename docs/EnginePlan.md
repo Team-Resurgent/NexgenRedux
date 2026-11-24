@@ -813,11 +813,11 @@ check its file for damage, so fonts must come with the app, never from a downloa
 | Cook tool | BC1 and BC3 textures, ADPCM sounds, same names, only what changed. The showcase's textures take a quarter to an eighth of the video memory on OG |
 | Scripts | Coroutines, tweens, sound, saving, rebinding: 175 documented calls. Garbage collection now keeps pace with what is made |
 | Live reload | Scripts and images, with `--dev` |
-| Platforms | **Linux (X11, OpenGL)**, drawing the same pixels as Windows. macOS (Cocoa, OpenGL) is written but has not been compiled or run |
+| Platforms | **Linux (X11, OpenGL)**, drawing the same pixels as Windows. macOS (Cocoa, OpenGL) builds and passes its tests in CI on Intel and Apple silicon, but has not been run with a screen |
 | Showcase | 25 scenes in about 3,000 lines of script, including two original games: Comet rally and Rune shift |
 | Tests | 43 tests and about 3,100 checks on Windows and Linux; every scene on the null GPU and on OpenGL; address and thread sanitizers clean in our code |
 | OG Xbox in xemu | 25 scenes for three rounds at 60 fps, with sound, nothing left behind; 128 MB and retail 64 MB. 33 MB free at the worst point |
-| CI | `.github/workflows/engine.yml`: Windows, Linux, macOS and OG packages with all the demos. Not yet run on GitHub |
+| CI | `.github/workflows/engine.yml`: Windows, Linux, macOS and OG packages with all the demos. All jobs pass |
 
 Found on the way:
 

@@ -11,7 +11,7 @@ From this folder:
 |---|---|
 | Windows | `cmake --preset windows`, `cmake --build --preset windows`, `ctest --preset windows` |
 | Linux | `cmake -S . -B build/linux -DCMAKE_BUILD_TYPE=Release`, `cmake --build build/linux`, `ctest --test-dir build/linux` |
-| macOS | The same as Linux. Written but not yet tested |
+| macOS | The same as Linux. Tested in CI only, without a screen |
 | Original Xbox | `cmake --preset xboxog-release`, `cmake --build --preset xboxog-release`, then run `build/xboxog-release/XISO/showcase.iso` |
 | Xbox 360 | `cmake --preset xbox360`, `cmake --build --preset xbox360` (libraries only) |
 | Xbox One / Series | `cmake --preset uwp`, `cmake --build --preset uwp` (libraries only) |
@@ -68,7 +68,7 @@ done again.
 | `script/` | AngelScript host, coroutines, bindings and the reference writer | base |
 | `bindings/`, `screens/` | What scripts can call; the screen stack and the engine's menu | all above |
 | `app/`, `media/` | The showcase | all |
-| `tools/` | `cook`; `make_media.py`, which makes the showcase's sounds and music; `stage-rxdk.ps1` | all |
+| `tools/` | `cook`; `make_media.py`, which makes the showcase's sounds and music; `make_docs.py`, which makes the web site; `stage-rxdk.ps1` | all |
 | `third_party/` | AngelScript, SSFN, stb, miniaudio and dr_libs, unmodified | |
 | `spike/`, `tests/` | Phase 0 app and tests | all |
 

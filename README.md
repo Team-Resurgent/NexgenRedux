@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="https://github.com/Team-Resurgent/NexgenRedux/actions/workflows/engine.yml"><img src="https://github.com/Team-Resurgent/NexgenRedux/actions/workflows/engine.yml/badge.svg" alt="Engine"></a>
-  <a href="docs/ScriptReference.md"><img src="https://img.shields.io/badge/docs-script%20reference-brightgreen.svg" alt="Script reference"></a>
+  <a href="https://team-resurgent.github.io/NexgenRedux-Docs/"><img src="https://img.shields.io/badge/docs-online-brightgreen.svg" alt="Documentation"></a>
   <a href="https://discord.gg/VcdSfajQGK"><img src="https://img.shields.io/badge/chat-on%20discord-7289da.svg?logo=discord" alt="Discord"></a>
 </p>
 
@@ -68,7 +68,7 @@ a compiler and the platform's SDK, downloads nothing, and uses no SDL or GLFW.
 | Windows 10 and 11 | Working | Direct3D 11 | miniaudio |
 | Original Xbox | Working in xemu (64 and 128 MB); not yet tried on a console | Direct3D 8 | DirectSound |
 | Linux | Working (X11) | OpenGL 3.3 | miniaudio |
-| macOS 11 and later | Written, not yet tested | OpenGL 3.3 | miniaudio |
+| macOS 11 and later | Builds and passes its tests in CI (Intel and Apple silicon); not yet run on a Mac with a screen | OpenGL 3.3 | miniaudio |
 | Xbox 360, Xbox One and Series | Shared code compiles; to come | | |
 
 ## Download
@@ -110,7 +110,8 @@ class Hello : Screen
 ```
 
 Put that in `media/showcase/hello/main.as` beside a `screen.json` with a title, and it appears in the menu. Everything that
-scripts can call is in [docs/ScriptReference.md](docs/ScriptReference.md), which the engine writes itself.
+scripts can call, a guide and every demo's script are in the
+[documentation](https://team-resurgent.github.io/NexgenRedux-Docs/).
 
 ## Building
 
@@ -134,9 +135,9 @@ The Xbox build needs [RXDK](https://github.com/Team-Resurgent/RXDK-VSCode).
 | Folder | What it is |
 |---|---|
 | `engine/` | The new engine, described above |
-| `docs/` | [The plan](docs/EnginePlan.md) and [the script reference](docs/ScriptReference.md) |
+| `docs/` | [The plan](docs/EnginePlan.md), [the guide](docs/Guide.md) and [the script reference](docs/ScriptReference.md) |
 | `NexgenRedux-Shared`, `-PC`, `-OG`, `-360`, `-UWP` | The first engine, kept as it is |
-| `NexgenRedux-Docs` | The first engine's [script reference](https://team-resurgent.github.io/NexgenRedux-Docs/) (submodule) |
+| `NexgenRedux-Docs` | The [documentation site](https://team-resurgent.github.io/NexgenRedux-Docs/), with the first engine's reference under `v1` (submodule) |
 | `NexgenRedux-Media` | An example game for the first engine (submodule) |
 
 To get the submodules as well:

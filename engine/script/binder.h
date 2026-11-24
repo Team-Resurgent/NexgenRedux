@@ -38,7 +38,11 @@ namespace nx
         void callback(const char* declaration, const char* doc);
 
         // Functions and constants in a namespace ("" for none).
-        void names(const char* name) { m_namespace = name; }
+        void names(const char* name)
+        {
+            m_namespace = name;
+            cased(name, m_namespace.size(), true);
+        }
         void function(const char* declaration, const asSFuncPtr& fn, asDWORD convention, const char* doc);
         void constant(const char* declaration, void* value, const char* doc);
 
@@ -48,6 +52,9 @@ namespace nx
 
     private:
         bool described(const char* declaration, const char* doc);
+        // Types, namespaces and constants begin with a capital; functions, methods and properties don't.
+        void cased(const char* name, size_t length, bool capital);
+        void casedName(const char* declaration, bool capital);
         void entry(const char* declaration, const char* doc);
 
         ScriptHost& m_host;

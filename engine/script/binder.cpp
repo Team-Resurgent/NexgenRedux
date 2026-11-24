@@ -26,6 +26,35 @@ namespace nx
         return true;
     }
 
+    void Binder::cased(const char* name, size_t length, bool capital)
+    {
+        if (length == 0)
+        {
+            return;
+        }
+        const bool upper = name[0] >= 'A' && name[0] <= 'Z';
+        if (upper != capital || memchr(name, '_', length))
+        {
+            NX_ERROR("%.*s should begin with a %s letter and have no underscores", static_cast<int>(length), name, capital ? "capital" : "small");
+            m_ok = false;
+        }
+    }
+
+    // "int get_x() const property" is about x, and "Vec2 opAdd(...)" is AngelScript's own name.
+    void Binder::casedName(const char* declaration, bool capital)
+    {
+        const std::string text = declaration;
+        const size_t bracket = text.find('(');
+        const size_t end = bracket == std::string::npos ? text.size() : bracket;
+        size_t start = text.rfind(' ', end - 1);
+        start = start == std::string::npos ? 0 : start + 1;
+        if (text.compare(start, 4, "get_") == 0 || text.compare(start, 4, "set_") == 0)
+        {
+            start += 4;
+        }
+        cased(text.c_str() + start, end - start, capital);
+    }
+
     void Binder::entry(const char* declaration, const char* doc)
     {
         if (described(declaration, doc))
@@ -64,6 +93,7 @@ namespace nx
     {
         m_type = name;
         m_namespace.clear();
+        cased(name, strlen(name), true);
         m_ok = m_host.check(m_engine->RegisterObjectType(name, static_cast<int>(size), asOBJ_VALUE | flags), name) && m_ok;
         section(name, doc);
     }
@@ -72,6 +102,7 @@ namespace nx
     {
         m_type = name;
         m_namespace.clear();
+        cased(name, strlen(name), true);
         m_ok = m_host.check(m_engine->RegisterObjectType(name, 0, asOBJ_REF | flags), name) && m_ok;
         section(name, doc);
     }
@@ -80,12 +111,14 @@ namespace nx
     {
         m_type = name;
         m_namespace.clear();
+        cased(name, strlen(name), true);
         m_ok = m_host.check(m_engine->RegisterEnum(name), name) && m_ok;
         section(name, doc);
     }
 
     void Binder::enumValue(const char* value, int number, const char* doc)
     {
+        cased(value, strlen(value), true);
         m_ok = m_host.check(m_engine->RegisterEnumValue(m_type.c_str(), value, number), value) && m_ok;
         entry(value, doc);
     }
@@ -94,6 +127,7 @@ namespace nx
     {
         m_type = name;
         m_namespace.clear();
+        cased(name, strlen(name), true);
         m_ok = m_host.check(m_engine->RegisterInterface(name), name) && m_ok;
         section(name, doc);
     }
@@ -117,12 +151,14 @@ namespace nx
 
     void Binder::method(const char* declaration, const asSFuncPtr& fn, asDWORD convention, const char* doc)
     {
+        casedName(declaration, false);
         m_ok = m_host.check(m_engine->RegisterObjectMethod(m_type.c_str(), declaration, fn, convention), declaration) && m_ok;
         entry(declaration, doc);
     }
 
     void Binder::property(const char* declaration, size_t offset, const char* doc)
     {
+        casedName(declaration, false);
         m_ok = m_host.check(m_engine->RegisterObjectProperty(m_type.c_str(), declaration, static_cast<int>(offset)), declaration) && m_ok;
         entry(declaration, doc);
     }
@@ -148,6 +184,7 @@ namespace nx
     void Binder::function(const char* declaration, const asSFuncPtr& fn, asDWORD convention, const char* doc)
     {
         m_engine->SetDefaultNamespace(m_namespace.c_str());
+        casedName(declaration, false);
         m_ok = m_host.check(m_engine->RegisterGlobalFunction(declaration, fn, convention), declaration) && m_ok;
         m_engine->SetDefaultNamespace("");
         entry(declaration, doc);
@@ -156,6 +193,7 @@ namespace nx
     void Binder::constant(const char* declaration, void* value, const char* doc)
     {
         m_engine->SetDefaultNamespace(m_namespace.c_str());
+        casedName(declaration, true);
         m_ok = m_host.check(m_engine->RegisterGlobalProperty(declaration, value), declaration) && m_ok;
         m_engine->SetDefaultNamespace("");
         entry(declaration, doc);

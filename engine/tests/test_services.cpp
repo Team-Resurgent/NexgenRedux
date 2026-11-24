@@ -1,5 +1,5 @@
 #include "test.h"
-#include "world.h"
+#include "rig.h"
 
 #include "assets/formats.h"
 
@@ -11,7 +11,7 @@ using namespace nx::test;
 namespace
 {
     // Runs a script as the "shapes" screen.
-    void openCode(World& w, const char* code)
+    void openCode(Rig& w, const char* code)
     {
         w.platform.extraPath = "showcase/shapes/main.as";
         w.platform.extraText = code;
@@ -25,7 +25,7 @@ namespace
         }
     }
 
-    bool saved(World& w, const char* key, const char* value)
+    bool saved(Rig& w, const char* key, const char* value)
     {
         const char* got = w.save.get(key, "(nothing)");
         if (strcmp(got, value) != 0)
@@ -53,7 +53,7 @@ NX_TEST(cookedTexturesAreChecked)
         NX_EXPECT(!readCookedTexture(bad, sizeof(bad), data));
     }
 
-    World w;
+    Rig w;
     w.platform.extraPath = "cooked.png";
     w.platform.extraText.assign(reinterpret_cast<const char*>(file), sizeof(file));
     Asset* a = w.assets.texture("cooked.png");
@@ -64,7 +64,7 @@ NX_TEST(cookedTexturesAreChecked)
 
 NX_TEST(changedFilesAreReloaded)
 {
-    World w;
+    Rig w;
     Asset* ship = w.assets.texture(kShip);
     w.assets.finish();
     const u32 loads = w.assets.stats().loads;
@@ -91,7 +91,7 @@ NX_TEST(changedFilesAreReloaded)
     w.screens.reloadChanged();
     NX_EXPECT(w.services.reloads == 0);
     w.platform.time++;
-    w.platform.extraText = "class A : Screen { void onEnter() { save::set(\"new\", \"yes\"); } }";
+    w.platform.extraText = "class A : Screen { void onEnter() { Save::set(\"new\", \"yes\"); } }";
     w.screens.reloadChanged();
     w.step(2);
     NX_EXPECT(w.services.reloads == 1 && !w.screens.failed() && saved(w, "new", "yes"));
@@ -110,14 +110,14 @@ NX_TEST(changedFilesAreReloaded)
 
 NX_TEST(screensWaitForTheirAssets)
 {
-    World w;
+    Rig w;
     openCode(w, R"(
         class A : Screen
         {
-            Texture@ t = assets::texture("global:missing.png");
+            Texture@ t = Assets::texture("global:missing.png");
             bool entered;
-            void onEnter() { entered = true; save::set("ready", "" + t.ready); }
-            void update(float dt) { if (!entered) save::set("early", "yes"); }
+            void onEnter() { entered = true; Save::set("ready", "" + t.ready); }
+            void update(float dt) { if (!entered) Save::set("early", "yes"); }
         }
     )");
     NX_EXPECT(!w.screens.loading() && !w.screens.failed());
@@ -126,18 +126,18 @@ NX_TEST(screensWaitForTheirAssets)
 
 NX_TEST(coroutinesWaitAndEnd)
 {
-    World w;
+    Rig w;
     openCode(w, R"(
         class A : Screen
         {
             void onEnter() { start(Coroutine(this.run)); start(forever); }
             void run()
             {
-                save::set("step", "1");
+                Save::set("step", "1");
                 wait(0.5f);
-                save::set("step", "2");
+                Save::set("step", "2");
                 for (int i = 0; i < 3; i++) nextUpdate();
-                save::set("step", "3");
+                Save::set("step", "3");
             }
         }
         void forever() { while (true) wait(0.01f); }
@@ -185,7 +185,7 @@ NX_TEST(coroutinesWaitAndEnd)
 
 NX_TEST(tweensMoveByThemselves)
 {
-    World w;
+    Rig w;
     openCode(w, R"(
         class A : Screen
         {
@@ -193,13 +193,13 @@ NX_TEST(tweensMoveByThemselves)
             void onEnter()
             {
                 Tween rest(5);
-                save::set("rest", "" + rest.value + rest.done);
+                Save::set("rest", "" + rest.value + rest.done);
                 t = Tween(10, 20, 1, EaseLinear);
             }
             void update(float dt)
             {
-                save::set("now", "" + int(t.value + 0.001f));
-                save::set("done", t.done ? "yes" : "no");
+                Save::set("now", "" + int(t.value + 0.001f));
+                Save::set("done", t.done ? "yes" : "no");
                 if (t.done && t.value == 20) t.go(0, 0.5f, EaseBounce);
             }
         }
@@ -252,18 +252,18 @@ NX_TEST(savesComeBack)
 
 NX_TEST(soundsFromScripts)
 {
-    World w;
+    Rig w;
     openCode(w, R"(
         class A : Screen
         {
-            Sound@ s = assets::sound("global:missing.wav");
+            Sound@ s = Assets::sound("global:missing.wav");
             void onEnter()
             {
                 Voice v = s.play(1, 0, 1, true);
                 Voice none;
                 none.stop();
                 v.setVolume(0.5f, 1);
-                save::set("r", "" + s.ready + s.failed + v.playing + none.playing + audio::voices());
+                Save::set("r", "" + s.ready + s.failed + v.playing + none.playing + Audio::voices());
             }
         }
     )");

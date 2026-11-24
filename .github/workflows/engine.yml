@@ -1,17 +1,17 @@
 name: Engine
 
-# Builds the new engine (engine/) and its showcase for every platform that runs so far, with all the
-# script demos, and tests it. Each package is an artifact of the run. A push to main also puts them in the
+# Builds the engine, with all the script demos from NexgenRedux-Media, for every platform that runs so
+# far, and tests it. Each package is an artifact of the run. A push to main also puts them in the
 # rolling "latest" release, and a v* tag makes a release of its own.
 
 on:
   push:
     branches: [ "main" ]
     tags: [ "v*" ]
-    paths: [ "engine/**", ".github/workflows/engine.yml" ]
+    paths: [ "engine/**", "NexgenRedux-Media", ".github/workflows/engine.yml" ]
   pull_request:
     branches: [ "main" ]
-    paths: [ "engine/**", ".github/workflows/engine.yml" ]
+    paths: [ "engine/**", "NexgenRedux-Media", ".github/workflows/engine.yml" ]
   workflow_dispatch:
 
 permissions:
@@ -40,6 +40,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v5
+      with:
+        submodules: true
 
     - name: Install X11 and OpenGL headers
       if: runner.os == 'Linux'
@@ -57,17 +59,17 @@ jobs:
     # With a real window and GPU driver, though a software one.
     - name: Draw every screen
       if: runner.os == 'Linux'
-      run: xvfb-run -a -s "-screen 0 1280x720x24" build/showcase/showcase --hidden --tour 1
+      run: xvfb-run -a -s "-screen 0 1280x720x24" build/showcase/nexgen --hidden --tour 1
 
     - name: Package
       run: |
-        package="Nexgen-showcase-${{ matrix.name }}"
+        package="Nexgen-${{ matrix.name }}"
         mkdir -p "dist/$package"
         case "$RUNNER_OS" in
-          Windows) cp -r build/showcase/Release/showcase.exe build/showcase/Release/media "dist/$package/" ;;
-          Linux)   cp -r build/showcase/showcase build/showcase/media "dist/$package/" ;;
-          macOS)   cp -R build/showcase/showcase.app "dist/$package/Nexgen showcase.app"
-                   codesign --force --deep --sign - "dist/$package/Nexgen showcase.app" ;;
+          Windows) cp -r build/showcase/Release/nexgen.exe build/showcase/Release/media "dist/$package/" ;;
+          Linux)   cp -r build/showcase/nexgen build/showcase/media "dist/$package/" ;;
+          macOS)   cp -R build/showcase/nexgen.app "dist/$package/Nexgen.app"
+                   codesign --force --deep --sign - "dist/$package/Nexgen.app" ;;
         esac
         # The demos have to be there, not just the program.
         test "$(find "dist/$package" -path '*media/showcase/*/main.as' | wc -l)" -ge 20
@@ -80,7 +82,7 @@ jobs:
 
     - uses: actions/upload-artifact@v5
       with:
-        name: Nexgen-showcase-${{ matrix.name }}
+        name: Nexgen-${{ matrix.name }}
         path: |
           dist/*.zip
           dist/*.tar.gz
@@ -101,6 +103,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v5
+      with:
+        submodules: true
 
     - name: Install X11 and OpenGL headers
       if: runner.os == 'Linux'
@@ -121,6 +125,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v5
+      with:
+        submodules: true
 
     - uses: actions/setup-dotnet@v5
       with:
@@ -148,7 +154,7 @@ jobs:
       shell: bash
       run: |
         out=engine/build/xboxog-release
-        package=Nexgen-showcase-xbox-og
+        package=Nexgen-xbox-og
         mkdir -p "dist/$package"
         cp -r "$out/Build/showcase/." "dist/$package/"
         cp "$out/XISO/showcase.iso" "dist/$package.iso"
@@ -158,7 +164,7 @@ jobs:
 
     - uses: actions/upload-artifact@v5
       with:
-        name: Nexgen-showcase-xbox-og
+        name: Nexgen-xbox-og
         path: |
           dist/*.zip
           dist/*.iso
@@ -170,6 +176,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v5
+      with:
+        submodules: true
 
     - name: Build
       working-directory: engine
@@ -181,13 +189,13 @@ jobs:
     # Windows installs only signed packages. The certificate is made for this build and shipped with it.
     - name: Sign and package
       run: |
-        $package = 'Nexgen-showcase-uwp-x64'
+        $package = 'Nexgen-uwp-x64'
         $built = Get-ChildItem engine/build/uwp/AppPackages -Recurse -Include *.msix, *.appx | Where-Object { $_.FullName -notmatch 'Dependencies' } | Select-Object -First 1
         if (-not $built) { throw 'no app package was built' }
         New-Item -ItemType Directory -Force "dist/$package" | Out-Null
         Copy-Item "$($built.Directory.FullName)/*" "dist/$package" -Recurse
         $msix = Get-ChildItem "dist/$package" -File | Where-Object { $_.Extension -in '.msix', '.appx' } | Select-Object -First 1
-        $cert = New-SelfSignedCertificate -Type Custom -Subject 'CN=TeamResurgent' -KeyUsage DigitalSignature -FriendlyName 'Nexgen showcase' -CertStoreLocation Cert:/CurrentUser/My -TextExtension @('2.5.29.37={text}1.3.6.1.5.5.7.3.3', '2.5.29.19={text}')
+        $cert = New-SelfSignedCertificate -Type Custom -Subject 'CN=TeamResurgent' -KeyUsage DigitalSignature -FriendlyName 'Nexgen' -CertStoreLocation Cert:/CurrentUser/My -TextExtension @('2.5.29.37={text}1.3.6.1.5.5.7.3.3', '2.5.29.19={text}')
         Export-Certificate -Cert $cert -FilePath ($msix.FullName -replace '[.][^.]+$', '.cer') | Out-Null
         $sdk = Get-ChildItem 'C:/Program Files (x86)/Windows Kits/10/bin/10.*/x64/signtool.exe' | Sort-Object FullName | Select-Object -Last 1
         & $sdk.FullName sign /fd SHA256 /sha1 $cert.Thumbprint $msix.FullName
@@ -199,7 +207,7 @@ jobs:
 
     - uses: actions/upload-artifact@v5
       with:
-        name: Nexgen-showcase-uwp-x64
+        name: Nexgen-uwp-x64
         path: dist/*.zip
         if-no-files-found: error
 
@@ -215,7 +223,7 @@ jobs:
     - uses: actions/download-artifact@v5
       with:
         path: dist
-        pattern: Nexgen-showcase-*
+        pattern: Nexgen-*
         merge-multiple: true
 
     - name: Publish
@@ -224,12 +232,12 @@ jobs:
         GH_REPO: ${{ github.repository }}
       run: |
         cat > notes.md <<'EOF'
-        The Nexgen showcase, with all its demo scripts. [Documentation](https://team-resurgent.github.io/NexgenRedux-Docs/)
+        Nexgen, with all its demo scripts. [Documentation](https://team-resurgent.github.io/NexgenRedux-Docs/)
 
         | Package | What to do |
         |---|---|
-        | `windows-x64` | Unzip and run `showcase.exe` |
-        | `linux-x64` | Unpack and run `./showcase` |
+        | `windows-x64` | Unzip and run `nexgen.exe` |
+        | `linux-x64` | Unpack and run `./nexgen` |
         | `macos-arm64`, `macos-x64` | Unzip and open the app. It is not notarised: the first time, right-click it and choose Open |
         | `uwp-x64` | Xbox One, Xbox Series or Windows, in Developer Mode: install the `.cer` and then the package, or upload the package in the Xbox Device Portal |
         | `xbox-og` | Copy the folder to the console, or run the `.iso` in xemu or from an ODE |
@@ -241,6 +249,10 @@ jobs:
         else
           # Moved rather than made again, so what else is in the release stays.
           gh api -X PATCH "repos/$GH_REPO/git/refs/tags/latest" -f sha="$GITHUB_SHA" -F force=true > /dev/null
+          # Packages that are no longer made, or were renamed.
+          gh release view latest --json assets --jq '.assets[].name' | grep '^Nexgen-' | while read -r name; do
+            [ -f "dist/$name" ] || gh release delete-asset latest "$name" --yes
+          done
           gh release upload latest dist/* --clobber
           gh release edit latest --title "Nexgen Redux latest" --notes-file notes.md --latest
         fi

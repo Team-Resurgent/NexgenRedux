@@ -1,4 +1,5 @@
 #include "bindings/bindings.h"
+#include "bindings/script_refs.h"
 #include "screens/screens.h"
 
 #include <math.h>
@@ -29,50 +30,6 @@ namespace nx
 
     namespace
     {
-        Services& services()
-        {
-            return *static_cast<Services*>(asGetActiveContext()->GetEngine()->GetUserData());
-        }
-
-        void scriptError(const std::string& message)
-        {
-            asGetActiveContext()->SetException(message.c_str());
-        }
-
-        // A script's hold on a cached asset.
-        struct AssetHandle
-        {
-            Asset* asset;
-            Assets* owner;
-            int refs;
-
-            void addRef() { refs++; }
-            void release()
-            {
-                if (--refs == 0)
-                {
-                    owner->release(asset);
-                    destroy(this);
-                }
-            }
-            float width() const { return static_cast<float>(asset->width); }
-            float height() const { return static_cast<float>(asset->height); }
-            bool failed() const { return asset->failed; }
-            bool ready() const { return asset->ready; }
-        };
-
-        struct TextureRef : AssetHandle
-        {
-        };
-
-        struct FontRef : AssetHandle
-        {
-        };
-
-        struct SoundRef : AssetHandle
-        {
-        };
-
         template <typename T>
         T* wrap(Asset* asset, Assets& owner)
         {
@@ -527,8 +484,8 @@ namespace nx
             b.behaviour(asBEHAVE_ADDREF, "void f()", NX_METHOD(SoundRef, addRef));
             b.behaviour(asBEHAVE_RELEASE, "void f()", NX_METHOD(SoundRef, release));
 
-            b.section("assets", "Loading. Names start with `asset:` for the screen's own files or `global:` for shared ones.");
-            b.names("assets");
+            b.section("Assets", "Loading. Names start with `asset:` for the screen's own files or `global:` for shared ones.");
+            b.names("Assets");
             b.function("Texture@ texture(const string &in name)", NX_FN(loadTexture), "An image: PNG, JPEG, TGA, BMP or GIF, up to 2048 pixels a side. What a screen asks for as it is made is ready by onEnter(); later ones arrive in the background.");
             b.function("Sound@ sound(const string &in name)", NX_FN(loadSoundAsset), "A sound. Arrives like an image.");
             b.function("uint pending()", NX_FN(cachePending), "Files still on their way.");
@@ -584,6 +541,7 @@ namespace nx
             b.method("void circle(float x, float y, float radius, const Color &in color)", NX_METHOD(Canvas, circle), "A filled circle.");
             b.method("void ring(float x, float y, float radius, float thickness, const Color &in color)", NX_METHOD(Canvas, ring), "A circle's outline.");
             b.method("void arc(float x, float y, float radius, float thickness, float from, float to, const Color &in color)", NX_METHOD(Canvas, arc), "Part of a ring, or a slice of a circle, between two angles in degrees.");
+            b.method("void glow(float x, float y, float radius, const Color &in color)", NX_METHOD(Canvas, glow), "A round glow, fading to nothing at its edge. With BlendAdd it is light.");
             b.method("void triangle(const Vec2 &in a, const Vec2 &in b, const Vec2 &in c, const Color &in ca, const Color &in cb, const Color &in cc)", NX_METHOD(Canvas, triangle), "A triangle with a colour at each corner.");
             b.method("void image(const Texture@+ texture, float x, float y, const Color &in tint = White)", NX_OBJ_LAST(drawImage), "An image at its own size.");
             b.method("void image(const Texture@+ texture, float x, float y, float w, float h, const Color &in tint = White)", NX_OBJ_LAST(drawImageSized), "An image at any size.");
@@ -597,8 +555,8 @@ namespace nx
 
         void bindInput(Binder& b)
         {
-            b.section("input", "Actions are `up`, `down`, `left`, `right`, `accept`, `cancel`, `fire`, `alternate` and `menu`, from a keyboard, mouse or gamepad.");
-            b.names("input");
+            b.section("Input", "Actions are `up`, `down`, `left`, `right`, `accept`, `cancel`, `fire`, `alternate` and `menu`, from a keyboard, mouse or gamepad.");
+            b.names("Input");
             b.function("bool held(const string &in action)", NX_FN(inputHeld), "Whether it is down now.");
             b.function("bool pressed(const string &in action)", NX_FN(inputPressed), "Whether it has just gone down.");
             b.function("bool released(const string &in action)", NX_FN(inputReleased), "Whether it has just been let go.");
@@ -645,8 +603,8 @@ namespace nx
             b.method("bool get_ready() const property", NX_METHOD(SoundRef, ready), "Whether it has arrived. Until then it plays as silence.");
             b.method("bool get_failed() const property", NX_METHOD(SoundRef, failed), "Whether the file could not be loaded.");
 
-            b.section("audio", "Volumes, and what is being heard. A screen's sounds pause while it is covered and stop when it closes.");
-            b.names("audio");
+            b.section("Audio", "Volumes, and what is being heard. A screen's sounds pause while it is covered and stop when it closes.");
+            b.names("Audio");
             b.function("void setVolume(Bus bus, float volume)", NX_FN(setBus), "0 to 1.");
             b.function("float volume(Bus bus)", NX_FN(getBus), "0 to 1.");
             b.function("void setMasterVolume(float volume)", NX_FN(setMaster), "Everything, 0 to 1.");
@@ -672,8 +630,8 @@ namespace nx
 
         void bindSave(Binder& b)
         {
-            b.section("save", "Text that is kept between runs, by name.");
-            b.names("save");
+            b.section("Save", "Text that is kept between runs, by name.");
+            b.names("Save");
             b.function("void set(const string &in key, const string &in value)", NX_FN(saveSet), "Keeps something.");
             b.function("string get(const string &in key, const string &in otherwise = \"\")", NX_FN(saveGet), "What was kept, or otherwise.");
             b.function("void remove(const string &in key)", NX_FN(saveRemove), "Forgets it.");
@@ -690,8 +648,8 @@ namespace nx
             b.callback("void onResume()", "Called when that one closes again.");
             b.callback("void onExit()", "Called once, before it closes.");
 
-            b.section("screens", "Moving between screens. Changes happen after the current update.");
-            b.names("screens");
+            b.section("Screens", "Moving between screens. Changes happen after the current update.");
+            b.names("Screens");
             b.function("void push(const string &in id)", NX_FN(screensPush), "Opens a screen on top of this one.");
             b.function("void pop()", NX_FN(screensPop), "Closes this screen and returns to the one below.");
             b.function("void replace(const string &in id)", NX_FN(screensReplace), "Closes this screen and opens another in its place.");
@@ -706,8 +664,8 @@ namespace nx
 
         void bindApp(Binder& b)
         {
-            b.section("app", "The machine and how it is doing.");
-            b.names("app");
+            b.section("App", "The machine and how it is doing.");
+            b.names("App");
             b.function("float time()", NX_FN(appTime), "Seconds since the app started.");
             b.function("float fps()", NX_FN(appFps), "Frames a second, averaged.");
             b.function("uint draws()", NX_FN(appDraws), "Draw calls in the last frame.");
@@ -789,6 +747,9 @@ namespace nx
         bindAudio(binder);
         bindCoroutines(binder);
         bindSave(binder);
+        bindScene(binder);
+        s.host->setPrelude(behaviourPrelude());
+        s.entityArray = s.host->hold("array<Entity@>");
         bindScreens(binder);
         bindApp(binder);
         return binder.ok();

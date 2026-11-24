@@ -33,13 +33,15 @@ publishes the packages from `main` in the `latest` release.
 
 ## Run
 
-`showcase` opens the main menu. Each folder in `media/showcase` is a screen: a `screen.json` and a `main.as`. Add a folder and
+The showcase is in the [NexgenRedux-Media](../NexgenRedux-Media) submodule (`git submodule update --init`). `nexgen` opens its
+main menu. Each folder in `media/showcase` is a screen: a `screen.json` and a `main.as`. Add a folder and
 it appears in the menu.
 
 | Option | |
 |---|---|
 | `--dev` | Reload scripts and images when their files change |
 | `--screen ID` | Start with a screen open |
+| `--demo SECONDS` | Show every screen for a while, playing it, then stop |
 | `--tour N` | Open every screen N times, unattended, and check that nothing leaks |
 | `--hidden --frames 100 --capture out.bmp` | Save a picture without showing a window or making a sound |
 | `--docs FILE` | Write the script reference |
@@ -50,6 +52,14 @@ twice more to check that nothing leaks, and stops. `spike` is the phase 0 test o
 
 Saves are in `%LOCALAPPDATA%\Nexgen` (Windows), `~/.local/share/nexgen` (Linux), `~/Library/Application Support/Nexgen`
 (macOS), the app's LocalState (UWP) and the title's own folder (Xbox).
+
+## Record a video
+
+On Windows, with ffmpeg 8 or later. The app isn't involved: its window and the computer's sound are recorded from outside.
+
+```powershell
+python tools/record/record.py build/windows/showcase/Release/nexgen.exe build/windows/Release/loopback.exe demos.mp4 8
+```
 
 ## Cook
 
@@ -68,11 +78,12 @@ done again.
 | `audio/` | Decoding, mixing and output | base |
 | `assets/` | Cache of images, fonts and sounds | gpu, audio |
 | `canvas/` | 2D drawing | assets |
+| `scene/` | Entities, behaviours, collision, physics, particles, prefabs and maps | canvas, script |
 | `save/` | What players keep | platform |
 | `script/` | AngelScript host, coroutines, bindings and the reference writer | base |
 | `bindings/`, `screens/` | What scripts can call; the screen stack and the engine's menu | all above |
-| `app/`, `media/` | The showcase | all |
-| `tools/` | `cook`; `make_media.py`, which makes the showcase's sounds and music; `make_docs.py`, which makes the web site; `stage-rxdk.ps1` | all |
+| `app/` | The program that runs the showcase | all |
+| `tools/` | `cook`; `record`; `make_media.py`, which makes the showcase's sounds and music; `make_docs.py`, which makes the web site; `stage-rxdk.ps1` | all |
 | `third_party/` | AngelScript, SSFN, stb, miniaudio and dr_libs, unmodified | |
 | `spike/`, `tests/` | Phase 0 app and tests | all |
 

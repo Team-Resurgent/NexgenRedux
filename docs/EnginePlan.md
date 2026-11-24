@@ -753,7 +753,7 @@ the design. Sizes are relative effort, not dates.
 | **2 Assets + audio** | Cook tool, async loading, **budgets and eviction for every asset type, sound cache and voice pool**, audio, input actions, coroutines, tweens, script hot reload, debugger, CI on Win/Linux/macOS | + Paddle game, Block puzzle, Audio, Input, Memory | L |
 | **3 Scene** | Entities, **pooled spawning**, hierarchy, sprites, animation, collision, prefabs | + Parallax, Shooter (script under 300 lines), Stress test | M |
 | **4 UI** | Layout, focus, themes, lists, on-screen keyboard, layout files, dashboard module | Main menu rebuilt on UI; + UI gallery, Dashboard at 60 fps on OG | L |
-| **5 3D** | glTF, materials, lights, fog, skinning, **LOD and culling, ray marching**, shadows and post effects on higher tiers | + 3D scene, Mixed. **First full release** | L |
+| **5 3D** | glTF, materials, lights, fog, skinning, **a world to walk around, 3D physics**, **LOD and culling, ray marching**, shadows and post effects on higher tiers | + 3D scene, Mixed. **First full release** | L |
 | **6 Xbox 360 + Xbox One / Series** | D3D9 backend and 360 platform layer, hardware testing. The UWP layer is already done and runs on Windows; consoles remain | The same showcase on both | L |
 | **7 Extras** | Inspector, particles, physics, tilemaps, video, networking, full guides | One scene per module | L |
 
@@ -832,6 +832,28 @@ Found on the way:
 
 Left from phase 2: the **script debugger**; one packed file instead of loose ones; music streamed from disk (it is decoded
 while playing, but held compressed in memory); sound and compressed textures on real OG hardware.
+
+### Phase 3 results
+
+| Done | |
+|---|---|
+| Entities | Handles that stay safe after the entity has gone, parents and children, deferred destroying, spawning that stops allocating once it has settled |
+| Components | Images, sheets, animation, shapes, text, movement, colliders, lifetimes, particle emitters; each kind packed |
+| Behaviours | Script classes on entities, told what happens to them. A mistake stops only its screen |
+| Files | Prefabs, particles, groups, maps and whole scenes as JSON, with the line of any mistake, reloaded while running |
+| Collision | Circles and turning boxes, groups, begin and end, rays, nearest, within; tiles that stop from any side or only from above |
+| **2D physics** | Stacking, friction, bouncing, joints. Asked for during the phase; it was to come in 7 |
+| Showcase | 32 scenes. The shooter is 260 lines of script, against about 1,030 before |
+| Script names | Types, namespaces and constants begin with a capital; functions and properties don't. The engine refuses anything else |
+| Video | `--demo` plays every screen; `tools/record` records the window from outside |
+| Tests | 60 tests and about 6,800 checks, sanitizers clean in our code. OG Xbox in xemu with 64 MB: 32 scenes at 60 fps, 32 MB free at the worst point |
+
+The transform is two-dimensional so far. In the 3D phase it gains depth, a full rotation and a mesh beside its image; ids, hierarchy,
+behaviours, prefabs and events stay as they are.
+
+Wanted for the 3D phase: **a world to walk around in**, and **3D physics**.
+
+Left: entities from script in other layouts than JSON; a scene editor.
 
 ### Targets to measure against (goals, not results)
 

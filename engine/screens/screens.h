@@ -14,6 +14,7 @@ namespace nx
         char title[64] = {};
         char description[160] = {};
         char category[32] = {};
+        char demo[256] = {};  // what to press when it is shown off by itself
         int order = 0;
     };
 
@@ -74,6 +75,7 @@ namespace nx
             float loadingFor = 0;
             u32 group = 0;         // of its sounds and coroutines
             u64 scriptTime = 0;
+            World* world = nullptr;
             char error[256] = {};
         };
 

@@ -21,7 +21,7 @@
   <img src="docs/screenshots/main.png" alt="The showcase's main menu" width="80%">
 </p>
 
-The same scripts run everywhere: all 25 demos keep 60 frames a second on a 64 MB original Xbox (measured in xemu). The engine is self-contained: it needs
+The same scripts run everywhere: all 32 demos keep 60 frames a second on a 64 MB original Xbox (measured in xemu). The engine is self-contained: it needs
 a compiler and the platform's SDK, downloads nothing, and uses no SDL or GLFW.
 
 ## Screenshots
@@ -30,6 +30,11 @@ a compiler and the platform's SDK, downloads nothing, and uses no SDL or GLFW.
   <img src="docs/screenshots/music.png" alt="Music" width="32%">
   <img src="docs/screenshots/runes.png" alt="Rune shift" width="32%">
   <img src="docs/screenshots/rally.png" alt="Comet rally" width="32%">
+</p>
+<p align="center">
+  <img src="docs/screenshots/shooter.png" alt="Shooter" width="32%">
+  <img src="docs/screenshots/platformer.png" alt="Platformer" width="32%">
+  <img src="docs/screenshots/physics.png" alt="Physics" width="32%">
 </p>
 <p align="center">
   <img src="docs/screenshots/cracktro.png" alt="Cracktro" width="32%">
@@ -59,6 +64,7 @@ a compiler and the platform's SDK, downloads nothing, and uses no SDL or GLFW.
   never takes the app down. Coroutines, tweens, and live reload while you edit.
 - **2D drawing** — shapes, images, sprite sheets, nine-slice, tiling, scalable text, clipping and blending, batched, on any
   shape of screen.
+- **Scenes** — entities with behaviours, prefabs, tile maps, particles, collision and 2D physics, described in plain text files.
 - **Sound** — 32 voices with volume, pan, pitch and fades; WAV, Ogg Vorbis and MP3; spectrum and waveform for visualisers.
 - **Assets** — loaded in the background, shared, kept warm and unloaded only when a budget needs the room.
 - **Input** — keyboard, mouse and four gamepads as actions that players can rebind.
@@ -83,11 +89,11 @@ The [latest release](https://github.com/Team-Resurgent/NexgenRedux/releases/late
 
 | Package | What to do |
 |---|---|
-| `Nexgen-showcase-windows-x64` | Unzip and run `showcase.exe` |
-| `Nexgen-showcase-linux-x64` | Unpack and run `./showcase` |
-| `Nexgen-showcase-macos-arm64`, `-macos-x64` | Unzip and open the app. It isn't notarised: the first time, right-click it and choose Open |
-| `Nexgen-showcase-uwp-x64` | Xbox One, Xbox Series or Windows, in Developer Mode: install the `.cer` and then the package, or upload the package in the Xbox Device Portal |
-| `Nexgen-showcase-xbox-og` | Copy the folder to the console, or run the `.iso` in xemu or from an ODE |
+| `Nexgen-windows-x64` | Unzip and run `nexgen.exe` |
+| `Nexgen-linux-x64` | Unpack and run `./nexgen` |
+| `Nexgen-macos-arm64`, `-macos-x64` | Unzip and open the app. It isn't notarised: the first time, right-click it and choose Open |
+| `Nexgen-uwp-x64` | Xbox One, Xbox Series or Windows, in Developer Mode: install the `.cer` and then the package, or upload the package in the Xbox Device Portal |
+| `Nexgen-xbox-og` | Copy the folder to the console, or run the `.iso` in xemu or from an ODE |
 
 To change a demo, edit its `main.as` in `media/showcase` (inside the app on macOS, under `Contents/Resources`). Started with
 `--dev`, the showcase reloads scripts and images as they are saved.
@@ -97,13 +103,13 @@ To change a demo, edit its `main.as` in `media/showcase` (inside the app on macO
 ```cpp
 class Hello : Screen
 {
-    Font@ font = assets::font("global:freesans.sfn", 48);
-    Sound@ pop = assets::sound("global:sound/pop.wav");
+    Font@ font = Assets::font("global:freesans.sfn", 48);
+    Sound@ pop = Assets::sound("global:sound/pop.wav");
     Tween size(0, 1, 0.6f, EaseOvershoot);
 
     void update(float dt)
     {
-        if (input::pressed("accept")) pop.play();
+        if (Input::pressed("accept")) pop.play();
     }
 
     void draw(Canvas@ c)
@@ -115,7 +121,7 @@ class Hello : Screen
 }
 ```
 
-Put that in `media/showcase/hello/main.as` beside a `screen.json` with a title, and it appears in the menu. Everything that
+Put that in `media/showcase/hello/main.as`, beside a `screen.json` with a title, and it appears in the menu. Everything that
 scripts can call, a guide and every demo's script are in the
 [documentation](https://team-resurgent.github.io/NexgenRedux-Docs/).
 
@@ -140,13 +146,13 @@ The Xbox build needs [RXDK](https://github.com/Team-Resurgent/RXDK-VSCode).
 
 | Folder | What it is |
 |---|---|
-| `engine/` | The new engine, described above |
+| `engine/` | The engine |
 | `docs/` | [The plan](docs/EnginePlan.md), [the guide](docs/Guide.md) and [the script reference](docs/ScriptReference.md) |
 | `NexgenRedux-Shared`, `-PC`, `-OG`, `-360`, `-UWP` | The first engine, kept as it is |
-| `NexgenRedux-Docs` | The [documentation site](https://team-resurgent.github.io/NexgenRedux-Docs/), with the first engine's reference under `v1` (submodule) |
-| `NexgenRedux-Media` | An example game for the first engine (submodule) |
+| `NexgenRedux-Docs` | The [documentation site](https://team-resurgent.github.io/NexgenRedux-Docs/) (submodule) |
+| `NexgenRedux-Media` | The demos: their scripts, pictures and sounds (submodule; needed to build) |
 
-To get the submodules as well:
+Clone with the submodules:
 
 ```bash
 git clone --recurse-submodules https://github.com/Team-Resurgent/NexgenRedux.git

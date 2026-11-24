@@ -42,6 +42,8 @@ namespace nx
         void translate(float x, float y);
         void rotate(float degrees);
         void scale(float x, float y);
+        // x' = m0 x + m2 y + m4, y' = m1 x + m3 y + m5.
+        void transform(const float (&m)[6]);
         void setAlpha(float alpha) { m_state.alpha = alpha; }
         void setBlend(gpu::Blend blend) { m_state.blend = blend; }
         void setFilter(gpu::Filter filter) { m_state.filter = filter; }
@@ -72,6 +74,12 @@ namespace nx
         void nineSlice(const Asset& texture, float x, float y, float w, float h, float corner, const Color& tint);
         // Repeats an image across an area, starting offset by (ox, oy).
         void tile(const Asset& texture, float x, float y, float w, float h, float tileW, float tileH, float ox, float oy, const Color& tint);
+
+        // An image or, with none, a plain rectangle: centred on the origin of a transform, with the
+        // part of the image given in 0 to 1. For the scene, which has a great many.
+        void placed(const Asset* texture, const float (&m)[6], float w, float h, float u0, float v0, float u1, float v1, const Color& color);
+        // A round glow, fading to nothing at its edge. Any number share a draw call.
+        void glow(float x, float y, float radius, const Color& color);
 
         // --- Text: UTF-8, '\n' starts a new line. Returns the width. ---
 
@@ -114,6 +122,7 @@ namespace nx
         gpu::Device* m_device = nullptr;
         Assets* m_assets = nullptr;
         gpu::Pipeline m_pipelines[3];
+        gpu::Texture m_soft;
         gpu::Vertex* m_vertices = nullptr;
         u32 m_count = 0;
         u32 m_draws = 0;

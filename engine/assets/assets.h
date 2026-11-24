@@ -94,6 +94,8 @@ namespace nx
         // Waits for all of them.
         void finish();
 
+        Platform& platform() const { return *m_platform; }
+
         // Looks for files that have changed and loads them again, in place. For development.
         void reloadChanged();
 

@@ -25,12 +25,19 @@ namespace nx
         // Registration helper: logs the declaration if a binding is refused.
         bool check(int result, const char* declaration);
 
+        // Code that every module is given. Must stay valid.
+        void setPrelude(const char* code) { m_prelude = code; }
+        // Keeps a type for as long as the host, so that it isn't made again for each module.
+        asITypeInfo* hold(const char* declaration);
+
         // Compile errors are logged with file, line and column.
         bool compile(const char* module, const char* file, const char* code, size_t length);
         void discard(const char* module);
 
         // Looks up a function by declaration; nullptr if the module doesn't have it.
         asIScriptFunction* find(const char* module, const char* declaration);
+        // A class in a module by name, or nullptr.
+        asITypeInfo* findType(const char* module, const char* name);
         // The first class in a module that implements an interface.
         asITypeInfo* findClass(const char* module, const char* interfaceName);
 
@@ -74,7 +81,9 @@ namespace nx
 
         asIScriptEngine* m_engine = nullptr;
         asIScriptContext* m_context = nullptr;
-        static constexpr u32 kHeldTypes = 7;
+        static constexpr u32 kHeldTypes = 12;
+        u32 m_heldCount = 0;
+        const char* m_prelude = nullptr;
         asITypeInfo* m_held[kHeldTypes] = {};
         u32 m_statementLimit = 20000000;
         u32 m_statements = 0;

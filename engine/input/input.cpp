@@ -276,6 +276,8 @@ namespace nx
         m_backHeldFor = back ? m_backHeldFor + dt : 0;
         set(Action::Menu, m_backHeldFor >= kBackHold);
 
+        move.x += static_cast<float>(m_simulated[index(Action::Right)]) - static_cast<float>(m_simulated[index(Action::Left)]);
+        move.y += static_cast<float>(m_simulated[index(Action::Down)]) - static_cast<float>(m_simulated[index(Action::Up)]);
         for (size_t i = 0; i < kCount; i++)
         {
             now[i] = now[i] || m_simulated[i];

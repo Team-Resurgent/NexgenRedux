@@ -53,27 +53,27 @@ Something to play: WAV, Ogg Vorbis, MP3 or cooked. Short effects are kept ready;
 | | |
 |---|---|
 
-## assets
+## Assets
 
 Loading. Names start with `asset:` for the screen's own files or `global:` for shared ones.
 
 | | |
 |---|---|
-| `Texture@ assets::texture(const string &in name)` | An image: PNG, JPEG, TGA, BMP or GIF, up to 2048 pixels a side. What a screen asks for as it is made is ready by onEnter(); later ones arrive in the background. |
-| `Sound@ assets::sound(const string &in name)` | A sound. Arrives like an image. |
-| `uint assets::pending()` | Files still on their way. |
-| `uint assets::textureKilobytes()` | Memory that images and fonts take. |
-| `uint assets::soundKilobytes()` | Memory that sounds take. |
-| `uint assets::soundBudgetKilobytes()` | Memory that sounds may take. |
-| `Font@ assets::font(const string &in name, uint size)` | A font at a size in design units. |
-| `uint assets::inUse()` | Assets that something is holding. |
-| `uint assets::warm()` | Assets kept ready though nothing holds them. |
-| `uint assets::hits()` | Requests served without reading a file. |
-| `uint assets::loads()` | Files read. |
-| `uint assets::evictions()` | Assets unloaded to make room. |
-| `uint assets::kilobytes()` | Memory the loaded assets take. |
-| `uint assets::budgetKilobytes()` | Memory that images and fonts may take. |
-| `void assets::trim()` | Unloads everything that isn't held. Rarely needed. |
+| `Texture@ Assets::texture(const string &in name)` | An image: PNG, JPEG, TGA, BMP or GIF, up to 2048 pixels a side. What a screen asks for as it is made is ready by onEnter(); later ones arrive in the background. |
+| `Sound@ Assets::sound(const string &in name)` | A sound. Arrives like an image. |
+| `uint Assets::pending()` | Files still on their way. |
+| `uint Assets::textureKilobytes()` | Memory that images and fonts take. |
+| `uint Assets::soundKilobytes()` | Memory that sounds take. |
+| `uint Assets::soundBudgetKilobytes()` | Memory that sounds may take. |
+| `Font@ Assets::font(const string &in name, uint size)` | A font at a size in design units. |
+| `uint Assets::inUse()` | Assets that something is holding. |
+| `uint Assets::warm()` | Assets kept ready though nothing holds them. |
+| `uint Assets::hits()` | Requests served without reading a file. |
+| `uint Assets::loads()` | Files read. |
+| `uint Assets::evictions()` | Assets unloaded to make room. |
+| `uint Assets::kilobytes()` | Memory the loaded assets take. |
+| `uint Assets::budgetKilobytes()` | Memory that images and fonts may take. |
+| `void Assets::trim()` | Unloads everything that isn't held. Rarely needed. |
 
 ## Blend
 
@@ -132,6 +132,7 @@ Which part of some text sits at its position.
 | `void circle(float x, float y, float radius, const Color &in color)` | A filled circle. |
 | `void ring(float x, float y, float radius, float thickness, const Color &in color)` | A circle's outline. |
 | `void arc(float x, float y, float radius, float thickness, float from, float to, const Color &in color)` | Part of a ring, or a slice of a circle, between two angles in degrees. |
+| `void glow(float x, float y, float radius, const Color &in color)` | A round glow, fading to nothing at its edge. With BlendAdd it is light. |
 | `void triangle(const Vec2 &in a, const Vec2 &in b, const Vec2 &in c, const Color &in ca, const Color &in cb, const Color &in cc)` | A triangle with a colour at each corner. |
 | `void image(const Texture@+ texture, float x, float y, const Color &in tint = White)` | An image at its own size. |
 | `void image(const Texture@+ texture, float x, float y, float w, float h, const Color &in tint = White)` | An image at any size. |
@@ -142,31 +143,31 @@ Which part of some text sits at its position.
 | `float text(const Font@+ font, const string &in text, float x, float y, const Color &in color = White, Align align = AlignLeft)` | Text from its top. Returns its width. |
 | `float paragraph(const Font@+ font, const string &in text, float x, float y, float width, const Color &in color = White)` | Text broken into lines to fit a width. Returns its height. |
 
-## input
+## Input
 
 Actions are `up`, `down`, `left`, `right`, `accept`, `cancel`, `fire`, `alternate` and `menu`, from a keyboard, mouse or gamepad.
 
 | | |
 |---|---|
-| `bool input::held(const string &in action)` | Whether it is down now. |
-| `bool input::pressed(const string &in action)` | Whether it has just gone down. |
-| `bool input::released(const string &in action)` | Whether it has just been let go. |
-| `bool input::repeated(const string &in action)` | pressed(), then again at intervals while held. |
-| `Vec2 input::move()` | Direction from keys, d-pad and left stick: x right, y down, never longer than 1. |
-| `bool input::usingPad()` | Whether a gamepad was used last. |
-| `bool input::hasMouse()` | Whether a mouse has moved. |
-| `Vec2 input::mouse()` | Where the mouse is, in design units. |
-| `bool input::mouseDown(uint button)` | Left is 0, right 1, middle 2. |
-| `bool input::padConnected(uint pad)` | Whether a gamepad (0 to 3) is plugged in. |
-| `Vec2 input::padLeft(uint pad)` | Left stick, -1 to 1, y up. |
-| `Vec2 input::padRight(uint pad)` | Right stick, -1 to 1, y up. |
-| `Vec2 input::padTriggers(uint pad)` | Left and right triggers, 0 to 1. |
-| `bool input::padButton(uint pad, uint button)` | In order: up, down, left, right, Start, Back, left stick, right stick, A, B, X, Y, left and right shoulder. |
-| `void input::listen(const string &in action)` | The next key or button pressed will do this. Escape or Start calls it off. Not for `menu`. |
-| `bool input::listening()` | Whether it is still waiting for one. |
-| `string input::keys(const string &in action)` | The keys for an action, as text. |
-| `string input::buttons(const string &in action)` | The gamepad buttons for an action, as text. |
-| `void input::resetBindings()` | Puts them all back. |
+| `bool Input::held(const string &in action)` | Whether it is down now. |
+| `bool Input::pressed(const string &in action)` | Whether it has just gone down. |
+| `bool Input::released(const string &in action)` | Whether it has just been let go. |
+| `bool Input::repeated(const string &in action)` | pressed(), then again at intervals while held. |
+| `Vec2 Input::move()` | Direction from keys, d-pad and left stick: x right, y down, never longer than 1. |
+| `bool Input::usingPad()` | Whether a gamepad was used last. |
+| `bool Input::hasMouse()` | Whether a mouse has moved. |
+| `Vec2 Input::mouse()` | Where the mouse is, in design units. |
+| `bool Input::mouseDown(uint button)` | Left is 0, right 1, middle 2. |
+| `bool Input::padConnected(uint pad)` | Whether a gamepad (0 to 3) is plugged in. |
+| `Vec2 Input::padLeft(uint pad)` | Left stick, -1 to 1, y up. |
+| `Vec2 Input::padRight(uint pad)` | Right stick, -1 to 1, y up. |
+| `Vec2 Input::padTriggers(uint pad)` | Left and right triggers, 0 to 1. |
+| `bool Input::padButton(uint pad, uint button)` | In order: up, down, left, right, Start, Back, left stick, right stick, A, B, X, Y, left and right shoulder. |
+| `void Input::listen(const string &in action)` | The next key or button pressed will do this. Escape or Start calls it off. Not for `menu`. |
+| `bool Input::listening()` | Whether it is still waiting for one. |
+| `string Input::keys(const string &in action)` | The keys for an action, as text. |
+| `string Input::buttons(const string &in action)` | The gamepad buttons for an action, as text. |
+| `void Input::resetBindings()` | Puts them all back. |
 
 ## Bus
 
@@ -203,22 +204,22 @@ Something that is playing. Safe to use after it has ended.
 | `bool get_ready() const property` | Whether it has arrived. Until then it plays as silence. |
 | `bool get_failed() const property` | Whether the file could not be loaded. |
 
-## audio
+## Audio
 
 Volumes, and what is being heard. A screen's sounds pause while it is covered and stop when it closes.
 
 | | |
 |---|---|
-| `void audio::setVolume(Bus bus, float volume)` | 0 to 1. |
-| `float audio::volume(Bus bus)` | 0 to 1. |
-| `void audio::setMasterVolume(float volume)` | Everything, 0 to 1. |
-| `float audio::masterVolume()` | 0 to 1. |
-| `float audio::level()` | How loud it has been lately, 0 to 1. |
-| `float audio::spectrum(uint band)` | How strong one of 32 bands is, low to high, 0 to 1. |
-| `float audio::wave(uint index)` | One of the last 512 samples heard, -1 to 1. |
-| `uint audio::voices()` | How many are playing. |
-| `uint audio::voiceLimit()` | How many can. |
-| `string audio::output()` | What is playing it. |
+| `void Audio::setVolume(Bus bus, float volume)` | 0 to 1. |
+| `float Audio::volume(Bus bus)` | 0 to 1. |
+| `void Audio::setMasterVolume(float volume)` | Everything, 0 to 1. |
+| `float Audio::masterVolume()` | 0 to 1. |
+| `float Audio::level()` | How loud it has been lately, 0 to 1. |
+| `float Audio::spectrum(uint band)` | How strong one of 32 bands is, low to high, 0 to 1. |
+| `float Audio::wave(uint index)` | One of the last 512 samples heard, -1 to 1. |
+| `uint Audio::voices()` | How many are playing. |
+| `uint Audio::voiceLimit()` | How many can. |
+| `string Audio::output()` | What is playing it. |
 
 ## void Coroutine()
 
@@ -238,15 +239,142 @@ Functions that run over many frames. They belong to their screen, pause with it 
 | `void nextUpdate()` | Inside a coroutine: carries on at the next update. |
 | `uint coroutines()` | How many are running. |
 
-## save
+## Save
 
 Text that is kept between runs, by name.
 
 | | |
 |---|---|
-| `void save::set(const string &in key, const string &in value)` | Keeps something. |
-| `string save::get(const string &in key, const string &in otherwise = "")` | What was kept, or otherwise. |
-| `void save::remove(const string &in key)` | Forgets it. |
+| `void Save::set(const string &in key, const string &in value)` | Keeps something. |
+| `string Save::get(const string &in key, const string &in otherwise = "")` | What was kept, or otherwise. |
+| `void Save::remove(const string &in key)` | Forgets it. |
+
+## Entity
+
+Something in the scene. A handle is always safe: once the entity has been destroyed, alive is false and nothing done to it has any effect.
+
+| | |
+|---|---|
+
+## IBehaviour
+
+What Behaviour comes from. Use Behaviour.
+
+| | |
+|---|---|
+
+## Behaviour
+
+A script on an entity. Write a class that comes from it and any of these methods; `entity` is the entity it is on.
+
+| | |
+|---|---|
+| `Entity@ entity` | The entity. |
+| `void start()` | Called once, before its first update. |
+| `void update(float dt)` | Called 60 times a second. |
+| `void onHit(Entity@ other)` | Called when its collider begins to touch one in a group it hits. |
+| `void onLeave(Entity@ other)` | Called when they stop touching. |
+| `void onGone()` | Called once, as the entity is destroyed. |
+
+### Entity
+
+| | |
+|---|---|
+| `bool get_alive() const property` | Whether it is still there. |
+| `void destroy()` | Removes it and its children, at the end of this step. |
+| `string get_name() const property` | A name to find it by, up to 23 letters. |
+| `void set_name(const string &in) property` | Names it. |
+| `Vec2 get_position() const property` | Where it is, from its parent if it has one. |
+| `void set_position(const Vec2 &in) property` | Moves it. |
+| `float get_x() const property` | Part of its position. |
+| `void set_x(float) property` | Moves it. |
+| `float get_y() const property` | Part of its position. |
+| `void set_y(float) property` | Moves it. |
+| `Vec2 get_worldPosition() const property` | Where it is in the scene, whatever its parents. |
+| `float get_rotation() const property` | Degrees clockwise. |
+| `void set_rotation(float) property` | Turns it. |
+| `Vec2 get_scale() const property` | Its size, across and down; 1 is normal. |
+| `void set_scale(const Vec2 &in) property` | Resizes it. |
+| `Entity@ get_parent() const property` | What it moves with, or null. |
+| `void attach(Entity@+ parent)` | Makes it move with another, its position then being from there; null lets go. |
+| `int get_layer() const property` | Higher layers are drawn over lower ones. |
+| `void set_layer(int) property` | Moves it to another layer. |
+| `bool get_visible() const property` | Whether it and its children are drawn. |
+| `void set_visible(bool) property` | Shows or hides them. |
+| `void image(Texture@+ texture, float w = 0, float h = 0)` | Looks like an image, centred; its own size unless one is given. |
+| `void rect(float w, float h, const Color &in color)` | Looks like a rectangle. |
+| `void disc(float radius, const Color &in color)` | Looks like a disc. |
+| `void label(Font@+ font, const string &in text, const Color &in color = White)` | Looks like some text, centred. |
+| `string get_text() const property` | The text. |
+| `void set_text(const string &in) property` | Changes the text. |
+| `Color get_color() const property` | Multiplies how it looks. |
+| `void set_color(const Color &in) property` | Changes it. |
+| `float get_alpha() const property` | The colour's alpha. |
+| `void set_alpha(float) property` | Fades it. |
+| `void set_blend(Blend) property` | How it combines with what is behind. |
+| `bool get_flip() const property` | Whether the image is turned left to right. |
+| `void set_flip(bool) property` | Turns it. |
+| `void sheet(uint columns, uint rows)` | Says that the image is a sheet of equal frames. |
+| `uint get_frame() const property` | Which frame, along each row. |
+| `void set_frame(uint) property` | Changes it. |
+| `void play(uint first, uint last, float fps, bool loop = true)` | Plays frames. Asking again for what is playing does nothing, so it can be called every update. |
+| `bool get_played() const property` | Whether an animation that doesn't loop has finished. |
+| `Vec2 get_velocity() const property` | Units a second. |
+| `void set_velocity(const Vec2 &in) property` | Sets it going. |
+| `float get_spin() const property` | Degrees a second. |
+| `void set_spin(float) property` | Sets it turning. |
+| `void set_drag(float) property` | Part of its speed lost each second. |
+| `void set_gravity(float) property` | How much of the scene's gravity it feels; 0 to begin with. |
+| `void set_bounce(float) property` | Part of its speed kept when it hits something. |
+| `void set_solid(bool) property` | Makes solid tiles and walls stop it, without turning it: for characters. |
+| `float get_mass() const property` | 0 unless it is a rigid body. |
+| `void set_mass(float) property` | Above 0, makes it a rigid body, which pushes, stacks and turns. It needs a collider and no parent. |
+| `void set_friction(float) property` | Of a rigid body: 0 is ice, 1 rubber. |
+| `void push(const Vec2 &in impulse)` | Pushes it at its middle. |
+| `void push(const Vec2 &in impulse, const Vec2 &in at)` | Pushes it at a place in the scene, which may turn it. |
+| `bool get_onGround() const property` | Whether something solid is holding it up. |
+| `bool get_onCeiling() const property` | Whether it has just hit something above. |
+| `int get_onWall() const property` | -1 for something solid on its left, 1 on its right, otherwise 0. |
+| `void circle(float radius, uint group = 0, uint hits = 0)` | Gives it a round collider in a group from 0 to 15. hits has a bit for each group it wants to know about: 1 << group. |
+| `void box(float w, float h, uint group = 0, uint hits = 0)` | The same with a box, which turns with it. |
+| `void set_wall(bool) property` | Makes solid and rigid bodies stop at its collider. |
+| `int get_group() const property` | Its collider's group, or -1. |
+| `void set_hits(uint) property` | Changes the groups it wants to know about. |
+| `bool touching(Entity@+ other) const` | Whether their colliders overlap now. |
+| `void set_lifetime(float) property` | Destroys it after some seconds. |
+| `void add(IBehaviour@+ behaviour)` | Adds a behaviour. |
+| `IBehaviour@ get_behaviour() const property` | Its first behaviour, or null. `cast<Enemy>(e.behaviour)` gives the class back. |
+
+## Scene
+
+Entities that move, collide and are drawn by the engine. Each screen has its own scene, and it is stepped after the screen's update().
+
+| | |
+|---|---|
+| `Entity@ Scene::spawn(const Vec2 &in position)` | A new, empty entity. |
+| `Entity@ Scene::spawn(const string &in prefab, const Vec2 &in position)` | A new entity from a prefab that has been loaded. |
+| `void Scene::load(const string &in name)` | Reads a scene file: groups, particles, prefabs, maps and entities. See the guide. |
+| `void Scene::draw(Canvas@ canvas, int first = -32768, int last = 32767)` | Draws the entities in some layers. Call it from draw(), after design(). |
+| `void Scene::camera(const Vec2 &in position, float zoom = 1, float rotation = 0)` | Puts a place in the middle of the screen. Without it, the scene's corner is the screen's. |
+| `Vec2 Scene::toWorld(const Vec2 &in screen)` | A place on the screen, in the scene. |
+| `Vec2 Scene::toScreen(const Vec2 &in world)` | A place in the scene, on the screen. |
+| `uint Scene::count()` | How many entities there are. |
+| `uint Scene::count(uint group)` | How many have a collider in a group. |
+| `int Scene::group(const string &in name)` | The number of a group named in a scene file, or -1. |
+| `Entity@ Scene::find(const string &in name)` | The first of that name, or null. |
+| `Entity@ Scene::nearest(const Vec2 &in position, float radius, uint groups = 0xFFFF, Entity@+ except = null)` | The nearest with a collider in some groups (a bit for each), or null. |
+| `array<Entity@>@ Scene::within(const Vec2 &in position, float radius, uint groups = 0xFFFF)` | Everything whose collider touches a circle. |
+| `Entity@ Scene::raycast(const Vec2 &in from, const Vec2 &in to, Vec2 &out hit, uint groups = 0xFFFF)` | The first collider on a line, and where, or null. |
+| `void Scene::setGravity(const Vec2 &in gravity)` | Units a second, each second. |
+| `void Scene::burst(const string &in particles, const Vec2 &in position, uint count)` | Throws out some particles. |
+| `bool Scene::join(Entity@+ a, Entity@+ b, const Vec2 &in at, float softness = 0)` | Pins two rigid bodies together at a place; null for b pins to the scene. |
+| `uint Scene::tile(const Vec2 &in position)` | What the map has there: 0 is nothing. |
+| `void Scene::setTile(const Vec2 &in position, uint tile)` | Changes the map. |
+| `Vec2 Scene::mapSize()` | How large the map is. |
+| `uint Scene::particles()` | How many particles there are. |
+| `uint Scene::drawn()` | How many entities and tiles were drawn last. |
+| `uint Scene::pairs()` | Pairs of colliders compared in the last step. |
+| `uint Scene::contacts()` | Where rigid bodies touched in the last step. |
 
 ## Screen
 
@@ -261,38 +389,38 @@ One place in the app. A screen's main.as has a class that implements this; it ma
 | `void onResume()` | Called when that one closes again. |
 | `void onExit()` | Called once, before it closes. |
 
-## screens
+## Screens
 
 Moving between screens. Changes happen after the current update.
 
 | | |
 |---|---|
-| `void screens::push(const string &in id)` | Opens a screen on top of this one. |
-| `void screens::pop()` | Closes this screen and returns to the one below. |
-| `void screens::replace(const string &in id)` | Closes this screen and opens another in its place. |
-| `void screens::home()` | Closes everything above the first screen. |
-| `uint screens::count()` | How many screens can be opened. |
-| `string screens::id(uint index)` | The name to pass to push(). |
-| `string screens::title(uint index)` | From its screen.json. |
-| `string screens::description(uint index)` | From its screen.json. |
-| `string screens::category(uint index)` | From its screen.json. |
+| `void Screens::push(const string &in id)` | Opens a screen on top of this one. |
+| `void Screens::pop()` | Closes this screen and returns to the one below. |
+| `void Screens::replace(const string &in id)` | Closes this screen and opens another in its place. |
+| `void Screens::home()` | Closes everything above the first screen. |
+| `uint Screens::count()` | How many screens can be opened. |
+| `string Screens::id(uint index)` | The name to pass to push(). |
+| `string Screens::title(uint index)` | From its screen.json. |
+| `string Screens::description(uint index)` | From its screen.json. |
+| `string Screens::category(uint index)` | From its screen.json. |
 
-## app
+## App
 
 The machine and how it is doing.
 
 | | |
 |---|---|
-| `float app::time()` | Seconds since the app started. |
-| `float app::fps()` | Frames a second, averaged. |
-| `uint app::draws()` | Draw calls in the last frame. |
-| `string app::platform()` | What it is running on. |
-| `string app::gpu()` | What is drawing. |
-| `uint app::memoryKilobytes()` | Memory the engine has allocated, not counting video memory. |
-| `uint app::scriptKilobytes()` | How much of that is scripts. |
-| `uint app::freeKilobytes()` | Memory the machine has left. |
-| `bool app::development()` | Whether it was started with --dev, so that changed files are reloaded. |
-| `uint app::reloads()` | How many times a script or image has been reloaded because its file changed. |
+| `float App::time()` | Seconds since the app started. |
+| `float App::fps()` | Frames a second, averaged. |
+| `uint App::draws()` | Draw calls in the last frame. |
+| `string App::platform()` | What it is running on. |
+| `string App::gpu()` | What is drawing. |
+| `uint App::memoryKilobytes()` | Memory the engine has allocated, not counting video memory. |
+| `uint App::scriptKilobytes()` | How much of that is scripts. |
+| `uint App::freeKilobytes()` | Memory the machine has left. |
+| `bool App::development()` | Whether it was started with --dev, so that changed files are reloaded. |
+| `uint App::reloads()` | How many times a script or image has been reloaded because its file changed. |
 
 ## Maths
 

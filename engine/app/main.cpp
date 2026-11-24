@@ -19,6 +19,7 @@
 //   --frames N      stop after N frames of a fixed 60th of a second, so runs can be repeated
 //   --capture FILE  save the last frame as a BMP
 //   --tour N        open every screen N times over, unattended, then stop
+//   --demo SECONDS  show every screen for a while, playing it, then stop
 //   --docs FILE     write the script reference and stop
 //   --budget MB     how much images and fonts may take
 //   --dev           reload scripts and images when their files change
@@ -37,6 +38,7 @@ namespace
         const char* docs = nullptr;
         int frames = 0;
         int tour = 0;
+        float demo = 0;
         size_t budget = 0;
         u32 width = 1280, height = 720;
         bool hidden = false;
@@ -95,6 +97,188 @@ namespace
         }
         return ok;
     }
+
+    // Shows every screen to someone, pressing what its screen.json says over and over: "right:0.5" holds
+    // right for half a second, "accept" presses it, "right+fire:1" holds both and "wait:1" does nothing.
+    class Demo
+    {
+    public:
+        explicit Demo(float seconds) : m_seconds(seconds) {}
+
+        // True once finished.
+        bool step(Services& s, float dt)
+        {
+            Screens& screens = *s.screens;
+            if (screens.loading())
+            {
+                return false;
+            }
+            m_left -= dt;
+            if (screens.depth() > 1 && m_left <= 0)
+            {
+                screens.home();
+                m_left = kAtHome;
+                // Along to the next tile, over any that are skipped.
+                m_moves = skip(screens, m_next) - m_next + 1;
+                return false;
+            }
+            if (screens.depth() > 1)
+            {
+                play(s, dt);
+                return false;
+            }
+            if (m_left > 0)
+            {
+                // On and off, as each press counts once.
+                m_beat++;
+                if (m_moves && m_beat % 8 == 0)
+                {
+                    m_moves--;
+                    s.input->simulate(Action::Right);
+                }
+                return false;
+            }
+            m_next = skip(screens, m_next);
+            if (m_next >= screens.count())
+            {
+                return true;
+            }
+            const ScreenInfo& info = *screens.info(m_next++);
+            snprintf(m_script, sizeof(m_script), "%s", info.demo);
+            m_at = m_script;
+            m_hold = kBeforePlaying;
+            m_pressed = 0;
+            m_left = m_seconds;
+            screens.push(info.id);
+            return false;
+        }
+
+        // The screen's name, for its first few seconds.
+        void caption(Services& s)
+        {
+            if (s.screens->depth() < 2 || s.screens->loading())
+            {
+                return;
+            }
+            const float shown = m_seconds - m_left;
+            const float alpha = shown < 0.4f ? shown / 0.4f : shown > 2.6f ? (3.2f - shown) / 0.6f : 1;
+            const ScreenInfo* info = m_next ? s.screens->info(m_next - 1) : nullptr;
+            if (alpha <= 0 || info == nullptr)
+            {
+                return;
+            }
+            if (m_title == nullptr)
+            {
+                m_title = s.assets->font("global/freesans.sfn", 44);
+                m_text = s.assets->font("global/freesans.sfn", 24);
+            }
+            Canvas& c = *s.canvas;
+            c.designHeight(720);
+            c.setAlpha(alpha);
+            c.gradient(0, 520, c.width(), 200, { 0, 0, 0, 0 }, { 0, 0, 0, 0.85f });
+            c.rect(48, 610, 6, 78, { 0.27f, 0.55f, 0.96f, 1 });
+            c.text(*m_title, info->title, 72, 602, { 1, 1, 1, 1 });
+            c.text(*m_text, info->description, 74, 658, { 0.8f, 0.85f, 0.95f, 1 });
+            c.setAlpha(1);
+        }
+
+        void finish(Services& s)
+        {
+            if (m_title)
+            {
+                s.assets->release(m_title);
+                s.assets->release(m_text);
+                m_title = m_text = nullptr;
+            }
+        }
+
+    private:
+        static constexpr float kAtHome = 0.8f;
+        static constexpr float kBeforePlaying = 0.8f;
+
+        // Broken on purpose, or nothing to look at.
+        static u32 skip(const Screens& screens, u32 next)
+        {
+            while (next < screens.count() && (strcmp(screens.info(next)->id, "main") == 0 || strcmp(screens.info(next)->id, "faulty") == 0))
+            {
+                next++;
+            }
+            return next;
+        }
+
+        void play(Services& s, float dt)
+        {
+            if (m_script[0] == 0)
+            {
+                return;
+            }
+            m_hold -= dt;
+            if (m_hold <= 0)
+            {
+                next();
+            }
+            for (u32 i = 0; i < static_cast<u32>(Action::Count); i++)
+            {
+                if (m_pressed & (1u << i))
+                {
+                    s.input->simulate(static_cast<Action>(i));
+                }
+            }
+        }
+
+        void next()
+        {
+            m_at = *m_at ? m_at : m_script;
+            char word[64];
+            size_t length = 0;
+            while (*m_at == ' ')
+            {
+                m_at++;
+            }
+            while (*m_at && *m_at != ' ')
+            {
+                if (length + 1 < sizeof(word))
+                {
+                    word[length++] = *m_at;
+                }
+                m_at++;
+            }
+            word[length] = 0;
+            m_pressed = 0;
+            m_hold = 1.5f / 60;
+            char* seconds = strchr(word, ':');
+            if (seconds)
+            {
+                *seconds = 0;
+                m_hold = static_cast<float>(atof(seconds + 1));
+            }
+            for (char* name = word; name;)
+            {
+                char* plus = strchr(name, '+');
+                if (plus)
+                {
+                    *plus = 0;
+                }
+                Action action;
+                if (Input::parse(name, action) && action != Action::Menu)
+                {
+                    m_pressed |= 1u << static_cast<u32>(action);
+                }
+                name = plus ? plus + 1 : nullptr;
+            }
+        }
+
+        float m_seconds;
+        float m_left = kAtHome;
+        u32 m_next = 0;
+        char m_script[256] = {};
+        const char* m_at = m_script;
+        float m_hold = 0;
+        u32 m_pressed = 0;
+        u32 m_moves = 0, m_beat = 0;
+        Asset* m_title = nullptr;
+        Asset* m_text = nullptr;
+    };
 
     // Opens every screen in turn, a few times over, and watches what is left behind.
     class Tour
@@ -195,7 +379,7 @@ namespace
     bool run(Platform& platform, const Options& options)
     {
         WindowDesc window;
-        window.title = "Nexgen showcase";
+        window.title = "Nexgen";
         window.width = options.width;
         window.height = options.height;
         window.hidden = options.hidden;
@@ -238,7 +422,7 @@ namespace
             audio.onFinished([](void* asset, void* cache) { static_cast<Assets*>(cache)->release(static_cast<Asset*>(asset)); }, &assets);
             coroutines.init(host);
             save.init(platform, "showcase");
-            if (options.frames || options.tour || options.docs)
+            if (options.frames || options.tour || options.demo > 0 || options.docs)
             {
                 save.setReadOnly();
             }
@@ -265,6 +449,7 @@ namespace
                     screens.push(options.screen);
                 }
                 Tour tour(options.tour);
+                Demo demo(options.demo);
                 double last = platform.seconds();
                 double nextLook = 0;
                 float unspent = 0;
@@ -305,6 +490,10 @@ namespace
                         {
                             input.simulate(Action::Menu);
                         }
+                        if (options.demo > 0)
+                        {
+                            done = demo.step(services, kStep) || done;
+                        }
                         input.update(platform.input(), kStep);
                         services.time += kStep;
                         screens.update(kStep);
@@ -318,6 +507,10 @@ namespace
                     {
                         canvas.begin();
                         screens.draw();
+                        if (options.demo > 0)
+                        {
+                            demo.caption(services);
+                        }
                         canvas.end();
                         device->endFrame();
                         services.draws = canvas.draws();
@@ -331,6 +524,7 @@ namespace
                     NX_ERROR("%s: %s", screens.current(), screens.error());
                     ok = false;
                 }
+                demo.finish(services);
                 if (device->stats().rejected)
                 {
                     NX_ERROR("%u draws were rejected", static_cast<unsigned>(device->stats().rejected));
@@ -388,6 +582,7 @@ int main(int argc, char** argv)
         else if (strcmp(a, "--docs") == 0) options.docs = value(i);
         else if (strcmp(a, "--frames") == 0) options.frames = atoi(value(i));
         else if (strcmp(a, "--tour") == 0) options.tour = atoi(value(i));
+        else if (strcmp(a, "--demo") == 0) options.demo = static_cast<float>(atof(value(i)));
         else if (strcmp(a, "--budget") == 0) options.budget = static_cast<size_t>(atof(value(i)) * 1024 * 1024);
         else if (strcmp(a, "--size") == 0) { options.width = static_cast<u32>(atoi(value(i))); options.height = static_cast<u32>(atoi(value(i))); }
         else if (strcmp(a, "--hidden") == 0) options.hidden = true;

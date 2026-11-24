@@ -17,6 +17,13 @@ namespace nx
         {
             return v * s;
         }
+
+        Vec2& addVec2(const Vec2& o, Vec2& v) { return v = v + o; }
+        Vec2& subtractVec2(const Vec2& o, Vec2& v) { return v = v - o; }
+        Vec2& multiplyVec2(float s, Vec2& v) { return v = v * s; }
+        Vec3& addVec3(const Vec3& o, Vec3& v) { return v = v + o; }
+        Vec3& subtractVec3(const Vec3& o, Vec3& v) { return v = v - o; }
+        Vec3& multiplyVec3(float s, Vec3& v) { return v = v * s; }
     }
 
     bool bindMath(ScriptHost& host)
@@ -47,6 +54,9 @@ namespace nx
         method("Vec2", "Vec2 opMul(float) const", NX_METHOD_PR(Vec2, operator*, (float) const, Vec2));
         method("Vec2", "Vec2 opMul_r(float) const", NX_OBJ_LAST(scaleVec2));
         method("Vec2", "Vec2 opDiv(float) const", NX_METHOD_PR(Vec2, operator/, (float) const, Vec2));
+        method("Vec2", "Vec2& opAddAssign(const Vec2 &in)", NX_OBJ_LAST(addVec2));
+        method("Vec2", "Vec2& opSubAssign(const Vec2 &in)", NX_OBJ_LAST(subtractVec2));
+        method("Vec2", "Vec2& opMulAssign(float)", NX_OBJ_LAST(multiplyVec2));
         method("Vec2", "Vec2 opNeg() const", NX_METHOD_PR(Vec2, operator-, () const, Vec2));
         method("Vec2", "bool opEquals(const Vec2 &in) const", NX_METHOD_PR(Vec2, operator==, (const Vec2&) const, bool));
         method("Vec2", "float dot(const Vec2 &in) const", NX_METHOD(Vec2, dot));
@@ -62,6 +72,9 @@ namespace nx
         method("Vec3", "Vec3 opMul(float) const", NX_METHOD_PR(Vec3, operator*, (float) const, Vec3));
         method("Vec3", "Vec3 opMul_r(float) const", NX_OBJ_LAST(scaleVec3));
         method("Vec3", "Vec3 opDiv(float) const", NX_METHOD_PR(Vec3, operator/, (float) const, Vec3));
+        method("Vec3", "Vec3& opAddAssign(const Vec3 &in)", NX_OBJ_LAST(addVec3));
+        method("Vec3", "Vec3& opSubAssign(const Vec3 &in)", NX_OBJ_LAST(subtractVec3));
+        method("Vec3", "Vec3& opMulAssign(float)", NX_OBJ_LAST(multiplyVec3));
         method("Vec3", "Vec3 opNeg() const", NX_METHOD_PR(Vec3, operator-, () const, Vec3));
         method("Vec3", "bool opEquals(const Vec3 &in) const", NX_METHOD_PR(Vec3, operator==, (const Vec3&) const, bool));
         method("Vec3", "float dot(const Vec3 &in) const", NX_METHOD(Vec3, dot));

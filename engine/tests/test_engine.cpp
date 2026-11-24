@@ -1,5 +1,5 @@
 #include "test.h"
-#include "world.h"
+#include "rig.h"
 
 #include "assets/decode.h"
 #include "base/json.h"
@@ -9,7 +9,7 @@ using namespace nx::test;
 
 NX_TEST(assetsAreSharedAndKeptWarm)
 {
-    World w;
+    Rig w;
     const int before = w.platform.reads;
     Asset* a = w.assets.texture(kShip);
     Asset* b = w.assets.texture("showcase\\Parallax/./x/../asset//Ship.png");
@@ -26,12 +26,12 @@ NX_TEST(assetsAreSharedAndKeptWarm)
     w.assets.release(again);
     w.assets.trim();
     NX_EXPECT(w.assets.stats().warm == 0);
-    NX_EXPECT(w.device->stats().textureBytes == 16 * 16 * 4 + 4);  // only the placeholders are left
+    NX_EXPECT(w.device->stats().textureBytes == 16 * 16 * 4 + 4 + 32 * 32 * 4);  // only the placeholders and the canvas's dot are left
 }
 
 NX_TEST(assetsStayWithinBudget)
 {
-    World w(5 * 1024 * 1024);
+    Rig w(5 * 1024 * 1024);
     Asset* stars = w.assets.texture(kStars);  // 4 MB
     w.assets.finish();
     w.assets.release(stars);
@@ -51,7 +51,7 @@ NX_TEST(assetsStayWithinBudget)
 
 NX_TEST(badAssetsBecomePlaceholders)
 {
-    World w;
+    Rig w;
     for (const char* path : { "missing.png", "../../secret.png", "c:/windows/win.ini", "", "showcase/main/main.as" })
     {
         Asset* a = w.assets.texture(path);
@@ -113,7 +113,7 @@ NX_TEST(damagedFilesDontCrash)
 
 NX_TEST(fontsRender)
 {
-    World w;
+    Rig w;
     Asset* font = w.assets.font("global/freesans.sfn", 32);
     NX_EXPECT(!font->failed && font->font != nullptr);
     if (font->font)
@@ -135,7 +135,7 @@ NX_TEST(fontsRender)
 
 NX_TEST(canvasBatches)
 {
-    World w;
+    Rig w;
     Asset* ship = w.assets.texture(kShip);
     Asset* stars = w.assets.texture(kStars);
     w.assets.finish();
@@ -191,7 +191,7 @@ NX_TEST(canvasBatches)
 
 NX_TEST(designFitsAnyScreen)
 {
-    World w;
+    Rig w;
     w.canvas.design(640, 480);  // on 1280 by 720: scale 1.5, with bars at the sides
     const Vec2 middle = w.canvas.toDesign(640, 360);
     NX_EXPECT(middle.x == 320 && middle.y == 240);
@@ -267,13 +267,13 @@ NX_TEST(jsonReadsWhatItShouldAndNothingElse)
 
 NX_TEST(everyScriptCallIsDescribed)
 {
-    World w;
+    Rig w;
     NX_EXPECT(w.ok && w.documented > 100);
 }
 
 NX_TEST(screensOpenAndComeBack)
 {
-    World w;
+    Rig w;
     NX_EXPECT(w.screens.init(w.services, "showcase", "main"));
     w.step(5);
     NX_EXPECT(w.screens.depth() == 1 && !w.screens.failed());
@@ -306,7 +306,7 @@ NX_TEST(screensOpenAndComeBack)
 
 NX_TEST(brokenScreensDontStopTheApp)
 {
-    World w;
+    Rig w;
     NX_EXPECT(w.screens.init(w.services, "showcase", "main"));
     for (int fault = 0; fault < 4; fault++)
     {
@@ -341,8 +341,8 @@ NX_TEST(brokenScreensDontStopTheApp)
         { "int z = 0; int bad = 1 / z; class A : Screen {}", "Divide by zero" },
         { "int forever() { while (true) {} return 0; } int bad = forever(); class A : Screen {}", "global variable" },
         { "class A : Screen { void onEnter() { while (true) {} } }", "endless loop" },
-        { "class A : Screen { void onEnter() { assets::texture(\"../x.png\"); } }", "asset:" },
-        { "class A : Screen { void update(float dt) { input::held(\"jump\"); } }", "no action called jump" },
+        { "class A : Screen { void onEnter() { Assets::texture(\"../x.png\"); } }", "asset:" },
+        { "class A : Screen { void update(float dt) { Input::held(\"jump\"); } }", "no action called jump" },
         { "class A : Screen { void draw(Canvas@ c) { Texture@ t; c.image(t, 0, 0); } }", "null texture" },
     };
     for (const auto& c : cases)
@@ -367,7 +367,7 @@ NX_TEST(brokenScreensDontStopTheApp)
 
 NX_TEST(screensLeaveNothingBehind)
 {
-    World w;
+    Rig w;
     NX_EXPECT(w.screens.init(w.services, "showcase", "main"));
     w.step(5);
     size_t settled = 0;
@@ -393,7 +393,7 @@ NX_TEST(everythingIsGivenBack)
 {
     const size_t before = memStatsTotal().count;
     {
-        World w;
+        Rig w;
         w.screens.init(w.services, "showcase", "main");
         w.step(10);
         w.screens.push("blend");

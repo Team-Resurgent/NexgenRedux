@@ -63,6 +63,18 @@ namespace nx
             m_pipelines[i] = device.createPipeline(desc);
             ok = ok && m_pipelines[i];
         }
+        // A dot that fades to nothing, for glows and particles.
+        u8 soft[32 * 32 * 4];
+        for (u32 i = 0; i < 32 * 32; i++)
+        {
+            const float dx = (static_cast<float>(i % 32) - 15.5f) / 15.5f;
+            const float dy = (static_cast<float>(i / 32) - 15.5f) / 15.5f;
+            const float left = 1 - sqrtf(dx * dx + dy * dy);
+            soft[i * 4 + 0] = soft[i * 4 + 1] = soft[i * 4 + 2] = 255;
+            soft[i * 4 + 3] = left > 0 ? static_cast<u8>(left * left * (3 - 2 * left) * 255) : 0;
+        }
+        m_soft = device.createTexture(gpu::rgbaTexture(soft, 32, 32));
+        ok = ok && m_soft;
         u32 w = 1, h = 1;
         device.size(w, h);
         m_pixelWidth = static_cast<float>(w);
@@ -79,6 +91,7 @@ namespace nx
             {
                 m_device->destroyPipeline(p);
             }
+            m_device->destroyTexture(m_soft);
         }
         memFree(m_vertices);
         m_vertices = nullptr;
@@ -181,6 +194,21 @@ namespace nx
         m[1] *= x;
         m[2] *= y;
         m[3] *= y;
+    }
+
+    void Canvas::transform(const float (&t)[6])
+    {
+        float* m = m_state.m;
+        const float a = m[0] * t[0] + m[2] * t[1];
+        const float b = m[1] * t[0] + m[3] * t[1];
+        const float c = m[0] * t[2] + m[2] * t[3];
+        const float d = m[1] * t[2] + m[3] * t[3];
+        m[4] += m[0] * t[4] + m[2] * t[5];
+        m[5] += m[1] * t[4] + m[3] * t[5];
+        m[0] = a;
+        m[1] = b;
+        m[2] = c;
+        m[3] = d;
     }
 
     void Canvas::clip(float x, float y, float w, float h)
@@ -447,6 +475,31 @@ namespace nx
         const float iw = 1.0f / static_cast<float>(t.width);
         const float ih = 1.0f / static_cast<float>(t.height);
         quad(x, y, w, h, sx * iw, sy * ih, (sx + sw) * iw, (sy + sh) * ih, pack(tint));
+    }
+
+    void Canvas::placed(const Asset* texture, const float (&t)[6], float w, float h, float u0, float v0, float u1, float v1, const Color& color)
+    {
+        if (texture)
+        {
+            const gpu::TextureInfo info = m_device->textureInfo(texture->texture);
+            use(texture->texture, info.uMax, info.vMax);
+        }
+        else
+        {
+            use({}, 1, 1);
+        }
+        const float x = w * 0.5f, y = h * 0.5f;
+        const float ax = t[0] * x, ay = t[1] * x;
+        const float bx = t[2] * y, by = t[3] * y;
+        const u32 c = pack(color);
+        addQuad({ t[4] - ax - bx, t[5] - ay - by, u0, v0, c }, { t[4] + ax - bx, t[5] + ay - by, u1, v0, c },
+            { t[4] + ax + bx, t[5] + ay + by, u1, v1, c }, { t[4] - ax + bx, t[5] - ay + by, u0, v1, c });
+    }
+
+    void Canvas::glow(float x, float y, float radius, const Color& color)
+    {
+        use(m_soft, 1, 1);
+        quad(x - radius, y - radius, radius * 2, radius * 2, 0, 0, 1, 1, pack(color));
     }
 
     void Canvas::sprite(const Asset& t, u32 columns, u32 rows, u32 frame, float x, float y, float w, float h, const Color& tint)

@@ -100,14 +100,10 @@ namespace nx
 
         // AngelScript makes these again for each module that uses them, and keeps a little of every one
         // that was filled from a list. Held here, they are made once.
-        static const char* const arrays[kHeldTypes] = { "array<int>", "array<uint>", "array<float>", "array<bool>", "array<string>", "array<Vec2>", "array<Color>" };
-        for (u32 i = 0; i < kHeldTypes; i++)
+        static const char* const arrays[] = { "array<int>", "array<uint>", "array<float>", "array<bool>", "array<string>", "array<Vec2>", "array<Color>" };
+        for (const char* declaration : arrays)
         {
-            m_held[i] = m_engine->GetTypeInfoByDecl(arrays[i]);
-            if (m_held[i])
-            {
-                m_held[i]->AddRef();
-            }
+            hold(declaration);
         }
         return ok;
     }
@@ -127,6 +123,7 @@ namespace nx
                 type = nullptr;
             }
         }
+        m_heldCount = 0;
         if (m_engine)
         {
             m_engine->ShutDownAndRelease();
@@ -134,10 +131,27 @@ namespace nx
         }
     }
 
+    asITypeInfo* ScriptHost::hold(const char* declaration)
+    {
+        asITypeInfo* type = m_heldCount < kHeldTypes ? m_engine->GetTypeInfoByDecl(declaration) : nullptr;
+        if (type)
+        {
+            type->AddRef();
+            m_held[m_heldCount++] = type;
+        }
+        return type;
+    }
+
+    asITypeInfo* ScriptHost::findType(const char* module, const char* name)
+    {
+        asIScriptModule* m = m_engine->GetModule(module, asGM_ONLY_IF_EXISTS);
+        return m ? m->GetTypeInfoByName(name) : nullptr;
+    }
+
     bool ScriptHost::compile(const char* module, const char* file, const char* code, size_t length)
     {
         asIScriptModule* m = m_engine->GetModule(module, asGM_ALWAYS_CREATE);
-        if (m == nullptr || m->AddScriptSection(file, code, length) < 0 || m->Build() < 0)
+        if (m == nullptr || (m_prelude && m->AddScriptSection("engine", m_prelude) < 0) || m->AddScriptSection(file, code, length) < 0 || m->Build() < 0)
         {
             snprintf(m_error, sizeof(m_error), "%s did not compile", file);
             discard(module);
@@ -173,6 +187,11 @@ namespace nx
 
     asIScriptObject* ScriptHost::create(asITypeInfo* type)
     {
+        if (asGetActiveContext())
+        {
+            // From inside a script, whose context is busy: this nests in it, limits and all.
+            return static_cast<asIScriptObject*>(m_engine->CreateScriptObject(type));
+        }
         asIScriptFunction* factory = nullptr;
         for (asUINT i = 0; type && i < type->GetFactoryCount(); i++)
         {

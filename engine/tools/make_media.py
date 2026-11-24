@@ -12,7 +12,7 @@ import wave
 import numpy as np
 
 RATE = 44100
-MEDIA = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'media')
+MEDIA = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'NexgenRedux-Media', 'media')
 rng = np.random.default_rng(20)
 
 
@@ -156,6 +156,51 @@ def ambient(path):
     compress(wav, path, '-c:a', 'libmp3lame', '-b:a', '96k')
 
 
+def pulse(freq, length, width=0.5, vibrato=0.0):
+    """A pulse wave from its harmonics, so that it doesn't alias."""
+    t = seconds(length)
+    phase = 2 * np.pi * freq * t + vibrato * np.sin(2 * np.pi * 6 * t)
+    count = max(1, min(14, int(RATE / 2 / freq) - 1))
+    return sum(np.sin(np.pi * k * width) / k * np.cos(phase * k) for k in range(1, count + 1)) * 0.6
+
+
+def chip(path):
+    """Four channels, as a home computer would: arpeggios for chords, a lead, a bass and noise."""
+    step = 60 / 138 / 4
+    bars = [('A', 'A4 C5 E5'), ('A', 'A4 C5 E5'), ('F', 'F4 A4 C5'), ('G', 'G4 B4 D5'),
+            ('A', 'A4 C5 E5'), ('C', 'G4 C5 E5'), ('D', 'F4 A4 D5'), ('E', 'G#4 B4 E5')] * 2
+    lead = ('E5 . E5 G5 A5 . G5 E5 D5 . E5 . . . . . | E5 . E5 G5 A5 . C6 . B5 . A5 . G5 . E5 . | '
+            'F5 . F5 A5 C6 . A5 F5 C6 . B5 . A5 . G5 . | G5 . G5 B5 D6 . B5 G5 E5 . . . D5 . E5 . | '
+            'A5 . . C6 . . E6 . D6 . C6 . A5 . . . | G5 . . C6 . . E6 . D6 . C6 . G5 . . . | '
+            'F5 . A5 . D6 . A5 . F5 . A5 . D6 . F6 . | E6 . . . B5 . G#5 . E5 . G#5 . B5 . E6 .').replace('|', ' ').split() * 2
+    track = Track(len(bars) * 16 * step)
+    for i, (root, chord) in enumerate(bars):
+        notes = chord.split()
+        at = i * 16 * step
+        for k in range(16):
+            octave = 3 if k % 4 == 2 else 2
+            track.add(at + k * step, pulse(hz(root + str(octave)), step * 0.95, 0.25) * fall(step * 0.95, 9, 0.002), 0.34, -0.15)
+            # A chord is one note after another, too fast to tell apart.
+            for j in range(3):
+                length = step / 3
+                track.add(at + k * step + j * length, pulse(hz(notes[j]), length, 0.5) * np.minimum(1, (length - seconds(length)) * 400), 0.13, 0.5)
+            if k % 2 == 0:
+                track.add(at + k * step, noise(0.03) * fall(0.03, 90, 0.001), 0.10, 0.2)
+            if k % 8 == 4:
+                track.add(at + k * step, noise(0.14) * fall(0.14, 26, 0.001), 0.30)
+            if k % 8 == 0 or k == 10:
+                track.add(at + k * step, pulse(90, 0.12) * fall(0.12, 30, 0.001) + tone([220, 50, 45], 0.12) * fall(0.12, 20, 0.001), 0.5)
+    for k, n in enumerate(lead):
+        if n != '.':
+            # The second time round a thinner sound, and an echo throughout.
+            width = 0.5 if k < len(lead) // 2 else 0.2
+            for delay, volume in ((0, 0.24), (step * 3, 0.08)):
+                track.add(k * step + delay, pulse(hz(n), step * 2.4, width, 0.25) * fall(step * 2.4, 5, 0.004), volume, 0 if delay == 0 else -0.6)
+    wav = path + '.wav'
+    save_wav(wav, track.data, 0.85)
+    compress(wav, path, '-c:a', 'libvorbis', '-q:a', '3')
+
+
 def pictures():
     from PIL import Image
     folder = os.path.join(MEDIA, 'showcase', 'loading', 'asset')
@@ -177,4 +222,5 @@ if __name__ == '__main__':
     tune(os.path.join(music, 'tune.ogg'))
     ambient(os.path.join(music, 'ambient.mp3'))
     pictures()
+    chip(os.path.join(MEDIA, 'showcase', 'cracktro', 'asset', 'chip.ogg'))
     sys.exit(0)

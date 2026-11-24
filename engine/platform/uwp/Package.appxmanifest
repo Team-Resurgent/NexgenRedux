@@ -5,11 +5,11 @@
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
   IgnorableNamespaces="uap mp">
 
-  <Identity Name="TeamResurgent.NexgenShowcase" Publisher="CN=TeamResurgent" Version="0.1.0.0" ProcessorArchitecture="x64" />
+  <Identity Name="TeamResurgent.Nexgen" Publisher="CN=TeamResurgent" Version="0.1.0.0" ProcessorArchitecture="x64" />
   <mp:PhoneIdentity PhoneProductId="6d0f3a52-5a0c-4b5f-9a35-0d1a7a6a9c11" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
 
   <Properties>
-    <DisplayName>Nexgen showcase</DisplayName>
+    <DisplayName>Nexgen</DisplayName>
     <PublisherDisplayName>Team Resurgent</PublisherDisplayName>
     <Logo>images\StoreLogo.png</Logo>
   </Properties>
@@ -24,7 +24,7 @@
 
   <Applications>
     <Application Id="App" Executable="$targetnametoken$.exe" EntryPoint="Nexgen.App">
-      <uap:VisualElements DisplayName="Nexgen showcase" Description="What the Nexgen engine can do" BackgroundColor="#0B0E16"
+      <uap:VisualElements DisplayName="Nexgen" Description="What the Nexgen engine can do" BackgroundColor="#0B0E16"
         Square150x150Logo="images\Square150x150Logo.png" Square44x44Logo="images\Square44x44Logo.png">
         <uap:DefaultTile Wide310x150Logo="images\Wide310x150Logo.png" />
         <uap:SplashScreen Image="images\SplashScreen.png" BackgroundColor="#0B0E16" />

@@ -84,6 +84,7 @@ namespace nx
         snprintf(info.id, sizeof(info.id), "%s", folderName);
         jsonString(text, "description", info.description, sizeof(info.description));
         jsonString(text, "category", info.category, sizeof(info.category));
+        jsonString(text, "demo", info.demo, sizeof(info.demo));
         double order = 1000;
         jsonNumber(text, "order", order);
         info.order = static_cast<int>(order);
@@ -212,6 +213,8 @@ namespace nx
         entry.loadingFor = 0;
         entry.group = ++m_nextModule;
         snprintf(entry.module, sizeof(entry.module), "screen%u", static_cast<unsigned>(entry.group));
+        const bool small = m_services->platform->totalMemory() && m_services->platform->totalMemory() <= 128u * 1024 * 1024;
+        entry.world = create<World>(MemTag::Scene, *m_services->assets, *m_services->host, entry.module, small ? 4096u : 16384u, small ? 1500u : 8000u);
         enter(entry);
 
         char path[192];
@@ -282,7 +285,7 @@ namespace nx
         char path[192];
         snprintf(path, sizeof(path), "%s/%s/main.as", m_folder, entry.info.id);
         const u64 time = m_services->platform->fileTime(path);
-        if (time && time != entry.scriptTime)
+        if ((time && time != entry.scriptTime) || (entry.world && entry.world->changed()))
         {
             NX_INFO("reloading %s", path);
             m_services->reloads++;
@@ -299,6 +302,9 @@ namespace nx
         }
         m_services->coroutines->stop(entry.group);
         m_services->audio->stopGroup(entry.group, 0.15f);
+        // Before its module goes: the behaviours are from there.
+        destroy(entry.world);
+        entry.world = nullptr;
         ScriptHost& host = *m_services->host;
         host.release(entry.object);
         entry.object = nullptr;
@@ -311,6 +317,7 @@ namespace nx
     void Screens::enter(const Entry& entry)
     {
         snprintf(m_services->folder, sizeof(m_services->folder), "%s/%s", m_folder, entry.info.id);
+        m_services->world = entry.world;
         m_services->audio->setGroup(entry.group);
         m_services->coroutines->setGroup(entry.group);
     }
@@ -370,6 +377,10 @@ namespace nx
         {
             enter(entry);
             if (entry.update && !m_services->host->callMethod(entry.object, entry.update, dt))
+            {
+                fail(entry);
+            }
+            if (!entry.failed && entry.world && !entry.world->update(dt))
             {
                 fail(entry);
             }

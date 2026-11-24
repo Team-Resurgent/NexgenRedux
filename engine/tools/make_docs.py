@@ -13,7 +13,7 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DOCS = os.path.join(HERE, '..', '..', 'docs')
-SHOWCASE = os.path.join(HERE, '..', 'media', 'showcase')
+SHOWCASE = os.path.join(HERE, '..', '..', 'NexgenRedux-Media', 'media', 'showcase')
 GITHUB = 'https://github.com/Team-Resurgent/NexgenRedux'
 
 CSS = '''
@@ -191,14 +191,16 @@ def tidy(declaration):
 
 # How the reference is arranged. A name that isn't here is put at the end.
 TOPICS = [
-    ('Screens', ['Screen', 'screens', 'app']),
+    ('Screens', ['Screen', 'Screens', 'App']),
     ('Drawing', ['Canvas', 'Color', 'Texture', 'Font', 'Blend', 'Filter', 'Align']),
-    ('Assets', ['assets']),
-    ('Sound', ['Sound', 'Voice', 'Bus', 'audio']),
-    ('Input', ['input']),
+    ('Scene', ['Scene', 'Entity', 'Behaviour']),
+    ('Assets', ['Assets']),
+    ('Sound', ['Sound', 'Voice', 'Bus', 'Audio']),
+    ('Input', ['Input']),
     ('Movement', ['Tween', 'Ease', 'Coroutines', 'Maths']),
-    ('Saving', ['save']),
+    ('Saving', ['Save']),
 ]
+NAMESPACES = ['Screens', 'App', 'Scene', 'Assets', 'Audio', 'Input', 'Save']
 FUNCTIONS = ['Coroutines', 'Maths']  # sections that aren't a type or a namespace
 
 
@@ -233,14 +235,13 @@ def reference():
             section = sections[name]
             if name in FUNCTIONS:
                 kind = 'functions'
-            elif name[0].islower():
+            elif name in NAMESPACES:
                 kind = name + '::'
             elif all('(' not in d and ' ' not in d for d, _ in section['rows']):
                 kind = 'enum'
             else:
                 kind = 'type'
-            # Every title is capitalised; what follows it says how it is written in a script.
-            shown = name[0].upper() + name[1:]
+            shown = name
             anchor = 'ns-' + slug(name) if kind.endswith('::') else slug(name)
             nav.append((anchor, shown + (' <i>%s</i>' % kind if kind.endswith('::') else '')))
             out.append('<section id="%s" data-title="%s"><h2>%s <span class="kind">%s</span></h2>' % (anchor, html.escape((topic + ' ' + name + ' ' + kind).lower(), True), shown, kind))
@@ -311,7 +312,7 @@ def main(folder):
     demo_body, demo_nav, count = demos()
     page(folder, 'demos.html', 'Nexgen Redux demos', '<h1>Demos</h1><p class="lead">Every screen of the showcase, with its whole script.</p>' + demo_body, demo_nav, True)
     body, nav = reference()
-    page(folder, 'reference.html', 'Nexgen Redux script reference', '<h1>Script reference</h1><p class="lead">Everything that scripts can call, written by the engine itself. A tag like <code>assets::</code> is a namespace: its calls are written <code>assets::texture(...)</code>.</p>' + body, nav, True)
+    page(folder, 'reference.html', 'Nexgen Redux script reference', '<h1>Script reference</h1><p class="lead">Everything that scripts can call, written by the engine itself. Types, namespaces and constants begin with a capital; functions and properties don\'t. A tag like <code>Assets::</code> is a namespace: its calls are written <code>Assets::texture(...)</code>.</p>' + body, nav, True)
     body, heads = markdown(open(os.path.join(DOCS, 'Guide.md'), encoding='utf-8').read())
     page(folder, 'guide.html', 'Nexgen Redux guide', body, [(slug(h), html.escape(h)) for h in heads])
 
@@ -323,7 +324,6 @@ def main(folder):
 <a href="reference.html"><b>Script reference</b>Every call, with search</a>
 <a href="demos.html"><b>Demos</b>%d screens, with their scripts</a>
 <a href="%s/actions/workflows/engine.yml"><b>Download</b>Builds for each platform</a>
-<a href="v1/index.html"><b>First engine</b>The reference for the engine before this one</a>
 </div>
 <div class="shots">%s</div>''' % (count, GITHUB, ''.join('<figure><img loading="lazy" src="screenshots/%s.png" alt="%s"><figcaption>%s</figcaption></figure>' % (n, c, c) for n, c in captions))
     page(folder, 'index.html', 'Nexgen Redux', body)

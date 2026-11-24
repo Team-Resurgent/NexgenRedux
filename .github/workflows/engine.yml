@@ -164,9 +164,48 @@ jobs:
           dist/*.iso
         if-no-files-found: error
 
+  uwp:
+    name: uwp-x64
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v5
+
+    - name: Build
+      working-directory: engine
+      run: |
+        cmake --preset uwp
+        if ($LASTEXITCODE) { exit $LASTEXITCODE }
+        cmake --build --preset uwp --parallel 4 -- -p:AppxPackageSigningEnabled=false
+
+    # Windows installs only signed packages. The certificate is made for this build and shipped with it.
+    - name: Sign and package
+      run: |
+        $package = 'Nexgen-showcase-uwp-x64'
+        $built = Get-ChildItem engine/build/uwp/AppPackages -Recurse -Include *.msix, *.appx | Where-Object { $_.FullName -notmatch 'Dependencies' } | Select-Object -First 1
+        if (-not $built) { throw 'no app package was built' }
+        New-Item -ItemType Directory -Force "dist/$package" | Out-Null
+        Copy-Item "$($built.Directory.FullName)/*" "dist/$package" -Recurse
+        $msix = Get-ChildItem "dist/$package" -File | Where-Object { $_.Extension -in '.msix', '.appx' } | Select-Object -First 1
+        $cert = New-SelfSignedCertificate -Type Custom -Subject 'CN=TeamResurgent' -KeyUsage DigitalSignature -FriendlyName 'Nexgen showcase' -CertStoreLocation Cert:/CurrentUser/My -TextExtension @('2.5.29.37={text}1.3.6.1.5.5.7.3.3', '2.5.29.19={text}')
+        Export-Certificate -Cert $cert -FilePath ($msix.FullName -replace '[.][^.]+$', '.cer') | Out-Null
+        $sdk = Get-ChildItem 'C:/Program Files (x86)/Windows Kits/10/bin/10.*/x64/signtool.exe' | Sort-Object FullName | Select-Object -Last 1
+        & $sdk.FullName sign /fd SHA256 /sha1 $cert.Thumbprint $msix.FullName
+        if ($LASTEXITCODE) { exit $LASTEXITCODE }
+        & (Join-Path $sdk.DirectoryName 'makeappx.exe') unpack /p $msix.FullName /d unpacked /o | Out-Null
+        $demos = (Get-ChildItem unpacked/media/showcase -Recurse -Filter main.as).Count
+        if ($demos -lt 20) { throw "only $demos demos in the package" }
+        Compress-Archive "dist/$package" "dist/$package.zip"
+
+    - uses: actions/upload-artifact@v5
+      with:
+        name: Nexgen-showcase-uwp-x64
+        path: dist/*.zip
+        if-no-files-found: error
+
   release:
     name: Release
-    needs: [ desktop, variants, xboxog ]
+    needs: [ desktop, variants, xboxog, uwp ]
     if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
     permissions:
@@ -192,6 +231,7 @@ jobs:
         | `windows-x64` | Unzip and run `showcase.exe` |
         | `linux-x64` | Unpack and run `./showcase` |
         | `macos-arm64`, `macos-x64` | Unzip and open the app. It is not notarised: the first time, right-click it and choose Open |
+        | `uwp-x64` | Xbox One, Xbox Series or Windows, in Developer Mode: install the `.cer` and then the package, or upload the package in the Xbox Device Portal |
         | `xbox-og` | Copy the folder to the console, or run the `.iso` in xemu or from an ODE |
 
         EOF

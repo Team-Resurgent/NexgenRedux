@@ -23,7 +23,7 @@
       }
     },
     {
-      "name": "uwp", "inherits": "base", "displayName": "Xbox One / Series UWP (shared layers only)",
+      "name": "uwp", "inherits": "base", "displayName": "UWP: Xbox One, Series and Windows",
       "generator": "Visual Studio 17 2022", "architecture": "x64",
       "cacheVariables": { "CMAKE_SYSTEM_NAME": "WindowsStore", "CMAKE_SYSTEM_VERSION": "10.0" }
     }

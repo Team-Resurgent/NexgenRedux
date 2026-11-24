@@ -14,6 +14,10 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/Team-Resurgent/NexgenRedux/releases/latest"><img src="https://img.shields.io/badge/download-latest-brightgreen.svg?style=for-the-badge&logo=github" alt="Download"></a>
+</p>
+
+<p align="center">
   <img src="docs/screenshots/main.png" alt="The showcase's main menu" width="80%">
 </p>
 
@@ -69,18 +73,20 @@ a compiler and the platform's SDK, downloads nothing, and uses no SDL or GLFW.
 | Original Xbox | Working in xemu (64 and 128 MB); not yet tried on a console | Direct3D 8 | DirectSound |
 | Linux | Working (X11) | OpenGL 3.3 | miniaudio |
 | macOS 11 and later | Builds and passes its tests in CI (Intel and Apple silicon); not yet run on a Mac with a screen | OpenGL 3.3 | miniaudio |
-| Xbox 360, Xbox One and Series | Shared code compiles; to come | | |
+| UWP: Xbox One, Series and Windows | Working on Windows; not yet tried on a console | Direct3D 11 | miniaudio |
+| Xbox 360 | Shared code compiles; to come | | |
 
 ## Download
 
-Every run of the [Engine workflow](https://github.com/Team-Resurgent/NexgenRedux/actions/workflows/engine.yml) keeps a package
-for each platform, with all the demo scripts in it:
+The [latest release](https://github.com/Team-Resurgent/NexgenRedux/releases/latest) has a package for each platform, built from
+`main`, with all the demo scripts in it:
 
 | Package | What to do |
 |---|---|
 | `Nexgen-showcase-windows-x64` | Unzip and run `showcase.exe` |
 | `Nexgen-showcase-linux-x64` | Unpack and run `./showcase` |
 | `Nexgen-showcase-macos-arm64`, `-macos-x64` | Unzip and open the app. It isn't notarised: the first time, right-click it and choose Open |
+| `Nexgen-showcase-uwp-x64` | Xbox One, Xbox Series or Windows, in Developer Mode: install the `.cer` and then the package, or upload the package in the Xbox Device Portal |
 | `Nexgen-showcase-xbox-og` | Copy the folder to the console, or run the `.iso` in xemu or from an ODE |
 
 To change a demo, edit its `main.as` in `media/showcase` (inside the app on macOS, under `Contents/Resources`). Started with

@@ -1,4 +1,4 @@
-#include "platform/platform.h"
+#include "platform/windows/platform_windows.h"
 #include "base/log.h"
 
 #define WIN32_LEAN_AND_MEAN
@@ -13,36 +13,7 @@ namespace nx
     namespace
     {
         constexpr wchar_t kWindowClass[] = L"NexgenWindow";
-        constexpr int kMaxPath = 1024;
-
-        Key translateKey(WPARAM code)
-        {
-            if (code >= 'A' && code <= 'Z')
-            {
-                return static_cast<Key>(static_cast<u32>(Key::A) + (code - 'A'));
-            }
-            if (code >= '0' && code <= '9')
-            {
-                return static_cast<Key>(static_cast<u32>(Key::Num0) + (code - '0'));
-            }
-            switch (code)
-            {
-            case VK_UP: return Key::Up;
-            case VK_DOWN: return Key::Down;
-            case VK_LEFT: return Key::Left;
-            case VK_RIGHT: return Key::Right;
-            case VK_SPACE: return Key::Space;
-            case VK_RETURN: return Key::Enter;
-            case VK_ESCAPE: return Key::Escape;
-            case VK_TAB: return Key::Tab;
-            case VK_BACK: return Key::Backspace;
-            case VK_SHIFT: return Key::Shift;
-            case VK_CONTROL: return Key::Control;
-            default: return Key::None;
-            }
-        }
-
-        class PlatformWin32 final : public Platform
+        class PlatformWin32 final : public PlatformWindows
         {
         public:
             ~PlatformWin32() override
@@ -58,20 +29,18 @@ namespace nx
             {
                 SetConsoleOutputCP(CP_UTF8);
                 SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
-                QueryPerformanceFrequency(&m_frequency);
-                QueryPerformanceCounter(&m_start);
-
-                const DWORD length = GetModuleFileNameW(nullptr, m_base, kMaxPath);
-                if (length == 0 || length >= kMaxPath)
+                wchar_t base[kMaxPath];
+                const DWORD length = GetModuleFileNameW(nullptr, base, kMaxPath);
+                wchar_t* slash = length && length < kMaxPath ? wcsrchr(base, L'\\') : nullptr;
+                wchar_t saves[kMaxPath];
+                const DWORD found = GetEnvironmentVariableW(L"LOCALAPPDATA", saves, kMaxPath);
+                if (slash == nullptr || found == 0 || found >= kMaxPath || wcscat_s(saves, L"\\Nexgen") != 0)
                 {
                     NX_ERROR("cannot find the program's folder");
                     return false;
                 }
-                if (wchar_t* slash = wcsrchr(m_base, L'\\'))
-                {
-                    slash[1] = 0;
-                }
-                return true;
+                *slash = 0;
+                return setFolders(base, saves);
             }
 
             bool openWindow(const WindowDesc& desc) override
@@ -124,128 +93,6 @@ namespace nx
 
             const InputState& input() const override { return m_input; }
 
-            double seconds() override
-            {
-                LARGE_INTEGER now;
-                QueryPerformanceCounter(&now);
-                return static_cast<double>(now.QuadPart - m_start.QuadPart) / static_cast<double>(m_frequency.QuadPart);
-            }
-
-            void sleep(double seconds) override { Sleep(static_cast<DWORD>(seconds * 1000.0)); }
-
-            bool readFile(const char* path, FileData& out, MemTag tag) override
-            {
-                wchar_t full[kMaxPath];
-                if (!mediaPath(path, L"", full))
-                {
-                    return false;
-                }
-                const HANDLE file = CreateFileW(full, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
-                if (file == INVALID_HANDLE_VALUE)
-                {
-                    NX_ERROR("cannot open %s (%lu)", path, GetLastError());
-                    return false;
-                }
-                LARGE_INTEGER size = {};
-                GetFileSizeEx(file, &size);
-                u8* data = size.QuadPart < 0x7FFFFFFF ? static_cast<u8*>(memAlloc(static_cast<size_t>(size.QuadPart) + 1, tag)) : nullptr;
-                DWORD read = 0;
-                const bool ok = data && ReadFile(file, data, static_cast<DWORD>(size.QuadPart), &read, nullptr) && read == size.QuadPart;
-                CloseHandle(file);
-                if (!ok)
-                {
-                    NX_ERROR("cannot read %s", path);
-                    memFree(data);
-                    return false;
-                }
-                out.take(data, read);
-                return true;
-            }
-
-            u64 fileTime(const char* path) override
-            {
-                wchar_t full[kMaxPath];
-                WIN32_FILE_ATTRIBUTE_DATA data;
-                if (!mediaPath(path, L"", full) || !GetFileAttributesExW(full, GetFileExInfoStandard, &data))
-                {
-                    return 0;
-                }
-                return (static_cast<u64>(data.ftLastWriteTime.dwHighDateTime) << 32) | data.ftLastWriteTime.dwLowDateTime;
-            }
-
-            bool loadSave(const char* name, FileData& out) override
-            {
-                wchar_t full[kMaxPath];
-                if (!savePath(name, L"", full))
-                {
-                    return false;
-                }
-                const HANDLE file = CreateFileW(full, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
-                if (file == INVALID_HANDLE_VALUE)
-                {
-                    return false;  // nothing saved yet
-                }
-                LARGE_INTEGER size = {};
-                GetFileSizeEx(file, &size);
-                u8* data = size.QuadPart < 0x1000000 ? static_cast<u8*>(memAlloc(static_cast<size_t>(size.QuadPart) + 1, MemTag::General)) : nullptr;
-                DWORD read = 0;
-                const bool ok = data && ReadFile(file, data, static_cast<DWORD>(size.QuadPart), &read, nullptr) && read == size.QuadPart;
-                CloseHandle(file);
-                if (!ok)
-                {
-                    memFree(data);
-                    return false;
-                }
-                out.take(data, read);
-                return true;
-            }
-
-            // Written beside the old one and then swapped in, so a crash never leaves half a file.
-            bool writeSave(const char* name, const void* data, size_t size) override
-            {
-                wchar_t full[kMaxPath];
-                wchar_t fresh[kMaxPath];
-                if (!savePath(name, L"", full) || !savePath(name, L".new", fresh))
-                {
-                    return false;
-                }
-                const HANDLE file = CreateFileW(fresh, GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
-                if (file == INVALID_HANDLE_VALUE)
-                {
-                    NX_ERROR("cannot save %s (%lu)", name, GetLastError());
-                    return false;
-                }
-                DWORD written = 0;
-                const bool ok = WriteFile(file, data, static_cast<DWORD>(size), &written, nullptr) && written == size;
-                CloseHandle(file);
-                return ok && MoveFileExW(fresh, full, MOVEFILE_REPLACE_EXISTING);
-            }
-
-            void listFolders(const char* path, FolderCallback callback, void* user) override
-            {
-                wchar_t full[kMaxPath];
-                if (!mediaPath(path, L"/*", full))
-                {
-                    return;
-                }
-                WIN32_FIND_DATAW found;
-                const HANDLE search = FindFirstFileW(full, &found);
-                if (search == INVALID_HANDLE_VALUE)
-                {
-                    return;
-                }
-                do
-                {
-                    char name[MAX_PATH * 3];
-                    if ((found.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && found.cFileName[0] != L'.' &&
-                        WideCharToMultiByte(CP_UTF8, 0, found.cFileName, -1, name, sizeof(name), nullptr, nullptr))
-                    {
-                        callback(name, user);
-                    }
-                } while (FindNextFileW(search, &found));
-                FindClose(search);
-            }
-
             u64 totalMemory() override { return memory().ullTotalPhys; }
             u64 freeMemory() override { return memory().ullAvailPhys; }
             const char* name() const override { return "Windows"; }
@@ -257,30 +104,6 @@ namespace nx
                 status.dwLength = sizeof(status);
                 GlobalMemoryStatusEx(&status);
                 return status;
-            }
-
-            static bool savePath(const char* name, const wchar_t* suffix, wchar_t (&full)[kMaxPath])
-            {
-                wchar_t folder[kMaxPath];
-                const DWORD length = GetEnvironmentVariableW(L"LOCALAPPDATA", folder, kMaxPath);
-                if (length == 0 || length >= kMaxPath || swprintf(full, kMaxPath, L"%ls\\Nexgen", folder) < 0)
-                {
-                    return false;
-                }
-                CreateDirectoryW(full, nullptr);
-                return swprintf(full, kMaxPath, L"%ls\\Nexgen\\%hs.sav%ls", folder, name, suffix) > 0;
-            }
-
-            bool mediaPath(const char* path, const wchar_t* suffix, wchar_t (&full)[kMaxPath]) const
-            {
-                wchar_t relative[kMaxPath];
-                if (MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, path, -1, relative, kMaxPath) == 0 ||
-                    swprintf(full, kMaxPath, L"%lsmedia/%ls%ls", m_base, relative, suffix) < 0)
-                {
-                    NX_ERROR("bad path: %s", path);
-                    return false;
-                }
-                return true;
             }
 
             void readPads()
@@ -368,7 +191,7 @@ namespace nx
                     return 0;
                 case WM_KEYDOWN:
                 case WM_KEYUP:
-                    m_input.keys[static_cast<size_t>(translateKey(wParam))] = message == WM_KEYDOWN;
+                    m_input.keys[static_cast<size_t>(translateKey(static_cast<u32>(wParam)))] = message == WM_KEYDOWN;
                     m_input.keys[static_cast<size_t>(Key::None)] = false;
                     return 0;
                 case WM_MOUSEMOVE:
@@ -402,11 +225,8 @@ namespace nx
             }
 
             HWND m_window = nullptr;
-            LARGE_INTEGER m_frequency = {};
-            LARGE_INTEGER m_start = {};
             InputState m_input;
             double m_nextPadSearch = 0;
-            wchar_t m_base[kMaxPath] = {};
             bool m_focused = false;
             bool m_quit = false;
         };

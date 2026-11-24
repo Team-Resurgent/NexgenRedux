@@ -31,6 +31,10 @@ header input { margin-left: auto; min-width: 200px; flex: 0 1 300px; padding: 7p
 .page { display: grid; grid-template-columns: 230px minmax(0, 1fr); max-width: 1240px; margin: 0 auto; }
 .page.wide { grid-template-columns: minmax(0, 1fr); }
 nav { position: sticky; top: 58px; align-self: start; max-height: calc(100vh - 58px); overflow: auto; padding: 24px 12px 40px 24px; font-size: 15px; }
+nav b { display: block; margin: 16px 0 2px; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; }
+nav b:first-child { margin-top: 0; }
+nav i, .kind { font: 13px ui-monospace, Consolas, Menlo, monospace; color: var(--dim); opacity: .8; }
+.kind { border: 1px solid var(--line); border-radius: 6px; padding: 2px 7px; vertical-align: middle; margin-left: 6px; }
 nav a { display: block; padding: 2px 0; color: var(--dim); overflow-wrap: anywhere; }
 main { padding: 24px 24px 80px; min-width: 0; }
 h1 { font-size: 34px; line-height: 1.2; margin: 8px 0 16px; }
@@ -185,36 +189,69 @@ def tidy(declaration):
     return '%s %s' % m.groups() if m else declaration
 
 
+# How the reference is arranged. A name that isn't here is put at the end.
+TOPICS = [
+    ('Screens', ['Screen', 'screens', 'app']),
+    ('Drawing', ['Canvas', 'Color', 'Texture', 'Font', 'Blend', 'Filter', 'Align']),
+    ('Assets', ['assets']),
+    ('Sound', ['Sound', 'Voice', 'Bus', 'audio']),
+    ('Input', ['input']),
+    ('Movement', ['Tween', 'Ease', 'Coroutines', 'Maths']),
+    ('Saving', ['save']),
+]
+FUNCTIONS = ['Coroutines', 'Maths']  # sections that aren't a type or a namespace
+
+
 def reference():
-    text = open(os.path.join(DOCS, 'ScriptReference.md'), encoding='utf-8').read()
-    out, nav, section = [], [], None
-    for line in text.split('\n'):
+    sections, current = {}, None
+    for line in open(os.path.join(DOCS, 'ScriptReference.md'), encoding='utf-8').read().split('\n'):
         if line.startswith('## ') or line.startswith('### '):
             title = line.lstrip('# ')
-            # "### Sound" adds to a section that was there before.
-            short = re.sub(r'^void (\w+)\(\)$', r'\1', title)
-            if section:
-                out.append('</table></section>')
-            anchor = slug(short)
-            while any(a == anchor for a, _ in nav):
-                anchor += '-more'
-            nav.append((anchor, short))
-            out.append('<section id="%s" data-title="%s"><h2>%s</h2>' % (anchor, html.escape(title.lower()), inline(short)))
-            section = title
-            table = False
-        elif section and line.startswith('| `'):
+            # A function type is described with the calls that take it.
+            kind = re.match(r'void (\w+)\(\)$', title)
+            name = kind.group(1) + 's' if kind else title
+            current = sections.setdefault(name, {'text': [], 'rows': []})
+            function_type = 'funcdef ' + title if kind else None
+        elif current is not None and line.startswith('| `'):
             declaration, doc = cells(line)[:2]
-            shown = tidy(declaration.strip('`'))
-            if not table:
+            current['rows'].append((tidy(declaration.strip('`')), doc))
+        elif current is not None and line.strip() and not line.startswith('|'):
+            if function_type:
+                current['rows'].append((function_type, line.strip()))
+            else:
+                current['text'].append(line)
+
+    known = [name for _, names in TOPICS for name in names]
+    topics = TOPICS + [('More', [name for name in sections if name not in known])]
+    out, nav = [], []
+    for topic, names in topics:
+        names = [name for name in names if name in sections]
+        if not names:
+            continue
+        nav.append((None, topic))
+        for name in names:
+            section = sections[name]
+            if name in FUNCTIONS:
+                kind = 'functions'
+            elif name[0].islower():
+                kind = name + '::'
+            elif all('(' not in d and ' ' not in d for d, _ in section['rows']):
+                kind = 'enum'
+            else:
+                kind = 'type'
+            # Every title is capitalised; what follows it says how it is written in a script.
+            shown = name[0].upper() + name[1:]
+            anchor = 'ns-' + slug(name) if kind.endswith('::') else slug(name)
+            nav.append((anchor, shown + (' <i>%s</i>' % kind if kind.endswith('::') else '')))
+            out.append('<section id="%s" data-title="%s"><h2>%s <span class="kind">%s</span></h2>' % (anchor, html.escape((topic + ' ' + name + ' ' + kind).lower(), True), shown, kind))
+            out += ['<p>%s</p>' % inline(t) for t in section['text']]
+            if section['rows']:
                 out.append('<table class="api">')
-                table = True
-            out.append('<tr data-find="%s"><td><code>%s</code></td><td>%s</td></tr>' % (html.escape((shown + ' ' + doc).lower(), True), highlight(shown), inline(doc)))
-        elif section and line.strip() and not line.startswith('|'):
-            out.append('<p>%s</p>' % inline(line))
-    out.append('</table></section>')
-    # A heading with nothing under it has no table to close.
-    body = re.sub(r'(<h2>[^\n]*</h2>\n(?:<p>[^\n]*</p>\n)*)</table></section>', r'\1</section>', '\n'.join(out))
-    return body, nav
+                for declaration, doc in section['rows']:
+                    out.append('<tr data-find="%s"><td><code>%s</code></td><td>%s</td></tr>' % (html.escape((declaration + ' ' + doc).lower(), True), highlight(declaration), inline(doc)))
+                out.append('</table>')
+            out.append('</section>')
+    return '\n'.join(out), nav
 
 
 def demos():
@@ -246,7 +283,7 @@ def demos():
 def page(folder, name, title, body, nav=None, search=False):
     links = [('index.html', 'Home'), ('guide.html', 'Guide'), ('reference.html', 'Script reference'), ('demos.html', 'Demos')]
     top = ' '.join('<a%s href="%s">%s</a>' % (' class="here"' if f == name else '', f, t) for f, t in links)
-    side = '<nav>%s</nav>' % ''.join('<a href="#%s">%s</a>' % (a, html.escape(t)) for a, t in nav) if nav else ''
+    side = '<nav>%s</nav>' % ''.join('<a href="#%s">%s</a>' % (a, t) if a else '<b>%s</b>' % t for a, t in nav) if nav else ''
     text = '''<!doctype html>
 <html lang="en">
 <head>
@@ -274,9 +311,9 @@ def main(folder):
     demo_body, demo_nav, count = demos()
     page(folder, 'demos.html', 'Nexgen Redux demos', '<h1>Demos</h1><p class="lead">Every screen of the showcase, with its whole script.</p>' + demo_body, demo_nav, True)
     body, nav = reference()
-    page(folder, 'reference.html', 'Nexgen Redux script reference', '<h1>Script reference</h1><p class="lead">Everything that scripts can call, written by the engine itself.</p>' + body, nav, True)
+    page(folder, 'reference.html', 'Nexgen Redux script reference', '<h1>Script reference</h1><p class="lead">Everything that scripts can call, written by the engine itself. A tag like <code>assets::</code> is a namespace: its calls are written <code>assets::texture(...)</code>.</p>' + body, nav, True)
     body, heads = markdown(open(os.path.join(DOCS, 'Guide.md'), encoding='utf-8').read())
-    page(folder, 'guide.html', 'Nexgen Redux guide', body, [(slug(h), h) for h in heads])
+    page(folder, 'guide.html', 'Nexgen Redux guide', body, [(slug(h), html.escape(h)) for h in heads])
 
     captions = [('music', 'Music'), ('runes', 'Rune shift'), ('rally', 'Comet rally'), ('cracktro', 'Cracktro'), ('parallax', 'Parallax'), ('coroutines', 'Coroutines'), ('gauges', 'Gauges'), ('shapes', 'Shapes'), ('xbox-main', 'On the original Xbox, in xemu')]
     body = '''<h1>Nexgen Redux</h1>

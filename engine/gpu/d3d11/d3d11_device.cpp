@@ -6,6 +6,10 @@
 #include <d3d11.h>
 #include <dxgi1_3.h>
 
+#if defined(NX_UWP)
+#include "gpu/d3d11/uwp_window.h"
+#endif
+
 #include <string.h>
 
 // Direct3D 11, for Windows and later Xbox One / Series. Frames are drawn to our own target and then
@@ -14,6 +18,12 @@ namespace nx::gpu
 {
     namespace
     {
+#if defined(NX_UWP)
+        using NativeWindow = const UwpWindow*;
+#else
+        using NativeWindow = HWND;
+#endif
+
         template <typename T>
         void release(T*& object)
         {
@@ -61,7 +71,7 @@ namespace nx::gpu
         class D3D11Device final : public Device
         {
         public:
-            explicit D3D11Device(HWND window) : m_window(window) {}
+            explicit D3D11Device(NativeWindow window) : m_window(window) {}
 
             ~D3D11Device() override
             {
@@ -452,8 +462,12 @@ namespace nx::gpu
                     desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
                     desc.BufferCount = 2;
                     desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+#if defined(NX_UWP)
+                    created = ok(factory->CreateSwapChainForCoreWindow(m_device, m_window->window, &desc, nullptr, &m_swapchain), "swap chain");
+#else
                     created = ok(factory->CreateSwapChainForHwnd(m_device, m_window, &desc, nullptr, nullptr, &m_swapchain), "swap chain");
                     factory->MakeWindowAssociation(m_window, DXGI_MWA_NO_ALT_ENTER);
+#endif
                 }
                 release(factory);
                 release(adapter);
@@ -501,16 +515,27 @@ namespace nx::gpu
                 release(m_depth);
             }
 
+            void windowSize(u32& width, u32& height)
+            {
+#if defined(NX_UWP)
+                m_window->size(m_window->user, width, height);
+#else
+                RECT rect = {};
+                GetClientRect(m_window, &rect);
+                width = static_cast<u32>(rect.right);
+                height = static_cast<u32>(rect.bottom);
+#endif
+            }
+
             // False when the window has no area.
             bool resize()
             {
-                RECT rect;
-                if (!GetClientRect(m_window, &rect) || rect.right <= 0 || rect.bottom <= 0)
+                u32 width = 0, height = 0;
+                windowSize(width, height);
+                if (width == 0 || height == 0)
                 {
                     return false;
                 }
-                const u32 width = static_cast<u32>(rect.right);
-                const u32 height = static_cast<u32>(rect.bottom);
                 if (width == m_width && height == m_height && m_depthView)
                 {
                     return true;
@@ -538,7 +563,7 @@ namespace nx::gpu
                        ok(m_device->CreateDepthStencilView(m_depth, nullptr, &m_depthView), "depth view");
             }
 
-            HWND m_window;
+            NativeWindow m_window;
             ID3D11Device* m_device = nullptr;
             ID3D11DeviceContext* m_context = nullptr;
             IDXGISwapChain1* m_swapchain = nullptr;
@@ -573,7 +598,7 @@ namespace nx::gpu
 
     Device* createDevice(void* nativeWindow)
     {
-        D3D11Device* device = create<D3D11Device>(MemTag::General, static_cast<HWND>(nativeWindow));
+        D3D11Device* device = create<D3D11Device>(MemTag::General, static_cast<NativeWindow>(nativeWindow));
         if (device && !device->init())
         {
             destroy(device);

@@ -754,7 +754,7 @@ the design. Sizes are relative effort, not dates.
 | **3 Scene** | Entities, **pooled spawning**, hierarchy, sprites, animation, collision, prefabs | + Parallax, Shooter (script under 300 lines), Stress test | M |
 | **4 UI** | Layout, focus, themes, lists, on-screen keyboard, layout files, dashboard module | Main menu rebuilt on UI; + UI gallery, Dashboard at 60 fps on OG | L |
 | **5 3D** | glTF, materials, lights, fog, skinning, **LOD and culling, ray marching**, shadows and post effects on higher tiers | + 3D scene, Mixed. **First full release** | L |
-| **6 Xbox 360 + Xbox One / Series** | D3D9 and D3D11 backends, platform layers, hardware testing. The UWP build also runs on Windows 10 and 11 PCs, so most of it is tested there first | The same showcase on both | L |
+| **6 Xbox 360 + Xbox One / Series** | D3D9 backend and 360 platform layer, hardware testing. The UWP layer is already done and runs on Windows; consoles remain | The same showcase on both | L |
 | **7 Extras** | Inspector, particles, physics, tilemaps, video, networking, full guides | One scene per module | L |
 
 The screen stack and script host come in phase 1 so that every later feature arrives as a scene rather than a
@@ -814,6 +814,7 @@ check its file for damage, so fonts must come with the app, never from a downloa
 | Scripts | Coroutines, tweens, sound, saving, rebinding: 175 documented calls. Garbage collection now keeps pace with what is made |
 | Live reload | Scripts and images, with `--dev` |
 | Platforms | **Linux (X11, OpenGL)**, drawing the same pixels as Windows. macOS (Cocoa, OpenGL) builds and passes its tests in CI on Intel and Apple silicon, but has not been run with a screen |
+| UWP | Window, pads, sound and saves for Xbox One, Series and Windows. 25 scenes for three rounds at 60 fps on Windows 11; not yet on a console |
 | Showcase | 25 scenes in about 3,000 lines of script, including two original games: Comet rally and Rune shift |
 | Tests | 43 tests and about 3,100 checks on Windows and Linux; every scene on the null GPU and on OpenGL; address and thread sanitizers clean in our code |
 | OG Xbox in xemu | 25 scenes for three rounds at 60 fps, with sound, nothing left behind; 128 MB and retail 64 MB. 33 MB free at the worst point |

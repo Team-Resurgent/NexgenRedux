@@ -14,7 +14,7 @@ From this folder:
 | macOS | The same as Linux. Tested in CI only, without a screen |
 | Original Xbox | `cmake --preset xboxog-release`, `cmake --build --preset xboxog-release`, then run `build/xboxog-release/XISO/showcase.iso` |
 | Xbox 360 | `cmake --preset xbox360`, `cmake --build --preset xbox360` (libraries only) |
-| Xbox One / Series | `cmake --preset uwp`, `cmake --build --preset uwp` (libraries only) |
+| UWP: Xbox One, Series and Windows | `cmake --preset uwp`, `cmake --build --preset uwp -- -p:AppxPackageSigningEnabled=false`; the package is in `build/uwp/AppPackages` |
 
 Needs CMake 3.21 and, for the Xbox targets, Ninja on the path (it comes with Visual Studio).
 
@@ -22,10 +22,14 @@ Needs CMake 3.21 and, for the Xbox targets, Ninja on the path (it comes with Vis
 - **Original Xbox:** RXDK 1.3.13 or later; `tools/stage-rxdk.ps1` installs it on a build machine. To ship compressed textures
   and sounds, build `cook` for Windows first and add `-DNX_COOK=<path to cook.exe>`. On a debug kernel or devkit the log goes
   to the debug output; in xemu add `-device lpc47m157 -serial stdio`.
+- **UWP:** Visual Studio with the Universal Windows Platform tools. Windows installs only signed packages, so sign it, or unpack it
+  with `makeappx unpack` and run `Add-AppxPackage -Register AppxManifest.xml` in Developer Mode. Its log is `nexgen.log` in the
+  app's LocalState folder.
 - **Xbox 360:** RXDK-360 from November 2026 or later. With an older one, set `RXDK360_TARGET=powerpc-unknown-xbox360`,
   or point `RXDK360_CC` at a newer clang.
 
-`.github/workflows/engine.yml` builds, tests and packages Windows, Linux, macOS and the original Xbox.
+`.github/workflows/engine.yml` builds, tests and packages Windows, Linux, macOS, UWP and the original Xbox, and
+publishes the packages from `main` in the `latest` release.
 
 ## Run
 
@@ -45,7 +49,7 @@ For an OG Xbox self-test, configure with `-DNX_TOUR=ON`: that disc shows each sc
 twice more to check that nothing leaks, and stops. `spike` is the phase 0 test of script calls and memory.
 
 Saves are in `%LOCALAPPDATA%\Nexgen` (Windows), `~/.local/share/nexgen` (Linux), `~/Library/Application Support/Nexgen`
-(macOS) and the title's own folder (Xbox).
+(macOS), the app's LocalState (UWP) and the title's own folder (Xbox).
 
 ## Cook
 
@@ -58,8 +62,8 @@ done again.
 | Folder | What | May use |
 |---|---|---|
 | `base/` | Memory, handles, maths, logging, JSON, threads | nothing |
-| `gpu/` | GPU interface; `d3d11` (Windows), `d3d8` (original Xbox), `gl` (Linux, macOS), `null` (tests) | base |
-| `platform/` | Window, input devices, time, files; `win32`, `xboxog`, `linux`, `macos` | base |
+| `gpu/` | GPU interface; `d3d11` (Windows, UWP), `d3d8` (original Xbox), `gl` (Linux, macOS), `null` (tests) | base |
+| `platform/` | Window, input devices, time, files; `win32`, `uwp`, `xboxog`, `linux`, `macos`, and what some share in `windows` and `posix` | base |
 | `input/` | Actions, from any device, and their bindings | base |
 | `audio/` | Decoding, mixing and output | base |
 | `assets/` | Cache of images, fonts and sounds | gpu, audio |

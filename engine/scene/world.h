@@ -6,6 +6,7 @@
 #include "base/json_tree.h"
 #include "base/math.h"
 #include "canvas/canvas.h"
+#include "scene/space.h"
 #include "script/script_host.h"
 
 #include <string>
@@ -205,6 +206,7 @@ namespace nx
             float world[6];                     // x' = m0 x + m2 y + m4, as in Canvas
             int layer;
             u32 parts[static_cast<size_t>(Component::Count)];
+            u32 parts3[5];                      // in space
             u32 behaviour;                      // first in its list
             EntityRef* ref;
             char name[24];
@@ -304,10 +306,14 @@ namespace nx
         // Entities in layers from first to last.
         void draw(Canvas& canvas, int first, int last);
 
+        // Everything in three dimensions.
+        Space& space() { return m_space; }
+
         const WorldStats& stats();
 
     private:
         friend struct EntityRef;
+        friend class Space;
 
         static constexpr u32 kNone = 0xFFFFFFFF;
         static constexpr u32 kIndexBits = 16;
@@ -475,6 +481,7 @@ namespace nx
         void updateTransforms();
         void transform(u32 index);
         bool collide();
+        bool wantsToKnow(u32 id, u32 other);
 
         void halfExtent(const Collider& c, float& x, float& y) const;
         bool touchesCircle(const Collider& c, Vec2 position, float radius) const;
@@ -563,5 +570,6 @@ namespace nx
         EntityRef* m_freeRefs[kFreeRefs] = {};
         u32 m_freeRefCount = 0;
         WorldStats m_stats;
+        Space m_space;
     };
 }

@@ -167,7 +167,7 @@ WASAPI, DirectSound (OG), XAudio2 (360, Xbox One), ALSA and Core Audio, with one
 |---|---|---|
 | Active | Windows, OG Xbox | Run and tested in every phase |
 | Desktop | Linux, macOS | Platform layer in phase 1, built in CI from phase 2, run at the end of each phase |
-| Later | Xbox 360, Xbox One / Series | Designed for from day one, tested on hardware in phase 6 |
+| Later | Xbox 360, Xbox One / Series | Designed for from day one, tested on hardware in phase 7 |
 
 To stop the *Later* group from rotting, as it did in the current repo:
 
@@ -249,7 +249,7 @@ test (`self_contained`) fails the build if that changes.
 | stb_image | Images | phase 1 |
 | SSFN | Scalable fonts | phase 1 |
 | stb (dxt, vorbis), miniaudio with dr_libs, miniz | Texture compression, audio, pak files | phase 2 |
-| cgltf | 3D models | phase 5 |
+| cgltf | 3D models | phase 4 |
 
 - **Consoles load cooked data** from phase 2, so most of these then run only in the cook tool. Music is cooked to ADPCM,
   which the OG Xbox plays in hardware.
@@ -752,10 +752,11 @@ the design. Sizes are relative effort, not dates.
 | **1 Shell + Canvas** | Base (**allocators, tags, pools**), **texture and font cache**, platform, GPU (textures and dynamic buffers for D3D11 and D3D8), **X11, Cocoa and OpenGL for Linux and macOS**, batching, text, input, **screen stack**, script host with generated bindings **and docs** | **Main menu → Cracktro, Sprite animation, Primitives → back** | L |
 | **2 Assets + audio** | Cook tool, async loading, **budgets and eviction for every asset type, sound cache and voice pool**, audio, input actions, coroutines, tweens, script hot reload, debugger, CI on Win/Linux/macOS | + Paddle game, Block puzzle, Audio, Input, Memory | L |
 | **3 Scene** | Entities, **pooled spawning**, hierarchy, sprites, animation, collision, prefabs | + Parallax, Shooter (script under 300 lines), Stress test | M |
-| **4 UI** | Layout, focus, themes, lists, on-screen keyboard, layout files, dashboard module | Main menu rebuilt on UI; + UI gallery, Dashboard at 60 fps on OG | L |
-| **5 3D** | glTF, materials, lights, fog, skinning, **a world to walk around, 3D physics**, **LOD and culling, ray marching**, shadows and post effects on higher tiers | + 3D scene, Mixed. **First full release** | L |
-| **6 Xbox 360 + Xbox One / Series** | D3D9 backend and 360 platform layer, hardware testing. The UWP layer is already done and runs on Windows; consoles remain | The same showcase on both | L |
-| **7 Extras** | Inspector, particles, physics, tilemaps, video, networking, full guides | One scene per module | L |
+| **4 3D** (brought forward) | glTF, materials, lights, fog, skinning, **a world to walk around, 3D physics**, **LOD and culling, ray marching, streamed regions**, shadows | + 3D scenes, Dashboard, Blades. **Done** | L |
+| **5 Networking and platform calls** | Sockets, HTTP, finding and joining games on the local network, keeping entities in step; calls that only some platforms have, behind names that say whether they are there. On the original Xbox: back to the firmware or dashboard, launch a title, restart, SMBus temperatures and fan, LED, tray, EEPROM and drive information. FTP | + a game for two consoles, Chat, System panel | L |
+| **6 UI** | Layout, focus, themes, lists, on-screen keyboard, layout files, dashboard module | Main menu rebuilt on UI; + UI gallery | L |
+| **7 Xbox 360 + Xbox One / Series** | D3D9 backend and 360 platform layer, hardware testing. The UWP layer is already done and runs on Windows; consoles remain | The same showcase on both | L |
+| **8 Extras** | Inspector, post effects, video, scene editor, full guides | One scene per module. **First full release** | L |
 
 The screen stack and script host come in phase 1 so that every later feature arrives as a scene rather than a
 one-off test program.
@@ -855,6 +856,23 @@ Wanted for the 3D phase: **a world to walk around in**, and **3D physics**.
 
 Left: entities from script in other layouts than JSON; a scene editor.
 
+### Phase 4 results: three dimensions
+
+| Done | |
+|---|---|
+| GPU | Meshes, lights, fog, sky and shadows on Direct3D 11 and OpenGL 3.3; the same scenes with the fixed pipeline on the original Xbox |
+| Models | glTF with materials, textures, up to 64 bones and animations that change smoothly; two simpler versions made as it loads |
+| Scene | The same entities, hierarchy, behaviours and events, in space. Culling, levels of detail, 16 lights, split screen |
+| Land | Hills from a number, coloured by height and slope, water, levelled places; **endless land in regions that stream**, and regions from files |
+| 3D physics | Balls, boxes and capsules that stack, roll and sleep; **walkers** that climb steps and push things; rays |
+| Ray marching | 24 shapes that join, cut and melt, with soft shadows and reflections, mixing with meshes. Triangles instead on the original Xbox |
+| Showcase | 46 screens. The island to walk about, solids, physics, models, ray marching, night lights, forest, split screen, endless land; the Dashboard and Blades, from the first engine's skins; Spire and Rebound |
+| **Original Xbox hardware** | Run for the first time on a real 64 MB console, through its debug monitor: all 45 demos at 54 to 60 fps, 26 MB free at the worst point, three times round without a leak. It found five faults that xemu hadn't |
+| Speed | `--bench` runs without waiting for the display. On a PC each scene takes under 1 ms but ray marching, which took 14.8 ms at 720p until only the shapes near each ray were looked at, and now takes 1.3 |
+| Tests | 79 tests and about 17,000 checks; Windows, Linux, generic calls; sanitizers find nothing in our code beyond AngelScript's own alignment |
+
+Left: post effects, particles in space, decals, navigation, cooked models.
+
 ### Targets to measure against (goals, not results)
 
 | | OG Xbox | PC |
@@ -881,15 +899,15 @@ The cache has its own tests: sharing, eviction order, over budget, failure, relo
 | Risk | What to do |
 |---|---|
 | **AngelScript has not run on the 360** (OG is proven) | It compiles with generic calls, which are what it will start on; small types on big endian need checking first |
-| **Xbox 360 clang is young** (documented ABI limits with Microsoft libraries) | The 360 port comes last, in phase 6, but compile the base layer with it in phase 0 so problems show early. The XDK's own compiler can't build C++20, so it is not a fallback |
+| **Xbox 360 clang is young** (documented ABI limits with Microsoft libraries) | The 360 port comes late, in phase 7, but compile the base layer with it in phase 0 so problems show early. The XDK's own compiler can't build C++20, so it is not a fallback |
 | **AngelScript 2.39.0 is very new** | Pin it; run AngelScript's own tests and our debugger tests on it; fall back to 2.38.0 |
 | **64 MB** | Budgets and tags per system (6.7); cooked assets; OG budget simulated on PC and in CI |
 | **Cache holds too much or hides leaks** | Hard limits; trim test on every scene; warm and in-use memory reported separately |
 | **Fragmentation over long sessions** | Arenas and pools for short-lived data, fixed texture heap, overnight open/close run on OG |
 | **Licence:** RXDK-SDK is **GPLv3** and is linked statically | Check what that means for closed games or selling titles on OG before committing |
-| **Xbox 360 and One are tested late** | Keep them compiling each phase (4.2). Expect surprises in GPU and big-endian code, which is why phase 6 is sized L |
+| **Xbox 360 and One are tested late** | Keep them compiling each phase (4.2). Expect surprises in GPU and big-endian code, which is why phase 7 is sized L |
 | **Two scenes in memory on OG** | A suspended screen's assets can be evicted; budget per screen in `screen.json` |
-| **Scope** | Every phase ships a runnable showcase; no editor before phase 7 |
+| **Scope** | Every phase ships a runnable showcase; no editor before phase 8 |
 | **Old skins stop working** | Accepted. They are rewritten as showcase scenes; the Lua and node APIs are not emulated |
 
 ---
@@ -902,7 +920,7 @@ Made:
 |---|---|
 | Scripting | AngelScript only, no Lua; update from 2.36.0 to 2.39.0 in phase 0 |
 | Dependencies | Self-contained: no frameworks (SDL, GLFW); small source libraries kept in the repository at their latest version |
-| Platforms | Keep all. Xbox 360 and Xbox One / Series are tested later (phase 6) |
+| Platforms | Keep all. Xbox 360 and Xbox One / Series are tested later (phase 7) |
 | Memory | Load once, keep warm, evict on budget; pools and arenas instead of per-frame heap use |
 | First release | A showcase: main scene → pick a sub-scene → back to main |
 

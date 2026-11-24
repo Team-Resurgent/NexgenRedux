@@ -145,6 +145,17 @@ namespace nx
         return { (x - m_offsetX) / m_scale, (y - m_offsetY) / m_scale };
     }
 
+    gpu::Scissor Canvas::toPixels(float x, float y, float w, float h) const
+    {
+        gpu::Scissor s;
+        s.enabled = true;
+        s.x = static_cast<i32>(floorf(m_offsetX + x * m_scale + 0.5f));
+        s.y = static_cast<i32>(floorf(m_offsetY + y * m_scale + 0.5f));
+        s.width = static_cast<i32>(floorf(m_offsetX + (x + w) * m_scale + 0.5f)) - s.x;
+        s.height = static_cast<i32>(floorf(m_offsetY + (y + h) * m_scale + 0.5f)) - s.y;
+        return s;
+    }
+
     void Canvas::push()
     {
         if (m_depth < kMaxStates)

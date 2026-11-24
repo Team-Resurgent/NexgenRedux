@@ -104,6 +104,7 @@ namespace nx::test
         gpu::Device* device = gpu::createNullDevice(1280, 720);
         Assets assets;
         Canvas canvas;
+        SolidMeshes solids;
         Input input;
         Audio audio;
         Save save;
@@ -120,6 +121,8 @@ namespace nx::test
             services.device = device;
             services.assets = &assets;
             services.canvas = &canvas;
+            services.solids = &solids;
+            solids.init(*device);
             services.input = &input;
             services.host = &host;
             services.audio = &audio;
@@ -142,6 +145,7 @@ namespace nx::test
             coroutines.shutdown();
             host.shutdown();
             audio.shutdown();
+            solids.shutdown();
             canvas.shutdown();
             assets.shutdown();
             destroy(device);

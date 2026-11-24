@@ -41,7 +41,8 @@ it appears in the menu.
 |---|---|
 | `--dev` | Reload scripts and images when their files change |
 | `--screen ID` | Start with a screen open |
-| `--demo SECONDS` | Show every screen for a while, playing it, then stop |
+| `--demo SECONDS` | Show every screen, or the one given with `--screen`, for a while, playing it, then stop |
+| `--bench --frames 400` | Don't wait for the display, and say how long frames took (Direct3D 11) |
 | `--tour N` | Open every screen N times, unattended, and check that nothing leaks |
 | `--hidden --frames 100 --capture out.bmp` | Save a picture without showing a window or making a sound |
 | `--docs FILE` | Write the script reference |
@@ -76,15 +77,15 @@ done again.
 | `platform/` | Window, input devices, time, files; `win32`, `uwp`, `xboxog`, `linux`, `macos`, and what some share in `windows` and `posix` | base |
 | `input/` | Actions, from any device, and their bindings | base |
 | `audio/` | Decoding, mixing and output | base |
-| `assets/` | Cache of images, fonts and sounds | gpu, audio |
+| `assets/` | Cache of images, fonts, sounds and models; meshes being made | gpu, audio |
 | `canvas/` | 2D drawing | assets |
-| `scene/` | Entities, behaviours, collision, physics, particles, prefabs and maps | canvas, script |
+| `scene/` | Entities, behaviours, collision, physics, particles, prefabs and maps; in space, with land, walkers and shapes that melt | canvas, script |
 | `save/` | What players keep | platform |
 | `script/` | AngelScript host, coroutines, bindings and the reference writer | base |
 | `bindings/`, `screens/` | What scripts can call; the screen stack and the engine's menu | all above |
 | `app/` | The program that runs the showcase | all |
-| `tools/` | `cook`; `record`; `make_media.py`, which makes the showcase's sounds and music; `make_docs.py`, which makes the web site; `stage-rxdk.ps1` | all |
-| `third_party/` | AngelScript, SSFN, stb, miniaudio and dr_libs, unmodified | |
+| `tools/` | `cook`; `record`; `make_media.py` and `make_models.py`, which make the showcase's sounds, music and models; `make_docs.py`, which makes the web site; `stage-rxdk.ps1` | all |
+| `third_party/` | AngelScript, SSFN, stb, cgltf, miniaudio and dr_libs, unmodified | |
 | `spike/`, `tests/` | Phase 0 app and tests | all |
 
 Platform `#if`s belong only in `platform/`, `gpu/`, `base/thread_*` and `audio/output_*`.

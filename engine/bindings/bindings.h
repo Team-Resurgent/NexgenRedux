@@ -27,6 +27,7 @@ namespace nx
         Save* save = nullptr;
         Coroutines* coroutines = nullptr;
         Screens* screens = nullptr;
+        SolidMeshes* solids = nullptr;
         World* world = nullptr;         // of the screen whose script is running
         asITypeInfo* entityArray = nullptr;
         char folder[96] = {};  // of the screen whose script is running

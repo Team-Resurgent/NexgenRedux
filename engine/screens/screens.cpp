@@ -215,6 +215,10 @@ namespace nx
         snprintf(entry.module, sizeof(entry.module), "screen%u", static_cast<unsigned>(entry.group));
         const bool small = m_services->platform->totalMemory() && m_services->platform->totalMemory() <= 128u * 1024 * 1024;
         entry.world = create<World>(MemTag::Scene, *m_services->assets, *m_services->host, entry.module, small ? 4096u : 16384u, small ? 1500u : 8000u);
+        if (entry.world)
+        {
+            entry.world->space().init(m_services->solids);
+        }
         enter(entry);
 
         char path[192];

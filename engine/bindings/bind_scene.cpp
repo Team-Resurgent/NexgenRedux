@@ -56,16 +56,68 @@ namespace nx
         EntityRef* getParent(const EntityRef* e) { return e->world ? e->world->ref(e->world->parentOf(e->id)) : nullptr; }
         void setParent(const EntityRef* parent, EntityRef* e) { if (e->world) e->world->setParent(e->id, parent ? parent->id : 0); }
 
+        // In space rather than on the plane.
+        bool inSpace(const EntityRef* e) { return e->world && e->world->space().getSpatial(e->id); }
+        Appearance* appearanceOf(const EntityRef* e) { return e->world ? e->world->space().getAppearance(e->id) : nullptr; }
+        Body3* body3Of(const EntityRef* e) { return inSpace(e) ? e->world->space().body(e->id) : nullptr; }
+        const Body3* someBody3(const EntityRef* e) { return e->world ? e->world->space().getBody(e->id) : nullptr; }
+        Collider3* collider3Of(const EntityRef* e) { return e->world ? e->world->space().getCollider(e->id) : nullptr; }
+
         Visual* visualOf(EntityRef* e) { return e->world ? e->world->getVisual(e->id) : nullptr; }
-        Color getColor(EntityRef* e) { const Visual* v = visualOf(e); return v ? v->color : Color{ 1, 1, 1, 1 }; }
-        void setColor(const Color& c, EntityRef* e) { if (e->world) if (Visual* v = e->world->visual(e->id)) v->color = c; }
+        Color getColor(EntityRef* e)
+        {
+            if (const Appearance* a = appearanceOf(e))
+            {
+                return a->color;
+            }
+            const Visual* v = visualOf(e);
+            return v ? v->color : Color{ 1, 1, 1, 1 };
+        }
+        void setColor(const Color& c, EntityRef* e)
+        {
+            if (Appearance* a = appearanceOf(e))
+            {
+                a->color = c;
+            }
+            else if (e->world && !inSpace(e))
+            {
+                if (Visual* v = e->world->visual(e->id))
+                {
+                    v->color = c;
+                }
+            }
+        }
         float getAlpha(EntityRef* e) { return getColor(e).a; }
-        void setAlpha(float a, EntityRef* e) { if (Visual* v = visualOf(e)) v->color.a = a; }
+        void setAlpha(float a, EntityRef* e)
+        {
+            if (Appearance* x = appearanceOf(e))
+            {
+                x->color.a = a;
+            }
+            else if (Visual* v = visualOf(e))
+            {
+                v->color.a = a;
+            }
+        }
         bool getFlip(EntityRef* e) { const Visual* v = visualOf(e); return v && v->flipX; }
         void setFlip(bool f, EntityRef* e) { if (Visual* v = visualOf(e)) v->flipX = f; }
         u32 getFrame(EntityRef* e) { const Visual* v = visualOf(e); return v ? v->frame : 0; }
         void setFrame(u32 f, EntityRef* e) { if (Visual* v = visualOf(e)) v->frame = static_cast<u16>(f); }
-        void setBlend(gpu::Blend b, EntityRef* e) { if (static_cast<u32>(b) < 3 && e->world) if (Visual* v = e->world->visual(e->id)) v->blend = b; }
+        void setBlend(gpu::Blend b, EntityRef* e)
+        {
+            if (static_cast<u32>(b) >= 3 || e->world == nullptr)
+            {
+                return;
+            }
+            if (Appearance* a = appearanceOf(e))
+            {
+                a->blend = b;
+            }
+            else if (Visual* v = e->world->visual(e->id))
+            {
+                v->blend = b;
+            }
+        }
 
         void look(EntityRef* e, Look kind, Asset* asset, float w, float h)
         {
@@ -135,14 +187,74 @@ namespace nx
         void setVelocity(const Vec2& v, EntityRef* e) { if (Body* b = bodyOf(e)) b->velocity = v; }
         float getSpin(const EntityRef* e) { const Body* b = someBody(e); return b ? b->spin : 0; }
         void setSpin(float v, EntityRef* e) { if (Body* b = bodyOf(e)) b->spin = v; }
-        void setDrag(float v, EntityRef* e) { if (Body* b = bodyOf(e)) b->drag = v; }
-        void setGravity(float v, EntityRef* e) { if (Body* b = bodyOf(e)) b->gravity = v; }
-        void setBounce(float v, EntityRef* e) { if (Body* b = bodyOf(e)) b->bounce = v; }
-        void setFriction(float v, EntityRef* e) { if (Body* b = bodyOf(e)) b->friction = v < 0 ? 0 : v; }
-        float getMass(const EntityRef* e) { const Body* b = someBody(e); return b ? b->mass : 0; }
-        void setMass(float v, EntityRef* e) { if (Body* b = bodyOf(e)) b->mass = v < 0 ? 0 : v; }
+        void setDrag(float v, EntityRef* e)
+        {
+            if (Body3* s = body3Of(e))
+            {
+                s->drag = v;
+            }
+            else if (Body* b = bodyOf(e))
+            {
+                b->drag = v;
+            }
+        }
+        void setGravity(float v, EntityRef* e)
+        {
+            if (Body3* s = body3Of(e))
+            {
+                s->gravity = v;
+            }
+            else if (Body* b = bodyOf(e))
+            {
+                b->gravity = v;
+            }
+        }
+        void setBounce(float v, EntityRef* e)
+        {
+            if (Body3* s = body3Of(e))
+            {
+                s->bounce = v;
+            }
+            else if (Body* b = bodyOf(e))
+            {
+                b->bounce = v;
+            }
+        }
+        void setFriction(float v, EntityRef* e)
+        {
+            if (Body3* s = body3Of(e))
+            {
+                s->friction = v < 0 ? 0 : v;
+            }
+            else if (Body* b = bodyOf(e))
+            {
+                b->friction = v < 0 ? 0 : v;
+            }
+        }
+        float getMass(const EntityRef* e)
+        {
+            const Body3* s = someBody3(e);
+            const Body* b = someBody(e);
+            return s ? s->mass : b ? b->mass : 0;
+        }
+        void setMass(float v, EntityRef* e)
+        {
+            if (Body3* s = body3Of(e))
+            {
+                s->mass = v < 0 ? 0 : v;
+            }
+            else if (Body* b = bodyOf(e))
+            {
+                b->mass = v < 0 ? 0 : v;
+            }
+        }
         void setSolid(bool v, EntityRef* e) { if (Body* b = bodyOf(e)) b->solid = v; }
-        bool getOnGround(const EntityRef* e) { const Body* b = someBody(e); return b && b->onGround; }
+        bool getOnGround(const EntityRef* e)
+        {
+            const Body3* s = someBody3(e);
+            const Body* b = someBody(e);
+            return s ? s->onGround : b && b->onGround;
+        }
         bool getOnCeiling(const EntityRef* e) { const Body* b = someBody(e); return b && b->onCeiling; }
         int getOnWall(const EntityRef* e) { const Body* b = someBody(e); return b ? b->onWall : 0; }
         void entityPush(const Vec2& impulse, EntityRef* e) { if (e->world) e->world->push(e->id, impulse, nullptr); }
@@ -166,10 +278,35 @@ namespace nx
         }
         void entityCircle(float r, u32 group, u32 hits, EntityRef* e) { collide(e, Shape::Circle, r, r, group, hits); }
         void entityBox(float w, float h, u32 group, u32 hits, EntityRef* e) { collide(e, Shape::Box, w * 0.5f, h * 0.5f, group, hits); }
-        void setWall(bool v, EntityRef* e) { if (e->world) if (Collider* c = e->world->collider(e->id)) c->wall = v; }
-        int getGroup(const EntityRef* e) { const Collider* c = e->world ? e->world->getCollider(e->id) : nullptr; return c ? c->group : -1; }
-        void setHits(u32 hits, EntityRef* e) { if (e->world) if (Collider* c = e->world->getCollider(e->id)) c->hits = static_cast<u16>(hits); }
-        bool entityTouching(const EntityRef* other, EntityRef* e) { return other && e->world && e->world->touching(e->id, other->id); }
+        void setWall(bool v, EntityRef* e)
+        {
+            if (Collider3* s = collider3Of(e))
+            {
+                s->wall = v;
+            }
+            else if (Collider* c = e->world ? e->world->collider(e->id) : nullptr)
+            {
+                c->wall = v;
+            }
+        }
+        int getGroup(const EntityRef* e)
+        {
+            const Collider3* s = collider3Of(e);
+            const Collider* c = e->world ? e->world->getCollider(e->id) : nullptr;
+            return s ? s->group : c ? c->group : -1;
+        }
+        void setHits(u32 hits, EntityRef* e)
+        {
+            if (Collider3* s = collider3Of(e))
+            {
+                s->hits = static_cast<u16>(hits);
+            }
+            else if (Collider* c = e->world ? e->world->getCollider(e->id) : nullptr)
+            {
+                c->hits = static_cast<u16>(hits);
+            }
+        }
+        bool entityTouching(const EntityRef* other, EntityRef* e) { return other && e->world && (e->world->touching(e->id, other->id) || e->world->space().touching(e->id, other->id)); }
         void setLifetime(float seconds, EntityRef* e) { if (e->world) if (Lifetime* l = e->world->lifetime(e->id)) l->left = seconds; }
 
         void entityAdd(asIScriptObject* behaviour, EntityRef* e)

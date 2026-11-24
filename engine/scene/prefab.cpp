@@ -134,7 +134,7 @@ namespace nx
             fail(file, json.line(), "%s: asset names start with asset: or global:", name);
             return nullptr;
         }
-        return type == AssetType::Font ? m_assets.font(path, size) : m_assets.texture(path);
+        return type == AssetType::Font ? m_assets.font(path, size) : type == AssetType::Model ? m_assets.model(path) : m_assets.texture(path);
     }
 
     const Prefab* World::prefabNamed(const char* name) const

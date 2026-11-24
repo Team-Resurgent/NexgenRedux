@@ -93,7 +93,7 @@ namespace nx
     // --- Entities ---
 
     World::World(Assets& assets, ScriptHost& host, const char* module, u32 maxEntities, u32 maxParticles)
-        : m_assets(assets), m_host(host), m_maxEntities(maxEntities < (1u << kIndexBits) ? maxEntities : (1u << kIndexBits) - 1), m_maxParticles(maxParticles)
+        : m_assets(assets), m_host(host), m_maxEntities(maxEntities < (1u << kIndexBits) ? maxEntities : (1u << kIndexBits) - 1), m_maxParticles(maxParticles), m_space(*this, assets)
     {
         snprintf(m_module, sizeof(m_module), "%s", module);
     }
@@ -173,6 +173,10 @@ namespace nx
         {
             part = kNone;
         }
+        for (u32& part : e.parts3)
+        {
+            part = kNone;
+        }
         e.position = position;
         e.scale = { 1, 1 };
         e.cosine = 1;
@@ -237,6 +241,7 @@ namespace nx
         {
             count += c.group == group && !m_entities[c.owner].dying;
         }
+        count += m_space.countGroup(group);
         return count;
     }
 
@@ -272,6 +277,7 @@ namespace nx
         m_touches.clear();
         m_touchesBefore.clear();
         m_joints.clear();
+        m_space.forget();
         m_order.clear();
         m_orderDirty = m_drawDirty = true;
         m_dying = 0;
@@ -326,6 +332,7 @@ namespace nx
         removePart(m_colliders, Component::Collider, index);
         removePart(m_lifetimes, Component::Lifetime, index);
         removePart(m_emitters, Component::Emitter, index);
+        m_space.removed(index);
         for (u32 b = e.behaviour; b != kNone;)
         {
             Behaviour& behaviour = m_behaviours[b];
@@ -433,6 +440,10 @@ namespace nx
     void World::transform(u32 index)
     {
         Entity& e = m_entities[index];
+        if (e.parts3[0] != kNone)
+        {
+            m_space.transform(index);
+        }
         if (e.rotation != e.turned)
         {
             e.turned = e.rotation;
@@ -751,7 +762,7 @@ namespace nx
 
     bool World::update(float dt)
     {
-        if (m_live == 0 && m_particleCount == 0)
+        if (m_live == 0 && m_particleCount == 0 && !m_space.streaming())
         {
             return true;
         }
@@ -760,6 +771,7 @@ namespace nx
         {
             move(dt);
             physics(dt);
+            m_space.update(dt);
             animate(dt);
             age(dt);
             updateTransforms();
@@ -1274,6 +1286,20 @@ namespace nx
         return found;
     }
 
+    // On the plane or in space.
+    bool World::wantsToKnow(u32 id, u32 otherId)
+    {
+        const Collider* self = getCollider(id);
+        const Collider* other = getCollider(otherId);
+        if (self && other && (self->hits >> other->group) & 1)
+        {
+            return true;
+        }
+        const Collider3* self3 = m_space.getCollider(id);
+        const Collider3* other3 = m_space.getCollider(otherId);
+        return self3 && other3 && (self3->hits >> other3->group) & 1;
+    }
+
     bool World::collide()
     {
         m_extents.clear();
@@ -1318,8 +1344,9 @@ namespace nx
                     }
                 }
             }
-            std::sort(m_pairs.begin(), m_pairs.end());
         }
+        m_space.collectPairs(m_pairs);
+        std::sort(m_pairs.begin(), m_pairs.end());
         m_stats.touching = m_pairs.count();
 
         // What has begun or ended, worked out before any script runs and changes things.
@@ -1335,9 +1362,7 @@ namespace nx
                 const u32 ids[2] = { static_cast<u32>(pair >> 32), static_cast<u32>(pair) };
                 for (u32 side = 0; side < 2; side++)
                 {
-                    const Collider* self = getCollider(ids[side]);
-                    const Collider* other = getCollider(ids[1 - side]);
-                    if (self && other && (self->hits >> other->group) & 1)
+                    if (wantsToKnow(ids[side], ids[1 - side]))
                     {
                         m_events.push({ ids[side], ids[1 - side], isNew });
                     }

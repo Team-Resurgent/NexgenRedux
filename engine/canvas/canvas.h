@@ -88,6 +88,11 @@ namespace nx
         // Breaks lines at spaces to fit a width. Returns the height.
         float paragraph(const Asset& font, const char* text, float x, float y, float width, const Color& color);
 
+        // Before something else draws: everything so far goes first.
+        void finish() { flush(); }
+        // Where an area of the design is on the real screen.
+        gpu::Scissor toPixels(float x, float y, float w, float h) const;
+
         // Draws so far this frame.
         u32 draws() const { return m_draws; }
 

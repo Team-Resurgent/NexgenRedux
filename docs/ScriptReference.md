@@ -24,6 +24,7 @@ Red, green, blue and alpha, each 0 to 1.
 | `const Color Purple` | A ready-made colour. |
 | `const Color Gray` | A ready-made colour. |
 | `Color hsv(float hue, float saturation, float value)` | A colour from its hue (0 to 1 around the wheel), saturation and brightness. |
+| `Color lerp(const Color &in a, const Color &in b, float t)` | From a to b as t goes from 0 to 1. |
 | `Color fade(const Color &in color, float alpha)` | The same colour, more transparent. |
 
 ## Texture
@@ -36,6 +37,54 @@ An image. Loaded once and shared by everyone who asks for it.
 | `float get_height() const property` | Height in its own pixels. |
 | `bool get_failed() const property` | Whether the file could not be loaded. It then draws as a checkerboard. |
 | `bool get_ready() const property` | Whether it has arrived. Until then it draws as nothing. |
+
+## Model
+
+A 3D model. Loaded once and shared by everyone who asks for it.
+
+| | |
+|---|---|
+| `bool get_failed() const property` | Whether the file could not be loaded. |
+| `bool get_ready() const property` | Whether it has arrived. Until then it draws as nothing. |
+| `float get_radius() const property` | Of a ball around it. |
+| `uint get_triangles() const property` | How many it has, close up. |
+| `uint get_animations() const property` | How many it has. |
+| `string animation(uint index) const` | The name of one. |
+
+## Solid
+
+Shapes that are always there, 1 metre across.
+
+| | |
+|---|---|
+| `SolidNone` | Nothing. |
+| `SolidBox` | A cube. |
+| `SolidSphere` | A ball. |
+| `SolidCylinder` | Upright. |
+| `SolidCone` | Point up. |
+| `SolidTorus` | A ring, lying flat. |
+| `SolidCapsule` | A round-ended cylinder, 2 metres tall. |
+| `SolidPlane` | Flat, facing up. |
+
+## Mesh
+
+Triangles made by a script. Shared by every entity that shows it.
+
+| | |
+|---|---|
+| `uint get_vertices() const property` | How many there are so far. |
+| `uint get_triangles() const property` | How many there are so far. |
+| `uint vertex(const Vec3 &in place, const Vec3 &in normal, const Color &in color = White, float u = 0, float v = 0)` | Adds one and returns its number. |
+| `void triangle(uint a, uint b, uint c)` | Joins three vertices, counter-clockwise seen from the front. |
+| `void quad(const Vec3 &in a, const Vec3 &in b, const Vec3 &in c, const Vec3 &in d, const Color &in color = White)` | Four corners, counter-clockwise seen from the front. |
+| `void box(const Vec3 &in middle, const Vec3 &in size, const Color &in color = White)` | Adds a box. |
+| `void sphere(const Vec3 &in middle, float radius, const Color &in color = White, uint around = 16)` | Adds a ball. |
+| `void cylinder(const Vec3 &in bottom, float height, float bottomRadius, float topRadius, const Color &in color = White, uint around = 12)` | Adds a cylinder; a radius of 0 makes a cone. |
+| `void torus(float ring, float tube, const Color &in color = White, uint around = 20)` | Adds a ring, lying flat. |
+| `void plane(float width, float depth, uint squares = 1, const Color &in color = White)` | Adds a flat sheet facing up. |
+| `void move(uint firstVertex, const Vec3 &in place, const Vec3 &in angles = Vec3(), const Vec3 &in size = Vec3(1, 1, 1))` | Moves everything from a vertex on: resized, then turned, then moved. |
+| `void smooth()` | Works out the normals from the triangles. |
+| `void clear()` | Takes everything out. |
 
 ## Font
 
@@ -61,6 +110,7 @@ Loading. Names start with `asset:` for the screen's own files or `global:` for s
 |---|---|
 | `Texture@ Assets::texture(const string &in name)` | An image: PNG, JPEG, TGA, BMP or GIF, up to 2048 pixels a side. What a screen asks for as it is made is ready by onEnter(); later ones arrive in the background. |
 | `Sound@ Assets::sound(const string &in name)` | A sound. Arrives like an image. |
+| `Model@ Assets::model(const string &in name)` | A 3D model: glTF, as a .glb or a .gltf with everything inside it. Arrives like an image. |
 | `uint Assets::pending()` | Files still on their way. |
 | `uint Assets::textureKilobytes()` | Memory that images and fonts take. |
 | `uint Assets::soundKilobytes()` | Memory that sounds take. |
@@ -376,6 +426,121 @@ Entities that move, collide and are drawn by the engine. Each screen has its own
 | `uint Scene::pairs()` | Pairs of colliders compared in the last step. |
 | `uint Scene::contacts()` | Where rigid bodies touched in the last step. |
 
+### Entity
+
+| | |
+|---|---|
+| `Vec3 get_place() const property` | In space: where it is, from its parent if it has one. |
+| `void set_place(const Vec3 &in) property` | Moves it. |
+| `Vec3 get_worldPlace() const property` | Where it is in space, whatever its parents. |
+| `Vec3 outward(const Vec3 &in place) const` | Where a place of its own is in space, as it is turned and sized: its hand, or the end of its gun. |
+| `Vec3 get_angles() const property` | Degrees it is tipped, turned and rolled: about x, y and z. |
+| `void set_angles(const Vec3 &in) property` | Turns it. |
+| `Vec3 get_size() const property` | Its size along each axis; 1 is normal. |
+| `void set_size(const Vec3 &in) property` | Resizes it. |
+| `Vec3 get_forward() const property` | Which way it faces: z, turned as it is. |
+| `void face(const Vec3 &in direction, float part = 1)` | Turns it, staying upright, some or all of the way to face along a direction. |
+| `void turn(const Vec3 &in about, float degrees)` | Turns it about an axis. |
+| `void model(Model@+ model)` | Looks like a model. |
+| `void mesh(Mesh@+ mesh, const Color &in color = White)` | Looks like a mesh made by a script. |
+| `void shape(Solid solid, const Color &in color = White)` | Looks like a simple shape. |
+| `void glow(float size, const Color &in color)` | Looks like a soft ball of light. `light` is what lights other things. |
+| `void skin(Texture@+ texture, bool repeat = false)` | Puts an image on it, instead of any of the model's own. |
+| `void set_shine(float) property` | How much it shows a highlight from the sun, 0 to 1. |
+| `void set_glowing(float) property` | 1 is as bright as its colour, even in the dark. |
+| `void set_twoSided(bool) property` | Draws the backs of its triangles too. |
+| `void set_shadow(bool) property` | Whether it casts one. |
+| `uint get_detail() const property` | The level it was last drawn at: 0 is all of it, 2 the least. |
+| `void light(const Color &in color, float range)` | Lights what is within so many metres. |
+| `bool animate(const string &in name, bool loop = true, float change = 0.25)` | Plays one of its model's animations, changing to it over some seconds. Asking again for what is playing does nothing. False if it isn't there, or hasn't arrived. |
+| `bool get_animated() const property` | Whether an animation that doesn't loop has finished. |
+| `void set_animationSpeed(float) property` | 1 is normal. |
+| `Vec3 get_motion() const property` | Metres a second. |
+| `void set_motion(const Vec3 &in) property` | Sets it going. |
+| `Vec3 get_turning() const property` | Degrees a second about each axis. |
+| `void set_turning(const Vec3 &in) property` | Sets it turning. |
+| `bool get_walker() const property` | Whether it is one. |
+| `void set_walker(bool) property` | Makes it a character: it stays upright, slides along walls, climbs steps and pushes what has mass. It needs a capsule, and feels gravity. |
+| `Vec3 get_groundNormal() const property` | Of a walker: which way the ground under it faces. |
+| `void push(const Vec3 &in impulse)` | Pushes it at its middle. |
+| `void push(const Vec3 &in impulse, const Vec3 &in at)` | Pushes it at a place, which may turn it. |
+| `void sphere(float radius, uint group = 0, uint hits = 0)` | Gives it a round collider. mass, wall, friction, bounce, gravity, drag, hits and touching are as on the plane. |
+| `void cube(const Vec3 &in size, uint group = 0, uint hits = 0)` | The same with a box, which turns with it. |
+| `void capsule(float radius, float height, uint group = 0, uint hits = 0)` | The same with an upright cylinder with round ends, included in its height. |
+| `void set_colliderAt(const Vec3 &in) property` | Moves its collider from its place: up by half its height, for something whose place is at its feet. |
+| `void set_streamed(bool) property` | Destroys it when the region of endless land that it is in goes. |
+
+## FieldShape
+
+Shapes that can melt into each other.
+
+| | |
+|---|---|
+| `FieldSphere` | size.x is its radius. |
+| `FieldBox` | size is half of it, along each axis. |
+| `FieldTorus` | size.x is the radius of the ring, size.y of the tube. |
+| `FieldCapsule` | size.x is its radius, size.y half the height of its straight part. |
+| `FieldPlane` | Everything below a height. |
+| `FieldCylinder` | size.x is its radius, size.y half its height. |
+
+## FieldJoin
+
+What a shape does to those before it.
+
+| | |
+|---|---|
+| `JoinAdd` | Is joined to them. |
+| `JoinCut` | Is cut out of them. |
+| `JoinKeep` | Keeps only what is in both. |
+
+## Space
+
+The scene in three dimensions: x right, y up, z towards you, in metres. Entities are spawned into it, and it is stepped with the rest of the scene.
+
+| | |
+|---|---|
+| `Entity@ Space::spawn(const Vec3 &in place)` | A new, empty entity in space. |
+| `void Space::draw(Canvas@ canvas)` | Draws everything, from the camera. Call it from draw(), after design(); what is drawn on the canvas after it is in front. |
+| `void Space::draw(Canvas@ canvas, float x, float y, float w, float h)` | The same in part of the screen. Move the camera and draw again for a split screen. |
+| `void Space::camera(const Vec3 &in from, const Vec3 &in to, float angle = 60)` | Where it is, what it looks at, and the degrees it sees from top to bottom. |
+| `void Space::sun(const Vec3 &in direction, const Color &in color)` | Light from far away; the direction is towards it. |
+| `void Space::ambient(const Color &in sky, const Color &in ground)` | Light from everywhere: on what faces up, and on what faces down. |
+| `void Space::sky(const Color &in top, const Color &in horizon)` | Draws a sky, with the sun in it. Without one, what is on the canvas already is behind. |
+| `void Space::fog(const Color &in color, float start, float end)` | Hides what is far away. |
+| `void Space::shadows(float strength, float distance = 40)` | How dark they are, 0 to 1, and how far they reach. Simple ones are drawn where the GPU can't do real ones. |
+| `void Space::farthest(float distance)` | Nothing beyond is drawn. |
+| `void Space::setGravity(const Vec3 &in gravity)` | Metres a second, each second. It starts as that of the Earth. |
+| `void Space::ground(float height)` | Something flat to stand on, everywhere. It isn't drawn. |
+| `void Space::water(float height, const Color &in color)` | Draws water, with waves, up to a height. |
+| `void Space::land(uint seed, uint squares, float spacing, float height, float roughness = 0.5, bool island = false)` | Makes hills: so many squares each way (a multiple of 32, up to 256), metres to a square, and about how high. An island goes down all round, to below 0. |
+| `void Space::endlessLand(uint seed, float spacing, float height, float roughness = 0.5, uint reach = 5)` | The same without end: regions of 32 squares are made in the background as the camera comes near, up to so many away, and go when it leaves. |
+| `bool Space::nextRegion(int &out x, int &out z, bool &out arrived)` | A region that has come or gone, or false when there is no more to tell. Ask each update, to put things in those that arrive; make them streamed and they go by themselves. |
+| `float Space::regionSize()` | Metres along a side. Region x, z begins at that many times x and z. |
+| `uint Space::regions()` | How many there are now. |
+| `uint Space::regionsWaiting()` | How many are still to come. |
+| `int Space::load(const string &in name, const Vec3 &in at = Vec3(), bool streamed = false)` | Makes the entities listed in a file, around a place, and returns how many. Their models arrive in the background. See the guide. |
+| `void Space::landColors(const Color &in low, const Color &in middle, const Color &in high, const Color &in steep, float lowHeight, float highHeight)` | Colours them by height and slope. |
+| `void Space::flatten(float x, float z, float radius)` | Levels the land around a place, to build on. |
+| `void Space::flatten(float x, float z, float radius, float height)` | The same, to a height. |
+| `float Space::height(float x, float z)` | How high the land or the ground is. Far below if there is none. |
+| `Vec3 Space::normal(float x, float z)` | Which way it faces there. |
+| `float Space::landSize()` | Metres along a side. Its middle is at 0, 0. |
+| `void Space::shape(FieldShape kind, const Vec3 &in place, const Vec3 &in size, const Color &in color, float soft = 0, FieldJoin how = JoinAdd, float turn = 0)` | Adds one of up to 24 shapes drawn by marching along rays, which melt together where they are soft. |
+| `void Space::clearShapes()` | Takes them all away. To move them, clear and add them again each update. |
+| `void Space::shapeLook(float shine, float reflection = 0, float repeat = 0, float farthest = 60, uint steps = 80)` | How they look; repeat makes the whole thing again every so many metres. |
+| `bool Space::raycast(const Vec3 &in from, const Vec3 &in to, Vec3 &out hit, Vec3 &out normal, uint groups = 0xFFFF, Entity@+ except = null)` | Whether there is anything on a line, where, and which way it faces. The land counts as group 0. |
+| `Entity@ Space::pick(const Vec3 &in from, const Vec3 &in to, Vec3 &out hit, uint groups = 0xFFFF, Entity@+ except = null)` | The first collider on a line, or null if there is none or the land comes first. |
+| `array<Entity@>@ Space::within(const Vec3 &in place, float radius, uint groups = 0xFFFF)` | Everything whose collider touches a ball. |
+| `bool Space::toScreen(const Vec3 &in place, Vec2 &out screen)` | Where a place was when last drawn. False if it is behind the camera. |
+| `Vec3 Space::ray(const Vec2 &in screen)` | The direction from the camera through a place on the screen. |
+| `Vec3 Space::eye()` | Where the camera is. |
+| `uint Space::drawn()` | How many entities were drawn last. |
+| `uint Space::drawnAt(uint level)` | How many at a level of detail: 0 is all of it, 2 the least. |
+| `uint Space::hidden()` | How many were out of sight or too small. |
+| `uint Space::triangles()` | How many triangles there were in the last frame. |
+| `uint Space::contacts()` | Where rigid bodies touched in the last step. |
+| `Vec3 lerp(const Vec3 &in a, const Vec3 &in b, float t)` | From a to b as t goes from 0 to 1. |
+
 ## Screen
 
 One place in the app. A screen's main.as has a class that implements this; it may have any of these methods.
@@ -435,6 +600,20 @@ A place or a direction, across and down. Vec3 is the same with z.
 | `Vec2 + Vec2, Vec2 - Vec2, -Vec2` | Added, taken away, turned round. += and -= too. |
 | `Vec2 * float, Vec2 / float` | Longer or shorter. *= too. |
 | `float dot(const Vec2 &in other) const` | How far one goes along the other. |
+
+## Vec3
+
+A place or a direction in space: x right, y up, z towards you, in metres.
+
+| | |
+|---|---|
+| `Vec3()` | Zero. |
+| `Vec3(float x, float y, float z)` | From its parts. |
+| `Vec3 + Vec3, Vec3 - Vec3, -Vec3, Vec3 * float, Vec3 / float` | As for Vec2. |
+| `float dot(const Vec3 &in other) const` | How far one goes along the other. |
+| `Vec3 cross(const Vec3 &in other) const` | The direction across both. |
+| `float length() const` | How long it is. |
+| `Vec3 normalized() const` | The same direction, 1 long. |
 
 ## Maths
 

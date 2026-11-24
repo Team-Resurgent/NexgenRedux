@@ -1,0 +1,98 @@
+#pragma once
+
+#include "assets/geometry.h"
+
+namespace nx
+{
+    constexpr u32 kModelDetails = 3;   // levels, the first the whole model
+    constexpr u32 kModelBones = 64;
+
+    // Some triangles of one material.
+    struct ModelPart
+    {
+        u32 first[kModelDetails], count[kModelDetails];
+        gpu::Color color;
+        int texture;        // in the model, or -1
+        bool twoSided;
+        bool see;           // through: drawn after everything solid
+        float glow;
+    };
+
+    struct ModelBone
+    {
+        int parent;
+        Vec3 place;
+        Quat turn;
+        Vec3 size;
+        Mat4 inverseBind;
+        char name[24];
+    };
+
+    enum class ModelPath : u8 { Place, Turn, Size };
+
+    // How one bone changes over time.
+    struct ModelChannel
+    {
+        u32 bone;
+        ModelPath path;
+        bool stepped;
+        u32 count;
+        float* times;
+        float* values;      // 3 or 4 for each time
+    };
+
+    struct ModelAnimation
+    {
+        char name[24];
+        float length;
+        u32 first, count;   // channels
+    };
+
+    // Which bones move a vertex, and how much.
+    struct ModelWeight
+    {
+        u8 bones[4];
+        u8 weights[4];      // adding up to 255
+    };
+
+    struct ModelTexture
+    {
+        u8* pixels;         // until it is on the GPU
+        u32 width, height;
+        gpu::Texture texture;
+    };
+
+    // A model read from a glTF file. Never changed after loading, and shared by all who show it.
+    struct ModelData : NonCopyable
+    {
+        ~ModelData();
+
+        MeshData mesh;                       // all the levels, one after another
+        GrowArray<ModelPart, MemTag::General> parts;
+        GrowArray<ModelBone, MemTag::General> bones;
+        GrowArray<ModelChannel, MemTag::General> channels;
+        GrowArray<ModelAnimation, MemTag::General> animations;
+        GrowArray<ModelWeight, MemTag::General> weights;  // empty: it doesn't bend
+        GrowArray<ModelTexture, MemTag::General> textures;
+        Vec3 middle;
+        float radius = 0;
+        gpu::Mesh gpuMesh;
+        size_t bytes = 0;
+
+        int findAnimation(const char* name) const;
+        // The bones at a time, ready for the vertices. Room for kModelBones.
+        void pose(int animation, float time, Mat4* out) const;
+        // Between two animations: how much of the second.
+        void pose(int from, float fromTime, int to, float toTime, float part, Mat4* out) const;
+        // Every vertex of the first level, moved by the bones.
+        void bend(const Mat4* bones, gpu::MeshVertex* out) const;
+    };
+
+    // A .glb, or a .gltf with everything inside it. nullptr, with the reason logged, if it can't be used.
+    // On a worker thread: nothing of it touches the GPU.
+    ModelData* loadModel(const u8* file, size_t size, const char* name);
+
+    // Moves it to the GPU. False if there is no room.
+    bool uploadModel(ModelData& model, gpu::Device& device);
+    void freeModel(ModelData* model, gpu::Device& device);
+}

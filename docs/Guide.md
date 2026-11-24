@@ -164,6 +164,103 @@ There are two kinds. A **solid** body is stopped by walls and tiles and never tu
 `onWall` and `onCeiling`. A body with **mass** is rigid: it pushes, stacks, bounces and turns. `Scene::join` pins two together, for
 chains, hinges and wheels.
 
+## Three dimensions
+
+The same entities can be in space: x right, y up, z towards you, in metres. `Space::spawn` puts one there, and behaviours, parents,
+groups, `onHit` and `lifetime` work as they do on the plane.
+
+```cpp
+Model@ robot = Assets::model("global:model/robot.glb");
+Entity@ hero;
+
+void onEnter()
+{
+    Space::ground(0);
+    Space::sky(Color(0.2f, 0.45f, 0.85f), Color(0.7f, 0.85f, 0.95f));
+    @hero = Space::spawn(Vec3(0, 0, 0));
+    hero.model(robot);
+    hero.animate("idle");
+}
+
+void update(float dt)
+{
+    Space::camera(hero.place + Vec3(0, 3, 6), hero.place + Vec3(0, 1, 0));
+}
+
+void draw(Canvas@ c)
+{
+    c.designHeight(720);
+    Space::draw(c);                        // all of the screen, or part of it
+    c.text(font, "In front of it", 40, 40);
+}
+```
+
+| To look like | Use |
+|---|---|
+| A glTF model | `model`, and `animate("walk")` to play one of its animations, changing smoothly from the last |
+| A simple shape | `shape(SolidBox, Red)`: a box, ball, cylinder, cone, ring, capsule or sheet |
+| A mesh of your own | `mesh`, with a `Mesh` built from boxes, balls and triangles |
+| A soft light | `glow`. `light` is what lights other things: the four strongest reach each thing |
+
+A model is a `.glb`, or a `.gltf` with everything inside it, with up to 64 bones. The engine makes two simpler versions as it loads,
+and draws those when it is small on the screen. What can't be seen isn't drawn.
+
+`Space::sun`, `ambient`, `sky`, `fog` and `shadows` set the scene. Real shadows need a GPU with shaders; the original Xbox draws soft
+patches instead.
+
+### A world to walk in
+
+```cpp
+Space::land(21, 192, 1.5f, 34, 0.45f, true);   // a seed, squares, metres to each, height, roughness, an island
+Space::flatten(0, 0, 40, 3);                   // somewhere to build
+Space::water(0, Color(0.16f, 0.42f, 0.55f, 0.8f));
+
+hero.capsule(0.35f, 1.6f, 1);
+hero.colliderAt = Vec3(0, 0.8f, 0);            // its place is at its feet
+hero.walker = true;
+```
+
+A **walker** stays upright, slides along walls, climbs small steps and pushes what has mass. Set `motion` each update, keeping
+its y so that it falls. Something with **mass** is a rigid body, as on the plane, with a `sphere`, `cube` or `capsule` collider; a
+collider with `wall` stops both. `Space::raycast` says what is on a line, including the land.
+
+### A world that streams
+
+`Space::endlessLand` has no edge. Regions of 32 squares are made in the background as the camera comes near and go as it leaves. Ask
+which have come, fill them, and let what is in them go with them:
+
+```cpp
+int x, z;
+bool arrived;
+while (Space::nextRegion(x, z, arrived))
+    if (arrived)
+        Space::load("asset:region_" + x + "_" + z + ".json", Vec3(), true);   // true: streamed
+```
+
+A region may come from a file, or be made up from its numbers so that it is the same each time. A file lists entities:
+
+```json
+{ "entities": [
+  { "model": "global:model/oak.glb", "place": [4, 0, 2], "onLand": true, "angles": 90, "size": 1.2, "capsule": [0.3, 4], "wall": true },
+  { "shape": "box", "color": "#b08048", "place": [3, 0.5, 1], "cube": [1, 1, 1], "mass": 5 },
+  { "glow": 2, "light": [1, 0.7, 0.3], "range": 8, "place": [0, 3, 0] }
+] }
+```
+
+| In such a file | What it does |
+|---|---|
+| `name`, `place`, `onLand`, `angles`, `size` | Where it is; `onLand` measures up from the ground |
+| `model`, `shape`, `glow`, `skin`, `color`, `shine`, `glowing`, `twoSided`, `shadow` | What it looks like |
+| `light`, `range` | Lights other things |
+| `sphere`, `cube`, `capsule`, `colliderAt`, `group`, `hits`, `wall` | Its collider |
+| `mass`, `friction`, `bounce`, `gravity`, `drag`, `walker` | How it moves |
+| `behaviour` | A class in the script |
+
+### Shapes that melt
+
+`Space::shape` adds one of up to 24 shapes that are drawn by marching along rays, so that they join softly, cut each other and
+reflect. They mix with meshes. Clear them and add them again each update to move them. The original Xbox makes triangles of them.
+
 ## Assets
 
 ```cpp
@@ -180,6 +277,7 @@ screen is instant, until the budget needs the room. A missing image draws as a c
 | Images | PNG, JPEG, TGA, BMP and GIF, up to 2048 pixels a side |
 | Sounds | WAV, Ogg Vorbis and MP3 |
 | Fonts | SSFN |
+| Models | glTF 2.0 (`.glb`) |
 
 ## Sound
 
@@ -230,4 +328,6 @@ int best = int(parseInt(Save::get("best", "0")));
 - A scene may have 4096 entities and 1500 particles at once; elsewhere 16384 and 8000.
 - Build the disc with the cook tool, which makes images a quarter to an eighth of the size in memory and sounds a quarter,
   under the same names.
+- Three dimensions use the fixed pipeline: lights are worked out at corners, so give a floor plenty of squares. Ray-marched shapes
+  become triangles.
 - There is no live reload: edit on a PC and then build the disc.

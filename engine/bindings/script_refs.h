@@ -53,6 +53,13 @@ namespace nx
     {
     };
 
+    struct ModelRef : AssetHandle
+    {
+    };
+
     // bind_scene.cpp
     void bindScene(Binder& binder);
+    // bind_space.cpp
+    void bindSpaceTypes(Binder& binder);
+    void bindSpace(Binder& binder);
 }

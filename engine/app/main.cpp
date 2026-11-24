@@ -19,7 +19,8 @@
 //   --frames N      stop after N frames of a fixed 60th of a second, so runs can be repeated
 //   --capture FILE  save the last frame as a BMP
 //   --tour N        open every screen N times over, unattended, then stop
-//   --demo SECONDS  show every screen for a while, playing it, then stop
+//   --bench         with --frames: don't wait for the display, and say how long frames took
+//   --demo SECONDS  show every screen, or the one given, for a while, playing it, then stop
 //   --docs FILE     write the script reference and stop
 //   --budget MB     how much images and fonts may take
 //   --dev           reload scripts and images when their files change
@@ -39,6 +40,7 @@ namespace
         int frames = 0;
         int tour = 0;
         float demo = 0;
+        bool bench = false;
         size_t budget = 0;
         u32 width = 1280, height = 720;
         bool hidden = false;
@@ -103,7 +105,8 @@ namespace
     class Demo
     {
     public:
-        explicit Demo(float seconds) : m_seconds(seconds) {}
+        // Only one screen, if it is named.
+        Demo(float seconds, const char* only) : m_seconds(seconds), m_only(only) {}
 
         // True once finished.
         bool step(Services& s, float dt)
@@ -139,6 +142,10 @@ namespace
                 return false;
             }
             m_next = skip(screens, m_next);
+            while (m_only && m_next < screens.count() && strcmp(screens.info(m_next)->id, m_only) != 0)
+            {
+                m_next++;
+            }
             if (m_next >= screens.count())
             {
                 return true;
@@ -269,6 +276,7 @@ namespace
         }
 
         float m_seconds;
+        const char* m_only;
         float m_left = kAtHome;
         u32 m_next = 0;
         char m_script[256] = {};
@@ -398,6 +406,7 @@ namespace
             // Destroyed in reverse: the scripts let go of their assets before the cache goes.
             Assets assets;
             Canvas canvas;
+            SolidMeshes solids;
             Input input;
             Audio audio;
             Save save;
@@ -409,6 +418,8 @@ namespace
             services.device = device;
             services.assets = &assets;
             services.canvas = &canvas;
+            services.solids = &solids;
+            solids.init(*device);
             services.input = &input;
             services.host = &host;
             services.audio = &audio;
@@ -444,24 +455,32 @@ namespace
 
             if (ok && !options.docs)
             {
-                if (options.screen)
+                if (options.screen && options.demo <= 0)
                 {
                     screens.push(options.screen);
                 }
                 Tour tour(options.tour);
-                Demo demo(options.demo);
+                device->setWait(!options.bench);
+                double updating = 0, drawing = 0, began = 0;
+                Demo demo(options.demo, options.screen);
                 double last = platform.seconds();
                 double nextLook = 0;
-                float unspent = 0;
+                float unspent = 0, between = 0;
                 int frame = 0;
                 bool done = false;
                 while (!done && platform.pumpEvents() && !screens.quitRequested())
                 {
                     const double now = platform.seconds();
+                    if (frame == 30)
+                    {
+                        began = now;  // once it has settled
+                        updating = drawing = 0;
+                    }
                     const float elapsed = static_cast<float>(now - last);
                     last = now;
-                    const float rate = 1.0f / (elapsed > 0.001f ? elapsed : 0.001f);
-                    services.fps = frame < 10 ? rate : services.fps * 0.95f + rate * 0.05f;
+                    // The time is what is averaged: a short frame after a long one mustn't look like speed.
+                    between = frame < 10 ? elapsed : between * 0.95f + elapsed * 0.05f;
+                    services.fps = 1.0f / (between > 0.0005f ? between : 0.0005f);
 
                     if (options.frames)
                     {
@@ -503,6 +522,8 @@ namespace
                             done = tour.step(services, ok) || done;
                         }
                     }
+                    const double updated = platform.seconds();
+                    updating += updated - now;
                     if (device->beginFrame({ 0, 0, 0, 1 }))
                     {
                         canvas.begin();
@@ -512,6 +533,7 @@ namespace
                             demo.caption(services);
                         }
                         canvas.end();
+                        drawing += platform.seconds() - updated;
                         device->endFrame();
                         services.draws = canvas.draws();
                     }
@@ -525,6 +547,11 @@ namespace
                     ok = false;
                 }
                 demo.finish(services);
+                if (options.bench && frame > 30)
+                {
+                    const double frames = frame - 30;
+                    NX_INFO("%s: %.2f ms a frame: %.2f updating, %.2f drawing, %u draws", screens.current(), (platform.seconds() - began) * 1000 / frames, updating * 1000 / frames, drawing * 1000 / frames, static_cast<unsigned>(device->stats().draws));
+                }
                 if (device->stats().rejected)
                 {
                     NX_ERROR("%u draws were rejected", static_cast<unsigned>(device->stats().rejected));
@@ -547,6 +574,7 @@ namespace
                 NX_ERROR("%u assets were still held", static_cast<unsigned>(assets.stats().inUse));
                 ok = false;
             }
+            solids.shutdown();
             canvas.shutdown();
             assets.shutdown();
         }
@@ -588,6 +616,7 @@ int main(int argc, char** argv)
         else if (strcmp(a, "--hidden") == 0) options.hidden = true;
         else if (strcmp(a, "--null") == 0) options.null = true;
         else if (strcmp(a, "--menu") == 0) options.menu = true;
+        else if (strcmp(a, "--bench") == 0) options.bench = true;
         else if (strcmp(a, "--dev") == 0) options.dev = true;
     }
 

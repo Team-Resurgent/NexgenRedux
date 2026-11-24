@@ -52,6 +52,18 @@ namespace nx
             return wrap<TextureRef>(s.assets->texture(path), *s.assets);
         }
 
+        ModelRef* loadModelAsset(const std::string& name)
+        {
+            Services& s = services();
+            char path[192];
+            if (!resolveAsset(s, name.c_str(), path, sizeof(path)))
+            {
+                scriptError("asset names start with asset: or global: (" + name + ")");
+                return nullptr;
+            }
+            return wrap<ModelRef>(s.assets->model(path), *s.assets);
+        }
+
         FontRef* loadFont(const std::string& name, u32 size)
         {
             Services& s = services();
@@ -428,6 +440,7 @@ namespace nx
             default: return { value, p, q, 1 };
             }
         }
+        Color lerpColor(const Color& a, const Color& b, float t) { return { a.r + (b.r - a.r) * t, a.g + (b.g - a.g) * t, a.b + (b.b - a.b) * t, a.a + (b.a - a.a) * t }; }
         Color fade(const Color& c, float alpha) { return { c.r, c.g, c.b, c.a * alpha }; }
 
         void makeColor(void* memory) { new (memory) Color(); }
@@ -461,6 +474,7 @@ namespace nx
                 b.constant(c.name, const_cast<Color*>(c.value), "A ready-made colour.");
             }
             b.function("Color hsv(float hue, float saturation, float value)", NX_FN(hsv), "A colour from its hue (0 to 1 around the wheel), saturation and brightness.");
+            b.function("Color lerp(const Color &in a, const Color &in b, float t)", NX_FN(lerpColor), "From a to b as t goes from 0 to 1.");
             b.function("Color fade(const Color &in color, float alpha)", NX_FN(fade), "The same colour, more transparent.");
         }
 
@@ -473,6 +487,8 @@ namespace nx
             b.method("float get_height() const property", NX_METHOD(TextureRef, height), "Height in its own pixels.");
             b.method("bool get_failed() const property", NX_METHOD(TextureRef, failed), "Whether the file could not be loaded. It then draws as a checkerboard.");
             b.method("bool get_ready() const property", NX_METHOD(TextureRef, ready), "Whether it has arrived. Until then it draws as nothing.");
+
+            bindSpaceTypes(b);
 
             b.refType("Font", 0, "A scalable SSFN font at one size.");
             b.behaviour(asBEHAVE_ADDREF, "void f()", NX_METHOD(FontRef, addRef));
@@ -488,6 +504,7 @@ namespace nx
             b.names("Assets");
             b.function("Texture@ texture(const string &in name)", NX_FN(loadTexture), "An image: PNG, JPEG, TGA, BMP or GIF, up to 2048 pixels a side. What a screen asks for as it is made is ready by onEnter(); later ones arrive in the background.");
             b.function("Sound@ sound(const string &in name)", NX_FN(loadSoundAsset), "A sound. Arrives like an image.");
+            b.function("Model@ model(const string &in name)", NX_FN(loadModelAsset), "A 3D model: glTF, as a .glb or a .gltf with everything inside it. Arrives like an image.");
             b.function("uint pending()", NX_FN(cachePending), "Files still on their way.");
             b.function("uint textureKilobytes()", NX_FN(cacheTextureKilobytes), "Memory that images and fonts take.");
             b.function("uint soundKilobytes()", NX_FN(cacheSoundKilobytes), "Memory that sounds take.");
@@ -687,6 +704,14 @@ namespace nx
             b.callback("Vec2 + Vec2, Vec2 - Vec2, -Vec2", "Added, taken away, turned round. += and -= too.");
             b.callback("Vec2 * float, Vec2 / float", "Longer or shorter. *= too.");
             b.callback("float dot(const Vec2 &in other) const", "How far one goes along the other.");
+            b.section("Vec3", "A place or a direction in space: x right, y up, z towards you, in metres.");
+            b.callback("Vec3()", "Zero.");
+            b.callback("Vec3(float x, float y, float z)", "From its parts.");
+            b.callback("Vec3 + Vec3, Vec3 - Vec3, -Vec3, Vec3 * float, Vec3 / float", "As for Vec2.");
+            b.callback("float dot(const Vec3 &in other) const", "How far one goes along the other.");
+            b.callback("Vec3 cross(const Vec3 &in other) const", "The direction across both.");
+            b.callback("float length() const", "How long it is.");
+            b.callback("Vec3 normalized() const", "The same direction, 1 long.");
             b.section("Maths", "As well as AngelScript's own `sin`, `cos`, `sqrt` and so on, in radians.");
             b.function("float random()", NX_FN(randomUnit), "From 0 up to 1.");
             b.function("float random(float low, float high)", NX_FN(randomRange), "Between two numbers.");
@@ -756,6 +781,7 @@ namespace nx
         bindCoroutines(binder);
         bindSave(binder);
         bindScene(binder);
+        bindSpace(binder);
         s.host->setPrelude(behaviourPrelude());
         s.entityArray = s.host->hold("array<Entity@>");
         bindScreens(binder);

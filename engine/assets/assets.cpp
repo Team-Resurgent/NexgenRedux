@@ -1,6 +1,7 @@
 #include "assets/assets.h"
 #include "assets/decode.h"
 #include "assets/formats.h"
+#include "assets/model.h"
 #include "base/log.h"
 
 #include <stdio.h>
@@ -37,6 +38,7 @@ namespace nx
         u8* decoded = nullptr;        // or a decoded one, to be freed with freeImage
         gpu::TextureData texture;
         SoundData* sound = nullptr;
+        ModelData* model = nullptr;
         u64 fileTime = 0;
         std::atomic<bool> done{ false };
     };
@@ -213,6 +215,11 @@ namespace nx
         return request(path, AssetType::Sound);
     }
 
+    Asset* Assets::model(const char* path)
+    {
+        return request(path, AssetType::Model);
+    }
+
     Asset* Assets::request(const char* path, AssetType type)
     {
         char clean[128];
@@ -220,7 +227,7 @@ namespace nx
         char lower[128];
         const bool valid = cleanPath(path, clean, sizeof(clean), false) && cleanPath(path, lower, sizeof(lower), true);
         // The same file could be asked for as different things.
-        snprintf(key, sizeof(key), "%s%s", type == AssetType::Sound ? "sound!" : "", valid ? lower : "?");
+        snprintf(key, sizeof(key), "%s%s", type == AssetType::Sound ? "sound!" : type == AssetType::Model ? "model!" : "", valid ? lower : "?");
         const u64 hash = hashText(key);
         if (Asset* found = find(key, hash))
         {
@@ -274,6 +281,11 @@ namespace nx
                 {
                     NX_ERROR("%s is not a sound this engine can read", load.path);
                 }
+                load.file.clear();
+            }
+            else if (load.type == AssetType::Model)
+            {
+                load.model = loadModel(load.file.data, load.file.size, load.path);
                 load.file.clear();
             }
             else if (isCookedTexture(load.file.data, load.file.size))
@@ -378,6 +390,26 @@ namespace nx
             unloadData(asset);
             asset.sound = load.sound;
             asset.bytes = load.sound->bytes;
+        }
+        else if (load.type == AssetType::Model)
+        {
+            if (load.model == nullptr || !uploadModel(*load.model, *m_device))
+            {
+                freeModel(load.model, *m_device);
+                fail(asset);
+                return;
+            }
+            if (asset.model && asset.refs)
+            {
+                // What shows it may be in the middle of moving: try again when it is let go of.
+                freeModel(load.model, *m_device);
+                asset.fileTime = 0;
+                return;
+            }
+            makeRoom(AssetType::Model, load.model->bytes);
+            unloadData(asset);
+            asset.model = load.model;
+            asset.bytes = load.model->bytes;
         }
         else
         {
@@ -488,7 +520,7 @@ namespace nx
             {
                 // A sound may be playing from its memory, so only those that nobody holds.
                 const u64 time = m_platform->fileTime(a.path);
-                if (time && time != a.fileTime && (a.type == AssetType::Texture || a.refs == 0))
+                if (time && time != a.fileTime && (a.type == AssetType::Texture || a.refs == 0) && a.type != AssetType::Font)
                 {
                     NX_INFO("reloading %s", a.path);
                     a.fileTime = time;
@@ -557,6 +589,8 @@ namespace nx
         asset.texture = m_invisible;
         destroy(asset.font);
         freeSound(asset.sound);
+        freeModel(asset.model, *m_device);
+        asset.model = nullptr;
         asset.font = nullptr;
         asset.sound = nullptr;
         m_bytes[budgetIndex(asset.type)] -= asset.bytes;

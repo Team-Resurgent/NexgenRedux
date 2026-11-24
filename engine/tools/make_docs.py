@@ -194,13 +194,14 @@ TOPICS = [
     ('Screens', ['Screen', 'Screens', 'App']),
     ('Drawing', ['Canvas', 'Color', 'Texture', 'Font', 'Blend', 'Filter', 'Align']),
     ('Scene', ['Scene', 'Entity', 'Behaviour', 'IBehaviour']),
+    ('Three dimensions', ['Space', 'Model', 'Mesh', 'Solid', 'FieldShape', 'FieldJoin', 'Vec3']),
     ('Assets', ['Assets']),
     ('Sound', ['Sound', 'Voice', 'Bus', 'Audio']),
     ('Input', ['Input']),
     ('Movement', ['Tween', 'Ease', 'Coroutines', 'Vec2', 'Maths']),
     ('Saving', ['Save']),
 ]
-NAMESPACES = ['Screens', 'App', 'Scene', 'Assets', 'Audio', 'Input', 'Save']
+NAMESPACES = ['Screens', 'App', 'Scene', 'Space', 'Assets', 'Audio', 'Input', 'Save']
 FUNCTIONS = ['Coroutines', 'Maths']  # sections that aren't a type or a namespace
 
 
@@ -316,7 +317,7 @@ def main(folder):
     body, heads = markdown(open(os.path.join(DOCS, 'Guide.md'), encoding='utf-8').read())
     page(folder, 'guide.html', 'Nexgen Redux guide', body, [(slug(h), html.escape(h)) for h in heads])
 
-    captions = [('music', 'Music'), ('runes', 'Rune shift'), ('rally', 'Comet rally'), ('cracktro', 'Cracktro'), ('parallax', 'Parallax'), ('coroutines', 'Coroutines'), ('gauges', 'Gauges'), ('shapes', 'Shapes'), ('xbox-main', 'On the original Xbox, in xemu')]
+    captions = [('explore', 'A world to walk about in'), ('dashboard', 'Dashboard'), ('endless', 'Endless land'), ('melt', 'Ray marching'), ('blades', 'Blades'), ('tumble', '3D physics'), ('music', 'Music'), ('runes', 'Rune shift'), ('shooter', 'Shooter'), ('platformer', 'Platformer'), ('cracktro', 'Cracktro'), ('xbox-explore', 'On a real original Xbox')]
     body = '''<h1>Nexgen Redux</h1>
 <p class="lead">A cross-platform engine for games and dashboards, scripted in AngelScript. The same scripts run on the original Xbox, Windows, Linux and macOS.</p>
 <div class="cards">

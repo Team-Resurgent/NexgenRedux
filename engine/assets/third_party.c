@@ -119,3 +119,6 @@ void nx_font_close(NxFont* font)
     ssfn_free(&font->context);
     fontFree(font);
 }
+
+#define CGLTF_IMPLEMENTATION
+#include "third_party/cgltf/cgltf.h"

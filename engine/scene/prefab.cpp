@@ -518,6 +518,14 @@ namespace nx
             {
                 s.radius = v.number();
             }
+            else if (is("fadeIn"))
+            {
+                s.fadeIn = v.number();
+            }
+            else if (is("spin"))
+            {
+                s.spin = v.number();
+            }
             else
             {
                 if (s.texture)

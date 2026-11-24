@@ -62,4 +62,6 @@ namespace nx
     // bind_space.cpp
     void bindSpaceTypes(Binder& binder);
     void bindSpace(Binder& binder);
+    // bind_net.cpp
+    void bindNet(Binder& binder);
 }

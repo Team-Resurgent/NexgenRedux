@@ -217,7 +217,7 @@ namespace nx
         entry.world = create<World>(MemTag::Scene, *m_services->assets, *m_services->host, entry.module, small ? 4096u : 16384u, small ? 1500u : 8000u);
         if (entry.world)
         {
-            entry.world->space().init(m_services->solids);
+            entry.world->space().init(m_services->solids, m_services->audio);
         }
         enter(entry);
 

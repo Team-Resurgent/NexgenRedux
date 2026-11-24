@@ -103,6 +103,8 @@ namespace nx
         Color colorStart, colorEnd;
         float gravity, drag;
         float radius;            // of the area they start in
+        float fadeIn;            // part of their life
+        float spin;              // degrees a second, at most, in space
     };
 
     struct Particle
@@ -206,7 +208,7 @@ namespace nx
             float world[6];                     // x' = m0 x + m2 y + m4, as in Canvas
             int layer;
             u32 parts[static_cast<size_t>(Component::Count)];
-            u32 parts3[5];                      // in space
+            u32 parts3[6];                      // in space
             u32 behaviour;                      // first in its list
             EntityRef* ref;
             char name[24];
@@ -261,6 +263,9 @@ namespace nx
         u32 groupNamed(const char* name) const;
 
         // --- Particles ---
+
+        u32 styleNamed(const char* name) const;  // 0xFFFFFFFF if there is none
+        const ParticleStyle& style(u32 index) const { return m_styles[index]; }
 
         bool burst(const char* style, Vec2 position, u32 count);
 
@@ -502,7 +507,6 @@ namespace nx
         bool readColor(JsonTree::Value json, Color& color, const char* file);
         bool readGroups(JsonTree::Value json, u32& mask, const char* file);
         Asset* readAsset(JsonTree::Value json, AssetType type, u32 size, const char* file);
-        u32 styleNamed(const char* name) const;
         const Prefab* prefabNamed(const char* name) const;
         u32 random();
         float random(float low, float high);

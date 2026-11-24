@@ -13,6 +13,7 @@
 namespace nx
 {
     class Screens;
+    class Net;
 
     // What scripts can reach. Found through the script engine, so nothing is global.
     struct Services
@@ -27,6 +28,7 @@ namespace nx
         Save* save = nullptr;
         Coroutines* coroutines = nullptr;
         Screens* screens = nullptr;
+        Net* net = nullptr;
         SolidMeshes* solids = nullptr;
         World* world = nullptr;         // of the screen whose script is running
         asITypeInfo* entityArray = nullptr;

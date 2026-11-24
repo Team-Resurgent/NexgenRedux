@@ -96,7 +96,7 @@ namespace nx
         {
             const char* key = v.key();
             const auto is = [key](const char* name) { return strcmp(key, name) == 0; };
-            if (is("place") || is("onLand") || is("angles") || is("size") || is("group") || is("hits") || is("colliderAt") || is("wall") || is("range"))
+            if (is("place") || is("onLand") || is("angles") || is("size") || is("group") || is("hits") || is("colliderAt") || is("wall") || is("range") || is("rate"))
             {
                 continue;
             }
@@ -213,6 +213,13 @@ namespace nx
                         b->walker = v.flag();
                         b->gravity = json["gravity"].exists() ? b->gravity : 1;
                     }
+                }
+            }
+            else if (is("emit"))
+            {
+                if (!emit(id, v.text(), json["rate"].number(20)))
+                {
+                    return m_world.fail(file, v.line(), "no particles called %s", v.text());
                 }
             }
             else if (is("behaviour"))

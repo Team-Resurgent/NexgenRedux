@@ -2,6 +2,7 @@
 
 #include "assets/assets.h"
 #include "assets/model.h"
+#include "audio/audio.h"
 #include "base/grow_array.h"
 #include "base/json_tree.h"
 #include "canvas/canvas.h"
@@ -134,6 +135,20 @@ namespace nx
         u32 touched;           // how many things, last step
     };
 
+    struct Emitter3
+    {
+        u32 owner;
+        u32 style;
+        float rate, owed;
+    };
+
+    struct Particle3
+    {
+        Vec3 place, velocity;
+        float age, life;
+        float turn, spin;   // radians
+    };
+
     struct SpaceStats
     {
         u32 drawn = 0, hidden = 0;  // last draw
@@ -148,7 +163,11 @@ namespace nx
         Space(World& world, Assets& assets) : m_world(world), m_assets(assets) {}
         ~Space() { clear(); }
 
-        void init(SolidMeshes* solids) { m_solids = solids; }
+        void init(SolidMeshes* solids, Audio* audio = nullptr)
+        {
+            m_solids = solids;
+            m_audio = audio;
+        }
         void clear();
         // What was touching what.
         void forget();
@@ -176,9 +195,24 @@ namespace nx
         void removed(u32 index);
         void transform(u32 index);
 
+        // --- Particles: the world's styles, in metres ---
+
+        // Thrown along a direction, as widely as the style spreads them. False for a style that isn't there.
+        bool burst(const char* style, const Vec3& place, u32 count, const Vec3& aim);
+        bool emit(u32 id, const char* style, float rate);
+        u32 particles() const { return m_particleCount; }
+        void clearParticles();
+
+        // --- Sound ---
+
+        // A voice that gets quieter with distance and comes from where it is: from an entity, or a place.
+        void follow(Voice voice, u32 entity, const Vec3& place, float volume, float range);
+        // How loud and how far to one side it would be.
+        void hear(const Vec3& place, float volume, float range, float& gain, float& pan) const;
+
         // --- Surroundings ---
 
-        void setCamera(const Vec3& from, const Vec3& to, float angle) { m_from = from; m_to = to; m_focus[m_focusCount < 3 ? m_focusCount++ : 3] = from; m_angle = angle < 5 ? 5 : angle > 150 ? 150 : angle; }
+        void setCamera(const Vec3& from, const Vec3& to, float angle) { m_from = from; m_to = to; m_focusTo[m_focusCount < 3 ? m_focusCount : 3] = to; m_focus[m_focusCount < 3 ? m_focusCount++ : 3] = from; m_angle = angle < 5 ? 5 : angle > 150 ? 150 : angle; }
         void setSun(const Vec3& direction, const gpu::Color& color) { m_sun = direction.normalized(); m_sunColor = color; }
         void setAmbient(const gpu::Color& sky, const gpu::Color& ground) { m_ambientSky = sky; m_ambientGround = ground; }
         void setSky(const gpu::Color& top, const gpu::Color& horizon) { m_skyTop = top; m_skyHorizon = horizon; m_hasSky = true; }
@@ -290,6 +324,16 @@ namespace nx
             bool arrived;
         };
 
+        // Something heard from a place.
+        struct Heard
+        {
+            Voice voice;
+            u32 entity;
+            Vec3 place;
+            float volume, range;
+            float gain, pan;   // as last told
+        };
+
         struct Frustum
         {
             float planes[6][4];
@@ -364,6 +408,10 @@ namespace nx
         void pickLights(const gpu::View& view, const Vec3& middle, float radius, gpu::MeshDraw& draw) const;
         void boundsOf(const Appearance& a, const Mat4& world, Vec3& middle, float& radius) const;
         void drawBlobs(const gpu::View& view, const Frustum& frustum);
+        void emitParticles(float dt);
+        void moveParticles(float dt);
+        void drawParticles(const gpu::View& view);
+        void listen();
 
         // land.cpp
         void buildChunk(Chunk& chunk);
@@ -410,6 +458,14 @@ namespace nx
         GrowArray<Light3> m_lights;
         GrowArray<Collider3> m_colliders;
         GrowArray<Body3> m_bodies;
+        GrowArray<Emitter3> m_emitters;
+        GrowArray<Particle3> m_particles[16];
+        u32 m_particleCount = 0;
+        gpu::Mesh m_particleMeshes[6];      // used in turn, as each can be filled once a frame
+        u32 m_particleMesh = 0;
+        MeshData m_particleData;
+        GrowArray<Heard> m_heard;
+        Audio* m_audio = nullptr;
 
         Vec3 m_from = { 0, 2, 6 }, m_to;
         float m_angle = 60, m_far = 400;
@@ -435,7 +491,9 @@ namespace nx
         GrowArray<Flat> m_flats;
         GrowArray<RegionEvent> m_regionEvents;
         u32 m_regionNext = 0;
-        Vec3 m_focus[4];
+        Vec3 m_focus[4], m_focusTo[4];
+        Vec3 m_ears[4], m_earSides[4];   // where it is heard from, and which way is right
+        u32 m_earCount = 0;
         u32 m_focusCount = 0;
         gpu::Color m_landColors[4] = { { 0.76f, 0.7f, 0.5f, 1 }, { 0.33f, 0.5f, 0.22f, 1 }, { 0.9f, 0.92f, 0.95f, 1 }, { 0.42f, 0.38f, 0.34f, 1 } };
         float m_landLow = 0, m_landHigh = 30;

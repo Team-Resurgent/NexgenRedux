@@ -211,6 +211,36 @@ namespace nx
             return playSound(*sound, o);
         }
 
+        // From a place in space, or from an entity, until either ends.
+        PlayingSound playFrom(SoundRef* sound, u32 entity, const Vec3& place, float volume, float range, float pitch, bool loop)
+        {
+            Space& space = services().world->space();
+            PlayOptions o;
+            space.hear(place, volume, range, o.volume, o.pan);
+            o.pitch = pitch;
+            o.loop = loop;
+            o.priority = loop ? 140 : 120;
+            const PlayingSound playing = playSound(*sound, o);
+            space.follow(Voice{ playing.value }, entity, place, volume, range);
+            return playing;
+        }
+        PlayingSound soundPlayAt(const Vec3& place, float volume, float range, float pitch, SoundRef* sound)
+        {
+            return playFrom(sound, 0, place, volume, range, pitch, false);
+        }
+        PlayingSound entitySound(SoundRef* sound, float volume, float range, bool loop, EntityRef* e)
+        {
+            if (sound == nullptr)
+            {
+                scriptError("null sound");
+            }
+            else if (e->world && e->world->alive(e->id))
+            {
+                return playFrom(sound, e->id, e->world->space().worldPlace(e->id), volume, range, 1, loop);
+            }
+            return { 0 };
+        }
+
         float soundSeconds(const SoundRef* sound) { const SoundData* d = sound->asset->sound; return d && d->rate ? static_cast<float>(d->frames) / static_cast<float>(d->rate) : 0; }
         bool soundKnown(Bus bus) { return bus < Bus::Count; }
         void setBus(Bus bus, float volume) { if (soundKnown(bus)) services().audio->setBusVolume(bus, volume); }
@@ -615,6 +645,7 @@ namespace nx
 
             b.reopen("Sound");
             b.method("Voice play(float volume = 1, float pan = 0, float pitch = 1, bool loop = false)", NX_OBJ_LAST(soundPlay), "Plays it as an effect. Any number can play at once, up to the voices there are.");
+            b.method("Voice playAt(const Vec3 &in place, float volume = 1, float range = 30, float pitch = 1)", NX_OBJ_LAST(soundPlayAt), "Plays it from a place in space: quieter farther from the camera, silent beyond a range, and from one side or the other.");
             b.method("Voice playMusic(float volume = 1, float fadeSeconds = 0, bool loop = true)", NX_OBJ_LAST(soundPlayMusic), "Plays it as music, fading in.");
             b.method("float get_seconds() const property", NX_OBJ_LAST(soundSeconds), "How long it is; 0 if that isn't known.");
             b.method("bool get_ready() const property", NX_METHOD(SoundRef, ready), "Whether it has arrived. Until then it plays as silence.");
@@ -782,6 +813,9 @@ namespace nx
         bindSave(binder);
         bindScene(binder);
         bindSpace(binder);
+        bindNet(binder);
+        binder.reopen("Entity");
+        binder.method("Voice sound(Sound@+ sound, float volume = 1, float range = 30, bool loop = true)", NX_OBJ_LAST(entitySound), "Plays a sound from it, wherever it goes, until it is destroyed.");
         s.host->setPrelude(behaviourPrelude());
         s.entityArray = s.host->hold("array<Entity@>");
         bindScreens(binder);

@@ -4,6 +4,8 @@
 #include "bindings/bindings.h"
 #include "canvas/canvas.h"
 #include "input/input.h"
+#include "net/net.h"
+#include "net/secure.h"
 #include "screens/screens.h"
 
 #include <atomic>
@@ -108,6 +110,7 @@ namespace nx::test
         Input input;
         Audio audio;
         Save save;
+        Net net;
         ScriptHost host;
         Coroutines coroutines;
         Services services;
@@ -122,6 +125,9 @@ namespace nx::test
             services.assets = &assets;
             services.canvas = &canvas;
             services.solids = &solids;
+            services.net = &net;
+            net.setOnlyHere(true);
+            secureSetPlatform(&platform);
             solids.init(*device);
             services.input = &input;
             services.host = &host;
@@ -145,6 +151,8 @@ namespace nx::test
             coroutines.shutdown();
             host.shutdown();
             audio.shutdown();
+            net.shutdown();
+            secureShutdown();
             solids.shutdown();
             canvas.shutdown();
             assets.shutdown();
@@ -157,6 +165,7 @@ namespace nx::test
             {
                 assets.finish();
                 audio.update();
+                net.update(services.time);
                 services.time += 1.0 / 60;
                 input.update(platform.state, 1.0f / 60);
                 screens.update(1.0f / 60);

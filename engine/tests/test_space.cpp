@@ -17,7 +17,7 @@ namespace
         World world{ rig.assets, rig.host, "none", 4096, 500 };
         Space& space = world.space();
 
-        Place() { space.init(&rig.solids); }
+        Place() { space.init(&rig.solids, &rig.audio); }
 
         void step(int count = 1)
         {
@@ -656,4 +656,86 @@ NX_TEST(everyModelCanBeUsed)
     p.rig.assets.finish();
     NX_EXPECT(bad->failed);
     p.rig.assets.release(bad);
+}
+
+NX_TEST(particlesFlyInSpace)
+{
+    Place p;
+    p.rig.platform.extraPath = "scene.json";
+    p.rig.platform.extraText = R"({ "particles": {
+        "spark": { "life": [0.5, 1], "speed": [4, 5], "size": [0.2, 0], "spread": 60, "color": "#ffff00", "gravity": 1 },
+        "smoke": { "life": 2, "speed": 1, "size": [0.5, 2], "spread": 20, "color": "#808080", "blend": "alpha", "fadeIn": 0.2, "spin": 90 } } })";
+    NX_EXPECT(p.world.load("scene.json", "showcase/shapes"));
+    NX_EXPECT(p.space.burst("spark", { 0, 1, 0 }, 100, { 0, 1, 0 }));
+    NX_EXPECT(!p.space.burst("none", { 0, 1, 0 }, 100, { 0, 1, 0 }));
+    NX_EXPECT(p.space.particles() == 100);
+    const u32 chimney = p.world.spawn({});
+    p.space.spatial(chimney)->place = { 3, 0, 0 };
+    NX_EXPECT(p.space.emit(chimney, "smoke", 30));
+    p.step(60);
+    NX_EXPECT(p.space.particles() > 20 && p.space.particles() < 60);
+    p.space.setCamera({ 0, 2, 8 }, { 0, 1, 0 }, 60);
+    p.draw(3);
+    NX_EXPECT(p.rig.device->stats().rejected == 0 && p.rig.device->stats().triangles >= 40);
+    p.world.destroyEntity(chimney);
+    p.step(200);
+    NX_EXPECT(p.space.particles() == 0);
+    // Never more than there is room for.
+    p.space.burst("smoke", {}, 100000, { 0, 1, 0 });
+    NX_EXPECT(p.space.particles() <= 500);
+    p.world.clear();
+    NX_EXPECT(p.space.particles() == 0);
+}
+
+NX_TEST(soundsComeFromPlaces)
+{
+    Place p;
+    p.space.setCamera({ 0, 0, 0 }, { 0, 0, -1 }, 60);
+    const u32 source = p.world.spawn({});
+    p.space.spatial(source)->place = { 10, 0, 0 };
+    p.step();
+    float gain, pan;
+    p.space.hear({ 10, 0, 0 }, 1, 20, gain, pan);
+    NX_EXPECT(fabsf(gain - 0.25f) < 0.01f && pan > 0.8f);
+    p.space.hear({ -10, 0, 0 }, 1, 20, gain, pan);
+    NX_EXPECT(pan < -0.8f);
+    p.space.hear({ 0, 0, -10 }, 1, 20, gain, pan);
+    NX_EXPECT(fabsf(pan) < 0.01f);
+    p.space.hear({ 30, 0, 0 }, 1, 20, gain, pan);
+    NX_EXPECT(gain == 0);
+    // It goes with its entity, and ends with it.
+    Asset* asset = p.rig.assets.sound("global/sound/bell.wav");
+    p.rig.assets.finish();
+    PlayOptions o;
+    o.loop = true;
+    p.rig.assets.addRef(asset);
+    const Voice voice = p.rig.audio.play(*asset->sound, asset, o);
+    p.space.follow(voice, source, {}, 1, 20);
+    i16 heard[800 * 2];
+    const auto loudness = [&]()
+    {
+        i32 left = 0, right = 0;
+        for (u32 i = 0; i < 30; i++)
+        {
+            p.space.setCamera({ 0, 0, 0 }, { 0, 0, -1 }, 60);
+            p.step();
+            p.rig.audio.update();
+            p.rig.audio.mix(heard, 800);
+        }
+        for (u32 i = 0; i < 800; i++)
+        {
+            left += heard[i * 2] < 0 ? -heard[i * 2] : heard[i * 2];
+            right += heard[i * 2 + 1] < 0 ? -heard[i * 2 + 1] : heard[i * 2 + 1];
+        }
+        return Vec2(static_cast<float>(left), static_cast<float>(right));
+    };
+    const Vec2 near = loudness();
+    NX_EXPECT(near.y > near.x * 2 && near.y > 1000);
+    p.space.spatial(source)->place = { 100, 0, 0 };
+    const Vec2 far = loudness();
+    NX_EXPECT(far.y < near.y * 0.1f);
+    p.world.destroyEntity(source);
+    loudness();
+    NX_EXPECT(!p.rig.audio.playing(voice));
+    p.rig.assets.release(asset);
 }

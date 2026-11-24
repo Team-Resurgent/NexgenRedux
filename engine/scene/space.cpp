@@ -304,6 +304,7 @@ namespace nx
         removePart(m_lights, 2, index);
         removePart(m_colliders, 3, index);
         removePart(m_bodies, 4, index);
+        removePart(m_emitters, 5, index);
     }
 
     void Space::forget()
@@ -330,6 +331,11 @@ namespace nx
         if (device)
         {
             device->destroyMesh(m_waterMesh);
+            for (gpu::Mesh& m : m_particleMeshes)
+            {
+                device->destroyMesh(m);
+                m = {};
+            }
             for (gpu::Mesh& m : m_fieldMeshes)
             {
                 device->destroyMesh(m);
@@ -482,10 +488,13 @@ namespace nx
     void Space::update(float dt)
     {
         m_time += dt;
+        listen();
         stream();
         animate(dt);
         walk(dt);
         physics(dt);
+        emitParticles(dt);
+        moveParticles(dt);
     }
 
     void Space::animate(float dt)
@@ -1055,6 +1064,333 @@ namespace nx
             {
                 drawAppearance(a, a.detail, view, false, true);
             }
+        }
+        drawParticles(view);
+    }
+
+    // --- Particles ---
+
+    bool Space::burst(const char* name, const Vec3& place, u32 count, const Vec3& aim)
+    {
+        const u32 index = m_world.styleNamed(name);
+        if (index == kNone)
+        {
+            return false;
+        }
+        const ParticleStyle& s = m_world.style(index);
+        const Vec3 up = aim.length() > 0.0001f ? aim.normalized() : Vec3(0, 1, 0);
+        const Vec3 side = (fabsf(up.x) > 0.7f ? Vec3(0, 1, 0) : Vec3(1, 0, 0)).cross(up).normalized();
+        const Vec3 along = up.cross(side);
+        const float widest = cosf(fminf(s.spread, 360) * 0.5f * kDegrees);
+        for (u32 i = 0; i < count && m_particleCount + m_world.m_particleCount < m_world.m_maxParticles; i++)
+        {
+            Particle3 p;
+            // Evenly over the cap of a ball.
+            const float height = m_world.random(widest, 1), angle = m_world.random(0, 6.2831853f);
+            const float out = sqrtf(fmaxf(0, 1 - height * height));
+            p.velocity = (up * height + side * (out * cosf(angle)) + along * (out * sinf(angle))) * m_world.random(s.speedMin, s.speedMax);
+            p.place = place;
+            if (s.radius > 0)
+            {
+                const float a = m_world.random(0, 6.2831853f), away = sqrtf(m_world.random(0, 1)) * s.radius;
+                p.place = p.place + side * (cosf(a) * away) + along * (sinf(a) * away);
+            }
+            p.age = 0;
+            p.life = m_world.random(s.lifeMin, s.lifeMax);
+            p.turn = s.spin != 0 ? m_world.random(0, 6.2831853f) : 0;
+            p.spin = m_world.random(-s.spin, s.spin) * kDegrees;
+            if (!m_particles[index].push(p))
+            {
+                break;
+            }
+            m_particleCount++;
+        }
+        return true;
+    }
+
+    bool Space::emit(u32 id, const char* name, float rate)
+    {
+        const u32 index = m_world.styleNamed(name);
+        if (index == kNone)
+        {
+            return false;
+        }
+        Emitter3 fresh = {};
+        spatial(id);
+        if (Emitter3* e = getOrAdd(m_emitters, 5, id, fresh))
+        {
+            e->style = index;
+            e->rate = rate < 0 ? 0 : rate;
+        }
+        return true;
+    }
+
+    void Space::clearParticles()
+    {
+        for (auto& particles : m_particles)
+        {
+            particles.clear();
+        }
+        m_particleCount = 0;
+    }
+
+    void Space::emitParticles(float dt)
+    {
+        for (u32 i = 0; i < m_emitters.count(); i++)
+        {
+            Emitter3& e = m_emitters[i];
+            const World::Entity& owner = m_world.m_entities[e.owner];
+            if (owner.dying || !owner.shown || owner.parts3[0] == kNone)
+            {
+                continue;
+            }
+            e.owed += e.rate * dt;
+            const u32 count = static_cast<u32>(e.owed);
+            e.owed -= static_cast<float>(count);
+            if (count)
+            {
+                const Mat4& at = m_spatials[owner.parts3[0]].world;
+                burst(m_world.style(e.style).name, { at.m[12], at.m[13], at.m[14] }, count, { at.m[4], at.m[5], at.m[6] });
+            }
+        }
+    }
+
+    void Space::moveParticles(float dt)
+    {
+        for (u32 s = 0; s < 16; s++)
+        {
+            GrowArray<Particle3>& particles = m_particles[s];
+            if (particles.count() == 0)
+            {
+                continue;
+            }
+            const ParticleStyle& style = m_world.style(s);
+            const Vec3 pull = m_gravity * (style.gravity * dt);
+            const float kept = fmaxf(0, 1 - style.drag * dt);
+            for (u32 i = 0; i < particles.count();)
+            {
+                Particle3& p = particles[i];
+                p.age += dt;
+                if (p.age >= p.life)
+                {
+                    particles.swapRemove(i);
+                    m_particleCount--;
+                    continue;
+                }
+                p.velocity = (p.velocity + pull) * kept;
+                p.place = p.place + p.velocity * dt;
+                p.turn += p.spin * dt;
+                i++;
+            }
+        }
+    }
+
+    // Squares that face the camera: those that cover, from far to near, and then those that add light.
+    void Space::drawParticles(const gpu::View& view)
+    {
+        if (m_particleCount == 0)
+        {
+            return;
+        }
+        gpu::Device& device = *m_solids->device();
+        constexpr u32 kMost = 4096;
+        MeshData& data = m_particleData;
+        if (data.indices.count() == 0)
+        {
+            // The corners never change which is joined to which.
+            for (u32 i = 0; i < kMost; i++)
+            {
+                for (u32 k = 0; k < 4; k++)
+                {
+                    data.vertex({}, { 0, 1, 0 }, kWhite, k == 1 || k == 2 ? 1.0f : 0.0f, k >= 2 ? 0.0f : 1.0f);
+                }
+                data.triangle(i * 4, i * 4 + 1, i * 4 + 2);
+                data.triangle(i * 4, i * 4 + 2, i * 4 + 3);
+            }
+        }
+        const Vec3 right = view.right.normalized(), up = view.up.normalized(), ahead = view.forward;
+        struct Run
+        {
+            u32 style, first, count;
+        };
+        Run runs[16];
+        u32 runCount = 0, used = 0;
+        const gpu::Color day = { fminf(1, m_ambientSky.r * 0.7f + m_sunColor.r * 0.5f), fminf(1, m_ambientSky.g * 0.7f + m_sunColor.g * 0.5f), fminf(1, m_ambientSky.b * 0.7f + m_sunColor.b * 0.5f), 1 };
+        for (u32 pass = 0; pass < 2; pass++)
+        {
+            for (u32 s = 0; s < 16; s++)
+            {
+                const GrowArray<Particle3>& particles = m_particles[s];
+                if (particles.count() == 0)
+                {
+                    continue;
+                }
+                const ParticleStyle& style = m_world.style(s);
+                const bool adds = style.blend == gpu::Blend::Additive;
+                if (adds != (pass == 1) || (style.texture && !style.texture->ready))
+                {
+                    continue;
+                }
+                m_items.clear();
+                for (u32 i = 0; i < particles.count(); i++)
+                {
+                    const float far = (particles[i].place - view.eye).dot(ahead);
+                    if (far > 0.1f && far < m_far)
+                    {
+                        m_items.push({ far, i });
+                    }
+                }
+                if (!adds)
+                {
+                    std::sort(m_items.begin(), m_items.end(), [](const Item& a, const Item& b) { return a.key > b.key; });
+                }
+                runs[runCount] = { s, used, 0 };
+                for (const Item& item : m_items)
+                {
+                    if (used == kMost)
+                    {
+                        break;
+                    }
+                    const Particle3& p = particles[item.index];
+                    const float t = p.age / p.life;
+                    const float size = (style.sizeStart + (style.sizeEnd - style.sizeStart) * t) * 0.5f;
+                    gpu::Color c = { style.colorStart.r + (style.colorEnd.r - style.colorStart.r) * t, style.colorStart.g + (style.colorEnd.g - style.colorStart.g) * t,
+                        style.colorStart.b + (style.colorEnd.b - style.colorStart.b) * t, style.colorStart.a + (style.colorEnd.a - style.colorStart.a) * t };
+                    c.a *= style.fadeIn > 0 && t < style.fadeIn ? t / style.fadeIn : 1;
+                    if (!adds)
+                    {
+                        // Smoke is lit by the day, all over.
+                        c.r *= day.r;
+                        c.g *= day.g;
+                        c.b *= day.b;
+                    }
+                    const gpu::MeshVertex shade = meshVertex({}, {}, { fminf(1, c.r), fminf(1, c.g), fminf(1, c.b), fminf(1, fmaxf(0, c.a)) }, 0, 0);
+                    Vec3 x = right * size, y = up * size;
+                    if (p.turn != 0)
+                    {
+                        const float cs = cosf(p.turn), sn = sinf(p.turn);
+                        const Vec3 rx = x * cs + y * sn;
+                        y = y * cs - x * sn;
+                        x = rx;
+                    }
+                    const Vec3 corners[4] = { p.place - x - y, p.place + x - y, p.place + x + y, p.place - x + y };
+                    for (u32 k = 0; k < 4; k++)
+                    {
+                        gpu::MeshVertex& v = data.vertices[used * 4 + k];
+                        v.x = corners[k].x;
+                        v.y = corners[k].y;
+                        v.z = corners[k].z;
+                        v.r = shade.r;
+                        v.g = shade.g;
+                        v.b = shade.b;
+                        v.a = shade.a;
+                    }
+                    used++;
+                }
+                runs[runCount].count = used - runs[runCount].first;
+                runCount += runs[runCount].count ? 1 : 0;
+            }
+        }
+        if (used == 0)
+        {
+            return;
+        }
+        m_particleMesh = (m_particleMesh + 1) % 6;
+        gpu::Mesh& mesh = m_particleMeshes[m_particleMesh];
+        if (mesh)
+        {
+            device.updateMesh(mesh, data.vertices.begin(), used * 4);
+        }
+        else
+        {
+            mesh = device.createMesh(data.vertices.begin(), data.vertices.count(), data.indices.begin(), data.indices.count(), true);
+        }
+        for (u32 i = 0; mesh && i < runCount; i++)
+        {
+            const ParticleStyle& style = m_world.style(runs[i].style);
+            gpu::MeshDraw d;
+            d.mesh = mesh;
+            d.first = runs[i].first * 6;
+            d.count = runs[i].count * 6;
+            d.texture = style.texture ? style.texture->texture : m_solids->soft();
+            d.blend = style.blend == gpu::Blend::None ? gpu::Blend::Alpha : style.blend;
+            d.cull = gpu::Cull::None;
+            d.depthWrite = d.lit = false;
+            d.fogged = style.blend != gpu::Blend::Additive;
+            device.drawMesh(d);
+        }
+    }
+
+    // --- Sound ---
+
+    void Space::follow(Voice voice, u32 entity, const Vec3& place, float volume, float range)
+    {
+        if (voice)
+        {
+            m_heard.push({ voice, entity, place, volume, range > 0.1f ? range : 0.1f, -1, 0 });
+        }
+    }
+
+    void Space::hear(const Vec3& place, float volume, float range, float& gain, float& pan) const
+    {
+        gain = pan = 0;
+        for (u32 i = 0; i < m_earCount; i++)
+        {
+            const Vec3 d = place - m_ears[i];
+            const float far = d.length();
+            const float near = fmaxf(0, 1 - far / range);
+            if (near * near * volume > gain)
+            {
+                gain = near * near * volume;
+                pan = far > 0.01f ? d.dot(m_earSides[i]) / far * 0.85f * fminf(1, far * 0.5f) : 0;
+            }
+        }
+    }
+
+    // Where the cameras were, and what can be heard from there.
+    void Space::listen()
+    {
+        if (m_focusCount)
+        {
+            m_earCount = m_focusCount;
+            for (u32 i = 0; i < m_focusCount; i++)
+            {
+                m_ears[i] = m_focus[i];
+                m_earSides[i] = (m_focusTo[i] - m_focus[i]).cross({ 0, 1, 0 }).normalized();
+            }
+        }
+        if (m_audio == nullptr)
+        {
+            m_heard.clear();
+            return;
+        }
+        for (u32 i = 0; i < m_heard.count();)
+        {
+            Heard& h = m_heard[i];
+            const bool gone = h.entity && !m_world.alive(h.entity);
+            if (gone)
+            {
+                m_audio->stop(h.voice, 0.15f);
+            }
+            if (gone || !m_audio->playing(h.voice))
+            {
+                m_heard.swapRemove(i);
+                continue;
+            }
+            float gain, pan;
+            hear(h.entity ? worldPlace(h.entity) : h.place, h.volume, h.range, gain, pan);
+            // Only when it makes a difference: the mixer is told through a short queue.
+            if (fabsf(gain - h.gain) > 0.008f || (gain == 0 && h.gain > 0))
+            {
+                h.gain = gain;
+                m_audio->setVolume(h.voice, gain, 0.06f);
+            }
+            if (fabsf(pan - h.pan) > 0.03f)
+            {
+                h.pan = pan;
+                m_audio->setPan(h.voice, pan);
+            }
+            i++;
         }
     }
 

@@ -201,6 +201,50 @@ def chip(path):
     compress(wav, path, '-c:a', 'libvorbis', '-q:a', '3')
 
 
+def climb(path):
+    """For a game that speeds up: five beats to the bar, going round and up, with bells over a low pulse."""
+    beat = 60 / 132
+    # Dorian, and each time round a step higher in the bass.
+    bars = [('D', 'D4 F4 A4 C5'), ('D', 'D4 G4 A4 C5'), ('G', 'D4 G4 B4 D5'), ('G', 'E4 G4 B4 D5'),
+            ('E', 'E4 G4 B4 D5'), ('F', 'F4 A4 C5 E5'), ('C', 'E4 G4 C5 E5'), ('A', 'C4 E4 G4 A4')] * 2
+    bells = ('A5 . . D6 . C6 . . G5 . | A5 . . D6 . F6 . E6 . . | B5 . . D6 . G6 . . F6 . | E6 . D6 . . B5 . . . . | '
+             'G5 . . B5 . E6 . . D6 . | C6 . . F6 . A6 . G6 . . | E6 . . G6 . C6 . . D6 . | A5 . . . . E5 . G5 . .').replace('|', ' ').split()
+    track = Track(len(bars) * 5 * beat)
+    for i, (root, chord) in enumerate(bars):
+        notes = chord.split()
+        at = i * 5 * beat
+        for n in notes[:3]:
+            length = beat * 5.3
+            t = seconds(length)
+            track.add(at, tone(hz(n), length, 'tri', 0.12) * np.minimum(1, np.minimum(t * 2.5, (length - t) * 2.5)), 0.075, 0.5 if n == notes[1] else -0.35)
+        # Three and two.
+        for k in (0, 1.5, 3, 4):
+            track.add(at + k * beat, tone(hz(root + '2'), 0.5, 'saw') * fall(0.5, 5), 0.3 if k in (0, 3) else 0.2)
+        for k in range(10):
+            n = notes[(0, 2, 1, 3, 2, 0, 3, 1, 2, 3)[k]]
+            track.add(at + k * beat / 2, pulse(hz(n) * 2, 0.16, 0.2) * fall(0.16, 16, 0.002), 0.10, 0.7 * np.cos(k * 1.3 + i))
+        for k in (0, 3):
+            track.add(at + k * beat, tone([150, 50, 42], 0.26) * fall(0.26, 13, 0.001), 0.5)
+        track.add(at + 1.5 * beat, (noise(0.16) * 0.6 + tone(210, 0.16) * 0.4) * fall(0.16, 24, 0.001), 0.2)
+        track.add(at + 4 * beat, (noise(0.16) * 0.6 + tone(210, 0.16) * 0.4) * fall(0.16, 24, 0.001), 0.24)
+        for k in range(10):
+            track.add(at + k * beat / 2, np.diff(noise(0.05), prepend=0) * fall(0.05, 70, 0.001), 0.10 if k % 2 == 0 else 0.06, 0.3)
+    # Twice round: alone, and then with another above it.
+    for turn in range(2):
+        for k, n in enumerate(bells):
+            if n == '.':
+                continue
+            at = (turn * len(bells) + k) * beat / 2
+            ring = (tone(hz(n), 1.1) + tone(hz(n) * 2.756, 1.1) * 0.25 * fall(1.1, 9)) * fall(1.1, 4.2, 0.002)
+            for delay, volume in ((0, 0.2), (beat * 1.5, 0.06)):
+                track.add(at + delay, ring, volume, -0.2 if delay == 0 else 0.6)
+            if turn and k % 5 == 0:
+                track.add(at, tone(hz(n) * 1.5, 0.7, 'tri', 0.2) * fall(0.7, 4), 0.08, 0.4)
+    wav = path + '.wav'
+    save_wav(wav, track.data, 0.82)
+    compress(wav, path, '-c:a', 'libvorbis', '-q:a', '3')
+
+
 def pictures():
     from PIL import Image
     folder = os.path.join(MEDIA, 'showcase', 'loading', 'asset')
@@ -222,5 +266,8 @@ if __name__ == '__main__':
     tune(os.path.join(music, 'tune.ogg'))
     ambient(os.path.join(music, 'ambient.mp3'))
     pictures()
-    chip(os.path.join(MEDIA, 'showcase', 'cracktro', 'asset', 'chip.ogg'))
+    shared = os.path.join(MEDIA, 'global', 'music')
+    os.makedirs(shared, exist_ok=True)
+    chip(os.path.join(shared, 'chip.ogg'))
+    climb(os.path.join(shared, 'climb.ogg'))
     sys.exit(0)

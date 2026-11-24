@@ -272,6 +272,7 @@ namespace nx
             particles.clear();
         }
         m_particleCount = 0;
+        m_space.clearParticles();
         m_pairs.clear();
         m_pairsBefore.clear();
         m_touches.clear();
@@ -762,7 +763,7 @@ namespace nx
 
     bool World::update(float dt)
     {
-        if (m_live == 0 && m_particleCount == 0 && !m_space.streaming())
+        if (m_live == 0 && m_particleCount == 0 && !m_space.streaming() && m_space.particles() == 0)
         {
             return true;
         }
@@ -782,7 +783,7 @@ namespace nx
         ok = removeDead() && ok;
         updateTransforms();
         m_stats.entities = m_live;
-        m_stats.particles = m_particleCount;
+        m_stats.particles = m_particleCount + m_space.particles();
         return ok;
     }
 
@@ -1622,8 +1623,9 @@ namespace nx
         {
             const float t = p.age / p.life;
             const float size = s.sizeStart + (s.sizeEnd - s.sizeStart) * t;
-            const Color color = { s.colorStart.r + (s.colorEnd.r - s.colorStart.r) * t, s.colorStart.g + (s.colorEnd.g - s.colorStart.g) * t,
+            Color color = { s.colorStart.r + (s.colorEnd.r - s.colorStart.r) * t, s.colorStart.g + (s.colorEnd.g - s.colorStart.g) * t,
                 s.colorStart.b + (s.colorEnd.b - s.colorStart.b) * t, s.colorStart.a + (s.colorEnd.a - s.colorStart.a) * t };
+            color.a *= s.fadeIn > 0 && t < s.fadeIn ? t / s.fadeIn : 1;
             if (s.texture)
             {
                 const float m[6] = { 1, 0, 0, 1, p.position.x, p.position.y };
@@ -1680,7 +1682,7 @@ namespace nx
     const WorldStats& World::stats()
     {
         m_stats.entities = m_live;
-        m_stats.particles = m_particleCount;
+        m_stats.particles = m_particleCount + m_space.particles();
         return m_stats;
     }
 }

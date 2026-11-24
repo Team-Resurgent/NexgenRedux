@@ -44,7 +44,7 @@ Marked **[ran]** where I built or ran it in a scratch copy, and **[read]** where
 | # | Problem | Where | |
 |---|---|---|---|
 | 1 | Doesn't compile on Windows: `m_initialized` is only declared for OG/360 but used everywhere | [DriveManager.cpp:87](../Libraries/Gensys/DriveManager.cpp#L87) | **[ran]** |
-| 2 | Doesn't link: `PreLoader.cpp` is missing from `CMakeLists.txt` | [CMakeLists.txt](../CMakeLists.txt) | **[ran]** |
+| 2 | Doesn't link: `PreLoader.cpp` is missing from `CMakeLists.txt` | `CMakeLists.txt`, since removed | **[ran]** |
 | 3 | With 1 and 2 patched, the Default skin exits at once with no window. Only the OG `main` calls `OnWindowCreate` | [NexgenRedux-PC/main.cpp](../NexgenRedux-PC/main.cpp) | **[ran]** |
 | 4 | Shooter fails to compile: it passes 3 arguments to `WindowCreateWithSize`, which now takes 2. MemTest makes the same call | [Shooter/main.as:715](../NexgenRedux-Shared/Media/Shooter/main.as#L715) | **[ran]** Shooter, **[read]** MemTest |
 | 5 | Can't build on Linux/macOS: the texture loader uses Win32 `HANDLE`/`CreateThread` with no guard | [TextureManager.cpp:28](../NexgenRedux-Shared/TextureManager.cpp#L28) | **[read]** |

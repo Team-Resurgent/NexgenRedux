@@ -247,6 +247,20 @@ namespace nx
                 l->range = range > 0.01f ? range : 0.01f;
             }
         }
+        void entityEmit(const std::string& style, float rate, EntityRef* e)
+        {
+            if (e->world && e->world->alive(e->id) && !e->world->space().emit(e->id, style.c_str(), rate))
+            {
+                scriptError("no particles called " + style);
+            }
+        }
+        void spaceBurst(const std::string& style, const Vec3& place, u32 count, const Vec3& aim)
+        {
+            if (!space().burst(style.c_str(), place, count, aim))
+            {
+                scriptError("no particles called " + style);
+            }
+        }
         bool entityAnimate(const std::string& name, bool loop, float change, EntityRef* e) { return e->world && e->world->space().play(e->id, name.c_str(), loop, change); }
         bool getAnimated(const EntityRef* e) { return e->world == nullptr || e->world->space().played(e->id); }
         void setAnimationSpeed(float v, EntityRef* e) { if (Appearance* a = lookOf(e)) a->speed = v; }
@@ -480,6 +494,7 @@ namespace nx
         b.method("bool get_walker() const property", NX_OBJ_LAST(getWalker), "Whether it is one.");
         b.method("void set_walker(bool) property", NX_OBJ_LAST(setWalker), "Makes it a character: it stays upright, slides along walls, climbs steps and pushes what has mass. It needs a capsule, and feels gravity.");
         b.method("Vec3 get_groundNormal() const property", NX_OBJ_LAST(getGroundNormal), "Of a walker: which way the ground under it faces.");
+        b.method("void emit(const string &in particles, float rate)", NX_OBJ_LAST(entityEmit), "Gives off so many particles a second, upwards from it as it is turned. The styles are read by Scene::load.");
         b.method("void push(const Vec3 &in impulse)", NX_OBJ_LAST(entityPush), "Pushes it at its middle.");
         b.method("void push(const Vec3 &in impulse, const Vec3 &in at)", NX_OBJ_LAST(entityPushAt), "Pushes it at a place, which may turn it.");
         b.method("void sphere(float radius, uint group = 0, uint hits = 0)", NX_OBJ_LAST(entitySphere), "Gives it a round collider. mass, wall, friction, bounce, gravity, drag, hits and touching are as on the plane.");
@@ -532,6 +547,7 @@ namespace nx
         b.function("void shape(FieldShape kind, const Vec3 &in place, const Vec3 &in size, const Color &in color, float soft = 0, FieldJoin how = JoinAdd, float turn = 0)", NX_FN(spaceShape), "Adds one of up to 24 shapes drawn by marching along rays, which melt together where they are soft.");
         b.function("void clearShapes()", NX_FN(spaceClearShapes), "Takes them all away. To move them, clear and add them again each update.");
         b.function("void shapeLook(float shine, float reflection = 0, float repeat = 0, float farthest = 60, uint steps = 80)", NX_FN(spaceShapeLook), "How they look; repeat makes the whole thing again every so many metres.");
+        b.function("void burst(const string &in particles, const Vec3 &in place, uint count, const Vec3 &in aim = Vec3(0, 1, 0))", NX_FN(spaceBurst), "Throws out some particles. A spread of 360 goes every way, 90 is a cone.");
         b.function("bool raycast(const Vec3 &in from, const Vec3 &in to, Vec3 &out hit, Vec3 &out normal, uint groups = 0xFFFF, Entity@+ except = null)", NX_FN(spaceRaycast), "Whether there is anything on a line, where, and which way it faces. The land counts as group 0.");
         b.function("Entity@ pick(const Vec3 &in from, const Vec3 &in to, Vec3 &out hit, uint groups = 0xFFFF, Entity@+ except = null)", NX_FN(spacePick), "The first collider on a line, or null if there is none or the land comes first.");
         b.function("array<Entity@>@ within(const Vec3 &in place, float radius, uint groups = 0xFFFF)", NX_FN(spaceWithin), "Everything whose collider touches a ball.");

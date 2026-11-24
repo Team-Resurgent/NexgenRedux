@@ -4,6 +4,8 @@
 #include "bindings/bindings.h"
 #include "audio/audio.h"
 #include "canvas/canvas.h"
+#include "net/net.h"
+#include "net/secure.h"
 #include "gpu/gpu.h"
 #include "input/input.h"
 #include "platform/platform.h"
@@ -410,6 +412,7 @@ namespace
             Input input;
             Audio audio;
             Save save;
+            Net net;
             ScriptHost host;
             Coroutines coroutines;
             Services services;
@@ -419,6 +422,8 @@ namespace
             services.assets = &assets;
             services.canvas = &canvas;
             services.solids = &solids;
+            services.net = &net;
+            secureSetPlatform(&platform);
             solids.init(*device);
             services.input = &input;
             services.host = &host;
@@ -491,6 +496,7 @@ namespace
                         assets.update();
                     }
                     audio.update();
+                    net.update(now);
                     if (options.dev && now >= nextLook)
                     {
                         nextLook = now + 0.5;
@@ -574,6 +580,8 @@ namespace
                 NX_ERROR("%u assets were still held", static_cast<unsigned>(assets.stats().inUse));
                 ok = false;
             }
+            net.shutdown();
+            secureShutdown();
             solids.shutdown();
             canvas.shutdown();
             assets.shutdown();

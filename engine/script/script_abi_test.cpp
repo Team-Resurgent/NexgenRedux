@@ -8,6 +8,8 @@
 
 // Each function covers one shape of argument or return value: the places where a calling
 // convention goes wrong are small structs, 64-bit values, floats, bools and method pointers.
+// 8 and 16-bit integers aren't here: clang expects the caller to widen them on 64-bit Unix, which
+// AngelScript doesn't do, so Binder refuses them.
 namespace nx
 {
     namespace
@@ -17,9 +19,7 @@ namespace nx
         float addFloat(float a, float b) { return a + b; }
         double addDouble(double a, float b, double c) { return a + b + c; }
         bool notBool(bool a) { return !a; }
-        u8 addU8(u8 a, u8 b) { return static_cast<u8>(a + b); }
-        i32 subI16(i16 a, i16 b) { return a - b; }
-        double mixed(int a, float b, double c, i64 d, u8 e, bool f, float g) { return a + b + c + static_cast<double>(d) + e + (f ? 1 : 0) + g; }
+        double mixed(int a, float b, double c, i64 d, int e, bool f, float g) { return a + b + c + static_cast<double>(d) + e + (f ? 1 : 0) + g; }
         Vec2 makeVec2(float x, float y) { return { x, y }; }
         Vec3 makeVec3(float x, float y, float z) { return { x, y, z }; }
         float sumVec2(Vec2 v) { return v.x + v.y; }
@@ -80,8 +80,6 @@ int run()
     expect(abi::addDouble(1.5, 0.25f, 2.0) == 3.75, "double");
     expect(abi::notBool(false), "bool true");
     expect(!abi::notBool(true), "bool false");
-    expect(abi::addU8(200, 100) == 44, "uint8");
-    expect(abi::subI16(-5, 10) == -15, "int16");
     expect(abi::mixed(1, 0.5f, 2.25, 1000000000000, 7, true, 0.25f) == 1000000000012.0, "mixed");
 
     Vec2 a = abi::makeVec2(1, 2);
@@ -165,9 +163,7 @@ int count() { return checks; }
         global("float addFloat(float, float)", NX_FN(addFloat));
         global("double addDouble(double, float, double)", NX_FN(addDouble));
         global("bool notBool(bool)", NX_FN(notBool));
-        global("uint8 addU8(uint8, uint8)", NX_FN(addU8));
-        global("int subI16(int16, int16)", NX_FN(subI16));
-        global("double mixed(int, float, double, int64, uint8, bool, float)", NX_FN(mixed));
+        global("double mixed(int, float, double, int64, int, bool, float)", NX_FN(mixed));
         global("Vec2 makeVec2(float, float)", NX_FN(makeVec2));
         global("Vec3 makeVec3(float, float, float)", NX_FN(makeVec3));
         global("float sumVec2(Vec2)", NX_FN(sumVec2));

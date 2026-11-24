@@ -754,7 +754,7 @@ the design. Sizes are relative effort, not dates.
 | **3 Scene** | Entities, **pooled spawning**, hierarchy, sprites, animation, collision, prefabs | + Parallax, Shooter (script under 300 lines), Stress test | M |
 | **4 UI** | Layout, focus, themes, lists, on-screen keyboard, layout files, dashboard module | Main menu rebuilt on UI; + UI gallery, Dashboard at 60 fps on OG | L |
 | **5 3D** | glTF, materials, lights, fog, skinning, **LOD and culling, ray marching**, shadows and post effects on higher tiers | + 3D scene, Mixed. **First full release** | L |
-| **6 Xbox 360 + Xbox One / Series** | D3D9 and D3D11 backends, platform layers, hardware testing | The same showcase on both | L |
+| **6 Xbox 360 + Xbox One / Series** | D3D9 and D3D11 backends, platform layers, hardware testing. The UWP build also runs on Windows 10 and 11 PCs, so most of it is tested there first | The same showcase on both | L |
 | **7 Extras** | Inspector, particles, physics, tilemaps, video, networking, full guides | One scene per module | L |
 
 The screen stack and script host come in phase 1 so that every later feature arrives as a scene rather than a
@@ -823,6 +823,8 @@ Found on the way:
 
 - Only plain types may be returned by value to scripts: with a default member value, MSVC returns them differently and the
   call crashes. `bindings.cpp` checks this.
+- 8 and 16-bit integers can't be passed to native calls by value: clang on 64-bit Unix expects them widened and AngelScript
+  doesn't do it. `Binder` refuses them.
 - AngelScript keeps a little of every `array<T>` type that a script fills from a list. The host holds the common ones, so each
   is made once and script memory stays level.
 - One collection step a frame is far too few when a script makes loops of objects; a share of them is looked at instead.

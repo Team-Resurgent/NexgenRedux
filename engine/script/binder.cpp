@@ -1,10 +1,22 @@
 #include "script/binder.h"
 #include "base/log.h"
 
+#include <string.h>
+
 namespace nx
 {
     bool Binder::described(const char* declaration, const char* doc)
     {
+        // Passed differently by AngelScript and by clang on 64-bit Unix. int is never slower.
+        static const char* const kSmall[] = { "int8 ", "int16 " };
+        for (const char* small : kSmall)
+        {
+            if (strstr(declaration, small))
+            {
+                NX_ERROR("%s: use int or uint", declaration);
+                m_ok = false;
+            }
+        }
         if (doc == nullptr || doc[0] == 0)
         {
             NX_ERROR("no description for %s", declaration);

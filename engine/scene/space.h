@@ -251,6 +251,7 @@ namespace nx
         void setShadows(float strength, float distance) { m_shadowStrength = strength; m_shadowDistance = distance; }
         void setFar(float distance) { m_far = distance < 1 ? 1 : distance; }
         void setGravity(const Vec3& gravity) { m_gravity = gravity; }
+        Vec3 gravity() const { return m_gravity; }
         void setGround(float height) { m_hasGround = true; m_ground = height; }
         void setWater(float height, const gpu::Color& color) { m_hasWater = true; m_water = height; m_waterColor = color; }
 

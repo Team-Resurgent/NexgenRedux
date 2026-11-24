@@ -262,8 +262,8 @@ NX_TEST(soundsFromScripts)
                 Voice v = s.play(1, 0, 1, true);
                 Voice none;
                 none.stop();
-                v.setVolume(0.5f, 1);
-                Save::set("r", "" + s.ready + s.failed + v.playing + none.playing + Audio::voices());
+                v.fade(0.5f, 1);
+                Save::set("r", "" + s.ready + s.failed + v.playing + none.playing + Audio::voices);
             }
         }
     )");

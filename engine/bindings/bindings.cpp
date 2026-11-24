@@ -555,18 +555,18 @@ namespace nx
             b.function("Sound@ sound(const string &in name)", NX_FN(loadSoundAsset), "A sound. Arrives like an image.");
             b.function("Effect@ effect(const string &in name)", NX_FN(loadEffectAsset), "A shader of your own: a .fx file. Each time gives one whose values are its own.");
             b.function("Model@ model(const string &in name)", NX_FN(loadModelAsset), "A 3D model: glTF, as a .glb or a .gltf with everything inside it. Arrives like an image.");
-            b.function("uint pending()", NX_FN(cachePending), "Files still on their way.");
-            b.function("uint textureKilobytes()", NX_FN(cacheTextureKilobytes), "Memory that images and fonts take.");
-            b.function("uint soundKilobytes()", NX_FN(cacheSoundKilobytes), "Memory that sounds take.");
-            b.function("uint soundBudgetKilobytes()", NX_FN(cacheSoundBudgetKilobytes), "Memory that sounds may take.");
+            b.function("uint get_pending() property", NX_FN(cachePending), "Files still on their way.");
+            b.function("uint get_textureKilobytes() property", NX_FN(cacheTextureKilobytes), "Memory that images and fonts take.");
+            b.function("uint get_soundKilobytes() property", NX_FN(cacheSoundKilobytes), "Memory that sounds take.");
+            b.function("uint get_soundBudgetKilobytes() property", NX_FN(cacheSoundBudgetKilobytes), "Memory that sounds may take.");
             b.function("Font@ font(const string &in name, uint size)", NX_FN(loadFont), "A font at a size in design units.");
-            b.function("uint inUse()", NX_FN(cacheInUse), "Assets that something is holding.");
-            b.function("uint warm()", NX_FN(cacheWarm), "Assets kept ready though nothing holds them.");
-            b.function("uint hits()", NX_FN(cacheHits), "Requests served without reading a file.");
-            b.function("uint loads()", NX_FN(cacheLoads), "Files read.");
-            b.function("uint evictions()", NX_FN(cacheEvictions), "Assets unloaded to make room.");
-            b.function("uint kilobytes()", NX_FN(cacheKilobytes), "Memory the loaded assets take.");
-            b.function("uint budgetKilobytes()", NX_FN(cacheBudgetKilobytes), "Memory that images and fonts may take.");
+            b.function("uint get_inUse() property", NX_FN(cacheInUse), "Assets that something is holding.");
+            b.function("uint get_warm() property", NX_FN(cacheWarm), "Assets kept ready though nothing holds them.");
+            b.function("uint get_hits() property", NX_FN(cacheHits), "Requests served without reading a file.");
+            b.function("uint get_loads() property", NX_FN(cacheLoads), "Files read.");
+            b.function("uint get_evictions() property", NX_FN(cacheEvictions), "Assets unloaded to make room.");
+            b.function("uint get_kilobytes() property", NX_FN(cacheKilobytes), "Memory the loaded assets take.");
+            b.function("uint get_budgetKilobytes() property", NX_FN(cacheBudgetKilobytes), "Memory that images and fonts may take.");
             b.function("void trim()", NX_FN(cacheTrim), "Unloads everything that isn't held. Rarely needed.");
             b.names("");
         }
@@ -595,9 +595,12 @@ namespace nx
             b.method("void translate(float x, float y)", NX_METHOD(Canvas, translate), "Moves what is drawn next.");
             b.method("void rotate(float degrees)", NX_METHOD(Canvas, rotate), "Turns it clockwise.");
             b.method("void scale(float x, float y)", NX_METHOD(Canvas, scale), "Resizes it.");
-            b.method("void setAlpha(float alpha)", NX_METHOD(Canvas, setAlpha), "Fades everything drawn next.");
-            b.method("void setBlend(Blend blend)", NX_METHOD(Canvas, setBlend), "Chooses how it combines.");
-            b.method("void setFilter(Filter filter)", NX_METHOD(Canvas, setFilter), "Chooses how images are scaled.");
+            b.method("float get_alpha() const property", NX_METHOD(Canvas, alpha), "How opaque what is drawn next will be.");
+            b.method("void set_alpha(float) property", NX_METHOD(Canvas, setAlpha), "Fades everything drawn next.");
+            b.method("Blend get_blend() const property", NX_METHOD(Canvas, blend), "How what is drawn next combines with what is behind.");
+            b.method("void set_blend(Blend) property", NX_METHOD(Canvas, setBlend), "Chooses how it combines.");
+            b.method("Filter get_filter() const property", NX_METHOD(Canvas, filter), "How images that are drawn larger will look.");
+            b.method("void set_filter(Filter) property", NX_METHOD(Canvas, setFilter), "Chooses how images are scaled.");
             b.method("void clip(float x, float y, float w, float h)", NX_METHOD(Canvas, clip), "Draws nothing outside an area. Clips within clips overlap.");
             b.method("void noClip()", NX_METHOD(Canvas, noClip), "Removes all clips.");
             b.method("void rect(float x, float y, float w, float h, const Color &in color)", NX_METHOD(Canvas, rect), "A filled rectangle.");
@@ -630,10 +633,10 @@ namespace nx
             b.function("bool pressed(const string &in action)", NX_FN(inputPressed), "Whether it has just gone down.");
             b.function("bool released(const string &in action)", NX_FN(inputReleased), "Whether it has just been let go.");
             b.function("bool repeated(const string &in action)", NX_FN(inputRepeated), "pressed(), then again at intervals while held.");
-            b.function("Vec2 move()", NX_FN(inputMove), "Direction from keys, d-pad and left stick: x right, y down, never longer than 1.");
-            b.function("bool usingPad()", NX_FN(inputUsingPad), "Whether a gamepad was used last.");
-            b.function("bool hasMouse()", NX_FN(inputHasMouse), "Whether a mouse has moved.");
-            b.function("Vec2 mouse()", NX_FN(inputMouse), "Where the mouse is, in design units.");
+            b.function("Vec2 get_move() property", NX_FN(inputMove), "Direction from keys, d-pad and left stick: x right, y down, never longer than 1.");
+            b.function("bool get_usingPad() property", NX_FN(inputUsingPad), "Whether a gamepad was used last.");
+            b.function("bool get_hasMouse() property", NX_FN(inputHasMouse), "Whether a mouse has moved.");
+            b.function("Vec2 get_mouse() property", NX_FN(inputMouse), "Where the mouse is, in design units.");
             b.function("bool mouseDown(uint button)", NX_FN(inputMouseDown), "Left is 0, right 1, middle 2.");
             b.function("bool padConnected(uint pad)", NX_FN(padConnected), "Whether a gamepad (0 to 3) is plugged in.");
             b.function("Vec2 padLeft(uint pad)", NX_FN(padLeft), "Left stick, -1 to 1, y up.");
@@ -641,7 +644,7 @@ namespace nx
             b.function("Vec2 padTriggers(uint pad)", NX_FN(padTriggers), "Left and right triggers, 0 to 1.");
             b.function("bool padButton(uint pad, uint button)", NX_FN(padButton), "In order: up, down, left, right, Start, Back, left stick, right stick, A, B, X, Y, left and right shoulder.");
             b.function("void listen(const string &in action)", NX_FN(inputListen), "The next key or button pressed will do this. Escape or Start calls it off. Not for `menu`.");
-            b.function("bool listening()", NX_FN(inputListening), "Whether it is still waiting for one.");
+            b.function("bool get_listening() property", NX_FN(inputListening), "Whether it is still waiting for one.");
             b.function("string keys(const string &in action)", NX_FN(inputKeys), "The keys for an action, as text.");
             b.function("string buttons(const string &in action)", NX_FN(inputButtons), "The gamepad buttons for an action, as text.");
             b.function("void resetBindings()", NX_FN(inputReset), "Puts them all back.");
@@ -660,10 +663,10 @@ namespace nx
             b.method("bool get_playing() const property", NX_METHOD(PlayingSound, playing), "Whether it still is.");
             b.method("float get_position() const property", NX_METHOD(PlayingSound, position), "Seconds in.");
             b.method("void stop(float fadeSeconds = 0)", NX_METHOD(PlayingSound, stop), "Ends it.");
-            b.method("void setVolume(float volume, float seconds = 0)", NX_METHOD(PlayingSound, setVolume), "Changes how loud it is, over a time.");
-            b.method("void setPan(float pan)", NX_METHOD(PlayingSound, setPan), "From -1, left, to 1, right.");
-            b.method("void setPitch(float pitch)", NX_METHOD(PlayingSound, setPitch), "1 is normal; 2 is an octave up, and twice as fast.");
-            b.method("void setPaused(bool paused)", NX_METHOD(PlayingSound, setPaused), "Holds it where it is.");
+            b.method("void fade(float volume, float seconds)", NX_METHOD(PlayingSound, setVolume), "Changes how loud it is, over a time.");
+            b.method("void set_pan(float) property", NX_METHOD(PlayingSound, setPan), "From -1, left, to 1, right.");
+            b.method("void set_pitch(float) property", NX_METHOD(PlayingSound, setPitch), "1 is normal; 2 is an octave up, and twice as fast.");
+            b.method("void set_paused(bool) property", NX_METHOD(PlayingSound, setPaused), "Holds it where it is.");
 
             b.reopen("Sound");
             b.method("Voice play(float volume = 1, float pan = 0, float pitch = 1, bool loop = false)", NX_OBJ_LAST(soundPlay), "Plays it as an effect. Any number can play at once, up to the voices there are.");
@@ -677,14 +680,14 @@ namespace nx
             b.names("Audio");
             b.function("void setVolume(Bus bus, float volume)", NX_FN(setBus), "0 to 1.");
             b.function("float volume(Bus bus)", NX_FN(getBus), "0 to 1.");
-            b.function("void setMasterVolume(float volume)", NX_FN(setMaster), "Everything, 0 to 1.");
-            b.function("float masterVolume()", NX_FN(getMaster), "0 to 1.");
-            b.function("float level()", NX_FN(audioLevel), "How loud it has been lately, 0 to 1.");
+            b.function("void set_masterVolume(float) property", NX_FN(setMaster), "Everything, 0 to 1.");
+            b.function("float get_masterVolume() property", NX_FN(getMaster), "0 to 1.");
+            b.function("float get_level() property", NX_FN(audioLevel), "How loud it has been lately, 0 to 1.");
             b.function("float spectrum(uint band)", NX_FN(audioSpectrum), "How strong one of 32 bands is, low to high, 0 to 1.");
             b.function("float wave(uint index)", NX_FN(audioWave), "One of the last 512 samples heard, -1 to 1.");
-            b.function("uint voices()", NX_FN(audioVoices), "How many are playing.");
-            b.function("uint voiceLimit()", NX_FN(audioVoiceLimit), "How many can.");
-            b.function("string output()", NX_FN(audioOutput), "What is playing it.");
+            b.function("uint get_voices() property", NX_FN(audioVoices), "How many are playing.");
+            b.function("uint get_voiceLimit() property", NX_FN(audioVoiceLimit), "How many can.");
+            b.function("string get_output() property", NX_FN(audioOutput), "What is playing it.");
             b.names("");
         }
 
@@ -724,7 +727,7 @@ namespace nx
             b.function("void pop()", NX_FN(screensPop), "Closes this screen and returns to the one below.");
             b.function("void replace(const string &in id)", NX_FN(screensReplace), "Closes this screen and opens another in its place.");
             b.function("void home()", NX_FN(screensHome), "Closes everything above the first screen.");
-            b.function("uint count()", NX_FN(screensCount), "How many screens can be opened.");
+            b.function("uint get_count() property", NX_FN(screensCount), "How many screens can be opened.");
             b.function("string id(uint index)", NX_FN(screensId), "The name to pass to push().");
             b.function("string title(uint index)", NX_FN(screensTitle), "From its screen.json.");
             b.function("string description(uint index)", NX_FN(screensDescription), "From its screen.json.");
@@ -736,17 +739,17 @@ namespace nx
         {
             b.section("App", "The machine and how it is doing.");
             b.names("App");
-            b.function("float time()", NX_FN(appTime), "Seconds since the app started.");
-            b.function("float fps()", NX_FN(appFps), "Frames a second, averaged.");
-            b.function("uint draws()", NX_FN(appDraws), "Draw calls in the last frame.");
-            b.function("string platform()", NX_FN(appPlatform), "What it is running on.");
-            b.function("string gpu()", NX_FN(appGpu), "What is drawing.");
-            b.function("uint memoryKilobytes()", NX_FN(appMemoryKilobytes), "Memory the engine has allocated, not counting video memory.");
-            b.function("uint scriptKilobytes()", NX_FN(appScriptKilobytes), "How much of that is scripts.");
-            b.function("uint freeKilobytes()", NX_FN(appFreeKilobytes), "Memory the machine has left.");
+            b.function("float get_time() property", NX_FN(appTime), "Seconds since the app started.");
+            b.function("float get_fps() property", NX_FN(appFps), "Frames a second, averaged.");
+            b.function("uint get_draws() property", NX_FN(appDraws), "Draw calls in the last frame.");
+            b.function("string get_platform() property", NX_FN(appPlatform), "What it is running on.");
+            b.function("string get_gpu() property", NX_FN(appGpu), "What is drawing.");
+            b.function("uint get_memoryKilobytes() property", NX_FN(appMemoryKilobytes), "Memory the engine has allocated, not counting video memory.");
+            b.function("uint get_scriptKilobytes() property", NX_FN(appScriptKilobytes), "How much of that is scripts.");
+            b.function("uint get_freeKilobytes() property", NX_FN(appFreeKilobytes), "Memory the machine has left.");
 
-            b.function("bool development()", NX_FN(appDevelopment), "Whether it was started with --dev, so that changed files are reloaded.");
-            b.function("uint reloads()", NX_FN(appReloads), "How many times a script or image has been reloaded because its file changed.");
+            b.function("bool get_development() property", NX_FN(appDevelopment), "Whether it was started with --dev, so that changed files are reloaded.");
+            b.function("uint get_reloads() property", NX_FN(appReloads), "How many times a script or image has been reloaded because its file changed.");
 
             b.names("");
             b.section("Vec2", "A place or a direction, across and down. Vec3 is the same with z.");

@@ -248,6 +248,24 @@ namespace nx
                 b->mass = v < 0 ? 0 : v;
             }
         }
+        // Of either kind of body.
+        float bodyValue(const EntityRef* e, float Body3::*in3, float Body::*in2)
+        {
+            const Body3* s = someBody3(e);
+            const Body* b = someBody(e);
+            return s ? s->*in3 : b ? b->*in2 : 0;
+        }
+        float getDrag(const EntityRef* e) { return bodyValue(e, &Body3::drag, &Body::drag); }
+        float getGravity(const EntityRef* e) { return bodyValue(e, &Body3::gravity, &Body::gravity); }
+        float getBounce(const EntityRef* e) { return bodyValue(e, &Body3::bounce, &Body::bounce); }
+        float getFriction(const EntityRef* e) { return bodyValue(e, &Body3::friction, &Body::friction); }
+        bool getSolid(const EntityRef* e) { const Body* b = someBody(e); return b && b->solid; }
+        gpu::Blend getBlend(EntityRef* e)
+        {
+            const Appearance* a = appearanceOf(e);
+            const Visual* v = visualOf(e);
+            return a ? a->blend : v ? v->blend : gpu::Blend::Alpha;
+        }
         void setSolid(bool v, EntityRef* e) { if (Body* b = bodyOf(e)) b->solid = v; }
         bool getOnGround(const EntityRef* e)
         {
@@ -307,6 +325,19 @@ namespace nx
             }
         }
         bool entityTouching(const EntityRef* other, EntityRef* e) { return other && e->world && (e->world->touching(e->id, other->id) || e->world->space().touching(e->id, other->id)); }
+        bool getWall(const EntityRef* e)
+        {
+            const Collider3* s = collider3Of(e);
+            const Collider* c = e->world ? e->world->getCollider(e->id) : nullptr;
+            return s ? s->wall : c && c->wall;
+        }
+        u32 getHits(const EntityRef* e)
+        {
+            const Collider3* s = collider3Of(e);
+            const Collider* c = e->world ? e->world->getCollider(e->id) : nullptr;
+            return s ? s->hits : c ? c->hits : 0u;
+        }
+        float getLifetime(const EntityRef* e) { const Lifetime* l = e->world ? e->world->getLifetime(e->id) : nullptr; return l ? l->left : -1; }
         void setLifetime(float seconds, EntityRef* e) { if (e->world) if (Lifetime* l = e->world->lifetime(e->id)) l->left = seconds; }
 
         void entityAdd(asIScriptObject* behaviour, EntityRef* e)
@@ -401,6 +432,7 @@ namespace nx
             });
             return list;
         }
+        Vec2 sceneGetGravity() { return world().gravity(); }
         void sceneGravity(const Vec2& g) { world().setGravity(g); }
         void sceneBurst(const std::string& name, const Vec2& at, u32 count)
         {
@@ -462,6 +494,7 @@ namespace nx
         b.method("void set_color(const Color &in) property", NX_OBJ_LAST(setColor), "Changes it.");
         b.method("float get_alpha() const property", NX_OBJ_LAST(getAlpha), "The colour's alpha.");
         b.method("void set_alpha(float) property", NX_OBJ_LAST(setAlpha), "Fades it.");
+        b.method("Blend get_blend() const property", NX_OBJ_LAST(getBlend), "How it combines with what is behind.");
         b.method("void set_blend(Blend) property", NX_OBJ_LAST(setBlend), "How it combines with what is behind.");
         b.method("bool get_flip() const property", NX_OBJ_LAST(getFlip), "Whether the image is turned left to right.");
         b.method("void set_flip(bool) property", NX_OBJ_LAST(setFlip), "Turns it.");
@@ -475,12 +508,17 @@ namespace nx
         b.method("void set_velocity(const Vec2 &in) property", NX_OBJ_LAST(setVelocity), "Sets it going.");
         b.method("float get_spin() const property", NX_OBJ_LAST(getSpin), "Degrees a second.");
         b.method("void set_spin(float) property", NX_OBJ_LAST(setSpin), "Sets it turning.");
+        b.method("float get_drag() const property", NX_OBJ_LAST(getDrag), "Part of its speed lost each second.");
         b.method("void set_drag(float) property", NX_OBJ_LAST(setDrag), "Part of its speed lost each second.");
+        b.method("float get_gravity() const property", NX_OBJ_LAST(getGravity), "How much of the gravity it feels.");
         b.method("void set_gravity(float) property", NX_OBJ_LAST(setGravity), "How much of the scene's gravity it feels; 0 to begin with.");
+        b.method("float get_bounce() const property", NX_OBJ_LAST(getBounce), "Part of its speed kept when it hits something.");
         b.method("void set_bounce(float) property", NX_OBJ_LAST(setBounce), "Part of its speed kept when it hits something.");
+        b.method("bool get_solid() const property", NX_OBJ_LAST(getSolid), "Whether solid tiles and walls stop it.");
         b.method("void set_solid(bool) property", NX_OBJ_LAST(setSolid), "Makes solid tiles and walls stop it, without turning it: for characters.");
         b.method("float get_mass() const property", NX_OBJ_LAST(getMass), "0 unless it is a rigid body.");
         b.method("void set_mass(float) property", NX_OBJ_LAST(setMass), "Above 0, makes it a rigid body, which pushes, stacks and turns. It needs a collider and no parent.");
+        b.method("float get_friction() const property", NX_OBJ_LAST(getFriction), "Of a rigid body.");
         b.method("void set_friction(float) property", NX_OBJ_LAST(setFriction), "Of a rigid body: 0 is ice, 1 rubber.");
         b.method("void push(const Vec2 &in impulse)", NX_OBJ_LAST(entityPush), "Pushes it at its middle.");
         b.method("void push(const Vec2 &in impulse, const Vec2 &in at)", NX_OBJ_LAST(entityPushAt), "Pushes it at a place in the scene, which may turn it.");
@@ -490,10 +528,13 @@ namespace nx
 
         b.method("void circle(float radius, uint group = 0, uint hits = 0)", NX_OBJ_LAST(entityCircle), "Gives it a round collider in a group from 0 to 15. hits has a bit for each group it wants to know about: 1 << group.");
         b.method("void box(float w, float h, uint group = 0, uint hits = 0)", NX_OBJ_LAST(entityBox), "The same with a box, which turns with it.");
+        b.method("bool get_wall() const property", NX_OBJ_LAST(getWall), "Whether others stop at its collider.");
         b.method("void set_wall(bool) property", NX_OBJ_LAST(setWall), "Makes solid and rigid bodies stop at its collider.");
         b.method("int get_group() const property", NX_OBJ_LAST(getGroup), "Its collider's group, or -1.");
+        b.method("uint get_hits() const property", NX_OBJ_LAST(getHits), "The groups it wants to know about, a bit for each.");
         b.method("void set_hits(uint) property", NX_OBJ_LAST(setHits), "Changes the groups it wants to know about.");
         b.method("bool touching(Entity@+ other) const", NX_OBJ_LAST(entityTouching), "Whether their colliders overlap now.");
+        b.method("float get_lifetime() const property", NX_OBJ_LAST(getLifetime), "Seconds until it is destroyed, or -1.");
         b.method("void set_lifetime(float) property", NX_OBJ_LAST(setLifetime), "Destroys it after some seconds.");
         b.method("void add(IBehaviour@+ behaviour)", NX_OBJ_LAST(entityAdd), "Adds a behaviour.");
         b.method("IBehaviour@ get_behaviour() const property", NX_OBJ_LAST(entityBehaviour), "Its first behaviour, or null. `cast<Enemy>(e.behaviour)` gives the class back.");
@@ -507,23 +548,24 @@ namespace nx
         b.function("void camera(const Vec2 &in position, float zoom = 1, float rotation = 0)", NX_FN(sceneCamera), "Puts a place in the middle of the screen. Without it, the scene's corner is the screen's.");
         b.function("Vec2 toWorld(const Vec2 &in screen)", NX_FN(sceneToWorld), "A place on the screen, in the scene.");
         b.function("Vec2 toScreen(const Vec2 &in world)", NX_FN(sceneToScreen), "A place in the scene, on the screen.");
-        b.function("uint count()", NX_FN(sceneCount), "How many entities there are.");
-        b.function("uint count(uint group)", NX_FN(sceneCountGroup), "How many have a collider in a group.");
+        b.function("uint get_count() property", NX_FN(sceneCount), "How many entities there are.");
+        b.function("uint countIn(uint group)", NX_FN(sceneCountGroup), "How many have a collider in a group.");
         b.function("int group(const string &in name)", NX_FN(sceneGroup), "The number of a group named in a scene file, or -1.");
         b.function("Entity@ find(const string &in name)", NX_FN(sceneFind), "The first of that name, or null.");
         b.function("Entity@ nearest(const Vec2 &in position, float radius, uint groups = 0xFFFF, Entity@+ except = null)", NX_FN(sceneNearest), "The nearest with a collider in some groups (a bit for each), or null.");
         b.function("array<Entity@>@ within(const Vec2 &in position, float radius, uint groups = 0xFFFF)", NX_FN(sceneWithin), "Everything whose collider touches a circle.");
         b.function("Entity@ raycast(const Vec2 &in from, const Vec2 &in to, Vec2 &out hit, uint groups = 0xFFFF)", NX_FN(sceneRaycast), "The first collider on a line, and where, or null.");
-        b.function("void setGravity(const Vec2 &in gravity)", NX_FN(sceneGravity), "Units a second, each second.");
+        b.function("Vec2 get_gravity() property", NX_FN(sceneGetGravity), "What pulls on those that feel it.");
+        b.function("void set_gravity(const Vec2 &in) property", NX_FN(sceneGravity), "Units a second, each second.");
         b.function("void burst(const string &in particles, const Vec2 &in position, uint count)", NX_FN(sceneBurst), "Throws out some particles.");
         b.function("bool join(Entity@+ a, Entity@+ b, const Vec2 &in at, float softness = 0)", NX_FN(sceneJoin), "Pins two rigid bodies together at a place; null for b pins to the scene.");
         b.function("uint tile(const Vec2 &in position)", NX_FN(sceneTile), "What the map has there: 0 is nothing.");
         b.function("void setTile(const Vec2 &in position, uint tile)", NX_FN(sceneSetTile), "Changes the map.");
-        b.function("Vec2 mapSize()", NX_FN(sceneMapSize), "How large the map is.");
-        b.function("uint particles()", NX_FN(sceneParticles), "How many particles there are.");
-        b.function("uint drawn()", NX_FN(sceneDrawn), "How many entities and tiles were drawn last.");
-        b.function("uint pairs()", NX_FN(scenePairs), "Pairs of colliders compared in the last step.");
-        b.function("uint contacts()", NX_FN(sceneContacts), "Where rigid bodies touched in the last step.");
+        b.function("Vec2 get_mapSize() property", NX_FN(sceneMapSize), "How large the map is.");
+        b.function("uint get_particles() property", NX_FN(sceneParticles), "How many particles there are.");
+        b.function("uint get_drawn() property", NX_FN(sceneDrawn), "How many entities and tiles were drawn last.");
+        b.function("uint get_pairs() property", NX_FN(scenePairs), "Pairs of colliders compared in the last step.");
+        b.function("uint get_contacts() property", NX_FN(sceneContacts), "Where rigid bodies touched in the last step.");
         b.names("");
     }
 

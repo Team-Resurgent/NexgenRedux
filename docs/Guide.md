@@ -26,7 +26,7 @@ class Hello : Screen
 
     void update(float dt)
     {
-        x += Input::move().x * 300 * dt;
+        x += Input::move.x * 300 * dt;
     }
 
     void draw(Canvas@ c)
@@ -258,7 +258,7 @@ A region may come from a file, or be made up from its numbers so that it is the 
 
 ### Shapes that melt
 
-`Space::shape` adds one of up to 24 shapes that are drawn by marching along rays, so that they join softly, cut each other and
+`Space::field` adds one of up to 24 shapes that are drawn by marching along rays, so that they join softly, cut each other and
 reflect. They mix with meshes. Clear them and add them again each update to move them. The original Xbox makes triangles of them.
 
 ## Assets
@@ -293,7 +293,7 @@ A `Voice` is safe to use after the sound has ended. A screen's sounds pause whil
 ## Input
 
 Scripts ask for actions, not keys: `up`, `down`, `left`, `right`, `accept`, `cancel`, `fire`, `alternate` and `menu`. Players
-can change every one except `menu`; the Settings demo shows how. `Input::move()` gives a direction from keys, d-pad or stick.
+can change every one except `menu`; the Settings demo shows how. `Input::move` gives a direction from keys, d-pad or stick.
 
 ## Coroutines and tweens
 

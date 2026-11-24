@@ -533,7 +533,7 @@ NX_TEST(behavioursAreToldWhatHappens)
                 Save::set("walker", Scene::find("walker") is null ? "no" : "yes");
                 Target@ t = cast<Target>(target.behaviour);
                 Save::set("cast", t is null ? "no" : "" + t.hits);
-                Save::set("count", "" + Scene::count() + "," + Scene::count(1) + "," + Scene::within(Vec2(), 5).length());
+                Save::set("count", "" + Scene::count + "," + Scene::countIn(1) + "," + Scene::within(Vec2(), 5).length());
             }
         }
     )");
@@ -597,12 +597,12 @@ NX_TEST(behavioursCanDestroyEverything)
                 array<Entity@>@ all = Scene::within(entity.position, 10000);
                 for (uint i = 0; i < all.length(); i++) all[i].destroy();
             }
-            void onGone() { if (Scene::count() < 400) { Entity@ e = Scene::spawn(Vec2()); e.circle(5); e.add(Bomb()); } }
+            void onGone() { if (Scene::count < 400) { Entity@ e = Scene::spawn(Vec2()); e.circle(5); e.add(Bomb()); } }
         }
         class A : Screen
         {
             void onEnter() { for (int i = 0; i < 100; i++) { Entity@ e = Scene::spawn(Vec2(i, i)); e.circle(5, 0, 1); e.add(Bomb()); } }
-            void update(float dt) { Save::set("count", "" + Scene::count()); }
+            void update(float dt) { Save::set("count", "" + Scene::count); }
             void draw(Canvas@ c) { c.design(1280, 720); Scene::draw(c); }
         }
     )");
@@ -691,7 +691,7 @@ NX_TEST(aScreenWithASceneLeavesNothingBehind)
         class A : Screen
         {
             array<Entity@> mine;
-            void onEnter() { Scene::setGravity(Vec2(0, 2000)); }
+            void onEnter() { Scene::gravity = Vec2(0, 2000); }
             void update(float dt)
             {
                 for (int i = 0; i < 5; i++)

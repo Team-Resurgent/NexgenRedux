@@ -413,7 +413,7 @@ NX_TEST(scriptsUseTheNetwork)
             int got = 0;
             void onEnter()
             {
-                if (!Net::available()) print("no network");
+                if (!Net::available) print("no network");
                 host.host("script", "Host", 2);
                 guest.find("script");
             }

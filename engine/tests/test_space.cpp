@@ -501,8 +501,8 @@ NX_TEST(scriptsUseSpace)
                 Vec3 hit;
                 Vec3 normal;
                 if (Space::raycast(Vec3(0, 5, 0), Vec3(0, -5, 0), hit, normal) && abs(hit.y) > 1.9) print("wrong");
-                Space::clearShapes();
-                Space::shape(FieldSphere, Vec3(0, 1, 0), Vec3(1, 1, 1), Green, 0.2);
+                Space::clearField();
+                Space::field(FieldSphere, Vec3(0, 1, 0), Vec3(1, 1, 1), Green, 0.2);
                 Vec3 f = hero.forward;
                 if (f.x < 0.9) print("facing wrong");
             }

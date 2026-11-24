@@ -223,7 +223,7 @@ namespace nx
         b.method("bool listen(uint port)", NX_OBJ_LAST(connectionListen), "Waits for others to connect; 0 is any port that is free.");
         b.method("Connection@ accept()", NX_METHOD(Connection, accept), "The next to have connected, or null.");
         b.method("void close()", NX_METHOD(Connection, close), "Ends it.");
-        b.method("bool get_isOpen() const property", NX_METHOD(Connection, isOpen), "Whether it is connected.");
+        b.method("bool get_connected() const property", NX_METHOD(Connection, isOpen), "Whether it is connected.");
         b.method("bool get_connecting() const property", NX_METHOD(Connection, connecting), "Whether it is still trying to.");
         b.method("bool get_listening() const property", NX_METHOD(Connection, listening), "Whether it is waiting for others.");
         b.method("uint get_port() const property", NX_OBJ_LAST(connectionPort), "Where it is listening.");
@@ -238,7 +238,7 @@ namespace nx
         b.behaviour(asBEHAVE_RELEASE, "void f()", NX_METHOD(Datagrams, release));
         b.method("bool open(uint port = 0)", NX_OBJ_LAST(datagramsOpen), "Opens a port; 0 is any that is free.");
         b.method("void close()", NX_METHOD(Datagrams, close), "Closes it.");
-        b.method("bool get_isOpen() const property", NX_METHOD(Datagrams, isOpen), "Whether it is open.");
+        b.method("bool get_opened() const property", NX_METHOD(Datagrams, isOpen), "Whether it is open.");
         b.method("uint get_port() const property", NX_OBJ_LAST(datagramsPort), "The port it has.");
         b.method("bool send(const string &in address, const string &in text)", NX_OBJ_LAST(datagramsSend), "Sends up to 1400 bytes to \"192.168.1.2:9000\".");
         b.method("bool broadcast(uint port, const string &in text)", NX_OBJ_LAST(datagramsBroadcast), "Sends to everyone on the network who is listening there.");
@@ -246,8 +246,8 @@ namespace nx
 
         b.section("Net", "The network: rooms for games on the same one, the web, and connections of your own.");
         b.names("Net");
-        b.function("bool available()", NX_FN(netAvailable), "Whether there is one.");
-        b.function("string address()", NX_FN(netAddress), "This machine's own, or empty while it has none.");
+        b.function("bool get_available() property", NX_FN(netAvailable), "Whether there is one.");
+        b.function("string get_address() property", NX_FN(netAddress), "This machine's own, or empty while it has none.");
         b.function("Request@ get(const string &in url)", NX_FN(webGet), "Asks for a web page, or anything else.");
         b.function("Request@ post(const string &in url, const string &in body, const string &in type = \"application/x-www-form-urlencoded\")", NX_FN(webPost), "Sends something, and waits for the answer.");
         b.names("");

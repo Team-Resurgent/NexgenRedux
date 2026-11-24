@@ -234,6 +234,14 @@ namespace nx
                 }
             }
         }
+        const Appearance* someLook(const EntityRef* e) { return e->world ? e->world->space().getAppearance(e->id) : nullptr; }
+        float getShine(const EntityRef* e) { const Appearance* a = someLook(e); return a ? a->shine : 0; }
+        float getGlowing(const EntityRef* e) { const Appearance* a = someLook(e); return a ? a->glow : 0; }
+        bool getTwoSided(const EntityRef* e) { const Appearance* a = someLook(e); return a && a->twoSided; }
+        bool getShadow(const EntityRef* e) { const Appearance* a = someLook(e); return a && a->casts; }
+        float getAnimationSpeed(const EntityRef* e) { const Appearance* a = someLook(e); return a ? a->speed : 1; }
+        bool getStreamed(const EntityRef* e) { const Spatial* s = someSpatial(e); return s && s->streamed; }
+        Vec3 getColliderAt(const EntityRef* e) { const Collider3* c = e->world ? e->world->space().getCollider(e->id) : nullptr; return c ? c->middle : Vec3(); }
         void setShine(float v, EntityRef* e) { if (Appearance* a = lookOf(e)) a->shine = v; }
         void setGlowing(float v, EntityRef* e) { if (Appearance* a = lookOf(e)) a->glow = v; }
         void setTwoSided(bool v, EntityRef* e) { if (Appearance* a = lookOf(e)) a->twoSided = v; }
@@ -312,6 +320,7 @@ namespace nx
         void spaceFog(const Color& color, float start, float end) { space().setFog(color, start, end); }
         void spaceShadows(float strength, float distance) { space().setShadows(strength, distance); }
         void spaceFarthest(float distance) { space().setFar(distance); }
+        Vec3 spaceGetGravity() { return space().gravity(); }
         void spaceGravity(const Vec3& g) { space().setGravity(g); }
         void spaceGround(float height) { space().setGround(height); }
         void spaceWater(float height, const Color& color) { space().setWater(height, color); }
@@ -473,7 +482,7 @@ namespace nx
         b.method("Vec3 get_place() const property", NX_OBJ_LAST(getPlace), "In space: where it is, from its parent if it has one.");
         b.method("void set_place(const Vec3 &in) property", NX_OBJ_LAST(setPlace), "Moves it.");
         b.method("Vec3 get_worldPlace() const property", NX_OBJ_LAST(getWorldPlace), "Where it is in space, whatever its parents.");
-        b.method("Vec3 outward(const Vec3 &in place) const", NX_OBJ_LAST(entityOutward), "Where a place of its own is in space, as it is turned and sized: its hand, or the end of its gun.");
+        b.method("Vec3 toSpace(const Vec3 &in place) const", NX_OBJ_LAST(entityOutward), "Where a place of its own is in space, as it is turned and sized: its hand, or the end of its gun.");
         b.method("Vec3 get_angles() const property", NX_OBJ_LAST(getAngles), "Degrees it is tipped, turned and rolled: about x, y and z.");
         b.method("void set_angles(const Vec3 &in) property", NX_OBJ_LAST(setAngles), "Turns it.");
         b.method("Vec3 get_size() const property", NX_OBJ_LAST(getSize), "Its size along each axis; 1 is normal.");
@@ -487,14 +496,19 @@ namespace nx
         b.method("void glow(float size, const Color &in color)", NX_OBJ_LAST(entityGlow), "Looks like a soft ball of light. `light` is what lights other things.");
         b.method("void skin(Texture@+ texture, bool repeat = false)", NX_OBJ_LAST(entitySkin), "Puts an image on it, instead of any of the model's own.");
         b.method("void effect(Effect@+ effect)", NX_OBJ_LAST(entityEffect), "Colours it, and may move its corners, with a shader of your own; null for none. Where there are no shaders it stays as it is.");
+        b.method("float get_shine() const property", NX_OBJ_LAST(getShine), "How much it shows a highlight from the sun.");
         b.method("void set_shine(float) property", NX_OBJ_LAST(setShine), "How much it shows a highlight from the sun, 0 to 1.");
+        b.method("float get_glowing() const property", NX_OBJ_LAST(getGlowing), "How bright it is by itself.");
         b.method("void set_glowing(float) property", NX_OBJ_LAST(setGlowing), "1 is as bright as its colour, even in the dark.");
+        b.method("bool get_twoSided() const property", NX_OBJ_LAST(getTwoSided), "Whether the backs of its triangles are drawn.");
         b.method("void set_twoSided(bool) property", NX_OBJ_LAST(setTwoSided), "Draws the backs of its triangles too.");
+        b.method("bool get_shadow() const property", NX_OBJ_LAST(getShadow), "Whether it casts one.");
         b.method("void set_shadow(bool) property", NX_OBJ_LAST(setShadow), "Whether it casts one.");
         b.method("uint get_detail() const property", NX_OBJ_LAST(getDetail), "The level it was last drawn at: 0 is all of it, 2 the least.");
         b.method("void light(const Color &in color, float range)", NX_OBJ_LAST(entityLight), "Lights what is within so many metres.");
         b.method("bool animate(const string &in name, bool loop = true, float change = 0.25)", NX_OBJ_LAST(entityAnimate), "Plays one of its model's animations, changing to it over some seconds. Asking again for what is playing does nothing. False if it isn't there, or hasn't arrived.");
         b.method("bool get_animated() const property", NX_OBJ_LAST(getAnimated), "Whether an animation that doesn't loop has finished.");
+        b.method("float get_animationSpeed() const property", NX_OBJ_LAST(getAnimationSpeed), "How fast its animation plays.");
         b.method("void set_animationSpeed(float) property", NX_OBJ_LAST(setAnimationSpeed), "1 is normal.");
 
         b.method("Vec3 get_motion() const property", NX_OBJ_LAST(getMotion), "Metres a second.");
@@ -510,8 +524,10 @@ namespace nx
         b.method("void sphere(float radius, uint group = 0, uint hits = 0)", NX_OBJ_LAST(entitySphere), "Gives it a round collider. mass, wall, friction, bounce, gravity, drag, hits and touching are as on the plane.");
         b.method("void cube(const Vec3 &in size, uint group = 0, uint hits = 0)", NX_OBJ_LAST(entityCube), "The same with a box, which turns with it.");
         b.method("void capsule(float radius, float height, uint group = 0, uint hits = 0)", NX_OBJ_LAST(entityCapsule), "The same with an upright cylinder with round ends, included in its height.");
+        b.method("Vec3 get_colliderAt() const property", NX_OBJ_LAST(getColliderAt), "Where its collider is, from its place.");
         b.method("void set_colliderAt(const Vec3 &in) property", NX_OBJ_LAST(setColliderAt), "Moves its collider from its place: up by half its height, for something whose place is at its feet.");
 
+        b.method("bool get_streamed() const property", NX_OBJ_LAST(getStreamed), "Whether it goes with its region.");
         b.method("void set_streamed(bool) property", NX_OBJ_LAST(setStreamed), "Destroys it when the region of endless land that it is in goes.");
 
         b.enumType("FieldShape", "Shapes that can melt into each other.");
@@ -538,37 +554,38 @@ namespace nx
         b.function("void fog(const Color &in color, float start, float end)", NX_FN(spaceFog), "Hides what is far away.");
         b.function("void shadows(float strength, float distance = 40)", NX_FN(spaceShadows), "How dark they are, 0 to 1, and how far they reach. Simple ones are drawn where the GPU can't do real ones.");
         b.function("void farthest(float distance)", NX_FN(spaceFarthest), "Nothing beyond is drawn.");
-        b.function("void setGravity(const Vec3 &in gravity)", NX_FN(spaceGravity), "Metres a second, each second. It starts as that of the Earth.");
+        b.function("Vec3 get_gravity() property", NX_FN(spaceGetGravity), "What pulls on those that feel it.");
+        b.function("void set_gravity(const Vec3 &in) property", NX_FN(spaceGravity), "Metres a second, each second. It starts as that of the Earth.");
         b.function("void ground(float height)", NX_FN(spaceGround), "Something flat to stand on, everywhere. It isn't drawn.");
         b.function("void water(float height, const Color &in color)", NX_FN(spaceWater), "Draws water, with waves, up to a height.");
         b.function("void land(uint seed, uint squares, float spacing, float height, float roughness = 0.5, bool island = false)", NX_FN(spaceLand), "Makes hills: so many squares each way (a multiple of 32, up to 256), metres to a square, and about how high. An island goes down all round, to below 0.");
         b.function("void endlessLand(uint seed, float spacing, float height, float roughness = 0.5, uint reach = 5)", NX_FN(spaceEndless), "The same without end: regions of 32 squares are made in the background as the camera comes near, up to so many away, and go when it leaves.");
         b.function("bool nextRegion(int &out x, int &out z, bool &out arrived)", NX_FN(spaceNextRegion), "A region that has come or gone, or false when there is no more to tell. Ask each update, to put things in those that arrive; make them streamed and they go by themselves.");
-        b.function("float regionSize()", NX_FN(spaceRegionSize), "Metres along a side. Region x, z begins at that many times x and z.");
-        b.function("uint regions()", NX_FN(spaceRegions), "How many there are now.");
-        b.function("uint regionsWaiting()", NX_FN(spaceRegionsWaiting), "How many are still to come.");
+        b.function("float get_regionSize() property", NX_FN(spaceRegionSize), "Metres along a side. Region x, z begins at that many times x and z.");
+        b.function("uint get_regions() property", NX_FN(spaceRegions), "How many there are now.");
+        b.function("uint get_regionsWaiting() property", NX_FN(spaceRegionsWaiting), "How many are still to come.");
         b.function("int load(const string &in name, const Vec3 &in at = Vec3(), bool streamed = false)", NX_FN(spaceLoad), "Makes the entities listed in a file, around a place, and returns how many. Their models arrive in the background. See the guide.");
         b.function("void landColors(const Color &in low, const Color &in middle, const Color &in high, const Color &in steep, float lowHeight, float highHeight)", NX_FN(spaceLandColors), "Colours them by height and slope.");
         b.function("void flatten(float x, float z, float radius)", NX_FN(spaceFlatten), "Levels the land around a place, to build on.");
         b.function("void flatten(float x, float z, float radius, float height)", NX_FN(spaceFlattenTo), "The same, to a height.");
         b.function("float height(float x, float z)", NX_FN(spaceHeight), "How high the land or the ground is. Far below if there is none.");
         b.function("Vec3 normal(float x, float z)", NX_FN(spaceNormal), "Which way it faces there.");
-        b.function("float landSize()", NX_FN(spaceLandSize), "Metres along a side. Its middle is at 0, 0.");
-        b.function("void shape(FieldShape kind, const Vec3 &in place, const Vec3 &in size, const Color &in color, float soft = 0, FieldJoin how = JoinAdd, float turn = 0)", NX_FN(spaceShape), "Adds one of up to 24 shapes drawn by marching along rays, which melt together where they are soft.");
-        b.function("void clearShapes()", NX_FN(spaceClearShapes), "Takes them all away. To move them, clear and add them again each update.");
-        b.function("void shapeLook(float shine, float reflection = 0, float repeat = 0, float farthest = 60, uint steps = 80)", NX_FN(spaceShapeLook), "How they look; repeat makes the whole thing again every so many metres.");
+        b.function("float get_landSize() property", NX_FN(spaceLandSize), "Metres along a side. Its middle is at 0, 0.");
+        b.function("void field(FieldShape kind, const Vec3 &in place, const Vec3 &in size, const Color &in color, float soft = 0, FieldJoin how = JoinAdd, float turn = 0)", NX_FN(spaceShape), "Adds one of up to 24 shapes drawn by marching along rays, which melt together where they are soft.");
+        b.function("void clearField()", NX_FN(spaceClearShapes), "Takes them all away. To move them, clear and add them again each update.");
+        b.function("void fieldLook(float shine, float reflection = 0, float repeat = 0, float farthest = 60, uint steps = 80)", NX_FN(spaceShapeLook), "How they look; repeat makes the whole thing again every so many metres.");
         b.function("void burst(const string &in particles, const Vec3 &in place, uint count, const Vec3 &in aim = Vec3(0, 1, 0))", NX_FN(spaceBurst), "Throws out some particles. A spread of 360 goes every way, 90 is a cone.");
         b.function("bool raycast(const Vec3 &in from, const Vec3 &in to, Vec3 &out hit, Vec3 &out normal, uint groups = 0xFFFF, Entity@+ except = null)", NX_FN(spaceRaycast), "Whether there is anything on a line, where, and which way it faces. The land counts as group 0.");
         b.function("Entity@ pick(const Vec3 &in from, const Vec3 &in to, Vec3 &out hit, uint groups = 0xFFFF, Entity@+ except = null)", NX_FN(spacePick), "The first collider on a line, or null if there is none or the land comes first.");
         b.function("array<Entity@>@ within(const Vec3 &in place, float radius, uint groups = 0xFFFF)", NX_FN(spaceWithin), "Everything whose collider touches a ball.");
         b.function("bool toScreen(const Vec3 &in place, Vec2 &out screen)", NX_FN(spaceToScreen), "Where a place was when last drawn. False if it is behind the camera.");
         b.function("Vec3 ray(const Vec2 &in screen)", NX_FN(spaceRay), "The direction from the camera through a place on the screen.");
-        b.function("Vec3 eye()", NX_FN(spaceEye), "Where the camera is.");
-        b.function("uint drawn()", NX_FN(spaceDrawn), "How many entities were drawn last.");
+        b.function("Vec3 get_eye() property", NX_FN(spaceEye), "Where the camera is.");
+        b.function("uint get_drawn() property", NX_FN(spaceDrawn), "How many entities were drawn last.");
         b.function("uint drawnAt(uint level)", NX_FN(spaceDrawnAt), "How many at a level of detail: 0 is all of it, 2 the least.");
-        b.function("uint hidden()", NX_FN(spaceHidden), "How many were out of sight or too small.");
-        b.function("uint triangles()", NX_FN(spaceTriangles), "How many triangles there were in the last frame.");
-        b.function("uint contacts()", NX_FN(spaceContacts), "Where rigid bodies touched in the last step.");
+        b.function("uint get_hidden() property", NX_FN(spaceHidden), "How many were out of sight or too small.");
+        b.function("uint get_triangles() property", NX_FN(spaceTriangles), "How many triangles there were in the last frame.");
+        b.function("uint get_contacts() property", NX_FN(spaceContacts), "Where rigid bodies touched in the last step.");
         b.names("");
         b.function("Vec3 lerp(const Vec3 &in a, const Vec3 &in b, float t)", NX_FN(lerpVec3), "From a to b as t goes from 0 to 1.");
     }

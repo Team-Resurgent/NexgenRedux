@@ -45,6 +45,9 @@ namespace nx
         // x' = m0 x + m2 y + m4, y' = m1 x + m3 y + m5.
         void transform(const float (&m)[6]);
         void setAlpha(float alpha) { m_state.alpha = alpha; }
+        float alpha() const { return m_state.alpha; }
+        gpu::Blend blend() const { return m_state.blend; }
+        gpu::Filter filter() const { return m_state.filter; }
         void setBlend(gpu::Blend blend) { m_state.blend = blend; }
         void setFilter(gpu::Filter filter) { m_state.filter = filter; }
         // Nothing outside is drawn. Within another clip, only the overlap. Ignores rotation.

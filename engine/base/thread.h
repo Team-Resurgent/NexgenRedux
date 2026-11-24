@@ -14,7 +14,7 @@ namespace nx
         void unlock();
 
     private:
-        [[maybe_unused]] alignas(16) u8 m_storage[80];
+        alignas(16) u8 m_storage[80];
     };
 
     class Lock : NonCopyable
@@ -36,7 +36,7 @@ namespace nx
         void wait();
 
     private:
-        [[maybe_unused]] alignas(16) u8 m_storage[160];
+        alignas(16) u8 m_storage[160];
     };
 
     using ThreadFunction = void (*)(void* user);

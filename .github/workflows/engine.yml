@@ -176,7 +176,7 @@ jobs:
       run: |
         cmake --preset uwp
         if ($LASTEXITCODE) { exit $LASTEXITCODE }
-        cmake --build --preset uwp --parallel 4 -- -p:AppxPackageSigningEnabled=false
+        cmake --build --preset uwp --parallel 4
 
     # Windows installs only signed packages. The certificate is made for this build and shipped with it.
     - name: Sign and package

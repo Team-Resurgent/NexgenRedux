@@ -50,7 +50,7 @@ function(nx_uwp_package target)
     list(APPEND _files ${CMAKE_CURRENT_SOURCE_DIR}/${_file})
   endforeach()
   target_sources(${target} PRIVATE ${_files})
-  set_target_properties(${target} PROPERTIES WIN32_EXECUTABLE ON)
+  set_target_properties(${target} PROPERTIES WIN32_EXECUTABLE ON VS_GLOBAL_AppxPackageSigningEnabled false)
   # The system starts the app and calls this; see platform_uwp.cpp.
   target_compile_definitions(${target} PRIVATE main=nxAppMain)
 endfunction()

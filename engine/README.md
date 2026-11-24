@@ -14,7 +14,7 @@ From this folder:
 | macOS | The same as Linux. Tested in CI only, without a screen |
 | Original Xbox | `cmake --preset xboxog-release`, `cmake --build --preset xboxog-release`, then run `build/xboxog-release/XISO/showcase.iso` |
 | Xbox 360 | `cmake --preset xbox360`, `cmake --build --preset xbox360` (libraries only) |
-| UWP: Xbox One, Series and Windows | `cmake --preset uwp`, `cmake --build --preset uwp -- -p:AppxPackageSigningEnabled=false`; the package is in `build/uwp/AppPackages` |
+| UWP: Xbox One, Series and Windows | `cmake --preset uwp`, `cmake --build --preset uwp`; the package is in `build/uwp/AppPackages` |
 
 Needs CMake 3.21 and, for the Xbox targets, Ninja on the path (it comes with Visual Studio).
 

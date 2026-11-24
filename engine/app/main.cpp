@@ -1,0 +1,419 @@
+#include "assets/assets.h"
+#include "base/endian.h"
+#include "base/log.h"
+#include "bindings/bindings.h"
+#include "audio/audio.h"
+#include "canvas/canvas.h"
+#include "gpu/gpu.h"
+#include "input/input.h"
+#include "platform/platform.h"
+#include "screens/screens.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+// The showcase: a main screen that opens the others.
+//
+//   --screen ID     start with a screen open
+//   --frames N      stop after N frames of a fixed 60th of a second, so runs can be repeated
+//   --capture FILE  save the last frame as a BMP
+//   --tour N        open every screen N times over, unattended, then stop
+//   --docs FILE     write the script reference and stop
+//   --budget MB     how much images and fonts may take
+//   --dev           reload scripts and images when their files change
+//   --size W H      window size
+//   --hidden (and silent), --null, --menu (open the engine's menu for a capture)
+namespace
+{
+    using namespace nx;
+
+    constexpr float kStep = 1.0f / 60.0f;
+
+    struct Options
+    {
+        const char* screen = nullptr;
+        const char* capture = nullptr;
+        const char* docs = nullptr;
+        int frames = 0;
+        int tour = 0;
+        size_t budget = 0;
+        u32 width = 1280, height = 720;
+        bool hidden = false;
+        bool null = false;
+        bool menu = false;
+        bool dev = false;
+    };
+
+    // A 32-bit BMP, stored top row first.
+    bool writeBmp(const char* path, const u8* pixels, u32 width, u32 height)
+    {
+        u8 header[54] = { 'B', 'M' };
+        const u32 bytes = width * height * 4;
+        writeU32(header + 2, static_cast<u32>(sizeof(header)) + bytes);
+        writeU32(header + 10, sizeof(header));
+        writeU32(header + 14, 40);
+        writeU32(header + 18, width);
+        writeU32(header + 22, 0u - height);
+        writeU16(header + 26, 1);
+        writeU16(header + 28, 32);
+        writeU32(header + 34, bytes);
+        FILE* file = fopen(path, "wb");
+        if (file == nullptr)
+        {
+            return false;
+        }
+        bool ok = fwrite(header, sizeof(header), 1, file) == 1;
+        for (u32 i = 0; ok && i < width * height; i++)
+        {
+            const u8* p = pixels + static_cast<size_t>(i) * 4;
+            const u8 bgra[4] = { p[2], p[1], p[0], p[3] };
+            ok = fwrite(bgra, 4, 1, file) == 1;
+        }
+        fclose(file);
+        return ok;
+    }
+
+    bool saveCapture(gpu::Device& device, const char* path)
+    {
+        u32 w, h;
+        device.size(w, h);
+        const size_t bytes = static_cast<size_t>(w) * h * 4;
+        u8* pixels = static_cast<u8*>(memAlloc(bytes, MemTag::General));
+        const bool ok = pixels && device.capture(pixels, bytes) && writeBmp(path, pixels, w, h);
+        memFree(pixels);
+        return ok;
+    }
+
+    bool writeText(const char* path, const std::string& text)
+    {
+        FILE* file = fopen(path, "wb");
+        const bool ok = file && fwrite(text.data(), 1, text.size(), file) == text.size();
+        if (file)
+        {
+            fclose(file);
+        }
+        return ok;
+    }
+
+    // Opens every screen in turn, a few times over, and watches what is left behind.
+    class Tour
+    {
+    public:
+        explicit Tour(int rounds) : m_rounds(rounds) {}
+
+        // True once finished.
+        bool step(Services& s, bool& ok)
+        {
+            if (m_wait > 0)
+            {
+                m_wait--;
+                return false;
+            }
+            Screens& screens = *s.screens;
+            if (screens.loading())
+            {
+                return false;
+            }
+            if (screens.depth() > 1)
+            {
+                if (screens.failed())
+                {
+                    NX_ERROR("tour: %s failed: %s", screens.current(), screens.error());
+                    ok = false;
+                }
+                NX_INFO("tour: %-12s %5.1f fps, %3u draws, %2u voices, script %u KB, assets %u KB, free %u KB", screens.current(), static_cast<double>(s.fps), static_cast<unsigned>(s.draws),
+                    static_cast<unsigned>(s.audio->voicesInUse()), static_cast<unsigned>(memStats(MemTag::Script).bytes / 1024), static_cast<unsigned>((s.assets->stats().inUseBytes + s.assets->stats().warmBytes) / 1024),
+                    static_cast<unsigned>(s.platform->freeMemory() / 1024));
+                // The way back has to work from anywhere: through the engine's menu, as a player would.
+                screens.home();
+                m_wait = 3;
+                return false;
+            }
+            while (m_next < screens.count() && strcmp(screens.info(m_next)->id, screens.current()) == 0)
+            {
+                m_next++;
+            }
+            if (m_next < screens.count())
+            {
+                screens.push(screens.info(m_next++)->id);
+                m_wait = m_round == 0 ? 90 : 5;
+                return false;
+            }
+            m_next = 0;
+            m_round++;
+            const size_t script = memStats(MemTag::Script).bytes;
+            const u32 loads = s.assets->stats().loads;
+            NX_INFO("tour: round %d done, script %u bytes, %u files read, %u hits, %u evictions", m_round, static_cast<unsigned>(script), static_cast<unsigned>(loads),
+                static_cast<unsigned>(s.assets->stats().hits), static_cast<unsigned>(s.assets->stats().evictions));
+            if (m_round == 2)
+            {
+                m_script = script;
+            }
+            if (m_round > 1 && loads != m_loads && s.assets->stats().evictions == 0 && s.assets->stats().trims == m_trimsBefore)
+            {
+                NX_ERROR("tour: screens read files again although nothing was evicted");
+                ok = false;
+            }
+            if (m_round == 1)
+            {
+                // Saving, which screens may not do on an unattended run.
+                FileData back;
+                static const char text[] = "{ \"self\": \"test\" }";
+                if (!s.platform->writeSave("selftest", text, sizeof(text) - 1) || !s.platform->loadSave("selftest", back) || back.size != sizeof(text) - 1 || memcmp(back.data, text, back.size) != 0)
+                {
+                    NX_ERROR("tour: a save did not come back");
+                    ok = false;
+                }
+            }
+            // What a screen unloads on purpose in one round is read again in the next.
+            m_trimsBefore = m_trims;
+            m_trims = s.assets->stats().trims;
+            m_loads = loads;
+            if (m_round >= m_rounds)
+            {
+                if (m_round > 2 && script > m_script + 64 * 1024)
+                {
+                    NX_ERROR("tour: script memory grew from %u to %u", static_cast<unsigned>(m_script), static_cast<unsigned>(script));
+                    ok = false;
+                }
+                return true;
+            }
+            return false;
+        }
+
+    private:
+        int m_rounds;
+        int m_round = 0;
+        int m_wait = 60;
+        u32 m_next = 0;
+        u32 m_loads = 0;
+        u32 m_trims = 0, m_trimsBefore = 0;
+        size_t m_script = 0;
+    };
+
+    bool run(Platform& platform, const Options& options)
+    {
+        WindowDesc window;
+        window.title = "Nexgen showcase";
+        window.width = options.width;
+        window.height = options.height;
+        window.hidden = options.hidden;
+        if (!options.null && !platform.openWindow(window))
+        {
+            return false;
+        }
+        gpu::Device* device = options.null ? gpu::createNullDevice(options.width, options.height) : gpu::createDevice(platform.nativeWindow());
+        if (device == nullptr)
+        {
+            return false;
+        }
+
+        bool ok = true;
+        {
+            // Destroyed in reverse: the scripts let go of their assets before the cache goes.
+            Assets assets;
+            Canvas canvas;
+            Input input;
+            Audio audio;
+            Save save;
+            ScriptHost host;
+            Coroutines coroutines;
+            Services services;
+            Screens screens;
+            services.platform = &platform;
+            services.device = device;
+            services.assets = &assets;
+            services.canvas = &canvas;
+            services.input = &input;
+            services.host = &host;
+            services.audio = &audio;
+            services.save = &save;
+            services.coroutines = &coroutines;
+
+            const bool small = platform.totalMemory() && platform.totalMemory() <= 128u * 1024 * 1024;
+            const size_t textures = options.budget ? options.budget : (small ? 20u : 256u) * 1024 * 1024;
+            ok = assets.init(*device, platform, textures, (small ? 6u : 64u) * 1024 * 1024) && canvas.init(*device, assets) && host.init();
+            ok = ok && audio.init(options.null || options.docs || options.hidden ? createNullAudioOutput(true) : createAudioOutput());
+            audio.onFinished([](void* asset, void* cache) { static_cast<Assets*>(cache)->release(static_cast<Asset*>(asset)); }, &assets);
+            coroutines.init(host);
+            save.init(platform, "showcase");
+            if (options.frames || options.tour || options.docs)
+            {
+                save.setReadOnly();
+            }
+            loadSettings(services);
+            services.development = options.dev;
+            host.setStatementLimit(5000000);
+            if (ok)
+            {
+                Binder binder(host);
+                ok = bindEngine(binder, services);
+                NX_INFO("%s, %s, %s, AngelScript %s, %u documented script calls", platform.name(), device->name(), audio.outputName(), ScriptHost::version(), static_cast<unsigned>(binder.count()));
+                if (ok && options.docs)
+                {
+                    ok = writeText(options.docs, "# Script reference\n\nGenerated by `showcase --docs`. Do not edit.\n" + binder.reference());
+                    screens.setCanQuit(false);
+                }
+            }
+            ok = ok && (options.docs || screens.init(services, "showcase", "main"));
+
+            if (ok && !options.docs)
+            {
+                if (options.screen)
+                {
+                    screens.push(options.screen);
+                }
+                Tour tour(options.tour);
+                double last = platform.seconds();
+                double nextLook = 0;
+                float unspent = 0;
+                int frame = 0;
+                bool done = false;
+                while (!done && platform.pumpEvents() && !screens.quitRequested())
+                {
+                    const double now = platform.seconds();
+                    const float elapsed = static_cast<float>(now - last);
+                    last = now;
+                    const float rate = 1.0f / (elapsed > 0.001f ? elapsed : 0.001f);
+                    services.fps = frame < 10 ? rate : services.fps * 0.95f + rate * 0.05f;
+
+                    if (options.frames)
+                    {
+                        assets.finish();  // loading times would make two runs differ
+                    }
+                    else
+                    {
+                        assets.update();
+                    }
+                    audio.update();
+                    if (options.dev && now >= nextLook)
+                    {
+                        nextLook = now + 0.5;
+                        assets.reloadChanged();
+                        screens.reloadChanged();
+                    }
+
+                    // Whole steps of a fixed length, so every machine runs the same. After a long stall
+                    // the time is dropped rather than caught up on.
+                    const bool fixed = options.frames > 0 || options.tour > 0;
+                    unspent = fixed ? kStep : unspent + (elapsed > 0.1f ? 0.1f : elapsed);
+                    // Half a frame early is close enough, and avoids a stutter when the display is 60 Hz.
+                    while (unspent >= kStep * 0.5f && !screens.quitRequested())
+                    {
+                        if (options.menu && frame == options.frames - 5)
+                        {
+                            input.simulate(Action::Menu);
+                        }
+                        input.update(platform.input(), kStep);
+                        services.time += kStep;
+                        screens.update(kStep);
+                        unspent -= kStep;
+                        if (options.tour)
+                        {
+                            done = tour.step(services, ok) || done;
+                        }
+                    }
+                    if (device->beginFrame({ 0, 0, 0, 1 }))
+                    {
+                        canvas.begin();
+                        screens.draw();
+                        canvas.end();
+                        device->endFrame();
+                        services.draws = canvas.draws();
+                    }
+                    host.collectStep();
+                    frame++;
+                    done = done || (options.frames > 0 && frame >= options.frames);
+                }
+                if (screens.failed())
+                {
+                    NX_ERROR("%s: %s", screens.current(), screens.error());
+                    ok = false;
+                }
+                if (device->stats().rejected)
+                {
+                    NX_ERROR("%u draws were rejected", static_cast<unsigned>(device->stats().rejected));
+                    ok = false;
+                }
+                if (options.capture)
+                {
+                    ok = saveCapture(*device, options.capture) && ok;
+                }
+            }
+            screens.shutdown();
+            coroutines.shutdown();
+            host.shutdown();
+            audio.shutdown();
+            saveSettings(services);
+            save.flush();
+            assets.trim();
+            if (ok && assets.stats().inUse)
+            {
+                NX_ERROR("%u assets were still held", static_cast<unsigned>(assets.stats().inUse));
+                ok = false;
+            }
+            canvas.shutdown();
+            assets.shutdown();
+        }
+        destroy(device);
+        return ok;
+    }
+
+    void findTour(const char* name, void* user)
+    {
+        if (strcmp(name, "tour") == 0)
+        {
+            *static_cast<bool*>(user) = true;
+        }
+    }
+}
+
+#if defined(NX_GPU_D3D8)
+int main()
+{
+    const int argc = 0;  // a title has no command line
+    char** argv = nullptr;
+#else
+int main(int argc, char** argv)
+{
+#endif
+    Options options;
+    const auto value = [&](int& i) { return i + 1 < argc ? argv[++i] : ""; };
+    for (int i = 1; i < argc; i++)
+    {
+        const char* a = argv[i];
+        if (strcmp(a, "--screen") == 0) options.screen = value(i);
+        else if (strcmp(a, "--capture") == 0) options.capture = value(i);
+        else if (strcmp(a, "--docs") == 0) options.docs = value(i);
+        else if (strcmp(a, "--frames") == 0) options.frames = atoi(value(i));
+        else if (strcmp(a, "--tour") == 0) options.tour = atoi(value(i));
+        else if (strcmp(a, "--budget") == 0) options.budget = static_cast<size_t>(atof(value(i)) * 1024 * 1024);
+        else if (strcmp(a, "--size") == 0) { options.width = static_cast<u32>(atoi(value(i))); options.height = static_cast<u32>(atoi(value(i))); }
+        else if (strcmp(a, "--hidden") == 0) options.hidden = true;
+        else if (strcmp(a, "--null") == 0) options.null = true;
+        else if (strcmp(a, "--menu") == 0) options.menu = true;
+        else if (strcmp(a, "--dev") == 0) options.dev = true;
+    }
+
+    nx::Platform* platform = nx::createPlatform();
+    bool ok = platform != nullptr;
+    if (platform)
+    {
+        // Consoles have no command line: a folder called tour on the disc asks for one.
+        bool tour = false;
+        platform->listFolders("", findTour, &tour);
+        options.tour = tour && options.tour == 0 ? 3 : options.tour;
+        ok = run(*platform, options);
+    }
+    nx::destroy(platform);
+
+    const nx::MemStats left = nx::memStatsTotal();
+    if (left.count)
+    {
+        NX_ERROR("at exit: %u bytes in %u allocations still held", static_cast<unsigned>(left.bytes), static_cast<unsigned>(left.count));
+        ok = false;
+    }
+    NX_INFO("%s", ok ? "EXIT OK" : "EXIT FAILED");
+    return ok ? 0 : 1;
+}

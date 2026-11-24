@@ -1,0 +1,191 @@
+cmake_minimum_required(VERSION 3.21)
+set(CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "Oldest macOS supported")
+project(Nexgen VERSION 0.1 LANGUAGES C CXX)
+
+# One project for every target. The toolchain decides the platform:
+#   desktop            the host compiler
+#   original Xbox      RXDK's RxdkToolchain.cmake      (XBOXOG)
+#   Xbox 360           cmake/Xbox360Toolchain.cmake    (XBOX360) shared layers only for now
+#   Xbox One / Series  -DCMAKE_SYSTEM_NAME=WindowsStore          shared layers only for now
+
+option(NX_SCRIPT_GENERIC "Use AngelScript's generic calls instead of native ones" OFF)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+# RXDK's linker takes a library with no folder in its name to be one of the SDK's.
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+
+# Targets with a platform layer and GPU backend so far. Others build the shared layers only.
+if(XBOXOG)
+  set(NX_PLATFORM xboxog)
+elseif(WIN32 AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
+  set(NX_PLATFORM win32)
+  # Nothing to install besides the program itself.
+  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+elseif(APPLE)
+  set(NX_PLATFORM macos)
+  enable_language(OBJCXX)
+  set(CMAKE_OBJCXX_STANDARD 20)
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  set(NX_PLATFORM linux)
+else()
+  set(NX_PLATFORM "")
+endif()
+
+include(cmake/Options.cmake)
+include(cmake/AngelScript.cmake)
+
+# --- Layers. A library may only link the ones above it. ---
+
+if(WIN32 OR XBOXOG)
+  set(_thread base/thread_windows.cpp)
+elseif(UNIX)
+  set(_thread base/thread_posix.cpp)
+else()
+  set(_thread base/thread_none.cpp)  # Xbox 360, until its platform layer is written
+endif()
+add_library(nx_base STATIC ${_thread} base/jobs.cpp base/json.cpp base/log.cpp base/math.cpp base/memory.cpp)
+target_include_directories(nx_base PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+nx_options(nx_base)
+
+add_library(nx_gpu STATIC gpu/null/null_device.cpp)
+target_link_libraries(nx_gpu PUBLIC nx_base)
+nx_options(nx_gpu)
+if(XBOXOG)
+  target_sources(nx_gpu PRIVATE gpu/d3d8/d3d8_device.cpp)
+  target_compile_definitions(nx_gpu PUBLIC NX_GPU_D3D8)
+elseif(NX_PLATFORM STREQUAL "win32")
+  target_sources(nx_gpu PRIVATE gpu/d3d11/d3d11_device.cpp)
+  target_link_libraries(nx_gpu PRIVATE d3d11 dxgi dxguid)
+elseif(NX_PLATFORM)
+  target_sources(nx_gpu PRIVATE gpu/gl/gl_device.cpp)
+endif()
+
+add_library(nx_script STATIC script/binder.cpp script/coroutines.cpp script/script_host.cpp script/bind_math.cpp script/script_abi_test.cpp)
+target_link_libraries(nx_script PUBLIC nx_base nx_angelscript)
+nx_options(nx_script)
+
+add_library(nx_input STATIC input/input.cpp)
+target_link_libraries(nx_input PUBLIC nx_base)
+nx_options(nx_input)
+
+# Sound: output is the desktop's through miniaudio, the original Xbox's own, or none yet.
+add_library(nx_audio STATIC audio/audio.cpp audio/decoder.cpp audio/third_party.c assets/adpcm.cpp)
+target_link_libraries(nx_audio PUBLIC nx_base)
+nx_options(nx_audio)
+nx_no_warnings(audio/third_party.c)
+if(XBOXOG)
+  target_sources(nx_audio PRIVATE audio/output_xboxog.cpp)
+elseif((WIN32 AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore") OR (UNIX AND NOT XBOX360))
+  target_sources(nx_audio PRIVATE audio/output_desktop.cpp audio/output_miniaudio.c)
+  nx_no_warnings(audio/output_miniaudio.c)
+  if(UNIX)
+    target_link_libraries(nx_audio PRIVATE pthread ${CMAKE_DL_LIBS} m)
+  endif()
+endif()
+
+add_library(nx_assets STATIC assets/assets.cpp assets/decode.cpp assets/third_party.c)
+target_link_libraries(nx_assets PUBLIC nx_audio nx_gpu)
+nx_options(nx_assets)
+nx_no_warnings(assets/third_party.c)
+
+add_library(nx_canvas STATIC canvas/canvas.cpp)
+target_link_libraries(nx_canvas PUBLIC nx_assets)
+nx_options(nx_canvas)
+
+add_library(nx_screens STATIC bindings/bindings.cpp save/save.cpp screens/screens.cpp)
+target_link_libraries(nx_screens PUBLIC nx_canvas nx_input nx_script)
+nx_options(nx_screens)
+
+if(NX_PLATFORM)
+  set(_platform platform/${NX_PLATFORM}/platform_${NX_PLATFORM}.cpp)
+  if(NX_PLATFORM STREQUAL "linux")
+    list(APPEND _platform platform/posix/platform_posix.cpp)
+  elseif(NX_PLATFORM STREQUAL "macos")
+    set(_platform platform/macos/platform_macos.mm platform/posix/platform_posix.cpp)
+  endif()
+  add_library(nx_platform STATIC ${_platform})
+  target_link_libraries(nx_platform PUBLIC nx_base)
+  if(NX_PLATFORM STREQUAL "win32")
+    target_link_libraries(nx_platform PRIVATE xinput)
+  elseif(NX_PLATFORM STREQUAL "linux")
+    target_link_libraries(nx_platform PRIVATE X11 GL)
+  elseif(NX_PLATFORM STREQUAL "macos")
+    target_link_libraries(nx_platform PRIVATE "-framework Cocoa" "-framework OpenGL" "-framework GameController")
+  endif()
+  nx_options(nx_platform)
+
+  # Opens every screen unattended when the title starts, for testing on a console.
+  option(NX_TOUR "Build the showcase to run its self-test" OFF)
+
+  foreach(_app spike showcase)
+    if(_app STREQUAL "spike")
+      add_executable(spike spike/main.cpp)
+      target_link_libraries(spike PRIVATE nx_platform nx_gpu nx_script)
+      nx_media(spike spike/media)
+    else()
+      add_executable(showcase app/main.cpp)
+      target_link_libraries(showcase PRIVATE nx_screens nx_platform)
+      if(APPLE)
+        set_target_properties(showcase PROPERTIES MACOSX_BUNDLE ON MACOSX_BUNDLE_BUNDLE_NAME "Nexgen showcase"
+          MACOSX_BUNDLE_GUI_IDENTIFIER com.teamresurgent.nexgen.showcase MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION})
+      endif()
+      nx_media(showcase media)
+    endif()
+    nx_options(${_app})
+    set_target_properties(${_app} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${_app})
+    if(XBOXOG)
+      set(_d "$<$<CONFIG:Debug>:d>")
+      target_link_libraries(${_app} PRIVATE libd3d8${_d} libdsound${_d} libxapi${_d} libxgraphics${_d} libcpp${_d} libc${_d} libkernel${_d} libcompat${_d})
+    endif()
+  endforeach()
+
+  if(XBOXOG)
+    rxdk_add_xbe(spike TITLE_NAME "Nexgen phase 0" TITLE_ID 0x4E580001 ISO DEPLOY media=${CMAKE_CURRENT_SOURCE_DIR}/spike/media)
+    # With NX_COOK set to a built cook tool, the disc holds compressed textures and sounds.
+    set(NX_COOK "" CACHE FILEPATH "Host cook tool; empty to ship the media as it is")
+    if(NX_COOK)
+      set(_media ${CMAKE_BINARY_DIR}/media)
+      file(GLOB_RECURSE _media_files CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/media/*)
+      add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/media.stamp
+        COMMAND ${NX_COOK} --platform xboxog ${CMAKE_CURRENT_SOURCE_DIR}/media ${_media}
+        COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_BINARY_DIR}/media.stamp
+        DEPENDS ${_media_files} ${NX_COOK})
+      add_custom_target(cooked_media DEPENDS ${CMAKE_BINARY_DIR}/media.stamp)
+      add_dependencies(showcase cooked_media)
+      file(MAKE_DIRECTORY ${_media})
+    else()
+      set(_media ${CMAKE_CURRENT_SOURCE_DIR}/media)
+    endif()
+    set(_deploy media=${_media})
+    if(NX_TOUR)
+      file(WRITE ${CMAKE_BINARY_DIR}/tour/readme.txt "Asks the showcase to run its self-test.")
+      list(APPEND _deploy media/tour=${CMAKE_BINARY_DIR}/tour)
+    endif()
+    rxdk_add_xbe(showcase TITLE_NAME "Nexgen showcase" TITLE_ID 0x4E580002 STACK 262144 ISO DEPLOY ${_deploy})
+  endif()
+endif()
+
+# --- Tools and tests, on the machine that builds ---
+
+if(NOT XBOXOG AND NOT XBOX360 AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
+  add_executable(cook tools/cook/cook.cpp tools/cook/third_party.c)
+  target_link_libraries(cook PRIVATE nx_assets)
+  nx_options(cook)
+  nx_no_warnings(tools/cook/third_party.c)
+
+  enable_testing()
+  add_executable(nx_tests tests/main.cpp tests/test_base.cpp tests/test_gpu_null.cpp tests/test_audio.cpp tests/test_services.cpp tests/test_script.cpp tests/test_engine.cpp)
+  target_link_libraries(nx_tests PRIVATE nx_screens)
+  target_compile_definitions(nx_tests PRIVATE NX_MEDIA="${CMAKE_CURRENT_SOURCE_DIR}/media")
+  nx_options(nx_tests)
+  add_test(NAME unit COMMAND nx_tests)
+  add_test(NAME self_contained COMMAND ${CMAKE_COMMAND} -DROOT=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/CheckSelfContained.cmake)
+  if(NX_PLATFORM)
+    # The whole app without a GPU, so it can run on any build machine.
+    add_test(NAME spike_null COMMAND spike --hidden --null --frames 130)
+    # Every screen, many times over: nothing may fail, leak or be read twice.
+    add_test(NAME showcase_tour COMMAND showcase --null --tour 20)
+  endif()
+endif()

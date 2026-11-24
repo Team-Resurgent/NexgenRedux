@@ -1,0 +1,78 @@
+# Nexgen engine
+
+The new engine described in [docs/EnginePlan.md](../docs/EnginePlan.md). Scripts are described in
+[docs/ScriptReference.md](../docs/ScriptReference.md).
+
+## Build
+
+From this folder:
+
+| Target | Commands |
+|---|---|
+| Windows | `cmake --preset windows`, `cmake --build --preset windows`, `ctest --preset windows` |
+| Linux | `cmake -S . -B build/linux -DCMAKE_BUILD_TYPE=Release`, `cmake --build build/linux`, `ctest --test-dir build/linux` |
+| macOS | The same as Linux. Written but not yet tested |
+| Original Xbox | `cmake --preset xboxog-release`, `cmake --build --preset xboxog-release`, then run `build/xboxog-release/XISO/showcase.iso` |
+| Xbox 360 | `cmake --preset xbox360`, `cmake --build --preset xbox360` (libraries only) |
+| Xbox One / Series | `cmake --preset uwp`, `cmake --build --preset uwp` (libraries only) |
+
+Needs CMake 3.21 and, for the Xbox targets, Ninja on the path (it comes with Visual Studio).
+
+- **Linux:** the X11 and OpenGL headers (`libx11-dev libgl-dev`).
+- **Original Xbox:** RXDK 1.3.13 or later; `tools/stage-rxdk.ps1` installs it on a build machine. To ship compressed textures
+  and sounds, build `cook` for Windows first and add `-DNX_COOK=<path to cook.exe>`. On a debug kernel or devkit the log goes
+  to the debug output; in xemu add `-device lpc47m157 -serial stdio`.
+- **Xbox 360:** RXDK-360 from November 2026 or later. With an older one, set `RXDK360_TARGET=powerpc-unknown-xbox360`,
+  or point `RXDK360_CC` at a newer clang.
+
+`.github/workflows/engine.yml` builds, tests and packages Windows, Linux, macOS and the original Xbox.
+
+## Run
+
+`showcase` opens the main menu. Each folder in `media/showcase` is a screen: a `screen.json` and a `main.as`. Add a folder and
+it appears in the menu.
+
+| Option | |
+|---|---|
+| `--dev` | Reload scripts and images when their files change |
+| `--screen ID` | Start with a screen open |
+| `--tour N` | Open every screen N times, unattended, and check that nothing leaks |
+| `--hidden --frames 100 --capture out.bmp` | Save a picture without showing a window or making a sound |
+| `--docs FILE` | Write the script reference |
+| `--budget MB` | How much memory images and fonts may take |
+
+For an OG Xbox self-test, configure with `-DNX_TOUR=ON`: that disc shows each screen for a moment, then opens them all rapidly
+twice more to check that nothing leaks, and stops. `spike` is the phase 0 test of script calls and memory.
+
+Saves are in `%LOCALAPPDATA%\Nexgen` (Windows), `~/.local/share/nexgen` (Linux), `~/Library/Application Support/Nexgen`
+(macOS) and the title's own folder (Xbox).
+
+## Cook
+
+`cook --platform xboxog|desktop <media folder> <new folder>` makes a copy of a media folder in which images are BC1 or BC3
+textures and sounds are ADPCM, under the same names. Small images and long music stay as they are. Only what has changed is
+done again.
+
+## Layout
+
+| Folder | What | May use |
+|---|---|---|
+| `base/` | Memory, handles, maths, logging, JSON, threads | nothing |
+| `gpu/` | GPU interface; `d3d11` (Windows), `d3d8` (original Xbox), `gl` (Linux, macOS), `null` (tests) | base |
+| `platform/` | Window, input devices, time, files; `win32`, `xboxog`, `linux`, `macos` | base |
+| `input/` | Actions, from any device, and their bindings | base |
+| `audio/` | Decoding, mixing and output | base |
+| `assets/` | Cache of images, fonts and sounds | gpu, audio |
+| `canvas/` | 2D drawing | assets |
+| `save/` | What players keep | platform |
+| `script/` | AngelScript host, coroutines, bindings and the reference writer | base |
+| `bindings/`, `screens/` | What scripts can call; the screen stack and the engine's menu | all above |
+| `app/`, `media/` | The showcase | all |
+| `tools/` | `cook`; `make_media.py`, which makes the showcase's sounds and music; `stage-rxdk.ps1` | all |
+| `third_party/` | AngelScript, SSFN, stb, miniaudio and dr_libs, unmodified | |
+| `spike/`, `tests/` | Phase 0 app and tests | all |
+
+Platform `#if`s belong only in `platform/`, `gpu/`, `base/thread_*` and `audio/output_*`.
+
+The engine is self-contained: it needs a compiler and the platform's SDK, and nothing is downloaded. The
+small libraries in `third_party` are unmodified copies. The `self_contained` test enforces this.

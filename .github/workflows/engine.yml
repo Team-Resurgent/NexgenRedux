@@ -1,0 +1,182 @@
+name: Engine
+
+# Builds the new engine (engine/) and its showcase for every platform that runs so far, with all the
+# script demos, and tests it. Each package is an artifact of the run. A v* tag also publishes them as a
+# GitHub release.
+
+on:
+  push:
+    branches: [ "main" ]
+    tags: [ "v*" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: windows-x64, os: windows-latest }
+          - { name: linux-x64, os: ubuntu-22.04, options: "-DCMAKE_EXE_LINKER_FLAGS=-static-libstdc++\ -static-libgcc" }
+          - { name: macos-arm64, os: macos-latest }
+          - { name: macos-x64, os: macos-15-intel }
+
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+    - uses: actions/checkout@v5
+
+    - name: Install X11 and OpenGL headers
+      if: runner.os == 'Linux'
+      run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libx11-dev libgl-dev xvfb libgl1-mesa-dri
+
+    - name: Configure
+      run: cmake -S engine -B build -DCMAKE_BUILD_TYPE=Release ${{ matrix.options }}
+
+    - name: Build
+      run: cmake --build build --config Release --parallel 4
+
+    - name: Test
+      run: ctest --test-dir build -C Release --output-on-failure --timeout 300
+
+    # With a real window and GPU driver, though a software one.
+    - name: Draw every screen
+      if: runner.os == 'Linux'
+      run: xvfb-run -a -s "-screen 0 1280x720x24" build/showcase/showcase --hidden --tour 1
+
+    - name: Package
+      run: |
+        package="Nexgen-showcase-${{ matrix.name }}"
+        mkdir -p "dist/$package"
+        case "$RUNNER_OS" in
+          Windows) cp -r build/showcase/Release/showcase.exe build/showcase/Release/media "dist/$package/" ;;
+          Linux)   cp -r build/showcase/showcase build/showcase/media "dist/$package/" ;;
+          macOS)   cp -R build/showcase/showcase.app "dist/$package/Nexgen showcase.app"
+                   codesign --force --deep --sign - "dist/$package/Nexgen showcase.app" ;;
+        esac
+        # The demos have to be there, not just the program.
+        test "$(find "dist/$package" -path '*media/showcase/*/main.as' | wc -l)" -ge 20
+        cd dist
+        case "$RUNNER_OS" in
+          Windows) 7z a -bso0 "$package.zip" "$package" ;;
+          Linux)   tar czf "$package.tar.gz" "$package" ;;
+          macOS)   ditto -c -k --keepParent "$package" "$package.zip" ;;
+        esac
+
+    - uses: actions/upload-artifact@v5
+      with:
+        name: Nexgen-showcase-${{ matrix.name }}
+        path: |
+          dist/*.zip
+          dist/*.tar.gz
+        if-no-files-found: error
+
+  # Calls into scripts the portable way, as the consoles without native support do, and with the
+  # address sanitizer watching.
+  variants:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: Windows generic calls, os: windows-latest, options: "-DNX_SCRIPT_GENERIC=ON" }
+          - { name: Linux sanitizer, os: ubuntu-latest, options: "-DCMAKE_C_FLAGS=-fsanitize=address -DCMAKE_CXX_FLAGS=-fsanitize=address" }
+
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v5
+
+    - name: Install X11 and OpenGL headers
+      if: runner.os == 'Linux'
+      run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libx11-dev libgl-dev
+
+    - name: Configure
+      run: cmake -S engine -B build -DCMAKE_BUILD_TYPE=Release ${{ matrix.options }}
+
+    - name: Build
+      run: cmake --build build --config Release --parallel 4
+
+    - name: Test
+      run: ctest --test-dir build -C Release --output-on-failure --timeout 300
+
+  xboxog:
+    name: xbox-og
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v5
+
+    - uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Stage RXDK clang, SDK and host tools
+      shell: pwsh
+      run: ./engine/tools/stage-rxdk.ps1
+
+    - name: Build the cook tool
+      run: |
+        cmake -S engine -B build-host
+        if ($LASTEXITCODE) { exit $LASTEXITCODE }
+        cmake --build build-host --config Release --target cook --parallel 4
+
+    - name: Build
+      working-directory: engine
+      run: |
+        $cook = (Get-ChildItem ..\build-host -Recurse -Filter cook.exe | Select-Object -First 1).FullName -replace '\', '/'
+        cmake --preset xboxog-release "-DNX_COOK=$cook"
+        if ($LASTEXITCODE) { exit $LASTEXITCODE }
+        cmake --build --preset xboxog-release
+
+    - name: Package
+      shell: bash
+      run: |
+        out=engine/build/xboxog-release
+        package=Nexgen-showcase-xbox-og
+        mkdir -p "dist/$package"
+        cp -r "$out/Build/showcase/." "dist/$package/"
+        cp "$out/XISO/showcase.iso" "dist/$package.iso"
+        test -f "dist/$package/default.xbe"
+        test "$(find "dist/$package" -path '*media/showcase/*/main.as' | wc -l)" -ge 20
+        cd dist && 7z a -bso0 "$package.zip" "$package"
+
+    - uses: actions/upload-artifact@v5
+      with:
+        name: Nexgen-showcase-xbox-og
+        path: |
+          dist/*.zip
+          dist/*.iso
+        if-no-files-found: error
+
+  release:
+    name: Release
+    needs: [ desktop, variants, xboxog ]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - uses: actions/download-artifact@v5
+      with:
+        path: dist
+        merge-multiple: true
+
+    - name: Publish
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: gh release create "${{ github.ref_name }}" dist/* --repo "${{ github.repository }}" --title "Nexgen ${{ github.ref_name }}" --generate-notes

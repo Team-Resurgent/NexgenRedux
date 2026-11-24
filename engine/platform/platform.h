@@ -1,0 +1,136 @@
+#pragma once
+
+#include "base/memory.h"
+#include "base/types.h"
+
+namespace nx
+{
+    struct WindowDesc
+    {
+        const char* title = "Nexgen";
+        u32 width = 1280;
+        u32 height = 720;
+        bool hidden = false;
+    };
+
+    // A whole file. The byte after the end is always 0, so text can be used as a string.
+    struct FileData : NonCopyable
+    {
+        u8* data = nullptr;
+        size_t size = 0;
+
+        ~FileData() { memFree(data); }
+
+        void clear()
+        {
+            memFree(data);
+            data = nullptr;
+            size = 0;
+        }
+
+        // Takes ownership of size + 1 bytes from memAlloc.
+        void take(u8* bytes, size_t length)
+        {
+            memFree(data);
+            data = bytes;
+            size = length;
+            data[size] = 0;
+        }
+    };
+
+    enum class Key : u8
+    {
+        None,
+        A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z,
+        Num0, Num1, Num2, Num3, Num4, Num5, Num6, Num7, Num8, Num9,
+        Up, Down, Left, Right, Space, Enter, Escape, Tab, Backspace, Shift, Control,
+        Count
+    };
+
+    enum class Button : u8
+    {
+        Up, Down, Left, Right, Start, Back, LeftStick, RightStick,
+        A, B, X, Y,
+        LeftShoulder, RightShoulder,  // White and Black on the original Xbox
+        Count
+    };
+
+    constexpr u32 kMaxPads = 4;
+
+    struct Gamepad
+    {
+        bool connected = false;
+        u32 buttons = 0;                               // one bit per Button
+        float leftX = 0, leftY = 0, rightX = 0, rightY = 0;  // -1 to 1, y up, dead zone removed
+        float leftTrigger = 0, rightTrigger = 0;       // 0 to 1
+
+        bool down(Button b) const { return (buttons & (1u << static_cast<u32>(b))) != 0; }
+    };
+
+    // What is held right now.
+    struct InputState
+    {
+        bool keys[static_cast<size_t>(Key::Count)] = {};
+        float mouseX = 0, mouseY = 0;  // pixels from the top left
+        float wheel = 0;               // since the last pumpEvents
+        bool mouseButtons[3] = {};     // left, right, middle
+        bool hasMouse = false;
+        Gamepad pads[kMaxPads];
+    };
+
+    // Sticks rarely rest at exactly zero: ignores the middle and stretches the rest to 0..1.
+    inline float removeDeadZone(float value)
+    {
+        constexpr float dead = 0.24f;
+        const float size = value < 0 ? -value : value;
+        if (size < dead)
+        {
+            return 0;
+        }
+        const float scaled = (size - dead) / (1.0f - dead);
+        const float limited = scaled > 1 ? 1 : scaled;
+        return value < 0 ? -limited : limited;
+    }
+
+    // Everything the engine needs from an operating system or console.
+    class Platform
+    {
+    public:
+        virtual ~Platform() = default;
+
+        // Does nothing where there is only the one screen.
+        virtual bool openWindow(const WindowDesc& desc) = 0;
+        virtual void* nativeWindow() = 0;
+
+        // Handles pending events and reads the input devices. False once asked to close.
+        virtual bool pumpEvents() = 0;
+        virtual const InputState& input() const = 0;
+
+        // High-resolution time since start-up.
+        virtual double seconds() = 0;
+        virtual void sleep(double seconds) = 0;
+
+        // Path is UTF-8, relative to the media folder, and uses '/'. May be called from any thread.
+        virtual bool readFile(const char* path, FileData& out, MemTag tag) = 0;
+
+        // Changes when the file does; 0 if it can't be told (consoles). May be called from any thread.
+        virtual u64 fileTime(const char* path) = 0;
+
+        // Small files that the player keeps: settings and scores. Names are plain, like "settings".
+        virtual bool loadSave(const char* name, FileData& out) = 0;
+        virtual bool writeSave(const char* name, const void* data, size_t size) = 0;
+
+        // Calls back with the name of each folder directly inside one.
+        using FolderCallback = void (*)(const char* name, void* user);
+        virtual void listFolders(const char* path, FolderCallback callback, void* user) = 0;
+
+        // Physical memory in bytes; 0 if unknown.
+        virtual u64 totalMemory() = 0;
+        virtual u64 freeMemory() = 0;
+
+        virtual const char* name() const = 0;
+    };
+
+    // nullptr on failure, after logging why. Release with nx::destroy.
+    Platform* createPlatform();
+}

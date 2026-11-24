@@ -1,0 +1,8 @@
+[submodule "NexgenRedux-Docs"]
+	path = NexgenRedux-Docs
+	url = https://github.com/Team-Resurgent/NexgenRedux-Docs.git
+	branch = main
+[submodule "NexgenRedux-Media"]
+	path = NexgenRedux-Media
+	url = https://github.com/Team-Resurgent/NexgenRedux-Media.git
+	branch = main

@@ -1,0 +1,42 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": { "major": 3, "minor": 21, "patch": 0 },
+  "configurePresets": [
+    { "name": "base", "hidden": true, "binaryDir": "${sourceDir}/build/${presetName}" },
+    { "name": "windows", "inherits": "base", "displayName": "Windows" },
+    {
+      "name": "xboxog-base", "hidden": true, "inherits": "base", "generator": "Ninja",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "$env{ProgramData}/RXDK/tools/cmake/RxdkToolchain.cmake",
+        "RXDK_CXX_STANDARD": "c++20",
+        "RXDK_CXX_EXCEPTIONS": "OFF"
+      }
+    },
+    { "name": "xboxog-release", "inherits": "xboxog-base", "displayName": "Original Xbox (Release)", "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" } },
+    { "name": "xboxog-debug", "inherits": "xboxog-base", "displayName": "Original Xbox (Debug)", "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" } },
+    {
+      "name": "xbox360", "inherits": "base", "displayName": "Xbox 360 (shared layers only)", "generator": "Ninja",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/Xbox360Toolchain.cmake",
+        "CMAKE_BUILD_TYPE": "Release",
+        "NX_SCRIPT_GENERIC": "ON"
+      }
+    },
+    {
+      "name": "uwp", "inherits": "base", "displayName": "Xbox One / Series UWP (shared layers only)",
+      "generator": "Visual Studio 17 2022", "architecture": "x64",
+      "cacheVariables": { "CMAKE_SYSTEM_NAME": "WindowsStore", "CMAKE_SYSTEM_VERSION": "10.0" }
+    }
+  ],
+  "buildPresets": [
+    { "name": "windows", "configurePreset": "windows", "configuration": "Release" },
+    { "name": "windows-debug", "configurePreset": "windows", "configuration": "Debug" },
+    { "name": "xboxog-release", "configurePreset": "xboxog-release" },
+    { "name": "xboxog-debug", "configurePreset": "xboxog-debug" },
+    { "name": "xbox360", "configurePreset": "xbox360" },
+    { "name": "uwp", "configurePreset": "uwp", "configuration": "Release" }
+  ],
+  "testPresets": [
+    { "name": "windows", "configurePreset": "windows", "configuration": "Release", "output": { "outputOnFailure": true } }
+  ]
+}

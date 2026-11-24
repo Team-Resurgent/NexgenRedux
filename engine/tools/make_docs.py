@@ -193,11 +193,11 @@ def tidy(declaration):
 TOPICS = [
     ('Screens', ['Screen', 'Screens', 'App']),
     ('Drawing', ['Canvas', 'Color', 'Texture', 'Font', 'Blend', 'Filter', 'Align']),
-    ('Scene', ['Scene', 'Entity', 'Behaviour']),
+    ('Scene', ['Scene', 'Entity', 'Behaviour', 'IBehaviour']),
     ('Assets', ['Assets']),
     ('Sound', ['Sound', 'Voice', 'Bus', 'Audio']),
     ('Input', ['Input']),
-    ('Movement', ['Tween', 'Ease', 'Coroutines', 'Maths']),
+    ('Movement', ['Tween', 'Ease', 'Coroutines', 'Vec2', 'Maths']),
     ('Saving', ['Save']),
 ]
 NAMESPACES = ['Screens', 'App', 'Scene', 'Assets', 'Audio', 'Input', 'Save']

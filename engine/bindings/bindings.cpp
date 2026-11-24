@@ -679,6 +679,14 @@ namespace nx
             b.function("uint reloads()", NX_FN(appReloads), "How many times a script or image has been reloaded because its file changed.");
 
             b.names("");
+            b.section("Vec2", "A place or a direction, across and down. Vec3 is the same with z.");
+            b.callback("Vec2()", "Zero.");
+            b.callback("Vec2(float x, float y)", "From its parts.");
+            b.callback("float x", "Across.");
+            b.callback("float y", "Down.");
+            b.callback("Vec2 + Vec2, Vec2 - Vec2, -Vec2", "Added, taken away, turned round. += and -= too.");
+            b.callback("Vec2 * float, Vec2 / float", "Longer or shorter. *= too.");
+            b.callback("float dot(const Vec2 &in other) const", "How far one goes along the other.");
             b.section("Maths", "As well as AngelScript's own `sin`, `cos`, `sqrt` and so on, in radians.");
             b.function("float random()", NX_FN(randomUnit), "From 0 up to 1.");
             b.function("float random(float low, float high)", NX_FN(randomRange), "Between two numbers.");

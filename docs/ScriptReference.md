@@ -422,6 +422,20 @@ The machine and how it is doing.
 | `bool App::development()` | Whether it was started with --dev, so that changed files are reloaded. |
 | `uint App::reloads()` | How many times a script or image has been reloaded because its file changed. |
 
+## Vec2
+
+A place or a direction, across and down. Vec3 is the same with z.
+
+| | |
+|---|---|
+| `Vec2()` | Zero. |
+| `Vec2(float x, float y)` | From its parts. |
+| `float x` | Across. |
+| `float y` | Down. |
+| `Vec2 + Vec2, Vec2 - Vec2, -Vec2` | Added, taken away, turned round. += and -= too. |
+| `Vec2 * float, Vec2 / float` | Longer or shorter. *= too. |
+| `float dot(const Vec2 &in other) const` | How far one goes along the other. |
+
 ## Maths
 
 As well as AngelScript's own `sin`, `cos`, `sqrt` and so on, in radians.

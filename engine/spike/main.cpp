@@ -124,7 +124,7 @@ namespace
         WindowDesc window;
         window.title = "Nexgen phase 0";
         window.hidden = options.hidden;
-        if (!platform.openWindow(window))
+        if (!options.null && !platform.openWindow(window))
         {
             return false;
         }

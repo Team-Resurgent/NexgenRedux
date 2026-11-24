@@ -244,7 +244,11 @@ namespace nx
                     NX_ERROR("OpenGL 3.3 is needed");
                     return false;
                 }
+                // Deprecated with the rest of OpenGL, but under a warning of its own.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
                 [m_context setView:[m_window contentView]];
+#pragma clang diagnostic pop
                 [m_context makeCurrentContext];
                 const GLint interval = m_hidden ? 0 : 1;
                 [m_context setValues:&interval forParameter:NSOpenGLContextParameterSwapInterval];

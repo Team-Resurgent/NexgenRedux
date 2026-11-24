@@ -131,9 +131,8 @@ float3 sky(float3 direction)
     return color;
 }
 
-float4 meshPs(MeshOut input) : SV_Target
+float4 finish(MeshOut input, float4 base, float glow)
 {
-    float4 base = image.Sample(imageSampler, input.uv) * input.color;
     float3 color = base.rgb;
     if (surface.z > 0.5)
     {
@@ -152,13 +151,18 @@ float4 meshPs(MeshOut input) : SV_Target
             }
         }
     }
-    color = lerp(color, base.rgb, surface.x);
+    color = lerp(color, base.rgb, glow);
     if (surface.w > 0.5)
     {
         float fog = saturate((distance(eye.xyz, input.place) - fogRange.x) * fogRange.y);
         color = lerp(color, fogColor.rgb, fog);
     }
     return float4(color, base.a);
+}
+
+float4 meshPs(MeshOut input) : SV_Target
+{
+    return finish(input, image.Sample(imageSampler, input.uv) * input.color, surface.x);
 }
 
 struct ScreenOut

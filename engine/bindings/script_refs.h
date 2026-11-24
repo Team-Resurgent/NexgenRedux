@@ -64,4 +64,6 @@ namespace nx
     void bindSpace(Binder& binder);
     // bind_net.cpp
     void bindNet(Binder& binder);
+    // bind_xbox.cpp
+    void bindXbox(Binder& binder);
 }

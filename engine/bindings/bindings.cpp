@@ -64,6 +64,25 @@ namespace nx
             return wrap<ModelRef>(s.assets->model(path), *s.assets);
         }
 
+        EffectUse* loadEffectAsset(const std::string& name)
+        {
+            Services& s = services();
+            char path[192];
+            if (!resolveAsset(s, name.c_str(), path, sizeof(path)))
+            {
+                scriptError("asset names start with asset: or global: (" + name + ")");
+                return nullptr;
+            }
+            EffectUse* use = create<EffectUse>(MemTag::Script);
+            *use = {};
+            use->asset = s.assets->effect(path);
+            use->owner = s.assets;
+            use->refs = 1;
+            return use;
+        }
+
+        bool canvasEffect(const EffectUse* effect, Canvas* c) { return effect && c->effect(*effect->asset, effect->values, static_cast<float>(services().time)); }
+
         FontRef* loadFont(const std::string& name, u32 size)
         {
             Services& s = services();
@@ -534,6 +553,7 @@ namespace nx
             b.names("Assets");
             b.function("Texture@ texture(const string &in name)", NX_FN(loadTexture), "An image: PNG, JPEG, TGA, BMP or GIF, up to 2048 pixels a side. What a screen asks for as it is made is ready by onEnter(); later ones arrive in the background.");
             b.function("Sound@ sound(const string &in name)", NX_FN(loadSoundAsset), "A sound. Arrives like an image.");
+            b.function("Effect@ effect(const string &in name)", NX_FN(loadEffectAsset), "A shader of your own: a .fx file. Each time gives one whose values are its own.");
             b.function("Model@ model(const string &in name)", NX_FN(loadModelAsset), "A 3D model: glTF, as a .glb or a .gltf with everything inside it. Arrives like an image.");
             b.function("uint pending()", NX_FN(cachePending), "Files still on their way.");
             b.function("uint textureKilobytes()", NX_FN(cacheTextureKilobytes), "Memory that images and fonts take.");
@@ -590,6 +610,8 @@ namespace nx
             b.method("void arc(float x, float y, float radius, float thickness, float from, float to, const Color &in color)", NX_METHOD(Canvas, arc), "Part of a ring, or a slice of a circle, between two angles in degrees.");
             b.method("void glow(float x, float y, float radius, const Color &in color)", NX_METHOD(Canvas, glow), "A round glow, fading to nothing at its edge. With BlendAdd it is light.");
             b.method("void triangle(const Vec2 &in a, const Vec2 &in b, const Vec2 &in c, const Color &in ca, const Color &in cb, const Color &in cc)", NX_METHOD(Canvas, triangle), "A triangle with a colour at each corner.");
+            b.method("bool effect(Effect@+ effect)", NX_OBJ_LAST(canvasEffect), "Puts all that has been drawn so far through a shader. False where there are none.");
+            b.method("bool bloom(float strength = 0.8, float threshold = 0.7, float spread = 1)", NX_METHOD(Canvas, bloom), "Lets light spill from what is bright, of all that has been drawn so far. False where it can't be done.");
             b.method("void image(const Texture@+ texture, float x, float y, const Color &in tint = White)", NX_OBJ_LAST(drawImage), "An image at its own size.");
             b.method("void image(const Texture@+ texture, float x, float y, float w, float h, const Color &in tint = White)", NX_OBJ_LAST(drawImageSized), "An image at any size.");
             b.method("void imagePart(const Texture@+ texture, float x, float y, float w, float h, float sx, float sy, float sw, float sh, const Color &in tint = White)", NX_OBJ_LAST(drawImagePart), "Part of an image, given in its own pixels.");
@@ -814,6 +836,7 @@ namespace nx
         bindScene(binder);
         bindSpace(binder);
         bindNet(binder);
+        bindXbox(binder);
         binder.reopen("Entity");
         binder.method("Voice sound(Sound@+ sound, float volume = 1, float range = 30, bool loop = true)", NX_OBJ_LAST(entitySound), "Plays a sound from it, wherever it goes, until it is destroyed.");
         s.host->setPrelude(behaviourPrelude());

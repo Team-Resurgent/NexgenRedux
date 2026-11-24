@@ -287,8 +287,13 @@ namespace nx
         {
             m_solids->device()->destroyMesh(a.bent);
         }
+        if (a.effect)
+        {
+            a.effect->release();
+        }
         a.model = a.texture = nullptr;
         a.custom = nullptr;
+        a.effect = nullptr;
         a.bent = {};
     }
 
@@ -405,6 +410,22 @@ namespace nx
         if (Appearance* a = appearance(id))
         {
             a->solid = solid;
+        }
+    }
+
+    void Space::setEffect(u32 id, EffectUse* effect)
+    {
+        if (Appearance* a = appearance(id))
+        {
+            if (effect)
+            {
+                effect->addRef();
+            }
+            if (a->effect)
+            {
+                a->effect->release();
+            }
+            a->effect = effect;
         }
     }
 
@@ -665,6 +686,11 @@ namespace nx
         draw.depthWrite = a.blend == gpu::Blend::None;
         draw.cull = a.twoSided ? gpu::Cull::None : gpu::Cull::Back;
         draw.repeat = a.repeat;
+        if (a.effect && a.effect->works())
+        {
+            draw.effect = a.effect->asset->effect;
+            draw.values = a.effect->values;
+        }
         const bool ownTexture = a.texture && a.texture->ready && !a.texture->failed;
         if (ownTexture)
         {

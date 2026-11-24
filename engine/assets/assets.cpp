@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <string>
 
 namespace nx
 {
@@ -220,6 +221,11 @@ namespace nx
         return request(path, AssetType::Model);
     }
 
+    Asset* Assets::effect(const char* path)
+    {
+        return request(path, AssetType::Effect);
+    }
+
     Asset* Assets::request(const char* path, AssetType type)
     {
         char clean[128];
@@ -227,7 +233,7 @@ namespace nx
         char lower[128];
         const bool valid = cleanPath(path, clean, sizeof(clean), false) && cleanPath(path, lower, sizeof(lower), true);
         // The same file could be asked for as different things.
-        snprintf(key, sizeof(key), "%s%s", type == AssetType::Sound ? "sound!" : type == AssetType::Model ? "model!" : "", valid ? lower : "?");
+        snprintf(key, sizeof(key), "%s%s", type == AssetType::Sound ? "sound!" : type == AssetType::Model ? "model!" : type == AssetType::Effect ? "effect!" : "", valid ? lower : "?");
         const u64 hash = hashText(key);
         if (Asset* found = find(key, hash))
         {
@@ -282,6 +288,10 @@ namespace nx
                     NX_ERROR("%s is not a sound this engine can read", load.path);
                 }
                 load.file.clear();
+            }
+            else if (load.type == AssetType::Effect)
+            {
+                // Its words are kept for the GPU's thread.
             }
             else if (load.type == AssetType::Model)
             {
@@ -390,6 +400,29 @@ namespace nx
             unloadData(asset);
             asset.sound = load.sound;
             asset.bytes = load.sound->bytes;
+        }
+        else if (load.type == AssetType::Effect)
+        {
+            const std::string source(reinterpret_cast<const char*>(load.file.data), load.file.size);
+            const gpu::EffectKind kind = source.find("paint(") != std::string::npos ? gpu::EffectKind::Surface : gpu::EffectKind::Picture;
+            char error[512] = "";
+            const gpu::Effect made = m_device->createEffect(kind, source.c_str(), error, sizeof(error));
+            if (!made && error[0])
+            {
+                // What worked before stays, while it is being written.
+                NX_ERROR("%s: %s", load.path, error);
+                if (!asset.effect)
+                {
+                    fail(asset);
+                    return;
+                }
+            }
+            else
+            {
+                m_device->destroyEffect(asset.effect);
+                asset.effect = made;
+            }
+            asset.bytes = 1024;
         }
         else if (load.type == AssetType::Model)
         {
@@ -591,6 +624,8 @@ namespace nx
         freeSound(asset.sound);
         freeModel(asset.model, *m_device);
         asset.model = nullptr;
+        m_device->destroyEffect(asset.effect);
+        asset.effect = {};
         asset.font = nullptr;
         asset.sound = nullptr;
         m_bytes[budgetIndex(asset.type)] -= asset.bytes;

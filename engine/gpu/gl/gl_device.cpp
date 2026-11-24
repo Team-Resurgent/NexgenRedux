@@ -1,10 +1,12 @@
 #include "gpu/gl/gl_window.h"
+#include "gpu/effect_source.h"
 #include "gpu/gl/mesh_shaders.h"
 #include "gpu/mesh_uniforms.h"
 #include "gpu/gpu.h"
 #include "base/log.h"
 
 #include <stddef.h>
+#include <string>
 
 // OpenGL 3.3 core, for Linux and macOS. Only what is used is declared here and loaded at start-up, so
 // there are no GL headers to find. Frames are drawn to our own target and then copied to the window.
@@ -27,7 +29,7 @@ namespace nx::gpu
             GL_ONE = 1, GL_LINES = 0x0001, GL_TRIANGLES = 0x0004, GL_LEQUAL = 0x0203, GL_SRC_ALPHA = 0x0302, GL_ONE_MINUS_SRC_ALPHA = 0x0303,
             GL_ALWAYS = 0x0207, GL_BACK = 0x0405, GL_CCW = 0x0901, GL_CULL_FACE = 0x0B44, GL_DEPTH_TEST = 0x0B71, GL_BLEND = 0x0BE2,
             GL_SCISSOR_TEST = 0x0C11, GL_UNPACK_ALIGNMENT = 0x0CF5, GL_PACK_ALIGNMENT = 0x0D05, GL_TEXTURE_2D = 0x0DE1, GL_UNSIGNED_BYTE = 0x1401,
-            GL_FLOAT_ = 0x1406, GL_RGBA = 0x1908, GL_VERSION = 0x1F02, GL_NEAREST = 0x2600, GL_LINEAR = 0x2601, GL_TEXTURE_MAG_FILTER = 0x2800,
+            GL_FLOAT_ = 0x1406, GL_RGBA = 0x1908, GL_RGB = 0x1907, GL_R11F_G11F_B10F = 0x8C3A, GL_VERSION = 0x1F02, GL_NEAREST = 0x2600, GL_LINEAR = 0x2601, GL_TEXTURE_MAG_FILTER = 0x2800,
             GL_TEXTURE_MIN_FILTER = 0x2801, GL_TEXTURE_WRAP_S = 0x2802, GL_TEXTURE_WRAP_T = 0x2803, GL_CLAMP_TO_EDGE = 0x812F,
             GL_TEXTURE_MAX_LEVEL = 0x813D, GL_RGBA8 = 0x8058, GL_TEXTURE0 = 0x84C0, GL_DEPTH24_STENCIL8 = 0x88F0, GL_ARRAY_BUFFER = 0x8892,
             GL_STREAM_DRAW = 0x88E0, GL_STATIC_DRAW = 0x88E4, GL_FRAGMENT_SHADER = 0x8B30, GL_VERTEX_SHADER = 0x8B31, GL_COMPILE_STATUS = 0x8B81,
@@ -177,6 +179,20 @@ void main()
             u32 count;
         };
 
+        struct EffectSlot
+        {
+            EffectKind kind;
+            GLuint program;
+        };
+
+        // Half the size each time.
+        constexpr u32 kBlurs = 5;
+        struct Blur
+        {
+            GLuint texture, target;
+            u32 width, height;
+        };
+
         struct MeshSlot
         {
             GLuint array, vertices, indices;
@@ -208,11 +224,13 @@ void main()
                 gl.DeleteSamplers(3, m_samplers);
                 gl.DeleteProgram(m_program);
                 m_meshes.forEach([&](MeshSlot& m) { releaseMesh(m); });
+                m_effects.forEach([&](EffectSlot& e) { gl.DeleteProgram(e.program); });
+                gl.DeleteProgram(m_blurProgram);
                 for (const GLuint program : m_programs)
                 {
                     gl.DeleteProgram(program);
                 }
-                gl.DeleteBuffers(3, m_blocks);
+                gl.DeleteBuffers(4, m_blocks);
                 gl.DeleteFramebuffers(1, &m_shadowTarget);
                 gl.DeleteTextures(1, &m_shadowMap);
                 gl.DeleteVertexArrays(1, &m_empty);
@@ -225,7 +243,7 @@ void main()
                     return false;
                 }
                 m_loaded = true;
-                if (!m_buffers.init(4096, MemTag::Buffer) || !m_pipelines.init(256, MemTag::Buffer) || !m_textures.init(4096, MemTag::Texture) || !m_meshes.init(4096, MemTag::Buffer))
+                if (!m_buffers.init(4096, MemTag::Buffer) || !m_pipelines.init(256, MemTag::Buffer) || !m_textures.init(4096, MemTag::Texture) || !m_meshes.init(4096, MemTag::Buffer) || !m_effects.init(128, MemTag::Buffer))
                 {
                     return false;
                 }
@@ -517,6 +535,7 @@ void main()
                 ViewUniforms u;
                 fillView(u, view, true);
                 upload(0, &u, sizeof(u));
+                m_viewTime = view.time;
                 gl.Disable(GL_SCISSOR_TEST);
                 gl.DepthMask(1);
                 gl.Clear(GL_DEPTH_BUFFER_BIT);
@@ -540,6 +559,14 @@ void main()
                 ObjectUniforms u;
                 fillObject(u, draw);
                 upload(1, &u, sizeof(u));
+                const EffectSlot* effect = draw.effect && !m_shadowing ? m_effects.get(draw.effect) : nullptr;
+                effect = effect && effect->kind == EffectKind::Surface ? effect : nullptr;
+                if (effect)
+                {
+                    const Scissor all;
+                    setValues(draw.values, m_viewTime, all);
+                    gl.UseProgram(effect->program);
+                }
                 if (!m_shadowing)
                 {
                     set(GL_BLEND, draw.blend != Blend::None);
@@ -559,6 +586,10 @@ void main()
                     m_boundArray = m->array;
                 }
                 gl.DrawElements(GL_TRIANGLES, static_cast<GLsizei>(count), GL_UNSIGNED_SHORT, reinterpret_cast<const void*>(static_cast<size_t>(draw.first) * sizeof(u16)));
+                if (effect)
+                {
+                    gl.UseProgram(m_programs[kMesh]);
+                }
                 m_current.draws++;
                 m_current.triangles += count / 3;
             }
@@ -602,6 +633,82 @@ void main()
                 gl.Disable(GL_POLYGON_OFFSET_FILL);
                 gl.Disable(GL_DEPTH_CLAMP);
                 gl.BindFramebuffer(GL_FRAMEBUFFER, m_target);
+            }
+
+            Effect createEffect(EffectKind kind, const char* source, char* error, size_t errorSize) override
+            {
+                using namespace shaders;
+                EffectSlot slot = {};
+                slot.kind = kind;
+                if (kind == EffectKind::Picture)
+                {
+                    const char* vertex[2] = { kMeshCommon, kScreenVertex };
+                    const char* fragment[6] = { "#version 330 core\n", kEffectGlslWords, kEffectPictureStart, "\n#line 1\n", source, kEffectPictureMain };
+                    slot.program = effectProgram(vertex, 2, fragment, 6, error, errorSize);
+                }
+                else
+                {
+                    const char* vertex[6] = { kMeshCommon, kEffectGlslWords, kEffectVertexStart, "\n#line 1\n", source, kEffectVertexMain };
+                    const char* fragment[8] = { kMeshCommon, kShade, kMeshFinish, kEffectGlslWords, kEffectSurfaceStart, "\n#line 1\n", source, kEffectSurfaceMain };
+                    slot.program = effectProgram(vertex, 6, fragment, 8, error, errorSize);
+                }
+                const Effect effect = slot.program ? m_effects.add(slot) : Effect();
+                if (!effect && slot.program)
+                {
+                    gl.DeleteProgram(slot.program);
+                }
+                m_mode = Mode::None;
+                return effect;
+            }
+
+            void destroyEffect(Effect handle) override
+            {
+                if (EffectSlot* slot = m_effects.get(handle))
+                {
+                    gl.DeleteProgram(slot->program);
+                    m_effects.remove(handle);
+                }
+            }
+
+            bool applyEffect(Effect handle, const float (&values)[16], float time, const Scissor& area) override
+            {
+                const EffectSlot* slot = m_effects.get(handle);
+                if (!m_inFrame || slot == nullptr || slot->kind != EffectKind::Picture || !copyTargets())
+                {
+                    return false;
+                }
+                copyPicture();
+                setValues(values, time, area);
+                pass(slot->program, m_copy, m_target, area, m_width, m_height, false);
+                return true;
+            }
+
+            bool bloom(const Bloom& bloom, const Scissor& area) override
+            {
+                if (!m_inFrame || bloom.strength <= 0 || !copyTargets())
+                {
+                    return false;
+                }
+                copyPicture();
+                const Scissor all;
+                const auto step = [&](float what, u32 width, u32 height, float strength)
+                {
+                    float values[16] = { what, bloom.threshold, strength, 0, bloom.spread / static_cast<float>(width), bloom.spread / static_cast<float>(height) };
+                    setValues(values, 0, all);
+                };
+                for (u32 i = 0; i < kBlurs; i++)
+                {
+                    step(i == 0 ? 0.0f : 1.0f, i == 0 ? m_width : m_blurs[i - 1].width, i == 0 ? m_height : m_blurs[i - 1].height, 1);
+                    pass(m_blurProgram, i == 0 ? m_copy : m_blurs[i - 1].texture, m_blurs[i].target, all, m_blurs[i].width, m_blurs[i].height, false);
+                }
+                for (u32 i = kBlurs - 1; i > 0; i--)
+                {
+                    step(2, m_blurs[i].width, m_blurs[i].height, 0.8f);
+                    pass(m_blurProgram, m_blurs[i].texture, m_blurs[i - 1].target, all, m_blurs[i - 1].width, m_blurs[i - 1].height, true);
+                }
+                step(2, m_blurs[0].width, m_blurs[0].height, bloom.strength * 0.5f);
+                pass(m_blurProgram, m_blurs[0].texture, m_target, all, m_width, m_height, true, area);
+                return true;
             }
 
             void endFrame() override
@@ -730,6 +837,185 @@ void main()
                 }
             }
 
+            GLuint effectProgram(const char* const* vertex, GLsizei vertexCount, const char* const* fragment, GLsizei fragmentCount, char* error, size_t errorSize)
+            {
+                if (errorSize)
+                {
+                    error[0] = 0;
+                }
+                const GLuint program = gl.CreateProgram();
+                const GLenum kinds[2] = { GL_VERTEX_SHADER, GL_FRAGMENT_SHADER };
+                bool fine = true;
+                for (u32 i = 0; i < 2; i++)
+                {
+                    const GLuint shader = gl.CreateShader(kinds[i]);
+                    gl.ShaderSource(shader, i ? fragmentCount : vertexCount, i ? fragment : vertex, nullptr);
+                    gl.CompileShader(shader);
+                    GLint compiled = 0;
+                    gl.GetShaderiv(shader, GL_COMPILE_STATUS, &compiled);
+                    if (!compiled && fine)
+                    {
+                        gl.GetShaderInfoLog(shader, static_cast<GLsizei>(errorSize), nullptr, error);
+                        fine = false;
+                    }
+                    gl.AttachShader(program, shader);
+                    gl.DeleteShader(shader);
+                }
+                gl.LinkProgram(program);
+                GLint linked = 0;
+                gl.GetProgramiv(program, GL_LINK_STATUS, &linked);
+                if (!linked || !fine)
+                {
+                    if (fine)
+                    {
+                        gl.GetProgramInfoLog(program, static_cast<GLsizei>(errorSize), nullptr, error);
+                    }
+                    gl.DeleteProgram(program);
+                    return 0;
+                }
+                static const char* const blocks[] = { "View", "Object", "Field", "EffectValues" };
+                for (u32 i = 0; i < 4; i++)
+                {
+                    const GLuint index = gl.GetUniformBlockIndex(program, blocks[i]);
+                    if (index != 0xFFFFFFFFu)
+                    {
+                        gl.UniformBlockBinding(program, index, i);
+                    }
+                }
+                gl.UseProgram(program);
+                const GLint image = gl.GetUniformLocation(program, "image");
+                const GLint shadow = gl.GetUniformLocation(program, "shadowMap");
+                if (image >= 0)
+                {
+                    gl.Uniform1i(image, 0);
+                }
+                if (shadow >= 0)
+                {
+                    gl.Uniform1i(shadow, 1);
+                }
+                return program;
+            }
+
+            void setValues(const float* values, float time, const Scissor& area)
+            {
+                shaders::EffectUniforms u = {};
+                if (values)
+                {
+                    memcpy(u.values, values, sizeof(u.values));
+                }
+                const float w = static_cast<float>(m_width), h = static_cast<float>(m_height);
+                u.area[2] = u.area[3] = 1;
+                u.info[0] = w;
+                u.info[1] = h;
+                u.info[2] = time;
+                if (area.enabled)
+                {
+                    u.area[0] = static_cast<float>(area.x) / w;
+                    u.area[1] = static_cast<float>(area.y) / h;
+                    u.area[2] = static_cast<float>(area.width) / w;
+                    u.area[3] = static_cast<float>(area.height) / h;
+                    u.info[0] = static_cast<float>(area.width);
+                    u.info[1] = static_cast<float>(area.height);
+                }
+                upload(3, &u, sizeof(u));
+            }
+
+            // Covers a target with a picture. Only part of it is changed, if there is a clip.
+            void pass(GLuint program, GLuint from, GLuint to, const Scissor& area, u32 width, u32 height, bool adds, const Scissor& clip = {})
+            {
+                use(Mode::None);
+                m_mode = Mode::None;
+                m_bound = {};
+                m_boundTexture = {};
+                gl.BindFramebuffer(GL_FRAMEBUFFER, to);
+                if (area.enabled)
+                {
+                    gl.Viewport(area.x, static_cast<GLint>(height) - area.y - area.height, area.width, area.height);
+                }
+                else
+                {
+                    gl.Viewport(0, 0, static_cast<GLsizei>(width), static_cast<GLsizei>(height));
+                }
+                set(GL_SCISSOR_TEST, clip.enabled);
+                if (clip.enabled)
+                {
+                    gl.Scissor(clip.x, static_cast<GLint>(height) - clip.y - clip.height, clip.width, clip.height);
+                }
+                gl.UseProgram(program);
+                gl.Disable(GL_DEPTH_TEST);
+                gl.Disable(GL_CULL_FACE);
+                gl.DepthMask(0);
+                set(GL_BLEND, adds);
+                gl.BlendFuncSeparate(GL_SRC_ALPHA, GL_ONE, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+                gl.ActiveTexture(GL_TEXTURE0);
+                gl.BindTexture(GL_TEXTURE_2D, from);
+                gl.BindSampler(0, m_samplers[0]);
+                gl.BindVertexArray(m_empty);
+                m_boundArray = m_empty;
+                gl.DrawArrays(GL_TRIANGLES, 0, 3);
+                gl.DepthMask(1);
+                gl.BindFramebuffer(GL_FRAMEBUFFER, m_target);
+                m_current.draws++;
+            }
+
+            void copyPicture()
+            {
+                gl.Disable(GL_SCISSOR_TEST);
+                gl.BindFramebuffer(GL_READ_FRAMEBUFFER, m_target);
+                gl.BindFramebuffer(GL_DRAW_FRAMEBUFFER, m_copyTarget);
+                const GLint width = static_cast<GLint>(m_width), height = static_cast<GLint>(m_height);
+                gl.BlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+                gl.BindFramebuffer(GL_FRAMEBUFFER, m_target);
+            }
+
+            bool makeTarget(GLuint& texture, GLuint& target, GLint format, GLenum type, u32 width, u32 height)
+            {
+                gl.GenTextures(1, &texture);
+                gl.BindTexture(GL_TEXTURE_2D, texture);
+                gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+                gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+                gl.TexImage2D(GL_TEXTURE_2D, 0, format, static_cast<GLsizei>(width), static_cast<GLsizei>(height), 0, type == GL_UNSIGNED_BYTE ? GL_RGBA : GL_RGB, type, nullptr);
+                gl.GenFramebuffers(1, &target);
+                gl.BindFramebuffer(GL_FRAMEBUFFER, target);
+                gl.FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
+                const bool fine = gl.CheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
+                gl.BindFramebuffer(GL_FRAMEBUFFER, m_target);
+                m_boundTexture = {};
+                return fine;
+            }
+
+            // Room for what effects read from, made when the first is used.
+            bool copyTargets()
+            {
+                if (m_copy)
+                {
+                    return m_copyFine;
+                }
+                if (m_blurProgram == 0)
+                {
+                    char error[256];
+                    const char* vertex[2] = { shaders::kMeshCommon, shaders::kScreenVertex };
+                    const char* fragment[2] = { "#version 330 core\n", shaders::kBlurFragment };
+                    m_blurProgram = effectProgram(vertex, 2, fragment, 2, error, sizeof(error));
+                    if (m_blurProgram == 0)
+                    {
+                        NX_ERROR("opengl: blur: %s", error);
+                    }
+                }
+                m_copyFine = m_blurProgram && makeTarget(m_copy, m_copyTarget, GL_RGBA8, GL_UNSIGNED_BYTE, m_width, m_height);
+                u32 width = m_width, height = m_height;
+                for (Blur& b : m_blurs)
+                {
+                    width = width > 2 ? width / 2 : 1;
+                    height = height > 2 ? height / 2 : 1;
+                    b.width = width;
+                    b.height = height;
+                    m_copyFine = m_copyFine && makeTarget(b.texture, b.target, GL_R11F_G11F_B10F, GL_FLOAT_, width, height);
+                }
+                return m_copyFine;
+            }
+
             void screen(GLuint program, bool depthWrite)
             {
                 use(Mode::Screen);
@@ -791,19 +1077,25 @@ void main()
                 return program;
             }
 
+            GLuint linkMesh()
+            {
+                const std::string shading = std::string(shaders::kShade) + shaders::kMeshFinish;
+                return link(shaders::kMeshVertex, shading.c_str(), shaders::kMeshFragment);
+            }
+
             bool createMeshState()
             {
                 using namespace shaders;
-                gl.GenBuffers(3, m_blocks);
-                const size_t sizes[3] = { sizeof(ViewUniforms), sizeof(ObjectUniforms), sizeof(FieldUniforms) };
-                for (GLuint i = 0; i < 3; i++)
+                gl.GenBuffers(4, m_blocks);
+                const size_t sizes[4] = { sizeof(ViewUniforms), sizeof(ObjectUniforms), sizeof(FieldUniforms), sizeof(EffectUniforms) };
+                for (GLuint i = 0; i < 4; i++)
                 {
                     gl.BindBuffer(GL_UNIFORM_BUFFER, m_blocks[i]);
                     gl.BufferData(GL_UNIFORM_BUFFER, static_cast<GLsizeiptr>(sizes[i]), nullptr, GL_DYNAMIC_DRAW);
                     gl.BindBufferBase(GL_UNIFORM_BUFFER, i, m_blocks[i]);
                 }
                 gl.GenVertexArrays(1, &m_empty);
-                m_programs[kMesh] = link(kMeshVertex, kShade, kMeshFragment);
+                m_programs[kMesh] = linkMesh();
                 m_programs[kShadow] = link(kShadowVertex, "", kShadowFragment);
                 m_programs[kSky] = link(kScreenVertex, kShade, kSkyFragment);
                 m_programs[kField] = link(kScreenVertex, kShade, kFieldFragment);
@@ -939,6 +1231,15 @@ void main()
                 gl.DeleteTextures(1, &m_color);
                 gl.DeleteRenderbuffers(1, &m_depth);
                 m_target = m_color = m_depth = 0;
+                gl.DeleteFramebuffers(1, &m_copyTarget);
+                gl.DeleteTextures(1, &m_copy);
+                m_copy = m_copyTarget = 0;
+                for (Blur& b : m_blurs)
+                {
+                    gl.DeleteFramebuffers(1, &b.target);
+                    gl.DeleteTextures(1, &b.texture);
+                    b = {};
+                }
             }
 
             // False when the window has no area.
@@ -988,9 +1289,14 @@ void main()
             HandlePool<BufferSlot, BufferTag> m_buffers;
             HandlePool<PipelineDesc, PipelineTag> m_pipelines;
             HandlePool<TextureSlot, TextureTag> m_textures;
+            HandlePool<EffectSlot, EffectTag> m_effects;
+            GLuint m_copy = 0, m_copyTarget = 0, m_blurProgram = 0;
+            Blur m_blurs[kBlurs] = {};
+            bool m_copyFine = false;
+            float m_viewTime = 0;
             HandlePool<MeshSlot, MeshTag> m_meshes;
             GLuint m_programs[kPrograms] = {};
-            GLuint m_blocks[3] = {};
+            GLuint m_blocks[4] = {};
             GLuint m_empty = 0;
             GLuint m_shadowMap = 0, m_shadowTarget = 0;
             Scissor m_area;

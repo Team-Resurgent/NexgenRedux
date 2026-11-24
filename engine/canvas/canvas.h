@@ -93,6 +93,11 @@ namespace nx
         // Where an area of the design is on the real screen.
         gpu::Scissor toPixels(float x, float y, float w, float h) const;
 
+        // All that has been drawn so far, through a shader. False where there are none.
+        bool effect(const Asset& effect, const float (&values)[16], float time);
+        // Light that spills from what is bright.
+        bool bloom(float strength, float threshold, float spread);
+
         // Draws so far this frame.
         u32 draws() const { return m_draws; }
 

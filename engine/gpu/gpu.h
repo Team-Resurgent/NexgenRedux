@@ -47,6 +47,7 @@ namespace nx::gpu
     static_assert(sizeof(MeshVertex) == 36);
 
     using Mesh = Handle<struct MeshTag>;
+    using Effect = Handle<struct EffectTag>;
     using Buffer = Handle<struct BufferTag>;
     using Pipeline = Handle<struct PipelineTag>;
     using Texture = Handle<struct TextureTag>;
@@ -161,6 +162,8 @@ namespace nx::gpu
         bool repeat = false;     // the texture
         u8 lights[kMeshLights] = {};
         u8 lightCount = 0;
+        Effect effect;             // how it is coloured, and moved; none: as it is
+        const float* values = nullptr;  // sixteen, for the effect
     };
 
     enum class FieldKind : u8 { Sphere, Box, Torus, Capsule, Plane, Cylinder };
@@ -187,6 +190,17 @@ namespace nx::gpu
         float repeat = 0;        // the whole thing again, every so far across and along; 0: not
         float shine = 0.3f;
         float reflection = 0;
+    };
+
+    // A shader that someone else has written: over a picture, or on a mesh.
+    enum class EffectKind : u8 { Picture, Surface };
+
+    // Light that spills from what is bright.
+    struct Bloom
+    {
+        float strength = 0.8f;
+        float threshold = 0.7f;   // how bright
+        float spread = 1;
     };
 
     // Vertices that stream() can take in one frame.
@@ -240,6 +254,37 @@ namespace nx::gpu
         // Draws what casts shadows, seen from the sun, before beginView. False if this GPU can't.
         virtual bool beginShadows(const Mat4& sunViewProjection) = 0;
         virtual void endShadows() = 0;
+
+        // --- Effects. A GPU without shaders has none: then things are drawn as they are. ---
+
+        // From source that either shader language can read; see gpu/effect_source.h. No effect, and why, if
+        // it can't be made.
+        virtual Effect createEffect(EffectKind kind, const char* source, char* error, size_t errorSize)
+        {
+            (void)kind;
+            (void)source;
+            if (errorSize)
+            {
+                error[0] = 0;
+            }
+            return {};
+        }
+        virtual void destroyEffect(Effect effect) { (void)effect; }
+        // Puts all that has been drawn so far through one. The area is none for all of it.
+        virtual bool applyEffect(Effect effect, const float (&values)[16], float time, const Scissor& area)
+        {
+            (void)effect;
+            (void)values;
+            (void)time;
+            (void)area;
+            return false;
+        }
+        virtual bool bloom(const Bloom& bloom, const Scissor& area)
+        {
+            (void)bloom;
+            (void)area;
+            return false;
+        }
 
         // Copies the last finished frame as RGBA8 rows, top row first. False if unsupported.
         virtual bool capture(u8* pixels, size_t size) = 0;

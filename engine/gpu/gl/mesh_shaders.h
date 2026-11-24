@@ -135,14 +135,13 @@ vec3 rayOf(vec2 at)
 }
 )";
 
-    inline const char kMeshFragment[] = R"(
+    inline const char kMeshFinish[] = R"(
 in vec4 vertexColor;
 in vec3 vertexNormal;
 in vec3 vertexPlace;
 in vec2 vertexUv;
-void main()
+vec4 finish(vec4 base, float glow)
 {
-    vec4 base = texture(image, vertexUv) * vertexColor;
     vec3 color = base.rgb;
     if (surface.z > 0.5)
     {
@@ -161,13 +160,119 @@ void main()
             }
         }
     }
-    color = mix(color, base.rgb, surface.x);
+    color = mix(color, base.rgb, glow);
     if (surface.w > 0.5)
     {
         float fog = clamp((distance(eye.xyz, vertexPlace) - fogRange.x) * fogRange.y, 0.0, 1.0);
         color = mix(color, fogColor.rgb, fog);
     }
-    result = vec4(color, base.a);
+    return vec4(color, base.a);
+}
+)";
+
+    inline const char kMeshFragment[] = R"(
+void main()
+{
+    result = finish(texture(image, vertexUv) * vertexColor, surface.x);
+}
+)";
+
+    // Effects: what others write goes between.
+    inline const char kEffectVertexMain[] = R"(
+layout(location = 0) in vec3 position;
+layout(location = 1) in vec3 normal;
+layout(location = 2) in vec4 color;
+layout(location = 3) in vec2 uv;
+out vec4 vertexColor;
+out vec3 vertexNormal;
+out vec3 vertexPlace;
+out vec2 vertexUv;
+void main()
+{
+#ifdef MOVES
+    vec4 place = world * vec4(move(position, normal, uv), 1.0);
+#else
+    vec4 place = world * vec4(position, 1.0);
+#endif
+    gl_Position = viewProjection * place;
+    gl_Position.z = gl_Position.z * 2.0 - gl_Position.w;
+    vertexPlace = place.xyz;
+    vertexNormal = mat3(world) * normal;
+    vertexColor = color * tint;
+    vertexUv = uv;
+}
+)";
+
+    inline const char kEffectVertexStart[] = R"(
+vec4 picture(vec2 uv) { return vec4(1.0); }
+)";
+
+    inline const char kEffectSurfaceStart[] = R"(
+vec4 picture(vec2 uv) { return texture(image, uv); }
+)";
+
+    inline const char kEffectSurfaceMain[] = R"(
+void main()
+{
+    float glow = surface.x;
+    vec4 base = paint(texture(image, vertexUv) * vertexColor, vertexUv, vertexPlace, normalize(vertexNormal), glow);
+    if (base.a < 0.004)
+    {
+        discard;
+    }
+    result = finish(base, glow);
+}
+)";
+
+    inline const char kEffectPictureStart[] = R"(
+uniform sampler2D image;
+layout(location = 0) out vec4 result;
+in vec2 at;
+vec4 picture(vec2 uv)
+{
+    vec2 p = effectArea.xy + clamp(uv, 0.0, 1.0) * effectArea.zw;
+    return textureLod(image, vec2(p.x, 1.0 - p.y), 0.0);
+}
+)";
+
+    inline const char kEffectPictureMain[] = R"(
+void main()
+{
+    vec2 uv = vec2(at.x * 0.5 + 0.5, 0.5 - at.y * 0.5);
+    result = vec4(effect(uv, picture(uv)).rgb, 1.0);
+}
+)";
+
+    // Bloom: only what is bright, smaller and smaller, and then larger again and added up.
+    inline const char kBlurFragment[] = R"(
+uniform sampler2D image;
+layout(location = 0) out vec4 result;
+in vec2 at;
+layout(std140) uniform EffectValues
+{
+    vec4 values[4];
+    vec4 effectArea;
+    vec4 effectInfo;
+};
+void main()
+{
+    vec2 uv = at * 0.5 + 0.5;
+    vec2 step = values[1].xy;
+    if (values[0].x < 1.5)
+    {
+        vec4 sum = texture(image, uv) * 4.0 + texture(image, uv + step) + texture(image, uv - step) + texture(image, uv + vec2(step.x, -step.y)) + texture(image, uv + vec2(-step.x, step.y));
+        vec3 color = sum.rgb / 8.0;
+        if (values[0].x < 0.5)
+        {
+            float bright = max(color.r, max(color.g, color.b));
+            color *= smoothstep(values[0].y, values[0].y + 0.3, bright);
+        }
+        result = vec4(color, 1.0);
+        return;
+    }
+    vec3 sum = texture(image, uv + vec2(-step.x * 2.0, 0.0)).rgb + texture(image, uv + vec2(step.x * 2.0, 0.0)).rgb + texture(image, uv + vec2(0.0, step.y * 2.0)).rgb + texture(image, uv + vec2(0.0, -step.y * 2.0)).rgb;
+    sum += (texture(image, uv + step).rgb + texture(image, uv - step).rgb + texture(image, uv + vec2(step.x, -step.y)).rgb + texture(image, uv + vec2(-step.x, step.y)).rgb) * 2.0;
+    result = vec4(sum / 12.0 * values[0].z, 1.0);
 }
 )";
 

@@ -239,6 +239,7 @@ namespace nx
         void setTwoSided(bool v, EntityRef* e) { if (Appearance* a = lookOf(e)) a->twoSided = v; }
         void setShadow(bool v, EntityRef* e) { if (Appearance* a = lookOf(e)) a->casts = v; }
         u32 getDetail(const EntityRef* e) { const Appearance* a = e->world ? e->world->space().getAppearance(e->id) : nullptr; return a ? a->detail : 0; }
+        void entityEffect(EffectUse* effect, EntityRef* e) { if (e->world) e->world->space().setEffect(e->id, effect); }
         void entityLight(const Color& color, float range, EntityRef* e)
         {
             if (Light3* l = e->world ? e->world->space().light(e->id) : nullptr)
@@ -439,6 +440,14 @@ namespace nx
         b.enumValue("SolidCapsule", static_cast<int>(Solid::Capsule), "A round-ended cylinder, 2 metres tall.");
         b.enumValue("SolidPlane", static_cast<int>(Solid::Plane), "Flat, facing up.");
 
+        b.refType("Effect", 0, "A shader of your own, over the whole picture or on a thing in space. See the guide.");
+        b.behaviour(asBEHAVE_ADDREF, "void f()", NX_METHOD(EffectUse, addRef));
+        b.behaviour(asBEHAVE_RELEASE, "void f()", NX_METHOD(EffectUse, release));
+        b.method("bool get_failed() const property", NX_METHOD(EffectUse, failed), "Whether it could not be loaded, or has a mistake in it, which is in the log.");
+        b.method("bool get_ready() const property", NX_METHOD(EffectUse, ready), "Whether it has arrived.");
+        b.method("bool get_works() const property", NX_METHOD(EffectUse, works), "Whether this GPU can do it. The original Xbox can't.");
+        b.method("void set(uint index, float value)", NX_METHOD(EffectUse, set), "Changes one of its sixteen values: 0 to 3 are values[0].x to values[0].w, and so on.");
+
         b.refType("Mesh", 0, "Triangles made by a script. Shared by every entity that shows it.");
         b.behaviour(asBEHAVE_FACTORY, "Mesh@ f()", NX_FN(makeMesh));
         b.behaviour(asBEHAVE_ADDREF, "void f()", NX_METHOD(CustomMesh, addRef));
@@ -477,6 +486,7 @@ namespace nx
         b.method("void shape(Solid solid, const Color &in color = White)", NX_OBJ_LAST(entitySolid), "Looks like a simple shape.");
         b.method("void glow(float size, const Color &in color)", NX_OBJ_LAST(entityGlow), "Looks like a soft ball of light. `light` is what lights other things.");
         b.method("void skin(Texture@+ texture, bool repeat = false)", NX_OBJ_LAST(entitySkin), "Puts an image on it, instead of any of the model's own.");
+        b.method("void effect(Effect@+ effect)", NX_OBJ_LAST(entityEffect), "Colours it, and may move its corners, with a shader of your own; null for none. Where there are no shaders it stays as it is.");
         b.method("void set_shine(float) property", NX_OBJ_LAST(setShine), "How much it shows a highlight from the sun, 0 to 1.");
         b.method("void set_glowing(float) property", NX_OBJ_LAST(setGlowing), "1 is as bright as its colour, even in the dark.");
         b.method("void set_twoSided(bool) property", NX_OBJ_LAST(setTwoSided), "Draws the backs of its triangles too.");

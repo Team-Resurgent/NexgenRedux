@@ -59,6 +59,35 @@ namespace nx
         void upload();
     };
 
+    // A shader and what it is to be told, shared by all that use it together.
+    struct EffectUse
+    {
+        Asset* asset;
+        Assets* owner;
+        int refs;
+        float values[16];
+
+        void addRef() { refs++; }
+        void release()
+        {
+            if (--refs == 0)
+            {
+                owner->release(asset);
+                destroy(this);
+            }
+        }
+        bool failed() const { return asset->failed; }
+        bool ready() const { return asset->ready; }
+        bool works() const { return static_cast<bool>(asset->effect); }
+        void set(u32 index, float value)
+        {
+            if (index < 16)
+            {
+                values[index] = value;
+            }
+        }
+    };
+
     enum class Shape3 : u8 { Sphere, Box, Capsule };
 
     // Where something is. An entity that has one is in space rather than on the plane.
@@ -82,6 +111,7 @@ namespace nx
         Asset* model;          // held
         Asset* texture;        // held; instead of the model's own
         CustomMesh* custom;    // held
+        EffectUse* effect;     // held
         Solid solid;
         bool glowBall;         // a soft light that faces the camera
         bool twoSided, casts, repeat;
@@ -188,6 +218,7 @@ namespace nx
         void setTexture(u32 id, Asset* texture);
         void setCustom(u32 id, CustomMesh* mesh);
         void setSolid(u32 id, Solid solid);
+        void setEffect(u32 id, EffectUse* effect);
         // Nothing if it is already playing.
         bool play(u32 id, const char* animation, bool loop, float change);
         bool played(u32 id) const;

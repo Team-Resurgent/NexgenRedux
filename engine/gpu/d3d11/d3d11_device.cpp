@@ -1,18 +1,24 @@
 #include "gpu/gpu.h"
 #include "gpu/d3d11/shaders/basic_shaders.h"
 #include "gpu/d3d11/shaders/mesh_shaders.h"
+#include "gpu/d3d11/shaders/mesh_source.h"
+#include "gpu/d3d11/shaders/post_shaders.h"
+#include "gpu/effect_source.h"
 #include "gpu/mesh_uniforms.h"
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <d3d11.h>
+#include <d3dcompiler.h>
 #include <dxgi1_3.h>
 
 #if defined(NX_UWP)
 #include "gpu/d3d11/uwp_window.h"
 #endif
 
+#include <stdio.h>
 #include <string.h>
+#include <string>
 
 // Direct3D 11, for Windows and later Xbox One / Series. Frames are drawn to our own target and then
 // copied to the window, so they can be captured and later scaled.
@@ -48,6 +54,23 @@ namespace nx::gpu
             ID3D11DepthStencilState* depth;
             ID3D11RasterizerState* raster;
             Topology topology;
+        };
+
+        struct EffectSlot
+        {
+            EffectKind kind;
+            ID3D11VertexShader* vertex;
+            ID3D11PixelShader* pixel;
+        };
+
+        // Half the size each time.
+        constexpr u32 kBlurs = 5;
+        struct Blur
+        {
+            ID3D11Texture2D* texture;
+            ID3D11RenderTargetView* target;
+            ID3D11ShaderResourceView* view;
+            u32 width, height;
         };
 
         struct MeshSlot
@@ -95,6 +118,11 @@ namespace nx::gpu
                 m_pipelines.forEach([](PipelineSlot& p) { releasePipeline(p); });
                 m_textures.forEach([](TextureSlot& t) { releaseTexture(t); });
                 m_meshes.forEach([](MeshSlot& m) { releaseMesh(m); });
+                m_effects.forEach([](EffectSlot& e)
+                {
+                    release(e.vertex);
+                    release(e.pixel);
+                });
                 for (ID3D11BlendState*& state : m_meshBlend)
                 {
                     release(state);
@@ -118,6 +146,10 @@ namespace nx::gpu
                 release(m_objectUniforms);
                 release(m_fieldUniforms);
                 release(m_meshLayout);
+                release(m_effectUniforms);
+                release(m_clipRaster);
+                release(m_noDepth);
+                release(m_blurPs);
                 release(m_meshVs);
                 release(m_meshPs);
                 release(m_shadowVs);
@@ -144,7 +176,7 @@ namespace nx::gpu
 
             bool init()
             {
-                if (!m_buffers.init(4096, MemTag::Buffer) || !m_pipelines.init(256, MemTag::Buffer) || !m_textures.init(4096, MemTag::Texture) || !m_meshes.init(4096, MemTag::Buffer))
+                if (!m_buffers.init(4096, MemTag::Buffer) || !m_pipelines.init(256, MemTag::Buffer) || !m_textures.init(4096, MemTag::Texture) || !m_meshes.init(4096, MemTag::Buffer) || !m_effects.init(128, MemTag::Buffer))
                 {
                     return false;
                 }
@@ -476,6 +508,7 @@ namespace nx::gpu
                 ViewUniforms u;
                 fillView(u, view, false);
                 upload(m_viewUniforms, &u, sizeof(u));
+                m_viewTime = view.time;
                 m_context->ClearDepthStencilView(m_depthView, D3D11_CLEAR_DEPTH, 1.0f, 0);
                 m_area = view.area;
                 m_mode = Mode::None;
@@ -497,6 +530,16 @@ namespace nx::gpu
                 ObjectUniforms u;
                 fillObject(u, draw);
                 upload(m_objectUniforms, &u, sizeof(u));
+                const EffectSlot* effect = draw.effect && !m_shadowing ? m_effects.get(draw.effect) : nullptr;
+                effect = effect && effect->kind == EffectKind::Surface ? effect : nullptr;
+                if (effect)
+                {
+                    const Scissor all;
+                    setValues(draw.values, m_viewTime, all);
+                    m_context->VSSetShader(effect->vertex, nullptr, 0);
+                    m_context->PSSetShader(effect->pixel, nullptr, 0);
+                    m_context->VSSetConstantBuffers(3, 1, &m_effectUniforms);
+                }
                 if (!m_shadowing)
                 {
                     m_context->OMSetBlendState(m_meshBlend[static_cast<u32>(draw.blend)], nullptr, 0xFFFFFFFF);
@@ -514,6 +557,11 @@ namespace nx::gpu
                 m_context->IASetVertexBuffers(0, 1, &m->vertices, &stride, &offset);
                 m_context->IASetIndexBuffer(m->indices, DXGI_FORMAT_R16_UINT, 0);
                 m_context->DrawIndexed(count, draw.first, 0);
+                if (effect)
+                {
+                    m_context->VSSetShader(m_meshVs, nullptr, 0);
+                    m_context->PSSetShader(m_meshPs, nullptr, 0);
+                }
                 m_current.draws++;
                 m_current.triangles += count / 3;
             }
@@ -567,6 +615,101 @@ namespace nx::gpu
                 m_shadowing = false;
                 m_mode = Mode::None;
                 m_context->OMSetRenderTargets(1, &m_colorView, m_depthView);
+            }
+
+            Effect createEffect(EffectKind kind, const char* source, char* error, size_t errorSize) override
+            {
+                using namespace shaders;
+                EffectSlot slot = {};
+                slot.kind = kind;
+                std::string pixel, vertex;
+                if (kind == EffectKind::Picture)
+                {
+                    pixel = std::string(kEffectHlslWords) +
+                            "Texture2D image : register(t0);\nSamplerState imageSampler : register(s0);\n"
+                            "float4 picture(float2 uv) { return image.SampleLevel(imageSampler, effectArea.xy + saturate(uv) * effectArea.zw, 0); }\n#line 1\n" +
+                            source +
+                            "\nfloat4 effectMain(float2 at : TEXCOORD0) : SV_Target { float2 uv = float2(at.x * 0.5 + 0.5, 0.5 - at.y * 0.5); return float4(effect(uv, picture(uv)).rgb, 1.0); }\n";
+                }
+                else
+                {
+                    const std::string start = std::string(kMeshSource) + kEffectHlslWords;
+                    pixel = start + "float4 picture(float2 uv) { return image.Sample(imageSampler, uv); }\n#line 1\n" + source +
+                            "\nfloat4 effectMain(MeshOut input) : SV_Target { float glow = surface.x; float4 base = paint(image.Sample(imageSampler, input.uv) * input.color, input.uv, input.place, normalize(input.normal), glow); "
+                            "if (base.a < 0.004) discard; return finish(input, base, glow); }\n";
+                    // Corners have no image to look at.
+                    vertex = start + "float4 picture(float2 uv) { return float4(1.0, 1.0, 1.0, 1.0); }\n#line 1\n" + source +
+                             "\nMeshOut effectMain(MeshIn input) {\n#ifdef MOVES\ninput.position = move(input.position, input.normal, input.uv);\n#endif\nreturn meshVs(input); }\n";
+                }
+                ID3DBlob* code = compile(pixel, "ps_4_0", error, errorSize);
+                bool fine = code && ok(m_device->CreatePixelShader(code->GetBufferPointer(), code->GetBufferSize(), nullptr, &slot.pixel), "effect");
+                release(code);
+                if (fine && kind == EffectKind::Surface)
+                {
+                    code = compile(vertex, "vs_4_0", error, errorSize);
+                    fine = code && ok(m_device->CreateVertexShader(code->GetBufferPointer(), code->GetBufferSize(), nullptr, &slot.vertex), "effect");
+                    release(code);
+                }
+                const Effect effect = fine ? m_effects.add(slot) : Effect();
+                if (!effect)
+                {
+                    release(slot.pixel);
+                    release(slot.vertex);
+                }
+                return effect;
+            }
+
+            void destroyEffect(Effect handle) override
+            {
+                if (EffectSlot* slot = m_effects.get(handle))
+                {
+                    release(slot->pixel);
+                    release(slot->vertex);
+                    m_effects.remove(handle);
+                }
+            }
+
+            bool applyEffect(Effect handle, const float (&values)[16], float time, const Scissor& area) override
+            {
+                const EffectSlot* slot = m_effects.get(handle);
+                if (!m_inFrame || slot == nullptr || slot->kind != EffectKind::Picture || !copyTargets())
+                {
+                    return false;
+                }
+                m_context->CopyResource(m_copy, m_color);
+                setValues(values, time, area);
+                pass(slot->pixel, m_copyView, m_colorView, area, m_width, m_height, false);
+                m_context->OMSetRenderTargets(1, &m_colorView, m_depthView);
+                return true;
+            }
+
+            bool bloom(const Bloom& bloom, const Scissor& area) override
+            {
+                if (!m_inFrame || bloom.strength <= 0 || !copyTargets())
+                {
+                    return false;
+                }
+                m_context->CopyResource(m_copy, m_color);
+                const Scissor all;
+                const auto step = [&](float what, u32 width, u32 height, float strength)
+                {
+                    float values[16] = { what, bloom.threshold, strength, 0, bloom.spread / static_cast<float>(width), bloom.spread / static_cast<float>(height) };
+                    setValues(values, 0, all);
+                };
+                for (u32 i = 0; i < kBlurs; i++)
+                {
+                    step(i == 0 ? 0.0f : 1.0f, i == 0 ? m_width : m_blurs[i - 1].width, i == 0 ? m_height : m_blurs[i - 1].height, 1);
+                    pass(m_blurPs, i == 0 ? m_copyView : m_blurs[i - 1].view, m_blurs[i].target, all, m_blurs[i].width, m_blurs[i].height, false);
+                }
+                for (u32 i = kBlurs - 1; i > 0; i--)
+                {
+                    step(2, m_blurs[i].width, m_blurs[i].height, 0.8f);
+                    pass(m_blurPs, m_blurs[i].view, m_blurs[i - 1].target, all, m_blurs[i - 1].width, m_blurs[i - 1].height, true);
+                }
+                step(2, m_blurs[0].width, m_blurs[0].height, bloom.strength * 0.5f);
+                pass(m_blurPs, m_blurs[0].view, m_colorView, all, m_width, m_height, true, area);
+                m_context->OMSetRenderTargets(1, &m_colorView, m_depthView);
+                return true;
             }
 
             void endFrame() override
@@ -648,6 +791,107 @@ namespace nx::gpu
             }
 
             // Whatever a kind of drawing needs that isn't set for each draw.
+            ID3DBlob* compile(const std::string& source, const char* profile, char* error, size_t errorSize)
+            {
+                ID3DBlob* code = nullptr;
+                ID3DBlob* why = nullptr;
+                D3DCompile(source.data(), source.size(), "effect", nullptr, nullptr, "effectMain", profile, D3DCOMPILE_OPTIMIZATION_LEVEL3 | D3DCOMPILE_PACK_MATRIX_COLUMN_MAJOR, 0, &code, &why);
+                if (code == nullptr && errorSize)
+                {
+                    snprintf(error, errorSize, "%s", why ? static_cast<const char*>(why->GetBufferPointer()) : "it can't be compiled");
+                }
+                release(why);
+                return code;
+            }
+
+            void setValues(const float* values, float time, const Scissor& area)
+            {
+                shaders::EffectUniforms u = {};
+                if (values)
+                {
+                    memcpy(u.values, values, sizeof(u.values));
+                }
+                const float w = static_cast<float>(m_width), h = static_cast<float>(m_height);
+                u.area[2] = u.area[3] = 1;
+                u.info[0] = w;
+                u.info[1] = h;
+                u.info[2] = time;
+                if (area.enabled)
+                {
+                    u.area[0] = static_cast<float>(area.x) / w;
+                    u.area[1] = static_cast<float>(area.y) / h;
+                    u.area[2] = static_cast<float>(area.width) / w;
+                    u.area[3] = static_cast<float>(area.height) / h;
+                    u.info[0] = static_cast<float>(area.width);
+                    u.info[1] = static_cast<float>(area.height);
+                }
+                upload(m_effectUniforms, &u, sizeof(u));
+                m_context->PSSetConstantBuffers(3, 1, &m_effectUniforms);
+            }
+
+            // Covers a target with a picture. Only part of it is changed, if there is a clip.
+            void pass(ID3D11PixelShader* shader, ID3D11ShaderResourceView* from, ID3D11RenderTargetView* to, const Scissor& area, u32 width, u32 height, bool adds, const Scissor& clip = {})
+            {
+                m_mode = Mode::None;
+                m_bound = {};
+                m_boundTexture = {};
+                ID3D11ShaderResourceView* none = nullptr;
+                m_context->PSSetShaderResources(0, 1, &none);
+                m_context->OMSetRenderTargets(1, &to, nullptr);
+                D3D11_VIEWPORT viewport = { 0, 0, static_cast<float>(width), static_cast<float>(height), 0, 1 };
+                if (area.enabled)
+                {
+                    viewport = { static_cast<float>(area.x), static_cast<float>(area.y), static_cast<float>(area.width), static_cast<float>(area.height), 0, 1 };
+                }
+                m_context->RSSetViewports(1, &viewport);
+                m_context->RSSetState(clip.enabled ? m_clipRaster : m_meshRaster[0]);
+                if (clip.enabled)
+                {
+                    const D3D11_RECT rect = { clip.x, clip.y, clip.x + clip.width, clip.y + clip.height };
+                    m_context->RSSetScissorRects(1, &rect);
+                }
+                m_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+                m_context->IASetInputLayout(nullptr);
+                m_context->VSSetShader(m_screenVs, nullptr, 0);
+                m_context->PSSetShader(shader, nullptr, 0);
+                m_context->PSSetShaderResources(0, 1, &from);
+                m_context->PSSetSamplers(0, 1, &m_linear);
+                m_context->OMSetBlendState(m_meshBlend[adds ? 2 : 0], nullptr, 0xFFFFFFFF);
+                m_context->OMSetDepthStencilState(m_noDepth, 0);
+                m_context->Draw(3, 0);
+                m_context->PSSetShaderResources(0, 1, &none);
+                m_current.draws++;
+            }
+
+            // Room for what effects read from, made when the first is used.
+            bool copyTargets()
+            {
+                if (m_copyView)
+                {
+                    return true;
+                }
+                D3D11_TEXTURE2D_DESC desc = {};
+                desc.Width = m_width;
+                desc.Height = m_height;
+                desc.MipLevels = desc.ArraySize = 1;
+                desc.SampleDesc.Count = 1;
+                desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+                desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+                bool fine = ok(m_device->CreateTexture2D(&desc, nullptr, &m_copy), "effect picture") && ok(m_device->CreateShaderResourceView(m_copy, nullptr, &m_copyView), "effect picture");
+                desc.Format = DXGI_FORMAT_R11G11B10_FLOAT;
+                desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+                for (Blur& b : m_blurs)
+                {
+                    desc.Width = desc.Width > 2 ? desc.Width / 2 : 1;
+                    desc.Height = desc.Height > 2 ? desc.Height / 2 : 1;
+                    b.width = desc.Width;
+                    b.height = desc.Height;
+                    fine = fine && ok(m_device->CreateTexture2D(&desc, nullptr, &b.texture), "blur") && ok(m_device->CreateRenderTargetView(b.texture, nullptr, &b.target), "blur") &&
+                           ok(m_device->CreateShaderResourceView(b.texture, nullptr, &b.view), "blur");
+                }
+                return fine;
+            }
+
             void use(Mode mode)
             {
                 if (m_mode == mode)
@@ -724,6 +968,8 @@ namespace nx::gpu
                 uniforms(sizeof(ViewUniforms), &m_viewUniforms);
                 uniforms(sizeof(ObjectUniforms), &m_objectUniforms);
                 uniforms(sizeof(FieldUniforms), &m_fieldUniforms);
+                uniforms(sizeof(EffectUniforms), &m_effectUniforms);
+                fine = fine && ok(m_device->CreatePixelShader(blurPs, sizeof(blurPs), nullptr, &m_blurPs), "blur shader");
                 for (u32 i = 0; i < 3; i++)
                 {
                     D3D11_BLEND_DESC desc = {};
@@ -747,6 +993,9 @@ namespace nx::gpu
                 }
                 depth.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
                 fine = fine && ok(m_device->CreateDepthStencilState(&depth, &m_skyDepth), "depth state");
+                D3D11_DEPTH_STENCIL_DESC none = {};
+                none.DepthFunc = D3D11_COMPARISON_ALWAYS;
+                fine = fine && ok(m_device->CreateDepthStencilState(&none, &m_noDepth), "depth state");
                 D3D11_RASTERIZER_DESC raster = {};
                 raster.FillMode = D3D11_FILL_SOLID;
                 raster.FrontCounterClockwise = TRUE;
@@ -756,8 +1005,11 @@ namespace nx::gpu
                     raster.CullMode = static_cast<Cull>(i) == Cull::Back ? D3D11_CULL_BACK : D3D11_CULL_NONE;
                     fine = fine && ok(m_device->CreateRasterizerState(&raster, &m_meshRaster[i]), "raster state");
                 }
-                // Pushed away a little, so that a surface doesn't shade itself.
                 raster.CullMode = D3D11_CULL_NONE;
+                raster.ScissorEnable = TRUE;
+                fine = fine && ok(m_device->CreateRasterizerState(&raster, &m_clipRaster), "raster state");
+                raster.ScissorEnable = FALSE;
+                // Pushed away a little, so that a surface doesn't shade itself.
                 raster.DepthBias = 60;
                 raster.SlopeScaledDepthBias = 2.0f;
                 raster.DepthClipEnable = FALSE;
@@ -882,6 +1134,14 @@ namespace nx::gpu
 
             void releaseTargets()
             {
+                release(m_copyView);
+                release(m_copy);
+                for (Blur& b : m_blurs)
+                {
+                    release(b.view);
+                    release(b.target);
+                    release(b.texture);
+                }
                 release(m_colorView);
                 release(m_depthView);
                 release(m_color);
@@ -955,6 +1215,15 @@ namespace nx::gpu
             HandlePool<PipelineSlot, PipelineTag> m_pipelines;
             HandlePool<TextureSlot, TextureTag> m_textures;
             HandlePool<MeshSlot, MeshTag> m_meshes;
+            HandlePool<EffectSlot, EffectTag> m_effects;
+            ID3D11Buffer* m_effectUniforms = nullptr;
+            ID3D11PixelShader* m_blurPs = nullptr;
+            ID3D11DepthStencilState* m_noDepth = nullptr;
+            ID3D11RasterizerState* m_clipRaster = nullptr;
+            ID3D11Texture2D* m_copy = nullptr;
+            ID3D11ShaderResourceView* m_copyView = nullptr;
+            Blur m_blurs[kBlurs] = {};
+            float m_viewTime = 0;
             ID3D11VertexShader* m_meshVs = nullptr;
             ID3D11PixelShader* m_meshPs = nullptr;
             ID3D11VertexShader* m_shadowVs = nullptr;

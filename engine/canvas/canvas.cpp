@@ -145,6 +145,22 @@ namespace nx
         return { (x - m_offsetX) / m_scale, (y - m_offsetY) / m_scale };
     }
 
+    bool Canvas::effect(const Asset& effect, const float (&values)[16], float time)
+    {
+        flush();
+        return effect.effect && m_device->applyEffect(effect.effect, values, time, {});
+    }
+
+    bool Canvas::bloom(float strength, float threshold, float spread)
+    {
+        flush();
+        gpu::Bloom b;
+        b.strength = strength;
+        b.threshold = threshold;
+        b.spread = spread;
+        return m_device->bloom(b, {});
+    }
+
     gpu::Scissor Canvas::toPixels(float x, float y, float w, float h) const
     {
         gpu::Scissor s;

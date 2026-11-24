@@ -30,7 +30,7 @@ namespace nx
 
     struct ModelData;
 
-    enum class AssetType : u8 { Texture, Font, Sound, Model, Count };
+    enum class AssetType : u8 { Texture, Font, Sound, Model, Effect, Count };
 
     // One loaded file. Owned by the cache and shared by everyone who asks for it.
     struct Asset
@@ -43,6 +43,7 @@ namespace nx
         FontData* font = nullptr;
         SoundData* sound = nullptr;
         ModelData* model = nullptr;
+        gpu::Effect effect;
         u32 refs = 0;
         size_t bytes = 0;
         u64 lastUsed = 0;
@@ -86,6 +87,8 @@ namespace nx
         Asset* sound(const char* path);
         // glTF. Arrives like a texture; until then there is nothing to draw.
         Asset* model(const char* path);
+        // A shader. Ready, but no effect, where the GPU has none.
+        Asset* effect(const char* path);
         // Size is in design units; the glyphs are made at the size they will appear on screen.
         Asset* font(const char* path, u32 size);
 

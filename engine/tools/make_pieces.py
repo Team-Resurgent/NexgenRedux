@@ -87,8 +87,8 @@ def bend(steps):
     return out
 
 
-def room(rng):
-    """Eight sides, four of them open; a dome over it."""
+def room(rng, r=8.0, doors=(0, 1, 2, 3), w=3.4):
+    """Eight sides, those of the doors open; a dome over it. Doors face +z, +x, -z and -x: 0 to 3."""
     m = Mesh()
 
     def face(a, b, c, color, inside=np.array([0, 2.5, 0])):
@@ -102,7 +102,7 @@ def room(rng):
         color = shade(rng, base)
         face(a, b, c, color)
         face(a, c, d, shade(rng, base))
-    w, r, top = 3.4, 8.0, 3.8
+    top = 3.8
     corners = []
     for q in range(4):
         a = q * math.pi / 2
@@ -110,9 +110,17 @@ def room(rng):
         at = lambda x, y, z: (x * c + z * s, y, -x * s + z * c)
         # The side with the way out: rock from the arch to the edge.
         outer = [(w, 0), (w, 1.5), (w, 3.0), (w, top), (1.7, top), (0, top), (-1.7, top), (-w, top), (-w, 3.0), (-w, 1.5), (-w, 0)]
-        for i in range(len(ARCH) - 1):
-            p, q2, o, o2 = ARCH[i], ARCH[i + 1], outer[i], outer[i + 1]
-            quad(at(p[0], p[1], r), at(o[0], o[1], r), at(o2[0], o2[1], r), at(q2[0], q2[1], r), ROCK)
+        if q in doors:
+            for i in range(len(ARCH) - 1):
+                p, q2, o, o2 = ARCH[i], ARCH[i + 1], outer[i], outer[i + 1]
+                quad(at(p[0], p[1], r), at(o[0], o[1], r), at(o2[0], o2[1], r), at(q2[0], q2[1], r), ROCK)
+        else:
+            # A wall, bulging out a little.
+            for i in range(4):
+                for k in range(3):
+                    x0, x1, y0, y1 = -w + 2 * w * i / 4, -w + 2 * w * (i + 1) / 4, top * k / 3, top * (k + 1) / 3
+                    out = lambda x, y: r + 0.5 * math.cos(x / w * math.pi / 2) * math.sin(y / top * math.pi)
+                    quad(at(x0, y0, out(x0, y0)), at(x1, y0, out(x1, y0)), at(x1, y1, out(x1, y1)), at(x0, y1, out(x0, y1)), ROCK)
         # And the slanting side after it.
         a0, a1 = (w, r), (r, w)
         for i in range(4):
@@ -441,6 +449,11 @@ def main():
     save('cave-slope', [(tube(straight(8, 5), rng), two)])
     save('cave-end', [(tube([((0, 0, 4 - i), (1 - max(0, i - 3) * 0.22, 0, 0), 0 if i == 0 else 1) for i in range(6)], rng, True), two)])
     save('cave-room', [(room(rng), two)])
+    save('cave-cross', [(room(rng, 4.0, (0, 1, 2, 3), 2.6), two)])
+    save('cave-fork', [(room(rng, 4.0, (0, 1, 2), 2.6), two)])
+    save('cave-hall', [(room(rng, 8.0, (0, 2), 3.4), two)])
+    save('cave-tunnel-2', [(tube(straight(6), np.random.default_rng(23)), two)])
+    save('cave-bend-2', [(tube(bend(6), np.random.default_rng(29)), two)])
     save('cave-mouth', list(zip(mouth(rng), (two, out))))
     save('cave-mouth-mine', list(zip(mouth(rng, True), (two, out))))
     save('cave-cap', [(cap(rng), two)])

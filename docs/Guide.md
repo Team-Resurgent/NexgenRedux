@@ -268,6 +268,30 @@ drive or fly through the place, and save it; there can be several. It is a scree
 or put them in the folder `own` beside the saves, or in `media/own` on the original Xbox. Names there are small letters,
 digits, dots and dashes.
 
+### Using a scene in a game
+
+A screen can include files of script that are shared: `#include "global:scene.as"` brings in `Level`, which makes a scene just as
+the editor does, land, sky, roads and all:
+
+```cpp
+#include "global:scene.as"
+
+Level level;
+void onEnter() { level.load("asset:village.json"); level.set("health", 100); }
+void update(float dt)
+{
+    string out = level.update(dt, player);          // "file|arrival" when the player went through a way out
+    if (level.isOn("gate") && score > 10)
+        level.show("treasure", 0.8f, "rise");       // hidden until now: it grows, rises or drops in
+}
+void draw(Canvas@ c) { Space::draw(c); level.drawHud(c); }
+```
+
+Anything with a name can be found (`level.find`), shown, hidden and switched on and off. **Triggers** are boxes that do something
+when someone goes into them, or a shot lands in them: show or hide a thing, switch something on or off, play a sound, or only
+tell the screen, through `level.onTouch`. **Ways out** lead to another scene, to an **arrival** of a name there. The HUD shows
+bars and text by name, set with `level.set`. On endless land, what is in each region comes and goes with it.
+
 ### Land by hand
 
 Land that has an end can be changed, while a game runs too, and things on it follow:

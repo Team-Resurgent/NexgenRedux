@@ -6,6 +6,7 @@
 #include "platform/platform.h"
 
 #include <atomic>
+#include <vector>
 
 namespace nx
 {
@@ -143,6 +144,7 @@ namespace nx
 
         static size_t budgetIndex(AssetType type) { return type == AssetType::Sound ? 1 : 0; }
         static void loadInBackground(void* load);
+        static bool readBeside(const char* name, std::vector<u8>& out, void* user);
         Asset* request(const char* path, AssetType type);
         Asset* find(const char* key, u64 hash);
         Asset* add(const char* key, u64 hash, AssetType type);

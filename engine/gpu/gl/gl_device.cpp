@@ -27,7 +27,7 @@ namespace nx::gpu
         enum : GLenum
         {
             GL_ONE = 1, GL_LINES = 0x0001, GL_TRIANGLES = 0x0004, GL_LEQUAL = 0x0203, GL_SRC_ALPHA = 0x0302, GL_ONE_MINUS_SRC_ALPHA = 0x0303,
-            GL_ALWAYS = 0x0207, GL_BACK = 0x0405, GL_CCW = 0x0901, GL_CULL_FACE = 0x0B44, GL_DEPTH_TEST = 0x0B71, GL_BLEND = 0x0BE2,
+            GL_ALWAYS = 0x0207, GL_BACK = 0x0405, GL_CCW = 0x0901, GL_CULL_FACE = 0x0B44, GL_FRONT_AND_BACK = 0x0408, GL_LINE = 0x1B01, GL_FILL = 0x1B02, GL_DEPTH_TEST = 0x0B71, GL_BLEND = 0x0BE2,
             GL_SCISSOR_TEST = 0x0C11, GL_UNPACK_ALIGNMENT = 0x0CF5, GL_PACK_ALIGNMENT = 0x0D05, GL_TEXTURE_2D = 0x0DE1, GL_UNSIGNED_BYTE = 0x1401,
             GL_FLOAT_ = 0x1406, GL_RGBA = 0x1908, GL_RGB = 0x1907, GL_R11F_G11F_B10F = 0x8C3A, GL_VERSION = 0x1F02, GL_NEAREST = 0x2600, GL_LINEAR = 0x2601, GL_TEXTURE_MAG_FILTER = 0x2800,
             GL_TEXTURE_MIN_FILTER = 0x2801, GL_TEXTURE_WRAP_S = 0x2802, GL_TEXTURE_WRAP_T = 0x2803, GL_CLAMP_TO_EDGE = 0x812F,
@@ -70,6 +70,7 @@ namespace nx::gpu
         F(GLuint, CreateProgram, ()) \
         F(GLuint, CreateShader, (GLenum)) \
         F(void, CullFace, (GLenum)) \
+        F(void, PolygonMode, (GLenum, GLenum)) \
         F(void, DeleteBuffers, (GLsizei, const GLuint*)) \
         F(void, DeleteFramebuffers, (GLsizei, const GLuint*)) \
         F(void, DeleteProgram, (GLuint)) \
@@ -572,7 +573,11 @@ void main()
                     set(GL_BLEND, draw.blend != Blend::None);
                     gl.BlendFuncSeparate(GL_SRC_ALPHA, draw.blend == Blend::Additive ? GL_ONE : GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
                     gl.DepthMask(draw.depthWrite);
-                    set(GL_CULL_FACE, draw.cull == Cull::Back);
+                    set(GL_CULL_FACE, draw.cull == Cull::Back && !draw.lines);
+                    if (draw.lines)
+                    {
+                        gl.PolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+                    }
                     gl.BindSampler(0, m_samplers[draw.repeat ? 2 : 0]);
                     if (m_boundTexture != handle)
                     {
@@ -586,6 +591,10 @@ void main()
                     m_boundArray = m->array;
                 }
                 gl.DrawElements(GL_TRIANGLES, static_cast<GLsizei>(count), GL_UNSIGNED_SHORT, reinterpret_cast<const void*>(static_cast<size_t>(draw.first) * sizeof(u16)));
+                if (draw.lines && !m_shadowing)
+                {
+                    gl.PolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+                }
                 if (effect)
                 {
                     gl.UseProgram(m_programs[kMesh]);

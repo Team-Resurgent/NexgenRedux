@@ -63,8 +63,26 @@ namespace nx::test
             return ok;
         }
 
-        void listFolders(const char* path, FolderCallback callback, void* user) override
+        bool takeDropped(std::string& name) override
         {
+            name = dropped;
+            dropped.clear();
+            return !name.empty();
+        }
+
+        void list(const char* path, bool folders, FolderCallback callback, void* user) override
+        {
+            if (!folders && strcmp(path, "own") == 0)
+            {
+                for (const char* name : { "b.stl", "a.obj" })
+                {
+                    callback(name, user);
+                }
+            }
+            if (!folders)
+            {
+                return;
+            }
             if (strcmp(path, "showcase") == 0)
             {
                 for (const char* name : { "main", "shapes", "blend", "faulty", "test" })
@@ -73,6 +91,8 @@ namespace nx::test
                 }
             }
         }
+
+        std::string dropped;
 
         u64 fileTime(const char*) override { return time; }
 

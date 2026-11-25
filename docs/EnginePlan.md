@@ -250,6 +250,7 @@ test (`self_contained`) fails the build if that changes.
 | SSFN | Scalable fonts | phase 1 |
 | stb (dxt, vorbis), miniaudio with dr_libs, miniz | Texture compression, audio, pak files | phase 2 |
 | cgltf | 3D models | phase 4 |
+| ufbx | FBX, on everything but the original Xbox | after phase 6 |
 
 - **Consoles load cooked data** from phase 2, so most of these then run only in the cook tool. Music is cooked to ADPCM,
   which the OG Xbox plays in hardware.
@@ -912,6 +913,10 @@ Left: touch; text beyond Latin-1; the console's own drives in a file picker.
 | Ink | The tenth stand-in: four tones, and dark edges, by pixel shaders |
 | JSON | For scripts: read, made and written |
 | A screen's own files | Written while developing, or kept with the saves |
+| Land by hand | Raised, smoothed, levelled and painted, and kept as text; on the original Xbox too |
+| Models | FBX (with ufbx), OBJ, STL, PLY and glTF in several files, turned into `.glb` by the cook tool or as they load; 128 bones |
+| Cook tool | Models and single files too; JSON for other programs; a window made with Avalonia; downloads for three systems on x64 and arm64 |
+| Players' own files | Dropped on the window, or put in a folder |
 | Scene editor | Adds, picks, moves, turns, sizes, colours, copies and undoes, with a mouse or a gamepad; plays what it has made; on the original Xbox too |
 | Showcase | 58 screens |
 

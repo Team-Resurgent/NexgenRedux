@@ -47,6 +47,8 @@ A 3D model. Loaded once and shared by everyone who asks for it.
 | `bool get_failed() const property` | Whether the file could not be loaded. |
 | `bool get_ready() const property` | Whether it has arrived. Until then it draws as nothing. |
 | `float get_radius() const property` | Of a ball around it. |
+| `Vec3 get_low() const property` | The least corner of a box around it. |
+| `Vec3 get_high() const property` | The greatest. |
 | `uint get_triangles() const property` | How many it has, close up. |
 | `uint get_animations() const property` | How many it has. |
 | `string animation(uint index) const` | The name of one. |
@@ -115,14 +117,14 @@ Something to play: WAV, Ogg Vorbis, MP3 or cooked. Short effects are kept ready;
 
 ## Assets
 
-Loading. Names start with `asset:` for the screen's own files or `global:` for shared ones.
+Loading. Names start with `asset:` for the screen's own files, `global:` for shared ones or `own:` for those that the player brought.
 
 | | |
 |---|---|
 | `Texture@ Assets::texture(const string &in name)` | An image: PNG, JPEG, TGA, BMP or GIF, up to 2048 pixels a side; from the web too, by its https:// address. What a screen asks for as it is made is ready by onEnter(); later ones arrive in the background. |
 | `Sound@ Assets::sound(const string &in name)` | A sound. Arrives like an image. |
 | `Effect@ Assets::effect(const string &in name)` | A shader of your own: a .fx file. Each time gives one whose values are its own. |
-| `Model@ Assets::model(const string &in name)` | A 3D model: glTF, as a .glb or a .gltf with everything inside it. Arrives like an image. |
+| `Model@ Assets::model(const string &in name)` | A 3D model: glTF (.glb or .gltf), FBX, OBJ, STL or PLY. Arrives like an image. On the original Xbox an FBX has to be cooked. |
 | `uint Assets::get_pending() property` | Files still on their way. |
 | `uint Assets::get_textureKilobytes() property` | Memory that images and fonts take. |
 | `uint Assets::get_soundKilobytes() property` | Memory that sounds take. |
@@ -359,6 +361,8 @@ Numbers, text and flags, in lists and by name: for files, and for what comes fro
 | `void remove(const string &in key)` | Takes a part out. |
 | `void remove(uint index)` | The same, by number. |
 | `string Assets::read(const string &in name)` | What is in a text file, at once. If the screen has written one of that name, that is what it is. |
+| `array<string>@ Assets::list(const string &in folder)` | The names of the files in a folder: `own:`, or `asset:` or `global:` and a name. |
+| `array<string>@ Assets::dropped()` | The names of files that were dropped on the window since it last asked. They are in `own:`, which is kept from one time to the next. |
 | `void Assets::forget(const string &in name)` | Goes back to the file that came with the screen, and loses what was written over it. While developing it is the only one, and nothing is done. |
 | `bool Assets::write(const string &in name, const string &in text)` | Writes one of the screen's own files: `asset:` something `.json`. While developing it is the file itself; otherwise it is kept with the saves, and read from there from then on. False if it couldn't be. |
 
@@ -590,6 +594,8 @@ The scene in three dimensions: x right, y up, z towards you, in metres. Entities
 | `void Space::ambient(const Color &in sky, const Color &in ground)` | Light from everywhere: on what faces up, and on what faces down. |
 | `void Space::sky(const Color &in top, const Color &in horizon)` | Draws a sky, with the sun in it. Without one, what is on the canvas already is behind. |
 | `void Space::fog(const Color &in color, float start, float end)` | Hides what is far away. |
+| `bool Space::get_lines() property` | Whether only the edges of triangles are drawn. |
+| `void Space::set_lines(bool) property` | Draws only those, to see how things are made. |
 | `void Space::shadows(float strength, float distance = 40)` | How dark they are, 0 to 1, and how far they reach. Simple ones are drawn where the GPU can't do real ones. |
 | `void Space::farthest(float distance)` | Nothing beyond is drawn. |
 | `Vec3 Space::get_gravity() property` | What pulls on those that feel it. |
@@ -607,6 +613,12 @@ The scene in three dimensions: x right, y up, z towards you, in metres. Entities
 | `void Space::landColors(const Color &in low, const Color &in middle, const Color &in high, const Color &in steep, float lowHeight, float highHeight)` | Colours them by height and slope. |
 | `void Space::flatten(float x, float z, float radius)` | Levels the land around a place, to build on. |
 | `void Space::flatten(float x, float z, float radius, float height)` | The same, to a height. |
+| `void Space::raise(float x, float z, float radius, float by)` | Raises the land by hand, most in the middle; lowers it if that is less than 0. For land that has an end. |
+| `void Space::smooth(float x, float z, float radius, float amount)` | Wears it down towards what is round about: from 0, nothing, to 1. |
+| `void Space::level(float x, float z, float radius, float height, float amount)` | Brings it nearer to a height: from 0, nothing, to 1, all the way. Over what flatten() did. |
+| `void Space::paint(float x, float z, float radius, const Color &in color, float amount)` | Colours it. A clear colour takes paint away. |
+| `string Space::get_landEdits() property` | All that was raised and painted by hand, as text to keep. Empty if there is nothing. |
+| `bool Space::restoreLand(const string &in edits)` | Puts all that back, instead of what there is, on land of as many squares. False if it doesn't fit. |
 | `float Space::height(float x, float z)` | How high the land or the ground is. Far below if there is none. |
 | `Vec3 Space::normal(float x, float z)` | Which way it faces there. |
 | `float Space::get_landSize() property` | Metres along a side. Its middle is at 0, 0. |

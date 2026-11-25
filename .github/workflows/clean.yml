@@ -1,0 +1,36 @@
+name: Clean
+
+# Takes away finished runs that are more than a day old, with their logs and artifacts. Releases stay.
+
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  actions: write
+
+concurrency:
+  group: ${{ github.workflow }}
+
+jobs:
+  clean:
+    name: Old runs
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Delete
+      env:
+        GH_TOKEN: ${{ github.token }}
+        GH_REPO: ${{ github.repository }}
+      run: |
+        before="$(date -u -d '1 day ago' +%Y-%m-%dT%H:%M:%SZ)"
+        # All are listed before any goes, as the pages would move.
+        gh api --paginate "repos/$GH_REPO/actions/runs?status=completed&created=%3C$before&per_page=100" --jq '.workflow_runs[].id' | sort -u > runs.txt
+        echo "$(wc -l < runs.txt) runs from before $before"
+        failed=0
+        while read -r id; do
+          gh api -X DELETE "repos/$GH_REPO/actions/runs/$id" --silent || { echo "run $id stays"; failed=$((failed + 1)); }
+        done < runs.txt
+        echo "$failed could not be deleted"
+        test "$failed" -eq 0

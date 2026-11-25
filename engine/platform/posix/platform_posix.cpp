@@ -100,7 +100,8 @@ namespace nx
 
     bool PlatformPosix::mediaPath(const char* path, char (&full)[kMaxPath]) const
     {
-        const int length = snprintf(full, sizeof(full), "%s/%s", m_media, path);
+        const bool own = strncmp(path, "own", 3) == 0 && (path[3] == '/' || path[3] == 0);
+        const int length = snprintf(full, sizeof(full), "%s/%s", own ? m_saves : m_media, path);
         return length > 0 && static_cast<size_t>(length) < sizeof(full);
     }
 
@@ -182,7 +183,7 @@ namespace nx
         return swapIn(full, fresh, path, data, size);
     }
 
-    void PlatformPosix::listFolders(const char* path, FolderCallback callback, void* user)
+    void PlatformPosix::list(const char* path, bool folders, FolderCallback callback, void* user)
     {
         char full[kMaxPath];
         DIR* folder = mediaPath(path, full) ? opendir(full) : nullptr;
@@ -195,7 +196,7 @@ namespace nx
             char inside[kMaxPath + 256];
             struct stat info = {};
             snprintf(inside, sizeof(inside), "%s/%s", full, entry->d_name);
-            if (entry->d_name[0] != '.' && stat(inside, &info) == 0 && S_ISDIR(info.st_mode))
+            if (entry->d_name[0] != '.' && stat(inside, &info) == 0 && (S_ISDIR(info.st_mode) != 0) == folders)
             {
                 callback(entry->d_name, user);
             }

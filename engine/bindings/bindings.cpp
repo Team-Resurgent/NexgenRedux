@@ -21,6 +21,10 @@ namespace nx
         {
             length = snprintf(out, size, "%s/asset/%s", services.folder, name + 6);
         }
+        else if (strncmp(name, "own:", 4) == 0 && strstr(name, "..") == nullptr)
+        {
+            length = snprintf(out, size, "own/%s", name + 4);
+        }
         else if (strncmp(name, "https://", 8) == 0 || strncmp(name, "http://", 7) == 0)
         {
             length = snprintf(out, size, "%s", name);
@@ -567,12 +571,12 @@ namespace nx
             b.behaviour(asBEHAVE_ADDREF, "void f()", NX_METHOD(SoundRef, addRef));
             b.behaviour(asBEHAVE_RELEASE, "void f()", NX_METHOD(SoundRef, release));
 
-            b.section("Assets", "Loading. Names start with `asset:` for the screen's own files or `global:` for shared ones.");
+            b.section("Assets", "Loading. Names start with `asset:` for the screen's own files, `global:` for shared ones or `own:` for those that the player brought.");
             b.names("Assets");
             b.function("Texture@ texture(const string &in name)", NX_FN(loadTexture), "An image: PNG, JPEG, TGA, BMP or GIF, up to 2048 pixels a side; from the web too, by its https:// address. What a screen asks for as it is made is ready by onEnter(); later ones arrive in the background.");
             b.function("Sound@ sound(const string &in name)", NX_FN(loadSoundAsset), "A sound. Arrives like an image.");
             b.function("Effect@ effect(const string &in name)", NX_FN(loadEffectAsset), "A shader of your own: a .fx file. Each time gives one whose values are its own.");
-            b.function("Model@ model(const string &in name)", NX_FN(loadModelAsset), "A 3D model: glTF, as a .glb or a .gltf with everything inside it. Arrives like an image.");
+            b.function("Model@ model(const string &in name)", NX_FN(loadModelAsset), "A 3D model: glTF (.glb or .gltf), FBX, OBJ, STL or PLY. Arrives like an image. On the original Xbox an FBX has to be cooked.");
             b.function("uint get_pending() property", NX_FN(cachePending), "Files still on their way.");
             b.function("uint get_textureKilobytes() property", NX_FN(cacheTextureKilobytes), "Memory that images and fonts take.");
             b.function("uint get_soundKilobytes() property", NX_FN(cacheSoundKilobytes), "Memory that sounds take.");

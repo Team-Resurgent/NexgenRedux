@@ -2,6 +2,8 @@
 
 #include "platform/platform.h"
 
+#include <vector>
+
 namespace nx
 {
     // Time and files, which the desktop and UWP share. Windows and input are in the classes made from it.
@@ -17,13 +19,18 @@ namespace nx
         void removeSave(const char* name) override;
         bool setSaveFolder(const char* path) override;
         bool writeFile(const char* path, const void* data, size_t size) override;
-        void listFolders(const char* path, FolderCallback callback, void* user) override;
+        void list(const char* path, bool folders, FolderCallback callback, void* user) override;
 
         // By virtual key code, which both use.
         static Key translateKey(u32 code);
 
+        bool takeDropped(std::string& name) override;
+
     protected:
         static constexpr int kMaxPath = 1024;
+
+        // Copies a file to the player's own.
+        void keepOwn(const wchar_t* from);
 
         // The folders that hold "media" and the saves, without a slash at the end.
         bool setFolders(const wchar_t* base, const wchar_t* saves);
@@ -34,6 +41,7 @@ namespace nx
 
         wchar_t m_base[kMaxPath] = {};
         wchar_t m_saves[kMaxPath] = {};
+        std::vector<std::string> m_dropped;
         long long m_frequency = 1;
         long long m_start = 0;
     };

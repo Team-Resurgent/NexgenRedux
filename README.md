@@ -94,7 +94,7 @@ a compiler and the platform's SDK, downloads nothing, and uses no SDL or GLFW.
 - **2D drawing** — shapes, images, sprite sheets, nine-slice, tiling, scalable text, clipping and blending, batched, on any
   shape of screen.
 - **Scenes** — entities with behaviours, prefabs, tile maps, particles, collision and 2D physics, described in plain text files.
-- **3D** — glTF models with animation, lights, shadows, fog, sky and water; hills and endless land that streams as you go; rigid
+- **3D** — glTF, FBX, OBJ, STL and PLY models, with animation, lights, shadows, fog, sky and water; hills and endless land that streams as you go; rigid
   bodies and characters that walk; culling and levels of detail; ray-marched shapes; particles; split screen.
 - **Shaders** — bloom, and effects of your own over the picture or on things: one file for every GPU that has shaders.
 - **Interfaces** — widgets with layout, gamepad focus, themes, lists of any length, dialogs and a keyboard on the screen; from
@@ -105,7 +105,8 @@ a compiler and the platform's SDK, downloads nothing, and uses no SDL or GLFW.
 - **Assets** — loaded in the background, shared, kept warm and unloaded only when a budget needs the room.
 - **Input** — keyboard, mouse and four gamepads as actions that players can rebind.
 - **Saving** — settings and scores, kept between runs.
-- **Cook tool** — turns images into compressed textures and sounds into ADPCM for the console, under the same names.
+- **Cook tool** — turns images into compressed textures, sounds into ADPCM and every kind of model into one, under the same names; a
+  command and a window, for Windows, Linux and macOS on x64 and arm64.
 
 ## Platforms
 
@@ -199,7 +200,7 @@ git clone --recurse-submodules https://github.com/Team-Resurgent/NexgenRedux.git
 Nexgen Redux is by Team Resurgent: EqUiNoX, HoRnEyDvL and RetroMura.
 
 The engine includes unmodified copies of [AngelScript](https://www.angelcode.com/angelscript/),
-[SSFN](https://gitlab.com/bztsrc/scalable-font2), [cgltf](https://github.com/jkuhlmann/cgltf), [stb](https://github.com/nothings/stb),
+[SSFN](https://gitlab.com/bztsrc/scalable-font2), [cgltf](https://github.com/jkuhlmann/cgltf), [ufbx](https://github.com/ufbx/ufbx), [stb](https://github.com/nothings/stb),
 [miniaudio](https://miniaud.io), [dr_libs](https://github.com/mackron/dr_libs) and
 [Mbed TLS](https://github.com/Mbed-TLS/mbedtls), under their own licences in
 `engine/third_party`.

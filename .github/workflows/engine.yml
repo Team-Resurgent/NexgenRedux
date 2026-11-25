@@ -88,6 +88,87 @@ jobs:
           dist/*.tar.gz
         if-no-files-found: error
 
+  # The cook tool by itself, as a command and with a window, for those who make things for the engine.
+  cook:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: windows-x64, os: windows-latest, rid: win-x64 }
+          - { name: windows-arm64, os: windows-11-arm, rid: win-arm64 }
+          - { name: linux-x64, os: ubuntu-22.04, rid: linux-x64, options: "'-DCMAKE_EXE_LINKER_FLAGS=-static-libstdc++ -static-libgcc'" }
+          - { name: linux-arm64, os: ubuntu-22.04-arm, rid: linux-arm64, options: "'-DCMAKE_EXE_LINKER_FLAGS=-static-libstdc++ -static-libgcc'" }
+          - { name: macos-arm64, os: macos-latest, rid: osx-arm64 }
+          - { name: macos-x64, os: macos-15-intel, rid: osx-x64 }
+
+    name: cook-${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        submodules: true
+
+    - uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: 10.0.x
+
+    - name: Install X11 and OpenGL headers
+      if: runner.os == 'Linux'
+      run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libx11-dev libgl-dev
+
+    - name: Build the tool
+      run: |
+        cmake -S engine -B build -DCMAKE_BUILD_TYPE=Release ${{ matrix.options }}
+        cmake --build build --config Release --target cook --parallel 4
+
+    - name: Build the window
+      run: dotnet publish engine/tools/cook-ui -c Release -r ${{ matrix.rid }} -o build-ui
+
+    - name: Try it
+      run: |
+        cook="$(find build -name cook.exe -o -name cook -type f -perm -u+x | head -1)"
+        "$cook" --version
+        printf 'v 0 0 0\nv 1 0 0\nv 0 1 0\nf 1 2 3\n' > one.obj
+        "$cook" one.obj
+        test "$(head -c 4 one.glb)" = glTF
+        "$cook" --quiet --platform xboxog NexgenRedux-Media/media cooked
+        "$cook" --quiet --platform xboxog NexgenRedux-Media/media cooked | grep "^0 cooked, 0 copied"
+        echo "COOK=$cook" >> "$GITHUB_ENV"
+
+    - name: Package
+      run: |
+        package="Nexgen-cook-${{ matrix.name }}"
+        mkdir -p "dist/$package"
+        cp "$COOK" "dist/$package/"
+        case "$RUNNER_OS" in
+          Windows) cp build-ui/nexgen-cook.exe "dist/$package/" ;;
+          Linux)   cp build-ui/nexgen-cook "dist/$package/" ;;
+          macOS)   app="dist/$package/Nexgen Cook.app"
+                   mkdir -p "$app/Contents/MacOS"
+                   cp build-ui/nexgen-cook "$COOK" "$app/Contents/MacOS/"
+                   cp engine/tools/cook-ui/Info.plist "$app/Contents/"
+                   codesign --force --deep --sign - "$app" ;;
+        esac
+        cp engine/tools/cook-ui/README.md "dist/$package/README.md"
+        cd dist
+        case "$RUNNER_OS" in
+          Windows) 7z a -bso0 "$package.zip" "$package" ;;
+          Linux)   tar czf "$package.tar.gz" "$package" ;;
+          macOS)   ditto -c -k --keepParent "$package" "$package.zip" ;;
+        esac
+
+    - uses: actions/upload-artifact@v5
+      with:
+        name: Nexgen-cook-${{ matrix.name }}
+        path: |
+          dist/*.zip
+          dist/*.tar.gz
+        if-no-files-found: error
+
   # Calls into scripts the portable way, as the consoles without native support do, and with the
   # address sanitizer watching.
   variants:
@@ -215,7 +296,7 @@ jobs:
 
   release:
     name: Release
-    needs: [ desktop, variants, xboxog, uwp ]
+    needs: [ desktop, cook, variants, xboxog, uwp ]
     if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
     permissions:
@@ -243,6 +324,7 @@ jobs:
         | `macos-arm64`, `macos-x64` | Unzip and open the app. It is not notarised: the first time, right-click it and choose Open |
         | `uwp-x64` | Xbox One, Xbox Series or Windows, in Developer Mode: install the `.cer` and then the package, or upload the package in the Xbox Device Portal |
         | `xbox-og` | Copy the folder to the console, or run the `.iso` in xemu or from an ODE |
+        | `cook-*` | The cook tool by itself, for x64 and arm64: `cook` is the command, `nexgen-cook` the window. On macOS, right-click the app and choose Open the first time |
 
         EOF
         echo "Built from ${GITHUB_SHA}." >> notes.md

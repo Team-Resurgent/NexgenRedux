@@ -277,6 +277,69 @@ NX_TEST(walkersPushCratesAndStandOnThem)
     NX_EXPECT(p.space.getBody(w)->onGround);
 }
 
+NX_TEST(landIsChangedByHand)
+{
+    Place p;
+    NX_EXPECT(!p.space.raise(0, 0, 5, 1) && p.space.landEdits().empty() && !p.space.setLandEdits(""));
+    NX_EXPECT(p.space.makeLand(7, 64, 2, 8, 0.5f, false) && p.space.landEdits().empty());
+    const float was = p.space.heightAt(0, 0), beyond = p.space.heightAt(20, 20), edge = p.space.heightAt(64, 64);
+    // Across the corner of four regions, and off the end.
+    NX_EXPECT(p.space.raise(0, 0, 8, 3) && p.space.raise(64, 64, 6, 2) && !p.space.raise(500, 0, 6, 2) && !p.space.raise(0, 0, 0, 2) && !p.space.raise(NAN, 0, 5, 2));
+    NX_EXPECT(fabsf(p.space.heightAt(0, 0) - was - 3) < 0.001f && p.space.heightAt(20, 20) == beyond && fabsf(p.space.heightAt(64, 64) - edge - 2) < 0.001f);
+    for (float x = -7; x < 7; x += 0.9f)
+    {
+        u32 id = 1;
+        Vec3 hit, normal;
+        NX_EXPECT(p.space.raycast({ x, 100, 1 }, { x, -100, 1 }, kAllGroups, 0, id, hit, normal) && fabsf(hit.y - p.space.heightAt(x, 1)) < 0.01f);
+    }
+    for (u32 i = 0; i < 60; i++)
+    {
+        p.space.level(-30, 10, 10, 5, 0.3f);
+        p.space.smooth(0, 0, 8, 1);
+    }
+    NX_EXPECT(fabsf(p.space.heightAt(-30, 10) - 5) < 0.01f && fabsf(p.space.heightAt(-27, 10) - 5) < 0.01f && p.space.heightAt(0, 0) < was + 2);
+    p.space.paint(10, 10, 6, { 1, 0, 0, 1 }, 1);
+    const std::string kept = p.space.landEdits();
+    const float a = p.space.heightAt(-28, 12), b = p.space.heightAt(1, 1);
+    NX_EXPECT(!kept.empty() && kept.size() < 2500);
+
+    // Away, and back again, also on other land of the same size.
+    NX_EXPECT(p.space.setLandEdits("") && p.space.heightAt(0, 0) == was && p.space.landEdits().empty());
+    NX_EXPECT(p.space.setLandEdits(kept) && fabsf(p.space.heightAt(-28, 12) - a) < 0.01f && fabsf(p.space.heightAt(1, 1) - b) < 0.01f && p.space.landEdits() == kept);
+    NX_EXPECT(p.space.makeLand(7, 64, 2, 8, 0.5f, false) && p.space.setLandEdits(kept) && p.space.landEdits() == kept);
+    // Paint can be taken away.
+    for (u32 i = 0; i < 300; i++)
+    {
+        p.space.paint(10, 10, 12, { 0, 0, 0, 0 }, 0.2f);
+    }
+    p.space.setLandEdits(p.space.landEdits());
+    NX_EXPECT(p.space.landEdits().size() < kept.size());
+
+    // What is damaged changes nothing.
+    const std::string now = p.space.landEdits();
+    for (size_t cut = 1; cut < kept.size(); cut += 3)
+    {
+        std::string bad = kept.substr(0, cut);
+        NX_EXPECT(!p.space.setLandEdits(bad));
+        bad = kept;
+        bad[cut] = bad[cut] == 'A' ? '/' : 'A';
+        p.space.setLandEdits(bad);
+    }
+    NX_EXPECT(!p.space.setLandEdits("no!") && !p.space.setLandEdits("AAAA"));
+    NX_EXPECT(p.space.setLandEdits(now) && p.space.landEdits() == now);
+    NX_EXPECT(p.space.makeLand(7, 32, 2, 8, 0.5f, false) && !p.space.setLandEdits(kept));
+
+    // What rested on it falls when it goes.
+    const u32 ball = p.thing({ 0, p.space.heightAt(0, 0) + 0.5f, 0 }, Shape3::Sphere, { 0.5f, 0, 0 }, 1);
+    p.step(200);
+    NX_EXPECT(p.space.raise(0, 0, 14, -4));
+    p.step(120);
+    const Vec3 at = p.at(ball);
+    NX_EXPECT(fabsf(at.y - p.space.heightAt(at.x, at.z) - 0.5f) < 0.3f);
+    p.space.makeEndlessLand(9, 2, 30, 0.5f, 3);
+    NX_EXPECT(!p.space.raise(0, 0, 5, 1) && !p.space.paint(0, 0, 5, { 1, 1, 1, 1 }, 1));
+}
+
 NX_TEST(landHoldsThingsUp)
 {
     Place p;

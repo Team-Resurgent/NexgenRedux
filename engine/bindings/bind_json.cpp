@@ -2,6 +2,9 @@
 #include "bindings/script_refs.h"
 
 #include <stdio.h>
+#include <scriptarray/scriptarray.h>
+
+#include <algorithm>
 #include <string.h>
 
 namespace nx
@@ -251,6 +254,46 @@ namespace nx
             return s.development && s.platform->writeFile(path, text.data(), text.size()) ? true : !s.development && s.platform->writeSave(kept.c_str(), text.data(), text.size());
         }
 
+        CScriptArray* texts(const std::vector<std::string>& from)
+        {
+            CScriptArray* out = CScriptArray::Create(asGetActiveContext()->GetEngine()->GetTypeInfoByDecl("array<string>"), static_cast<asUINT>(from.size()));
+            for (size_t i = 0; i < from.size(); i++)
+            {
+                std::string text = from[i];
+                out->SetValue(static_cast<asUINT>(i), &text);
+            }
+            return out;
+        }
+
+        CScriptArray* listFiles(const std::string& folder)
+        {
+            Services& s = services();
+            std::vector<std::string> names;
+            char path[192];
+            if (folder.find("..") != std::string::npos || !resolveAsset(s, folder.c_str(), path, sizeof(path)))
+            {
+                scriptError("folders start with asset:, global: or own: (" + folder + ")");
+                return texts(names);
+            }
+            for (size_t end = strlen(path); end && path[end - 1] == '/';)
+            {
+                path[--end] = 0;
+            }
+            s.platform->list(path, false, [](const char* name, void* user) { static_cast<std::vector<std::string>*>(user)->push_back(name); }, &names);
+            std::sort(names.begin(), names.end());
+            return texts(names);
+        }
+
+        CScriptArray* dropped()
+        {
+            std::vector<std::string> names;
+            for (std::string name; services().platform->takeDropped(name);)
+            {
+                names.push_back(name);
+            }
+            return texts(names);
+        }
+
         void forgetText(const std::string& name)
         {
             Services& s = services();
@@ -320,6 +363,8 @@ namespace nx
 
         b.names("Assets");
         b.function("string read(const string &in name)", NX_FN(readText), "What is in a text file, at once. If the screen has written one of that name, that is what it is.");
+        b.function("array<string>@ list(const string &in folder)", NX_FN(listFiles), "The names of the files in a folder: `own:`, or `asset:` or `global:` and a name.");
+        b.function("array<string>@ dropped()", NX_FN(dropped), "The names of files that were dropped on the window since it last asked. They are in `own:`, which is kept from one time to the next.");
         b.function("void forget(const string &in name)", NX_FN(forgetText), "Goes back to the file that came with the screen, and loses what was written over it. While developing it is the only one, and nothing is done.");
         b.function("bool write(const string &in name, const string &in text)", NX_FN(writeText), "Writes one of the screen's own files: `asset:` something `.json`. While developing it is the file itself; otherwise it is kept with the saves, and read from there from then on. False if it couldn't be.");
         b.names("");

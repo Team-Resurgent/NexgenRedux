@@ -1,0 +1,67 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:n="using:NexgenCook"
+        x:Class="NexgenCook.MainWindow" Title="Nexgen Cook" Icon="avares://nexgen-cook/cook.ico" Width="1060" Height="700" MinWidth="760" MinHeight="480"
+        Background="#10141F" DragDrop.AllowDrop="True">
+  <Window.Styles>
+    <Style Selector="TextBlock.label"><Setter Property="Foreground" Value="#8A94AE" /><Setter Property="FontSize" Value="13" /><Setter Property="VerticalAlignment" Value="Center" /></Style>
+    <Style Selector="Border.card"><Setter Property="Background" Value="#182032" /><Setter Property="CornerRadius" Value="10" /><Setter Property="Padding" Value="18" /></Style>
+    <Style Selector="ListBoxItem"><Setter Property="Padding" Value="12,5" /></Style>
+  </Window.Styles>
+  <Grid RowDefinitions="Auto,Auto,*,Auto" Margin="20" RowSpacing="14">
+    <StackPanel Orientation="Horizontal" Spacing="14">
+      <TextBlock Text="Nexgen Cook" FontSize="24" FontWeight="SemiBold" />
+      <TextBlock Classes="label" Text="Images, sounds and 3D models, made ready for the engine" Margin="0,6,0,0" />
+    </StackPanel>
+
+    <Border Grid.Row="1" Classes="card">
+      <Grid ColumnDefinitions="60,*,Auto,Auto" RowDefinitions="Auto,Auto,Auto" RowSpacing="10" ColumnSpacing="10">
+        <TextBlock Classes="label" Text="From" />
+        <TextBox x:Name="From" Grid.Column="1" PlaceholderText="A media folder or one file: choose it, or drop it here" />
+        <Button x:Name="FromFolder" Grid.Column="2" Content="Folder…" />
+        <Button x:Name="FromFile" Grid.Column="3" Content="File…" />
+        <TextBlock Grid.Row="1" Classes="label" Text="To" />
+        <TextBox x:Name="To" Grid.Row="1" Grid.Column="1" PlaceholderText="The folder to make" />
+        <Button x:Name="ToFolder" Grid.Row="1" Grid.Column="2" Grid.ColumnSpan="2" Content="Folder…" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
+        <TextBlock Grid.Row="2" Classes="label" Text="For" />
+        <WrapPanel Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3" Orientation="Horizontal">
+          <ComboBox x:Name="Platform" SelectedIndex="0" Width="170" Margin="0,0,22,0">
+            <ComboBoxItem Content="Desktop" />
+            <ComboBoxItem Content="Original Xbox" />
+          </ComboBox>
+          <CheckBox x:Name="Images" Content="Images" IsChecked="True" Margin="0,0,18,0" />
+          <CheckBox x:Name="Sounds" Content="Sounds" IsChecked="True" Margin="0,0,18,0" />
+          <CheckBox x:Name="Models" Content="Models" IsChecked="True" Margin="0,0,30,0" />
+          <CheckBox x:Name="Force" Content="All again" Margin="0,0,18,0" ToolTip.Tip="Everything, not only what has changed" />
+          <CheckBox x:Name="Watch" Content="Again as files change" />
+        </WrapPanel>
+      </Grid>
+    </Border>
+
+    <Border Grid.Row="2" Classes="card" Padding="6">
+      <Grid>
+        <ListBox x:Name="Rows" Background="Transparent">
+          <ListBox.ItemTemplate>
+            <DataTemplate x:DataType="n:Row">
+              <Grid ColumnDefinitions="86,*,Auto,64" ColumnSpacing="10">
+                <TextBlock Text="{Binding What}" Foreground="{Binding Tint}" FontWeight="SemiBold" />
+                <TextBlock Grid.Column="1" Text="{Binding File}" TextTrimming="PrefixCharacterEllipsis" ToolTip.Tip="{Binding File}" />
+                <TextBlock Grid.Column="2" Text="{Binding Detail}" Foreground="#A8B2CB" />
+                <TextBlock Grid.Column="3" Text="{Binding Saved}" Foreground="{Binding SavedTint}" TextAlignment="Right" />
+              </Grid>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+        <TextBlock x:Name="Empty" Classes="label" HorizontalAlignment="Center" TextAlignment="Center" IsHitTestVisible="False" FontSize="15"
+                   Text="glTF, FBX, OBJ, STL and PLY become models the engine reads at once.&#10;PNG, JPEG, TGA, BMP and GIF become compressed textures.&#10;WAV, Ogg and MP3 become sounds that cost little to play." />
+      </Grid>
+    </Border>
+
+    <Grid Grid.Row="3" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="12">
+      <StackPanel VerticalAlignment="Center" Spacing="6">
+        <TextBlock x:Name="Status" Text="Ready" TextTrimming="CharacterEllipsis" />
+        <ProgressBar x:Name="Progress" Height="6" MinWidth="0" />
+      </StackPanel>
+      <Button x:Name="Open" Grid.Column="1" Content="Show the folder" IsEnabled="False" />
+      <Button x:Name="Go" Grid.Column="2" Content="Cook" Classes="accent" Width="110" HorizontalContentAlignment="Center" IsDefault="True" />
+    </Grid>
+  </Grid>
+</Window>

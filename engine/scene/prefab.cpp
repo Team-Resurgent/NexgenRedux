@@ -129,6 +129,10 @@ namespace nx
         {
             snprintf(path, sizeof(path), "%s/asset/%s", m_folder, name + 6);
         }
+        else if (strncmp(name, "own:", 4) == 0 && strstr(name, "..") == nullptr)
+        {
+            snprintf(path, sizeof(path), "own/%s", name + 4);
+        }
         else
         {
             fail(file, json.line(), "%s: asset names start with asset: or global:", name);

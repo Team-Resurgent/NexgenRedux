@@ -3,6 +3,7 @@
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <shellapi.h>
 #include <xinput.h>
 
 #include <string.h>
@@ -65,6 +66,7 @@ namespace nx
                     NX_ERROR("CreateWindow failed (%lu)", GetLastError());
                     return false;
                 }
+                DragAcceptFiles(m_window, TRUE);
                 if (!desc.hidden)
                 {
                     ShowWindow(m_window, SW_SHOW);
@@ -205,6 +207,21 @@ namespace nx
                     m_input.mouseX = static_cast<float>(static_cast<short>(LOWORD(lParam)));
                     m_input.mouseY = static_cast<float>(static_cast<short>(HIWORD(lParam)));
                     return 0;
+                case WM_DROPFILES:
+                {
+                    const HDROP drop = reinterpret_cast<HDROP>(wParam);
+                    const UINT count = DragQueryFileW(drop, 0xFFFFFFFF, nullptr, 0);
+                    for (UINT i = 0; i < count && i < 64; i++)
+                    {
+                        wchar_t path[kMaxPath];
+                        if (DragQueryFileW(drop, i, path, kMaxPath))
+                        {
+                            keepOwn(path);
+                        }
+                    }
+                    DragFinish(drop);
+                    return 0;
+                }
                 case WM_MOUSEWHEEL:
                     m_input.wheel += static_cast<float>(GET_WHEEL_DELTA_WPARAM(wParam)) / WHEEL_DELTA;
                     return 0;

@@ -182,3 +182,18 @@ NX_TEST(aThingThatIsWrongSaysSo)
     open(r, "class A : Screen { void onEnter() { Json j; j.set(\"shape\", \"hat\"); Space::make(j); } }");
     NX_EXPECT(r.screens.failed() && strstr(r.screens.error(), "isn't a shape"));
 }
+
+NX_TEST(playersBringFiles)
+{
+    Rig r;
+    r.platform.dropped = "chair.obj";
+    open(r, "class A : Screen { void onEnter() { array<string>@ l = Assets::list(\"own:\"); array<string>@ d = Assets::dropped(); array<string>@ none = Assets::dropped();"
+            "Save::set(\"s\", l[0] + l[1] + d[0] + none.length() + Assets::list(\"asset:model/\").length()); } }");
+    NX_EXPECT(!r.screens.failed() && strcmp(r.save.get("s", ""), "a.objb.stlchair.obj00") == 0);
+    for (const char* name : { "own:../a", "C:/", "a" })
+    {
+        Rig bad;
+        open(bad, (std::string("class A : Screen { void onEnter() { Assets::list(\"") + name + "\"); } }").c_str());
+        NX_EXPECT(bad.screens.failed());
+    }
+}

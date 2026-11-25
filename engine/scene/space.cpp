@@ -686,6 +686,7 @@ namespace nx
         draw.depthWrite = a.blend == gpu::Blend::None;
         draw.cull = a.twoSided ? gpu::Cull::None : gpu::Cull::Back;
         draw.repeat = a.repeat;
+        draw.lines = m_lines && !shadow;
         if (a.effect && a.effect->works())
         {
             draw.effect = a.effect->asset->effect;

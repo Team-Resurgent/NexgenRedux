@@ -99,16 +99,21 @@ elseif(WIN32 OR (UNIX AND NOT XBOX360))
   endif()
 endif()
 
-add_library(nx_assets STATIC assets/assets.cpp assets/decode.cpp assets/geometry.cpp assets/model.cpp assets/third_party.c)
+add_library(nx_assets STATIC assets/assets.cpp assets/decode.cpp assets/geometry.cpp assets/import.cpp assets/import_fbx.cpp assets/model.cpp assets/ufbx.c assets/third_party.c)
 target_link_libraries(nx_assets PUBLIC nx_audio nx_gpu)
 nx_options(nx_assets)
 nx_no_warnings(assets/third_party.c)
+nx_no_warnings(assets/ufbx.c)
+# Too large for the original Xbox, where the cook tool has turned them into something else.
+if(NX_PLATFORM AND NOT XBOXOG)
+  target_compile_definitions(nx_assets PRIVATE NX_FBX)
+endif()
 
 add_library(nx_canvas STATIC canvas/canvas.cpp)
 target_link_libraries(nx_canvas PUBLIC nx_assets)
 nx_options(nx_canvas)
 
-add_library(nx_scene STATIC scene/physics.cpp scene/space.cpp scene/land.cpp scene/physics3.cpp scene/space_load.cpp scene/prefab.cpp scene/world.cpp)
+add_library(nx_scene STATIC scene/physics.cpp scene/space.cpp scene/land.cpp scene/sculpt.cpp scene/physics3.cpp scene/space_load.cpp scene/prefab.cpp scene/world.cpp)
 target_link_libraries(nx_scene PUBLIC nx_canvas nx_script)
 nx_options(nx_scene)
 
@@ -245,12 +250,16 @@ endif()
 
 if(NOT XBOXOG AND NOT XBOX360 AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
   add_executable(cook tools/cook/cook.cpp tools/cook/third_party.c)
+  if(WIN32)
+    target_sources(cook PRIVATE tools/cook/cook.manifest)  # names of files in every language
+  endif()
   target_link_libraries(cook PRIVATE nx_assets)
+  target_compile_definitions(cook PRIVATE NX_VERSION="${PROJECT_VERSION}")
   nx_options(cook)
   nx_no_warnings(tools/cook/third_party.c)
 
   enable_testing()
-  add_executable(nx_tests tests/main.cpp tests/test_base.cpp tests/test_gpu_null.cpp tests/test_audio.cpp tests/test_services.cpp tests/test_script.cpp tests/test_engine.cpp tests/test_scene.cpp tests/test_space.cpp tests/test_ui.cpp tests/test_net.cpp tests/test_ftp.cpp tests/test_json.cpp)
+  add_executable(nx_tests tests/main.cpp tests/test_base.cpp tests/test_gpu_null.cpp tests/test_audio.cpp tests/test_services.cpp tests/test_script.cpp tests/test_engine.cpp tests/test_scene.cpp tests/test_space.cpp tests/test_ui.cpp tests/test_net.cpp tests/test_ftp.cpp tests/test_json.cpp tests/test_import.cpp)
   target_link_libraries(nx_tests PRIVATE nx_screens)
   target_compile_definitions(nx_tests PRIVATE NX_MEDIA="${NX_MEDIA}")
   nx_options(nx_tests)

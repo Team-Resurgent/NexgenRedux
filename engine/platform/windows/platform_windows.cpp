@@ -162,7 +162,7 @@ namespace nx
         return mediaPath(path, L"", full) && mediaPath(path, L".new", fresh) && swapIn(full, fresh, path, data, size);
     }
 
-    void PlatformWindows::listFolders(const char* path, FolderCallback callback, void* user)
+    void PlatformWindows::list(const char* path, bool folders, FolderCallback callback, void* user)
     {
         wchar_t full[kMaxPath];
         if (!mediaPath(path, L"/*", full))
@@ -178,13 +178,60 @@ namespace nx
         do
         {
             char name[MAX_PATH * 3];
-            if ((found.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && found.cFileName[0] != L'.' &&
+            if (((found.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0) == folders && found.cFileName[0] != L'.' &&
                 WideCharToMultiByte(CP_UTF8, 0, found.cFileName, -1, name, sizeof(name), nullptr, nullptr))
             {
                 callback(name, user);
             }
         } while (FindNextFileW(search, &found));
         FindClose(search);
+    }
+
+    void PlatformWindows::keepOwn(const wchar_t* from)
+    {
+        WIN32_FILE_ATTRIBUTE_DATA data;
+        const wchar_t* last = from;
+        for (const wchar_t* c = from; *c; c++)
+        {
+            last = *c == L'\\' || *c == L'/' ? c + 1 : last;
+        }
+        // Under names that are the same on every machine.
+        std::string name;
+        for (const wchar_t* c = last; *c; c++)
+        {
+            name += plainLetter(*c < 128 ? static_cast<char>(*c) : '_');
+        }
+        if (!GetFileAttributesExW(from, GetFileExInfoStandard, &data) || (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) || data.nFileSizeHigh || data.nFileSizeLow > 64 * 1024 * 1024 || name.size() > 60 || name[0] == '.')
+        {
+            NX_WARN("a file that was dropped is too large, or isn't one");
+            return;
+        }
+        wchar_t folder[kMaxPath], full[kMaxPath];
+        if (swprintf(folder, kMaxPath, L"%ls\\own", m_saves) < 0 || swprintf(full, kMaxPath, L"%ls\\%hs", folder, name.c_str()) < 0)
+        {
+            return;
+        }
+        CreateDirectoryW(m_saves, nullptr);
+        CreateDirectoryW(folder, nullptr);
+        COPYFILE2_EXTENDED_PARAMETERS how = {};
+        how.dwSize = sizeof(how);
+        if (FAILED(CopyFile2(from, full, &how)))
+        {
+            NX_ERROR("cannot keep %s (%lu)", name.c_str(), GetLastError());
+            return;
+        }
+        m_dropped.push_back(name);
+    }
+
+    bool PlatformWindows::takeDropped(std::string& name)
+    {
+        if (m_dropped.empty())
+        {
+            return false;
+        }
+        name = m_dropped.front();
+        m_dropped.erase(m_dropped.begin());
+        return true;
     }
 
     bool PlatformWindows::savePath(const char* name, const wchar_t* suffix, wchar_t (&full)[kMaxPath]) const
@@ -195,8 +242,9 @@ namespace nx
     bool PlatformWindows::mediaPath(const char* path, const wchar_t* suffix, wchar_t (&full)[kMaxPath]) const
     {
         wchar_t relative[kMaxPath];
+        const bool own = strncmp(path, "own", 3) == 0 && (path[3] == '/' || path[3] == 0);
         if (MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, path, -1, relative, kMaxPath) == 0 ||
-            swprintf(full, kMaxPath, L"%ls/media/%ls%ls", m_base, relative, suffix) < 0)
+            swprintf(full, kMaxPath, own ? L"%ls/%ls%ls" : L"%ls/media/%ls%ls", own ? m_saves : m_base, relative, suffix) < 0)
         {
             NX_ERROR("bad path: %s", path);
             return false;

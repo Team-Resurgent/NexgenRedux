@@ -85,6 +85,27 @@ namespace nx
             return false;
         }
 
+        // Each pixel of the four it was, in the same memory.
+        void halve(u8* pixels, u32& width, u32& height)
+        {
+            const u32 w = width / 2, h = height / 2;
+            for (u32 y = 0; y < h; y++)
+            {
+                for (u32 x = 0; x < w; x++)
+                {
+                    const u8* a = pixels + (static_cast<size_t>(y) * 2 * width + static_cast<size_t>(x) * 2) * 4;
+                    const u8* b = a + static_cast<size_t>(width) * 4;
+                    u8* out = pixels + (static_cast<size_t>(y) * w + x) * 4;
+                    for (u32 k = 0; k < 4; k++)
+                    {
+                        out[k] = static_cast<u8>((a[k] + a[k + 4] + b[k] + b[k + 4] + 2) / 4);
+                    }
+                }
+            }
+            width = w;
+            height = h;
+        }
+
         int readTexture(ModelData& model, const cgltf_texture_view& view, const cgltf_image** images, u32& imageCount, const char* name)
         {
             const cgltf_image* image = view.texture ? view.texture->image : nullptr;
@@ -102,9 +123,14 @@ namespace nx
             const u8* data = cgltf_buffer_view_data(image->buffer_view);
             u32 width = 0, height = 0;
             ModelTexture t = {};
-            if (imageCount < 16 && data && imageSize(data, image->buffer_view->size, width, height) && gpu::validTextureSize(width, height))
+            if (imageCount < 16 && data && imageSize(data, image->buffer_view->size, width, height) && width <= 4096 && height <= 4096)
             {
                 t.pixels = decodeImage(data, image->buffer_view->size, width, height);
+                // Those made for other engines are often larger than is drawn here.
+                while (t.pixels && !gpu::validTextureSize(width, height) && width > 1 && height > 1)
+                {
+                    halve(t.pixels, width, height);
+                }
                 t.width = width;
                 t.height = height;
             }
@@ -340,14 +366,14 @@ namespace nx
             }
         }
 
-        bool read(ModelData& model, const cgltf_data& data, const char* name)
+        bool readAll(ModelData& model, const cgltf_data& data, const char* name)
         {
             const bool animated = data.animations_count > 0 || data.skins_count > 0;
             if (animated)
             {
                 if (data.nodes_count > kModelBones)
                 {
-                    return fail(name, "an animated model can have up to 64 nodes");
+                    return fail(name, "an animated model can have up to 128 nodes");
                 }
                 for (cgltf_size i = 0; i < data.nodes_count; i++)
                 {
@@ -406,6 +432,18 @@ namespace nx
             {
                 model.mesh.computeNormals();
             }
+            const auto box = [&](const MeshData& mesh, u32 count)
+            {
+                model.low = { 1e9f, 1e9f, 1e9f };
+                model.high = { -1e9f, -1e9f, -1e9f };
+                for (u32 i = 0; i < count; i++)
+                {
+                    const gpu::MeshVertex& v = mesh.vertices[i];
+                    model.low = { fminf(model.low.x, v.x), fminf(model.low.y, v.y), fminf(model.low.z, v.z) };
+                    model.high = { fmaxf(model.high.x, v.x), fmaxf(model.high.y, v.y), fmaxf(model.high.z, v.z) };
+                }
+            };
+            box(model.mesh, model.mesh.vertices.count());
             addDetails(model);
 
             // Where it is when nothing has moved it.
@@ -420,6 +458,7 @@ namespace nx
                     moved.vertices.resize(model.weights.count());
                     model.bend(bones, moved.vertices.begin());
                     moved.bounds(model.middle, model.radius);
+                    box(moved, moved.vertices.count());
                     model.radius *= 1.3f;  // arms and legs reach further than they rest
                 }
             }
@@ -440,8 +479,20 @@ namespace nx
         }
     }
 
-    ModelData* loadModel(const u8* file, size_t size, const char* name)
+    ModelData* loadModel(const u8* file, size_t size, const char* name, ReadBeside read, void* user)
     {
+        std::vector<u8> made;
+        if (modelKind(name, file, size) != ModelKind::Glb)
+        {
+            std::string why;
+            if (!importModel(name, file, size, read, user, made, why))
+            {
+                fail(name, why.c_str());
+                return nullptr;
+            }
+            file = made.data();
+            size = made.size();
+        }
         cgltf_options options = {};
         options.memory.alloc_func = parserAlloc;
         options.memory.free_func = parserFree;
@@ -467,7 +518,7 @@ namespace nx
             return nullptr;
         }
         ModelData* model = create<ModelData>(MemTag::General);
-        if (model && !read(*model, *parsed.data, name))
+        if (model && !readAll(*model, *parsed.data, name))
         {
             destroy(model);
             return nullptr;

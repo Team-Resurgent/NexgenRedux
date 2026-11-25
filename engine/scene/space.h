@@ -7,6 +7,8 @@
 #include "base/json_tree.h"
 #include "canvas/canvas.h"
 
+#include <string>
+
 namespace nx
 {
     class World;
@@ -248,6 +250,9 @@ namespace nx
         void setAmbient(const gpu::Color& sky, const gpu::Color& ground) { m_ambientSky = sky; m_ambientGround = ground; }
         void setSky(const gpu::Color& top, const gpu::Color& horizon) { m_skyTop = top; m_skyHorizon = horizon; m_hasSky = true; }
         void setFog(const gpu::Color& color, float start, float end) { m_fog = color; m_fogStart = start; m_fogEnd = end; }
+        // Only edges, to see how things are made.
+        void setLines(bool lines) { m_lines = lines; }
+        bool lines() const { return m_lines; }
         void setShadows(float strength, float distance) { m_shadowStrength = strength; m_shadowDistance = distance; }
         void setFar(float distance) { m_far = distance < 1 ? 1 : distance; }
         void setGravity(const Vec3& gravity) { m_gravity = gravity; }
@@ -279,6 +284,16 @@ namespace nx
         u32 make(JsonTree::Value json, const char* folder, const Vec3& at);
         // Levels the land towards a height around a place.
         void flatten(float x, float z, float radius, float level);
+        // By hand, where the land has an end: more in the middle of the radius than at its edge. False where
+        // there is none. Over what flatten() did.
+        bool raise(float x, float z, float radius, float by);
+        bool smooth(float x, float z, float radius, float amount);
+        bool level(float x, float z, float radius, float height, float amount);
+        // A colour that is clear takes paint away.
+        bool paint(float x, float z, float radius, const gpu::Color& color, float amount);
+        // All of that, as text. Empty if there is none. It only fits land of the same number of squares.
+        std::string landEdits() const;
+        bool setLandEdits(const std::string& text);
         void setLandColors(const gpu::Color& low, const gpu::Color& middle, const gpu::Color& high, const gpu::Color& steep, float lowHeight, float highHeight);
         bool hasLand() const { return m_landOn; }
         // Of the land or the ground; far below if there is neither.
@@ -464,6 +479,20 @@ namespace nx
         void drawWater(const gpu::View& view);
         gpu::Color landColor(float height, const Vec3& normal, float x, float z) const;
 
+        // sculpt.cpp
+        struct Brush
+        {
+            float x, z, radius;   // in squares
+            int fromX, fromZ, toX, toZ;
+        };
+        bool brush(float x, float z, float radius, Brush& b);
+        bool makeSculpt();
+        template <typename F>
+        bool change(float x, float z, float radius, const F& by);
+        void moveCorners(int fromX, int fromZ, int toX, int toZ, const float* moved);
+        float sculpted(int x, int z) const;
+        const u8* painted(int x, int z) const;
+
         // physics3.cpp
         void physics(float dt);
         void addRigid(const Collider3& c, u32 body);
@@ -512,7 +541,7 @@ namespace nx
         gpu::Color m_fog = { 0.75f, 0.85f, 0.95f, 1 };
         float m_fogStart = 1e6f, m_fogEnd = 2e6f;
         float m_shadowStrength = 0.75f, m_shadowDistance = 40;
-        bool m_hasSky = false, m_hasGround = false, m_hasWater = false;
+        bool m_lines = false, m_hasSky = false, m_hasGround = false, m_hasWater = false;
         float m_ground = 0, m_water = 0;
         gpu::Color m_waterColor = { 0.15f, 0.35f, 0.5f, 0.75f };
         Vec3 m_gravity = { 0, -9.8f, 0 };
@@ -525,6 +554,8 @@ namespace nx
         GrowArray<Chunk> m_chunks;
         u16 m_table[32 * 32] = {};   // of regions, by the last bits of where they are; 0 is none
         GrowArray<Flat> m_flats;
+        GrowArray<float> m_sculpt;   // by corner; empty until something is changed by hand
+        GrowArray<u8> m_paint;       // colour and how much of it, likewise
         GrowArray<RegionEvent> m_regionEvents;
         u32 m_regionNext = 0;
         Vec3 m_focus[4], m_focusTo[4];

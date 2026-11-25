@@ -808,6 +808,20 @@ namespace nx::gpu
 
             void drawMesh(const MeshDraw& draw) override
             {
+                if (draw.lines && !m_inShadows)
+                {
+                    m_device->SetRenderState(D3DRS_FILLMODE, D3DFILL_WIREFRAME);
+                    m_device->SetRenderState(D3DRS_BACKFILLMODE, D3DFILL_WIREFRAME);
+                    drawTriangles(draw);
+                    m_device->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
+                    m_device->SetRenderState(D3DRS_BACKFILLMODE, D3DFILL_SOLID);
+                    return;
+                }
+                drawTriangles(draw);
+            }
+
+            void drawTriangles(const MeshDraw& draw)
+            {
                 NX_ASSERT(m_inFrame);
                 const MeshSlot* m = m_meshes.get(draw.mesh);
                 const Texture handle = draw.texture ? draw.texture : m_white;

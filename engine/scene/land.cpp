@@ -48,6 +48,8 @@ namespace nx
             removeChunk(m_chunks.count() - 1);
         }
         m_flats.clear();
+        m_sculpt.clear();
+        m_paint.clear();
         m_regionEvents.clear();
         m_regionNext = 0;
         m_landSeed = seed;
@@ -131,7 +133,7 @@ namespace nx
                 level += (f.level - level) * t * t * (3 - 2 * t);
             }
         }
-        return level;
+        return level + sculpted(x, z);
     }
 
     const Space::Chunk* Space::chunkAt(int x, int z) const
@@ -423,8 +425,13 @@ namespace nx
                 const float* at = chunk.heights + (z + 1) * kRow + x + 1;
                 const Vec3 normal = Vec3((at[-1] - at[1]) / (2 * m_landSpacing), 1, (at[-static_cast<int>(kRow)] - at[kRow]) / (2 * m_landSpacing)).normalized();
                 const float px = static_cast<float>(chunk.x * 32 + static_cast<int>(x)) * m_landSpacing, pz = static_cast<float>(chunk.z * 32 + static_cast<int>(z)) * m_landSpacing;
+                gpu::Color color = landColor(*at, normal, px, pz);
+                if (const u8* paint = painted(chunk.x * 32 + static_cast<int>(x), chunk.z * 32 + static_cast<int>(z)))
+                {
+                    color = mix(color, { static_cast<float>(paint[0]) / 255, static_cast<float>(paint[1]) / 255, static_cast<float>(paint[2]) / 255, 1 }, static_cast<float>(paint[3]) / 255);
+                }
                 // Within the region, so that they stay exact far from the middle; the grain repeats anyway.
-                d.vertex({ px, *at, pz }, normal, landColor(*at, normal, px, pz), static_cast<float>(x) * m_landSpacing * 0.25f, static_cast<float>(z) * m_landSpacing * 0.25f);
+                d.vertex({ px, *at, pz }, normal, color, static_cast<float>(x) * m_landSpacing * 0.25f, static_cast<float>(z) * m_landSpacing * 0.25f);
             }
         }
         // A skirt all round, hanging down, hides the gaps between chunks of different detail.
@@ -509,8 +516,15 @@ namespace nx
             draw.mesh = c.mesh;
             draw.texture = m_solids->grain();
             draw.repeat = true;
+            draw.lines = m_lines && !shadow;
             draw.first = first[detail];
             draw.count = first[detail + 1] - first[detail];
+            if (draw.lines)
+            {
+                // Without the skirt, which comes last.
+                const u32 step = 1u << (detail * 2 > 3 ? 3 : detail * 2);
+                draw.count -= 4 * kChunk / step * 6;
+            }
             pickLights(view, middle, radius, draw);
             m_solids->device()->drawMesh(draw);
         }
@@ -518,7 +532,7 @@ namespace nx
 
     void Space::drawWater(const gpu::View& view)
     {
-        if (!m_hasWater)
+        if (!m_hasWater || m_lines)
         {
             return;
         }

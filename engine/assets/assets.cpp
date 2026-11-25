@@ -300,6 +300,27 @@ namespace nx
         }
     }
 
+    // A file that a model names, in its own folder.
+    bool Assets::readBeside(const char* name, std::vector<u8>& out, void* user)
+    {
+        const Load& load = *static_cast<Load*>(user);
+        const char* slash = strrchr(load.path, '/');
+        std::string path = std::string(load.path, slash ? static_cast<size_t>(slash - load.path) + 1 : 0) + name;
+        // What players bring has been given plain names.
+        for (size_t i = 4; strncmp(load.path, "own/", 4) == 0 && i < path.size(); i++)
+        {
+            path[i] = path[i] == '/' ? '/' : plainLetter(path[i]);
+        }
+        char clean[192];
+        FileData file;
+        if (!cleanPath(path.c_str(), clean, sizeof(clean), false) || !load.platform->readFile(clean, file, MemTag::General))
+        {
+            return false;
+        }
+        out.assign(file.data, file.data + file.size);
+        return true;
+    }
+
     void Assets::loadInBackground(void* user)
     {
         Load& load = *static_cast<Load*>(user);
@@ -322,7 +343,7 @@ namespace nx
             }
             else if (load.type == AssetType::Model)
             {
-                load.model = loadModel(load.file.data, load.file.size, load.path);
+                load.model = loadModel(load.file.data, load.file.size, load.path, readBeside, &load);
                 load.file.clear();
             }
             else if (isCookedTexture(load.file.data, load.file.size))

@@ -172,7 +172,7 @@ namespace nx
                 return true;
             }
 
-            void listFolders(const char* path, FolderCallback callback, void* user) override
+            void list(const char* path, bool folders, FolderCallback callback, void* user) override
             {
                 char full[260];
                 if (!mediaPath(path, "\\*", full))
@@ -187,7 +187,7 @@ namespace nx
                 }
                 do
                 {
-                    if ((found.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && found.cFileName[0] != '.')
+                    if (((found.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0) == folders && found.cFileName[0] != '.')
                     {
                         callback(found.cFileName, user);
                     }

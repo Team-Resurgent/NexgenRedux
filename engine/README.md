@@ -66,8 +66,11 @@ python tools/record/record.py build/windows/showcase/Release/nexgen.exe demos.mp
 ## Cook
 
 `cook --platform xboxog|desktop <media folder> <new folder>` makes a copy of a media folder in which images are BC1 or BC3
-textures and sounds are ADPCM, under the same names. Small images and long music stay as they are. Only what has changed is
-done again.
+textures, sounds are ADPCM and models of every kind are `.glb`, under the same names. Small images and long music stay as they are. Only what has changed is
+done again. `cook house.fbx` makes one model, and `cook --help` has the rest.
+
+`tools/cook-ui` is a window for it, made with Avalonia on .NET 10: `dotnet run --project tools/cook-ui`, with `NEXGEN_COOK` set to the
+cook tool that was built. Both are a download of their own, for Windows, Linux and macOS on x64 and arm64.
 
 ## Layout
 
@@ -86,8 +89,8 @@ done again.
 | `script/` | AngelScript host, coroutines, bindings and the reference writer | base |
 | `bindings/`, `screens/` | What scripts can call; the screen stack and the engine's menu | all above |
 | `app/` | The program that runs the showcase | all |
-| `tools/` | `cook`; `record`; `make_media.py` and `make_models.py`, which make the showcase's sounds, music and models; `make_docs.py`, which makes the web site; `stage-rxdk.ps1` | all |
-| `third_party/` | AngelScript, SSFN, stb, cgltf, miniaudio, dr_libs and Mbed TLS, unmodified | |
+| `tools/` | `cook`, and `cook-ui`, a window for it; `record`; `make_media.py` and `make_models.py`, which make the showcase's sounds, music and models; `make_docs.py`, which makes the web site; `stage-rxdk.ps1` | all |
+| `third_party/` | AngelScript, SSFN, stb, cgltf, ufbx, miniaudio, dr_libs and Mbed TLS, unmodified | |
 | `spike/`, `tests/` | Phase 0 app and tests | all |
 
 Platform `#if`s belong only in `platform/`, `gpu/`, `base/thread_*`, `audio/output_*` and `net/`.

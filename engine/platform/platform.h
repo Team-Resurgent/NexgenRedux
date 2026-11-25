@@ -3,6 +3,8 @@
 #include "base/memory.h"
 #include "base/types.h"
 
+#include <string>
+
 namespace nx
 {
     struct WindowDesc
@@ -103,6 +105,12 @@ namespace nx
     }
 
     // Everything the engine needs from an operating system or console.
+    // Names of files that players bring are small letters, digits, dots, dashes and lines.
+    inline char plainLetter(char c)
+    {
+        return c >= 'A' && c <= 'Z' ? static_cast<char>(c - 'A' + 'a') : (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '.' || c == '-' ? c : '_';
+    }
+
     class Platform
     {
     public:
@@ -135,9 +143,14 @@ namespace nx
         // Somewhere else for them, so that a trial leaves the player's own alone. False if there is no such place.
         virtual bool setSaveFolder(const char*) { return false; }
 
-        // Calls back with the name of each folder directly inside one.
+        // Calls back with the name of each folder, or each file, directly inside one.
         using FolderCallback = void (*)(const char* name, void* user);
-        virtual void listFolders(const char* path, FolderCallback callback, void* user) = 0;
+        virtual void list(const char* path, bool folders, FolderCallback callback, void* user) = 0;
+        void listFolders(const char* path, FolderCallback callback, void* user) { list(path, true, callback, user); }
+
+        // Files that the player brought: in the folder "own", which is beside the saves, or in the media on the
+        // original Xbox. Those that have just been dropped on the window are put there, and are told of once.
+        virtual bool takeDropped(std::string&) { return false; }
 
         // Physical memory in bytes; 0 if unknown.
         virtual u64 totalMemory() = 0;

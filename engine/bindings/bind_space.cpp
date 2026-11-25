@@ -96,6 +96,8 @@ namespace nx
         }
 
         float modelRadius(const ModelRef* m) { return m->asset->model ? m->asset->model->radius : 0; }
+        Vec3 modelLow(const ModelRef* m) { return m->asset->model ? m->asset->model->low : Vec3(); }
+        Vec3 modelHigh(const ModelRef* m) { return m->asset->model ? m->asset->model->high : Vec3(); }
         u32 modelTriangles(const ModelRef* m)
         {
             u32 count = 0;
@@ -319,6 +321,8 @@ namespace nx
         void spaceAmbient(const Color& sky, const Color& ground) { space().setAmbient(sky, ground); }
         void spaceSky(const Color& top, const Color& horizon) { space().setSky(top, horizon); }
         void spaceFog(const Color& color, float start, float end) { space().setFog(color, start, end); }
+        bool spaceLines() { return space().lines(); }
+        void spaceSetLines(bool v) { space().setLines(v); }
         void spaceShadows(float strength, float distance) { space().setShadows(strength, distance); }
         void spaceFarthest(float distance) { space().setFar(distance); }
         Vec3 spaceGetGravity() { return space().gravity(); }
@@ -390,6 +394,19 @@ namespace nx
         void spaceFlattenTo(float x, float z, float radius, float height) { space().flatten(x, z, radius, height); }
         float spaceHeight(float x, float z) { return space().heightAt(x, z); }
         Vec3 spaceNormal(float x, float z) { return space().normalAt(x, z); }
+        void handWork(bool done)
+        {
+            if (!done && (!space().hasLand() || space().streaming()))
+            {
+                scriptError("only land that has an end can be changed by hand");
+            }
+        }
+        void spaceRaise(float x, float z, float radius, float by) { handWork(space().raise(x, z, radius, by)); }
+        void spaceSmooth(float x, float z, float radius, float amount) { handWork(space().smooth(x, z, radius, amount)); }
+        void spaceLevel(float x, float z, float radius, float height, float amount) { handWork(space().level(x, z, radius, height, amount)); }
+        void spacePaint(float x, float z, float radius, const Color& color, float amount) { handWork(space().paint(x, z, radius, color, amount)); }
+        std::string spaceLandEdits() { return space().landEdits(); }
+        bool spaceRestoreLand(const std::string& text) { return space().setLandEdits(text); }
         float spaceLandSize() { return space().landSize(); }
 
         void spaceShape(gpu::FieldKind kind, const Vec3& place, const Vec3& size, const Color& color, float soft, gpu::FieldOperation operation, float turn)
@@ -461,6 +478,8 @@ namespace nx
         b.method("bool get_failed() const property", NX_METHOD(ModelRef, failed), "Whether the file could not be loaded.");
         b.method("bool get_ready() const property", NX_METHOD(ModelRef, ready), "Whether it has arrived. Until then it draws as nothing.");
         b.method("float get_radius() const property", NX_OBJ_LAST(modelRadius), "Of a ball around it.");
+        b.method("Vec3 get_low() const property", NX_OBJ_LAST(modelLow), "The least corner of a box around it.");
+        b.method("Vec3 get_high() const property", NX_OBJ_LAST(modelHigh), "The greatest.");
         b.method("uint get_triangles() const property", NX_OBJ_LAST(modelTriangles), "How many it has, close up.");
         b.method("uint get_animations() const property", NX_OBJ_LAST(modelAnimations), "How many it has.");
         b.method("string animation(uint index) const", NX_OBJ_LAST(modelAnimation), "The name of one.");
@@ -578,6 +597,8 @@ namespace nx
         b.function("void ambient(const Color &in sky, const Color &in ground)", NX_FN(spaceAmbient), "Light from everywhere: on what faces up, and on what faces down.");
         b.function("void sky(const Color &in top, const Color &in horizon)", NX_FN(spaceSky), "Draws a sky, with the sun in it. Without one, what is on the canvas already is behind.");
         b.function("void fog(const Color &in color, float start, float end)", NX_FN(spaceFog), "Hides what is far away.");
+        b.function("bool get_lines() property", NX_FN(spaceLines), "Whether only the edges of triangles are drawn.");
+        b.function("void set_lines(bool) property", NX_FN(spaceSetLines), "Draws only those, to see how things are made.");
         b.function("void shadows(float strength, float distance = 40)", NX_FN(spaceShadows), "How dark they are, 0 to 1, and how far they reach. Simple ones are drawn where the GPU can't do real ones.");
         b.function("void farthest(float distance)", NX_FN(spaceFarthest), "Nothing beyond is drawn.");
         b.function("Vec3 get_gravity() property", NX_FN(spaceGetGravity), "What pulls on those that feel it.");
@@ -595,6 +616,12 @@ namespace nx
         b.function("void landColors(const Color &in low, const Color &in middle, const Color &in high, const Color &in steep, float lowHeight, float highHeight)", NX_FN(spaceLandColors), "Colours them by height and slope.");
         b.function("void flatten(float x, float z, float radius)", NX_FN(spaceFlatten), "Levels the land around a place, to build on.");
         b.function("void flatten(float x, float z, float radius, float height)", NX_FN(spaceFlattenTo), "The same, to a height.");
+        b.function("void raise(float x, float z, float radius, float by)", NX_FN(spaceRaise), "Raises the land by hand, most in the middle; lowers it if that is less than 0. For land that has an end.");
+        b.function("void smooth(float x, float z, float radius, float amount)", NX_FN(spaceSmooth), "Wears it down towards what is round about: from 0, nothing, to 1.");
+        b.function("void level(float x, float z, float radius, float height, float amount)", NX_FN(spaceLevel), "Brings it nearer to a height: from 0, nothing, to 1, all the way. Over what flatten() did.");
+        b.function("void paint(float x, float z, float radius, const Color &in color, float amount)", NX_FN(spacePaint), "Colours it. A clear colour takes paint away.");
+        b.function("string get_landEdits() property", NX_FN(spaceLandEdits), "All that was raised and painted by hand, as text to keep. Empty if there is nothing.");
+        b.function("bool restoreLand(const string &in edits)", NX_FN(spaceRestoreLand), "Puts all that back, instead of what there is, on land of as many squares. False if it doesn't fit.");
         b.function("float height(float x, float z)", NX_FN(spaceHeight), "How high the land or the ground is. Far below if there is none.");
         b.function("Vec3 normal(float x, float z)", NX_FN(spaceNormal), "Which way it faces there.");
         b.function("float get_landSize() property", NX_FN(spaceLandSize), "Metres along a side. Its middle is at 0, 0.");

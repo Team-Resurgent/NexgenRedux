@@ -197,12 +197,14 @@ void draw(Canvas@ c)
 
 | To look like | Use |
 |---|---|
-| A glTF model | `model`, and `animate("walk")` to play one of its animations, changing smoothly from the last |
+| A model | `model`, and `animate("walk")` to play one of its animations, changing smoothly from the last |
 | A simple shape | `shape(SolidBox, Red)`: a box, ball, cylinder, cone, ring, capsule or sheet |
 | A mesh of your own | `mesh`, with a `Mesh` built from boxes, balls and triangles |
 | A soft light | `glow`. `light` is what lights other things: the four strongest reach each thing |
 
-A model is a `.glb`, or a `.gltf` with everything inside it, with up to 64 bones. The engine makes two simpler versions as it loads,
+A model is a glTF (`.glb` or `.gltf`), FBX, OBJ, STL or PLY file, with up to 128 bones and 65536 vertices, and the files it names in its
+own folder. Anything but a `.glb` is turned into one as it loads; the cook tool does it beforehand, and has to for an FBX on the
+original Xbox. FBX and glTF bring bones and animations; OBJ brings materials and pictures; STL and PLY are shapes. The engine makes two simpler versions as it loads,
 and draws those when it is small on the screen. What can't be seen isn't drawn.
 
 `Space::sun`, `ambient`, `sky`, `fog` and `shadows` set the scene. Shadows are the shape of what casts them, on the original Xbox too,
@@ -257,8 +259,30 @@ A region may come from a file, or be made up from its numbers so that it is the 
 | `behaviour` | A class in the script |
 
 `Space::make` makes one entity from a `Json` of the same kind. The showcase's **Scene editor** makes such files: fly about, add
-things, move, turn, size and colour them, try the place, and save it. It is a screen like any other, in
-`showcase/editor`, and can be taken for your own tools.
+things, move, turn, size and colour them, shape and paint the land, try the place, and save it. It is a screen like any other, in
+`showcase/editor`, and can be taken for your own tools. Models of your own appear at the end of its list: drop them on the window (on
+Windows), or put them in the folder `own` beside the saves, or in `media/own` on the original Xbox. Names there are small letters,
+digits, dots and dashes.
+
+### Land by hand
+
+Land that has an end can be changed, while a game runs too, and things on it follow:
+
+```cpp
+Space::raise(x, z, 6, 2);                            // a hill six metres round; less than 0 digs
+Space::smooth(x, z, 6, 0.5f);
+Space::level(x, z, 6, height, 1);                    // somewhere to build
+Space::paint(x, z, 4, Color(0.55f, 0.42f, 0.28f), 1);  // a path; a clear colour takes it away
+string kept = Space::landEdits;                      // all of it, as text for a Json
+Space::restoreLand(kept);                            // on land of as many squares
+```
+
+`Space::lines = true` draws only the edges of triangles, to see how things are made.
+
+### Files that players bring
+
+`Assets::list("own:")` has the names of the player's own files, and `Assets::dropped()` those that were just dropped on the window. They
+are loaded like any others: `Assets::model("own:chair.obj")`.
 
 ### Particles and sounds in space
 
@@ -427,7 +451,7 @@ screen is instant, until the budget needs the room. A missing image draws as a c
 | Images | PNG, JPEG, TGA, BMP and GIF, up to 2048 pixels a side |
 | Sounds | WAV, Ogg Vorbis and MP3 |
 | Fonts | SSFN |
-| Models | glTF 2.0 (`.glb`) |
+| Models | glTF 2.0 (`.glb`, `.gltf`), FBX, OBJ, STL and PLY. Pictures in them up to 4096 pixels a side, made smaller if need be |
 
 ## Sound
 

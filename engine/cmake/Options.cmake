@@ -1,7 +1,7 @@
 # Engine code: no exceptions, no RTTI, warnings are errors.
 function(nx_options target)
   if(MSVC)
-    target_compile_options(${target} PRIVATE /W4 /WX /permissive- /GR- /utf-8)
+    target_compile_options(${target} PRIVATE /W4 /WX /wd4324 /permissive- /GR- /utf-8)
     target_compile_definitions(${target} PRIVATE _CRT_SECURE_NO_WARNINGS NOMINMAX _HAS_EXCEPTIONS=0)
   else()
     target_compile_options(${target} PRIVATE -Wall -Wextra -Werror $<$<CXX_COMPILER_ID:GNU>:-Wno-format-truncation> -fno-exceptions $<$<COMPILE_LANGUAGE:CXX,OBJCXX>:-fno-rtti>)

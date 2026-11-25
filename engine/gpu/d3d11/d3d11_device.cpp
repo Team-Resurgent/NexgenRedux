@@ -544,7 +544,7 @@ namespace nx::gpu
                 {
                     m_context->OMSetBlendState(m_meshBlend[static_cast<u32>(draw.blend)], nullptr, 0xFFFFFFFF);
                     m_context->OMSetDepthStencilState(m_meshDepth[draw.depthWrite], 0);
-                    m_context->RSSetState(m_meshRaster[static_cast<u32>(draw.cull)]);
+                    m_context->RSSetState(m_meshRaster[draw.lines ? 2 : static_cast<u32>(draw.cull)]);
                     m_context->PSSetSamplers(0, 1, draw.repeat ? &m_wrap : &m_linear);
                     if (m_boundTexture != handle)
                     {
@@ -1006,6 +1006,9 @@ namespace nx::gpu
                     fine = fine && ok(m_device->CreateRasterizerState(&raster, &m_meshRaster[i]), "raster state");
                 }
                 raster.CullMode = D3D11_CULL_NONE;
+                raster.FillMode = D3D11_FILL_WIREFRAME;
+                fine = fine && ok(m_device->CreateRasterizerState(&raster, &m_meshRaster[2]), "raster state");
+                raster.FillMode = D3D11_FILL_SOLID;
                 raster.ScissorEnable = TRUE;
                 fine = fine && ok(m_device->CreateRasterizerState(&raster, &m_clipRaster), "raster state");
                 raster.ScissorEnable = FALSE;
@@ -1237,7 +1240,7 @@ namespace nx::gpu
             ID3D11BlendState* m_meshBlend[3] = {};
             ID3D11DepthStencilState* m_meshDepth[2] = {};
             ID3D11DepthStencilState* m_skyDepth = nullptr;
-            ID3D11RasterizerState* m_meshRaster[2] = {};
+            ID3D11RasterizerState* m_meshRaster[3] = {};  // the last, of lines
             ID3D11RasterizerState* m_shadowRaster = nullptr;
             ID3D11Texture2D* m_shadowMap = nullptr;
             ID3D11DepthStencilView* m_shadowTarget = nullptr;

@@ -157,6 +157,7 @@ namespace nx::gpu
         Blend blend = Blend::None;
         Cull cull = Cull::Back;
         bool depthWrite = true;
+        bool lines = false;      // only the edges of its triangles
         bool lit = true;
         bool fogged = true;
         bool repeat = false;     // the texture

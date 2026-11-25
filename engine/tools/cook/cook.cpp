@@ -1,12 +1,12 @@
-// Prepares a media folder for a platform, on the machine that builds the game:
+// Prepares media for a platform, on the machine that builds the game: a folder of it, or one file.
 //
-//   cook --platform xboxog|desktop <media folder> <folder to make>
-//
-// Images become compressed textures and sounds become ADPCM, under the same names, so scripts don't
-// change. Whatever wouldn't get smaller is copied. Only files that have changed are done again, and
-// files whose originals are gone are removed.
+// Images become compressed textures, sounds become ADPCM and models of every kind become .glb, under the
+// same names, so scripts don't change. Whatever wouldn't get smaller is copied. Only files that have changed
+// are done again, and files whose originals are gone are removed.
 #include "assets/decode.h"
 #include "assets/formats.h"
+#include "assets/import.h"
+#include "assets/model.h"
 #include "audio/decoder.h"
 #include "base/log.h"
 #include "base/memory.h"
@@ -16,6 +16,7 @@
 #include <filesystem>
 #include <fstream>
 #include <set>
+#include <stdio.h>
 #include <string.h>
 #include <string>
 #include <system_error>
@@ -27,7 +28,7 @@ using namespace nx;
 namespace
 {
     // Goes up when the output changes, so everything is done again.
-    constexpr u32 kVersion = 1;
+    constexpr u32 kVersion = 2;
     // Compression suits photographs and large art. Small images cost little and show every flaw.
     constexpr u32 kSmallestCompressed = 64 * 64;
     // Longer sounds stay as they are: music is smaller as Ogg or MP3 than as ADPCM.
@@ -171,6 +172,30 @@ namespace
         return true;
     }
 
+    // What it names is beside it, as it was, not as it is cooked.
+    bool readBeside(const char* name, Bytes& out, void* user)
+    {
+        return readAll(*static_cast<const fs::path*>(user) / fs::path(name), out);
+    }
+
+    bool cookModel(const fs::path& source, const Bytes& in, Bytes& out, std::string& why)
+    {
+        fs::path folder = source.parent_path();
+        if (!importModel(source.filename().string().c_str(), in.data(), in.size(), readBeside, &folder, out, why))
+        {
+            return false;
+        }
+        // One that the engine would refuse is better known of now.
+        ModelData* model = loadModel(out.data(), out.size(), "model");
+        if (model == nullptr)
+        {
+            why = "the engine can't use it: up to 65536 vertices and 128 moving nodes";
+            return false;
+        }
+        destroy(model);
+        return true;
+    }
+
     std::string lower(std::string text)
     {
         for (char& c : text)
@@ -180,116 +205,379 @@ namespace
         return text;
     }
 
-    int cook(const fs::path& from, const fs::path& to, bool powersOfTwo)
+    const char kHelp[] =
+        "Prepares media for Nexgen: images, sounds and 3D models.\n"
+        "\n"
+        "  cook [options] <media folder> <new folder>    a folder, and all in it, under the same names\n"
+        "  cook [options] <file> [<file or folder>]      one file; a model becomes a .glb\n"
+        "\n"
+        "  -p, --platform NAME   desktop, or xboxog for the original Xbox (desktop if not said)\n"
+        "  -s, --skip WHAT       leave images, sounds or models as they are; can be given again\n"
+        "  -f, --force           do everything again, not only what changed\n"
+        "  -n, --dry-run         say what would be done, and write nothing\n"
+        "  -q, --quiet           only errors and the last line\n"
+        "  -j, --json            a line of JSON for each file, for other programs\n"
+        "  -h, --help\n"
+        "      --version\n"
+        "\n"
+        "Models: glTF (.glb, .gltf), FBX, OBJ, STL, PLY. Images: PNG, JPEG, TGA, BMP, GIF. Sounds: WAV, Ogg, MP3.\n"
+        "0 if all went well, 1 if something failed, 2 if it was asked wrongly.\n";
+
+    struct Options
+    {
+        bool xbox = false, force = false, dry = false, quiet = false, json = false;
+        bool images = true, sounds = true, models = true;
+        std::vector<std::string> paths;
+    };
+
+    Options g_options;
+
+    std::string quoted(const std::string& text)
+    {
+        std::string out = "\"";
+        for (const char c : text)
+        {
+            if (c == '"' || c == '\\')
+            {
+                out += '\\';
+            }
+            out += static_cast<unsigned char>(c) < 32 ? ' ' : c;
+        }
+        return out + "\"";
+    }
+
+    std::string utf8(const fs::path& path)
+    {
+        const auto text = path.generic_u8string();
+        return std::string(text.begin(), text.end());
+    }
+
+    // What was done with a file: "image", "sound", "model", "copied", "unchanged", "removed" or "failed".
+    void tell(const fs::path& name, const char* what, u64 before, u64 after, const std::string& why = "")
+    {
+        if (g_options.json)
+        {
+            printf("{\"file\":%s,\"what\":\"%s\",\"before\":%llu,\"after\":%llu%s%s}\n", quoted(utf8(name)).c_str(), what, static_cast<unsigned long long>(before), static_cast<unsigned long long>(after),
+                why.empty() ? "" : ",\"why\":", why.empty() ? "" : quoted(why).c_str());
+        }
+        else if (!why.empty())
+        {
+            fprintf(stderr, "%s: %s\n", utf8(name).c_str(), why.c_str());
+        }
+        else if (!g_options.quiet && strcmp(what, "unchanged") != 0)
+        {
+            printf("%-9s %s  %llu KB -> %llu KB\n", what, utf8(name).c_str(), static_cast<unsigned long long>((before + 1023) / 1024), static_cast<unsigned long long>((after + 1023) / 1024));
+        }
+        fflush(stdout);
+    }
+
+    // What to do with a file, and what comes of it. Nothing in `out`: it stays as it is.
+    const char* cookOne(const fs::path& source, const Bytes& in, Bytes& out, std::string& why)
+    {
+        const std::string extension = lower(utf8(source.extension()));
+        if (isImage(extension) && g_options.images)
+        {
+            if (!cookImage(in, g_options.xbox, out))
+            {
+                why = "the image can't be read, or is more than 2048 pixels a side";
+                return "failed";
+            }
+            return out.empty() ? "copied" : "image";
+        }
+        if (isSound(extension) && g_options.sounds)
+        {
+            if (!cookSound(in, extension != ".wav", out))
+            {
+                why = "the sound can't be read";
+                return "failed";
+            }
+            return out.empty() ? "copied" : "sound";
+        }
+        if (modelKindByName(utf8(source).c_str()) > ModelKind::Glb && g_options.models)
+        {
+            return cookModel(source, in, out, why) ? "model" : "failed";
+        }
+        return "copied";
+    }
+
+    // Written beside the old one and swapped in, so that stopping never leaves half a file.
+    bool writeAll(const fs::path& path, const Bytes& bytes)
+    {
+        std::error_code error;
+        fs::create_directories(path.parent_path(), error);
+        fs::path fresh = path;
+        fresh += ".new";
+        {
+            std::ofstream file(fresh, std::ios::binary | std::ios::trunc);
+            file.write(reinterpret_cast<const char*>(bytes.data()), static_cast<std::streamsize>(bytes.size()));
+            file.close();
+            if (!file)
+            {
+                return false;
+            }
+        }
+        fs::rename(fresh, path, error);
+        return !error;
+    }
+
+    int finish(const Totals& t)
+    {
+        if (g_options.json)
+        {
+            printf("{\"done\":true,\"cooked\":%u,\"copied\":%u,\"unchanged\":%u,\"removed\":%u,\"failed\":%u,\"before\":%llu,\"after\":%llu}\n", static_cast<unsigned>(t.done), static_cast<unsigned>(t.copied), static_cast<unsigned>(t.kept),
+                static_cast<unsigned>(t.removed), static_cast<unsigned>(t.failed), static_cast<unsigned long long>(t.before), static_cast<unsigned long long>(t.after));
+        }
+        else
+        {
+            printf("%u cooked, %u copied, %u unchanged, %u removed, %u failed; %u KB became %u KB\n", static_cast<unsigned>(t.done), static_cast<unsigned>(t.copied), static_cast<unsigned>(t.kept),
+                static_cast<unsigned>(t.removed), static_cast<unsigned>(t.failed), static_cast<unsigned>(t.before / 1024), static_cast<unsigned>(t.after / 1024));
+        }
+        return t.failed ? 1 : 0;
+    }
+
+    int stop(const std::string& why)
+    {
+        if (g_options.json)
+        {
+            printf("{\"error\":%s}\n", quoted(why).c_str());
+        }
+        fprintf(stderr, "%s\n", why.c_str());
+        return 1;
+    }
+
+    int cookFile(const fs::path& from, fs::path to)
+    {
+        const ModelKind kind = modelKindByName(utf8(from).c_str());
+        std::error_code error;
+        fs::path name = from.filename();
+        if (kind != ModelKind::None)
+        {
+            name.replace_extension(".glb");
+        }
+        to = to.empty() ? from.parent_path() / name : fs::is_directory(to, error) ? to / name : to;
+        if (fs::exists(to, error) && fs::equivalent(from, to, error))
+        {
+            return stop(utf8(to) + " would be written over itself: say what to make");
+        }
+        Bytes in, out;
+        std::string why;
+        Totals t;
+        const bool read = readAll(from, in);
+        const char* what = read ? cookOne(from, in, out, why) : "failed";
+        why = read ? why : "it can't be read";
+        const Bytes& write = out.empty() ? in : out;
+        if (strcmp(what, "failed") != 0 && !g_options.dry && !writeAll(to, write))
+        {
+            what = "failed";
+            why = utf8(to) + " can't be written";
+        }
+        const bool failed = strcmp(what, "failed") == 0;
+        t.failed = failed;
+        t.copied = strcmp(what, "copied") == 0;
+        t.done = !failed && !t.copied;
+        t.before = in.size();
+        t.after = failed ? 0 : write.size();
+        tell(failed ? from : to, what, t.before, t.after, why);
+        return finish(t);
+    }
+
+    int cookFolder(const fs::path& from, const fs::path& to)
     {
         std::error_code error;
         const fs::path inside = fs::weakly_canonical(to, error).lexically_relative(fs::weakly_canonical(from, error));
-        if (!fs::is_directory(from, error) || (!inside.empty() && *inside.begin() != ".."))
+        if (!inside.empty() && *inside.begin() != "..")
         {
-            NX_ERROR("%s must be a folder, and the one to make must be outside it", from.string().c_str());
-            return 1;
+            return stop("the folder to make must be outside " + utf8(from));
         }
-        fs::create_directories(to, error);
+        if (!g_options.dry)
+        {
+            fs::create_directories(to, error);
+        }
 
         // Never clear out a folder that something else made.
         const fs::path stamp = to / ".cooked";
-        const std::string stampText = "nexgen cook " + std::to_string(kVersion) + (powersOfTwo ? " xboxog\n" : " desktop\n");
+        const std::string skips = std::string(g_options.images ? "" : " -images") + (g_options.sounds ? "" : " -sounds") + (g_options.models ? "" : " -models");
+        const std::string stampText = "nexgen cook " + std::to_string(kVersion) + (g_options.xbox ? " xboxog" : " desktop") + skips + "\n";
         bool again = true;
         Bytes old;
         if (readAll(stamp, old))
         {
-            again = std::string(old.begin(), old.end()) != stampText;
+            again = g_options.force || std::string(old.begin(), old.end()) != stampText;
         }
-        else if (!fs::is_empty(to, error) || error)
+        else if (fs::exists(to, error) && !fs::is_empty(to, error))
         {
-            NX_ERROR("%s was not made by this tool: choose a new folder", to.string().c_str());
-            return 1;
+            return stop(utf8(to) + " was not made by this tool: choose a new folder");
         }
-        std::ofstream(stamp, std::ios::binary) << stampText;
+        if (!g_options.dry)
+        {
+            std::ofstream(stamp, std::ios::binary) << stampText;
+        }
+
+        std::vector<fs::path> sources;
+        for (auto it = fs::recursive_directory_iterator(from, error); !error && it != fs::recursive_directory_iterator(); it.increment(error))
+        {
+            if (it->is_regular_file(error))
+            {
+                sources.push_back(it->path());
+            }
+        }
+        if (error)
+        {
+            return stop(utf8(from) + ": " + error.message());
+        }
+        if (g_options.json)
+        {
+            printf("{\"files\":%u}\n", static_cast<unsigned>(sources.size()));
+            fflush(stdout);
+        }
 
         Totals totals;
         std::set<fs::path> made;
-        for (auto it = fs::recursive_directory_iterator(from, error); !error && it != fs::recursive_directory_iterator(); it.increment(error))
+        for (const fs::path& source : sources)
         {
-            if (!it->is_regular_file(error))
-            {
-                continue;
-            }
-            const fs::path source = it->path();
             const fs::path name = fs::relative(source, from, error);
             const fs::path target = to / name;
             made.insert(target.lexically_normal());
-            totals.before += fs::file_size(source, error);
+            const u64 size = fs::file_size(source, error);
+            totals.before += size;
             const auto sourceTime = fs::last_write_time(source, error);
             std::error_code missing;
             const auto targetTime = fs::last_write_time(target, missing);
             if (!again && !missing && targetTime >= sourceTime)
             {
                 totals.kept++;
-                totals.after += fs::file_size(target, error);
+                const u64 now = fs::file_size(target, error);
+                totals.after += now;
+                tell(name, "unchanged", size, now);
                 continue;
             }
             Bytes in, out;
-            const std::string extension = lower(name.extension().string());
-            bool ok = readAll(source, in);
-            if (ok && isImage(extension))
+            std::string why;
+            const char* what = "failed";
+            if (readAll(source, in))
             {
-                ok = cookImage(in, powersOfTwo, out);
+                what = cookOne(source, in, out, why);
             }
-            else if (ok && isSound(extension))
+            else
             {
-                ok = cookSound(in, extension != ".wav", out);
+                why = "it can't be read";
             }
-            if (!ok)
+            if (strcmp(what, "failed") == 0)
             {
-                NX_ERROR("cannot read %s", source.string().c_str());
+                // An old one would be taken for new.
+                if (!g_options.dry)
+                {
+                    fs::remove(target, error);
+                }
                 totals.failed++;
+                tell(name, what, size, 0, why);
+                continue;
             }
             const Bytes& write = out.empty() ? in : out;
-            (out.empty() ? totals.copied : totals.done)++;
-            fs::create_directories(target.parent_path(), error);
-            std::ofstream file(target, std::ios::binary | std::ios::trunc);
-            file.write(reinterpret_cast<const char*>(write.data()), static_cast<std::streamsize>(write.size()));
-            if (!file)
+            if (!g_options.dry && !writeAll(target, write))
             {
-                NX_ERROR("cannot write %s", target.string().c_str());
                 totals.failed++;
+                tell(name, "failed", size, 0, "it can't be written");
+                continue;
             }
+            (out.empty() ? totals.copied : totals.done)++;
             totals.after += write.size();
-        }
-        if (error)
-        {
-            NX_ERROR("%s: %s", from.string().c_str(), error.message().c_str());
-            return 1;
+            tell(name, what, size, write.size());
         }
 
         std::vector<fs::path> gone;
-        for (const auto& entry : fs::recursive_directory_iterator(to, error))
+        for (auto it = fs::recursive_directory_iterator(to, error); !error && it != fs::recursive_directory_iterator(); it.increment(error))
         {
-            if (entry.is_regular_file(error) && entry.path() != stamp && made.count(entry.path().lexically_normal()) == 0)
+            if (it->is_regular_file(error) && it->path() != stamp && made.count(it->path().lexically_normal()) == 0)
             {
-                gone.push_back(entry.path());
+                gone.push_back(it->path());
             }
         }
         for (const fs::path& path : gone)
         {
-            fs::remove(path, error);
+            std::error_code ignored;
+            const u64 size = fs::file_size(path, ignored);
+            if (!g_options.dry)
+            {
+                fs::remove(path, ignored);
+            }
             totals.removed++;
+            tell(fs::relative(path, to, ignored), "removed", size, 0);
         }
+        return finish(totals);
+    }
 
-        NX_INFO("%u cooked, %u copied, %u unchanged, %u removed, %u failed; %u KB became %u KB", static_cast<unsigned>(totals.done), static_cast<unsigned>(totals.copied),
-            static_cast<unsigned>(totals.kept), static_cast<unsigned>(totals.removed), static_cast<unsigned>(totals.failed),
-            static_cast<unsigned>(totals.before / 1024), static_cast<unsigned>(totals.after / 1024));
-        return totals.failed ? 1 : 0;
+    int wrong(const std::string& why)
+    {
+        fprintf(stderr, "%s\ncook --help says what can be asked.\n", why.c_str());
+        return 2;
     }
 }
 
 int main(int argc, char** argv)
 {
-    if (argc != 5 || strcmp(argv[1], "--platform") != 0 || (strcmp(argv[2], "xboxog") != 0 && strcmp(argv[2], "desktop") != 0))
+    Options& o = g_options;
+    for (int i = 1; i < argc; i++)
     {
-        NX_ERROR("usage: cook --platform xboxog|desktop <media folder> <folder to make>");
-        return 2;
+        const std::string a = argv[i];
+        const auto is = [&](const char* small, const char* full) { return a == small || a == full; };
+        if (is("-h", "--help"))
+        {
+            fputs(kHelp, stdout);
+            return 0;
+        }
+        if (a == "--version")
+        {
+            printf("Nexgen cook %s, format %u\n", NX_VERSION, static_cast<unsigned>(kVersion));
+            return 0;
+        }
+        if (is("-p", "--platform") || is("-s", "--skip"))
+        {
+            const std::string value = i + 1 < argc ? argv[++i] : "";
+            if (is("-p", "--platform"))
+            {
+                if (value != "xboxog" && value != "desktop")
+                {
+                    return wrong("the platform is desktop or xboxog, not \"" + value + "\"");
+                }
+                o.xbox = value == "xboxog";
+                continue;
+            }
+            bool* which = value == "images" ? &o.images : value == "sounds" ? &o.sounds : value == "models" ? &o.models : nullptr;
+            if (which == nullptr)
+            {
+                return wrong("what can be skipped is images, sounds or models, not \"" + value + "\"");
+            }
+            *which = false;
+        }
+        else if (is("-f", "--force")) o.force = true;
+        else if (is("-n", "--dry-run")) o.dry = true;
+        else if (is("-q", "--quiet")) o.quiet = true;
+        else if (is("-j", "--json")) o.json = true;
+        else if (a.size() > 1 && a[0] == '-')
+        {
+            return wrong(a + " isn't an option");
+        }
+        else
+        {
+            o.paths.push_back(a);
+        }
     }
-    return cook(argv[3], argv[4], strcmp(argv[2], "xboxog") == 0);
+    if (o.paths.empty() || o.paths.size() > 2)
+    {
+        return wrong("a folder and a folder to make, or a file, must be given");
+    }
+    setLogSink([](LogLevel, const char*) {});   // what went wrong is told with the file it was in
+    std::error_code error;
+    const auto path = [](const std::string& text) { return fs::path(std::u8string(text.begin(), text.end())); };
+    const fs::path from = path(o.paths[0]);
+    if (fs::is_directory(from, error))
+    {
+        return o.paths.size() == 2 ? cookFolder(from, path(o.paths[1])) : wrong("the folder to make must be given too");
+    }
+    if (!fs::is_regular_file(from, error))
+    {
+        return stop(o.paths[0] + " isn't there");
+    }
+    return cookFile(from, o.paths.size() == 2 ? path(o.paths[1]) : fs::path());
 }

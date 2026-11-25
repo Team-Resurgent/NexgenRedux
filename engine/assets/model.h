@@ -1,11 +1,12 @@
 #pragma once
 
 #include "assets/geometry.h"
+#include "assets/import.h"
 
 namespace nx
 {
     constexpr u32 kModelDetails = 3;   // levels, the first the whole model
-    constexpr u32 kModelBones = 64;
+    constexpr u32 kModelBones = 128;
 
     // Some triangles of one material.
     struct ModelPart
@@ -76,6 +77,7 @@ namespace nx
         GrowArray<ModelTexture, MemTag::General> textures;
         Vec3 middle;
         float radius = 0;
+        Vec3 low, high;                      // a box around it, at rest
         gpu::Mesh gpuMesh;
         size_t bytes = 0;
 
@@ -88,9 +90,10 @@ namespace nx
         void bend(const Mat4* bones, gpu::MeshVertex* out) const;
     };
 
-    // A .glb, or a .gltf with everything inside it. nullptr, with the reason logged, if it can't be used.
+    // A .glb, or another kind that import.h turns into one, with the files it names read by `read`. nullptr,
+    // with the reason logged, if it can't be used.
     // On a worker thread: nothing of it touches the GPU.
-    ModelData* loadModel(const u8* file, size_t size, const char* name);
+    ModelData* loadModel(const u8* file, size_t size, const char* name, ReadBeside read = nullptr, void* user = nullptr);
 
     // Moves it to the GPU. False if there is no room.
     bool uploadModel(ModelData& model, gpu::Device& device);

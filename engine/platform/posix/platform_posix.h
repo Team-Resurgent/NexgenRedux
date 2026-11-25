@@ -17,7 +17,7 @@ namespace nx
         void removeSave(const char* name) override;
         bool setSaveFolder(const char* path) override;
         bool writeFile(const char* path, const void* data, size_t size) override;
-        void listFolders(const char* path, FolderCallback callback, void* user) override;
+        void list(const char* path, bool folders, FolderCallback callback, void* user) override;
         u64 totalMemory() override;
         u64 freeMemory() override;
 

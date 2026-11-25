@@ -825,13 +825,16 @@ NX_TEST(thingsComeFromFiles)
     p.space.setGround(0);
     p.rig.platform.extraPath = "region.json";
     p.rig.platform.extraText = R"({ "entities": [
-        { "shape": "box", "color": "#ff0000", "place": [1, 2, 3], "cube": [1, 1, 1], "mass": 2, "name": "crate" },
+        { "shape": "box", "color": "#ff0000", "place": [1, 2, 3], "cube": [1, 1, 1], "mass": 2, "name": "crate", "sway": 0.2 },
         { "model": "global:model/rock.glb", "place": [4, 0, 0], "onLand": true, "angles": 90, "size": 2, "sphere": 0.8, "wall": true, "group": 2 },
         { "light": [1, 1, 0.5], "range": 6, "glow": 2 } ] })";
     NX_EXPECT(p.space.load("region.json", "showcase/shapes", { 10, 0, 0 }, true) == 3);
     const u32 crate = p.world.findNamed("crate");
     NX_EXPECT(crate && close(p.at(crate), { 11, 2, 3 }));
     NX_EXPECT(p.space.getBody(crate)->mass == 2 && p.space.getBody(crate)->gravity == 1);
+    NX_EXPECT(p.space.getAppearance(crate) && fabsf(p.space.getAppearance(crate)->sway - 0.2f) < 1e-5f);
+    // Leaning in the wind is only how it is drawn: where it is stays the same.
+    p.space.setWind({ 3, 0, 0 });
     p.step(120);
     NX_EXPECT(fabsf(p.at(crate).y - 0.5f) < 0.02f);
     p.rig.platform.extraText = R"({ "entities": [
@@ -846,7 +849,7 @@ NX_TEST(thingsComeFromFiles)
 NX_TEST(everyModelCanBeUsed)
 {
     Place p;
-    for (const char* name : { "robot", "house", "well", "lantern", "pine", "oak", "bush", "rock", "crystal", "mushroom" })
+    for (const char* name : { "robot", "house", "well", "lantern", "pine", "oak", "bush", "rock", "crystal", "mushroom", "grass" })
     {
         char path[96];
         snprintf(path, sizeof(path), "global/model/%s.glb", name);

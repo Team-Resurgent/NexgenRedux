@@ -246,6 +246,8 @@ namespace nx
         bool getStreamed(const EntityRef* e) { const Spatial* s = someSpatial(e); return s && s->streamed; }
         Vec3 getColliderAt(const EntityRef* e) { const Collider3* c = e->world ? e->world->space().getCollider(e->id) : nullptr; return c ? c->middle : Vec3(); }
         void setShine(float v, EntityRef* e) { if (Appearance* a = lookOf(e)) a->shine = v; }
+        float getSway(const EntityRef* e) { const Appearance* a = someLook(e); return a ? a->sway : 0; }
+        void setSway(float v, EntityRef* e) { if (Appearance* a = lookOf(e)) a->sway = v; }
         void setGlowing(float v, EntityRef* e) { if (Appearance* a = lookOf(e)) a->glow = v; }
         void setTwoSided(bool v, EntityRef* e) { if (Appearance* a = lookOf(e)) a->twoSided = v; }
         void setShadow(bool v, EntityRef* e) { if (Appearance* a = lookOf(e)) a->casts = v; }
@@ -322,6 +324,8 @@ namespace nx
         void spaceAmbient(const Color& sky, const Color& ground) { space().setAmbient(sky, ground); }
         void spaceSky(const Color& top, const Color& horizon) { space().setSky(top, horizon); }
         void spaceFog(const Color& color, float start, float end) { space().setFog(color, start, end); }
+        Vec3 spaceWind() { return space().wind(); }
+        void spaceSetWind(const Vec3& v) { space().setWind(v); }
         bool spaceLines() { return space().lines(); }
         void spaceSetLines(bool v) { space().setLines(v); }
         void spaceShadows(float strength, float distance) { space().setShadows(strength, distance); }
@@ -546,6 +550,8 @@ namespace nx
         b.method("void glow(float size, const Color &in color)", NX_OBJ_LAST(entityGlow), "Looks like a soft ball of light. `light` is what lights other things.");
         b.method("void skin(Texture@+ texture, bool repeat = false)", NX_OBJ_LAST(entitySkin), "Puts an image on it, instead of any of the model's own.");
         b.method("void effect(Effect@+ effect)", NX_OBJ_LAST(entityEffect), "Colours it, and may move its corners, with a shader of your own; null for none. Where there are no shaders it stays as it is.");
+        b.method("float get_sway() const property", NX_OBJ_LAST(getSway), "How far the wind leans it: for each metre of height, at the strongest gust. 0.03 suits a tree, 0.1 grass.");
+        b.method("void set_sway(float) property", NX_OBJ_LAST(setSway), "How far the wind leans it: for each metre of height, at the strongest gust. 0.03 suits a tree, 0.1 grass.");
         b.method("float get_shine() const property", NX_OBJ_LAST(getShine), "How much it shows a highlight from the sun.");
         b.method("void set_shine(float) property", NX_OBJ_LAST(setShine), "How much it shows a highlight from the sun, 0 to 1.");
         b.method("float get_glowing() const property", NX_OBJ_LAST(getGlowing), "How bright it is by itself.");
@@ -603,6 +609,8 @@ namespace nx
         b.function("void ambient(const Color &in sky, const Color &in ground)", NX_FN(spaceAmbient), "Light from everywhere: on what faces up, and on what faces down.");
         b.function("void sky(const Color &in top, const Color &in horizon)", NX_FN(spaceSky), "Draws a sky, with the sun in it. Without one, what is on the canvas already is behind.");
         b.function("void fog(const Color &in color, float start, float end)", NX_FN(spaceFog), "Hides what is far away.");
+        b.function("Vec3 get_wind() property", NX_FN(spaceWind), "Which way the wind blows, and how hard: 1 is a breeze. Things with `sway` lean with it.");
+        b.function("void set_wind(const Vec3 &in) property", NX_FN(spaceSetWind), "Which way the wind blows, and how hard: 1 is a breeze; nothing still air. Things with `sway` lean with it.");
         b.function("bool get_lines() property", NX_FN(spaceLines), "Whether only the edges of triangles are drawn.");
         b.function("void set_lines(bool) property", NX_FN(spaceSetLines), "Draws only those, to see how things are made.");
         b.function("void shadows(float strength, float distance = 40)", NX_FN(spaceShadows), "How dark they are, 0 to 1, and how far they reach. Simple ones are drawn where the GPU can't do real ones.");

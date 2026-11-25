@@ -192,11 +192,12 @@ namespace nx
                     }
                 }
             }
-            else if (is("shine") || is("glowing") || is("twoSided") || is("shadow"))
+            else if (is("shine") || is("glowing") || is("twoSided") || is("shadow") || is("sway"))
             {
                 if (Appearance* a = appearance(id))
                 {
                     a->shine = is("shine") ? v.number() : a->shine;
+                    a->sway = is("sway") ? v.number() : a->sway;
                     a->glow = is("glowing") ? v.number() : a->glow;
                     a->twoSided = is("twoSided") ? v.flag() : a->twoSided;
                     a->casts = is("shadow") ? v.flag() : a->casts;

@@ -703,6 +703,20 @@ namespace nx
         const Mat4& world = m_spatials[m_world.m_entities[a.owner].parts3[0]].world;
         gpu::MeshDraw draw;
         draw.world = world;
+        if (a.sway != 0 && (m_wind.x != 0 || m_wind.z != 0))
+        {
+            // Leant downwind, more the higher up: the base stays where it is. Gusts roll along the way the wind
+            // blows, so a wood moves as a wave, and a sheared matrix needs nothing of the device.
+            const float along = (world.m[12] * m_wind.x + world.m[14] * m_wind.z) * 0.12f;
+            const float t = view.time;
+            const float gust = (sinf(t * 1.3f - along) * 0.55f + sinf(t * 2.9f - along * 1.7f + world.m[12]) * 0.2f + 0.35f) * a.sway;
+            const float kx = gust * m_wind.x, kz = gust * m_wind.z;
+            for (u32 c = 0; c < 3; c++)
+            {
+                draw.world.m[c * 4 + 0] += kx * world.m[c * 4 + 1];
+                draw.world.m[c * 4 + 2] += kz * world.m[c * 4 + 1];
+            }
+        }
         draw.color = a.color;
         draw.glow = a.glow;
         draw.shine = a.shine;

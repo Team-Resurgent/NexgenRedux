@@ -278,6 +278,28 @@ def bush(rng):
     return m.flat()
 
 
+def grass(rng):
+    # Thin blades from one spot, each bending outwards: dark at the root, light at the tip. Their normals
+    # point up, so a tuft is lit as the land under it is.
+    m = Mesh()
+    for i in range(18):
+        a = rng.uniform(0, math.tau)
+        out = rng.uniform(0.02, 0.12)
+        tall = rng.uniform(0.3, 0.6)
+        lean = rng.uniform(0.08, 0.22)
+        wide = rng.uniform(0.025, 0.04)
+        bx, bz = math.cos(a) * out, math.sin(a) * out
+        sx, sz = -math.sin(a) * wide, math.cos(a) * wide
+        dx, dz = math.cos(a), math.sin(a)
+        mid = (bx + dx * lean * 0.35, tall * 0.55, bz + dz * lean * 0.35)
+        tip = (bx + dx * lean, tall, bz + dz * lean)
+        pts = [(bx - sx, 0, bz - sz), (bx + sx, 0, bz + sz), (mid[0] + sx * 0.6, mid[1], mid[2] + sz * 0.6), (mid[0] - sx * 0.6, mid[1], mid[2] - sz * 0.6), tip]
+        g = rng.uniform(-0.04, 0.04)
+        root, middle, top = (0.17, 0.3 + g, 0.1, 1), (0.3, 0.48 + g, 0.17, 1), (0.52, 0.7 + g, 0.3, 1)
+        m.add(pts, [(0, 1, 0)] * 5, [root, root, middle, middle, top], [[0, 1, 2], [0, 2, 3], [3, 2, 4]])
+    return m
+
+
 def rock(rng):
     m = Mesh()
     put(m, rough(ball(1, 9, 0.72), 0.2, rng), (0.45, 0.44, 0.43, 1), (0, 0.35, 0))
@@ -547,6 +569,7 @@ def main():
     save('gate', gate())
     save('campfire', [(campfire(), matter())])
     robot()
+    save('grass', [(grass(np.random.default_rng(11)), matter(two_sided=True))])
 
 
 if __name__ == '__main__':

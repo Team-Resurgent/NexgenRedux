@@ -292,6 +292,10 @@ when someone goes into them, or a shot lands in them: show or hide a thing, swit
 tell the screen, through `level.onTouch`. **Ways out** lead to another scene, to an **arrival** of a name there. The HUD shows
 bars and text by name, set with `level.set`. On endless land, what is in each region comes and goes with it.
 
+The **Lost key** showcase is a whole game made this way: two scene files, a village at dusk and an island at night, say what is
+where, which trigger opens the stone ring and what the HUD shows. Its script only walks, follows, keeps the score, and remembers
+what was taken so it stays gone when you go back.
+
 ### Land by hand
 
 Land that has an end can be changed, while a game runs too, and things on it follow:
@@ -311,6 +315,13 @@ like anything. Road pieces (`road-straight`, `road-bend`, `road-t`, `road-cross`
 can't be seen at the sides of the land.
 
 `Space::lines = true` draws only the edges of triangles, to see how things are made.
+
+### Wind
+
+Plants lean with the wind: give a thing a `sway`, how far its top moves for each metre of height (about 0.02 for a tree, 0.15 for
+`global:model/grass.glb`), or `"sway"` in a scene file. `Space::wind = Vec3(1, 0, 0.4f)` says which way it blows and how hard, and
+gusts roll across a wood as a wave. The base stays where it is, it is only how things are drawn, and it costs the same on every
+platform. The editor gives trees, bushes and grass their sway when they are added.
 
 ### Files that players bring
 

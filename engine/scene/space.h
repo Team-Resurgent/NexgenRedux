@@ -120,6 +120,7 @@ namespace nx
         gpu::Blend blend;
         gpu::Color color;
         float glow, shine;
+        float sway;            // how far the wind leans its top, for each metre of height
         u8 detail;             // the level it was last drawn at
         // Movement of a model that bends.
         int animation, before;
@@ -258,6 +259,9 @@ namespace nx
         void setSky(const gpu::Color& top, const gpu::Color& horizon) { m_skyTop = top; m_skyHorizon = horizon; m_hasSky = true; }
         void setFog(const gpu::Color& color, float start, float end) { m_fog = color; m_fogStart = start; m_fogEnd = end; }
         // Only edges, to see how things are made.
+        // Which way the wind blows, and how hard: 1 is a breeze.
+        void setWind(const Vec3& wind) { m_wind = wind; }
+        Vec3 wind() const { return m_wind; }
         void setLines(bool lines) { m_lines = lines; }
         bool lines() const { return m_lines; }
         void setShadows(float strength, float distance) { m_shadowStrength = strength; m_shadowDistance = distance; }
@@ -596,6 +600,7 @@ namespace nx
         gpu::Color m_waterColor = { 0.15f, 0.35f, 0.5f, 0.75f };
         Vec3 m_gravity = { 0, -9.8f, 0 };
         float m_time = 0;
+        Vec3 m_wind = { 0.94f, 0, 0.34f };
 
         bool m_landOn = false, m_island = false, m_started = false;
         u32 m_landSquares = 0;       // 0: endless

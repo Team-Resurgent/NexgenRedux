@@ -227,6 +227,8 @@ Actions are `up`, `down`, `left`, `right`, `accept`, `cancel`, `fire`, `alternat
 | `bool Input::get_hasMouse() property` | Whether a mouse has moved. |
 | `Vec2 Input::get_mouse() property` | Where the mouse is, in design units. |
 | `bool Input::mouseDown(uint button)` | Left is 0, right 1, middle 2. |
+| `Vec2 Input::get_mouseMove() property` | How far the mouse has just moved, in design units, even while it is locked. |
+| `void Input::lockMouse(bool locked)` | Hides the pointer and keeps it in the window, for looking about. It is let go when the window is left, and when the screen closes. |
 | `float Input::get_wheel() property` | How far the mouse's wheel has just turned: up is more than 0. |
 | `bool Input::key(const string &in name)` | Whether a key is down, by its name: `A`, `1`, `Up`, `Space`, `Shift`, `Control`. Not while someone is typing. Actions are better for playing with, as they can be changed. |
 | `bool Input::padConnected(uint pad)` | Whether a gamepad (0 to 3) is plugged in. |
@@ -525,6 +527,8 @@ Entities that move, collide and are drawn by the engine. Each screen has its own
 | `void glow(float size, const Color &in color)` | Looks like a soft ball of light. `light` is what lights other things. |
 | `void skin(Texture@+ texture, bool repeat = false)` | Puts an image on it, instead of any of the model's own. |
 | `void effect(Effect@+ effect)` | Colours it, and may move its corners, with a shader of your own; null for none. Where there are no shaders it stays as it is. |
+| `float get_sway() const property` | How far the wind leans it: for each metre of height, at the strongest gust. 0.03 suits a tree, 0.1 grass. |
+| `void set_sway(float) property` | How far the wind leans it: for each metre of height, at the strongest gust. 0.03 suits a tree, 0.1 grass. |
 | `float get_shine() const property` | How much it shows a highlight from the sun. |
 | `void set_shine(float) property` | How much it shows a highlight from the sun, 0 to 1. |
 | `float get_glowing() const property` | How bright it is by itself. |
@@ -595,6 +599,8 @@ The scene in three dimensions: x right, y up, z towards you, in metres. Entities
 | `void Space::ambient(const Color &in sky, const Color &in ground)` | Light from everywhere: on what faces up, and on what faces down. |
 | `void Space::sky(const Color &in top, const Color &in horizon)` | Draws a sky, with the sun in it. Without one, what is on the canvas already is behind. |
 | `void Space::fog(const Color &in color, float start, float end)` | Hides what is far away. |
+| `Vec3 Space::get_wind() property` | Which way the wind blows, and how hard: 1 is a breeze. Things with `sway` lean with it. |
+| `void Space::set_wind(const Vec3 &in) property` | Which way the wind blows, and how hard: 1 is a breeze; nothing still air. Things with `sway` lean with it. |
 | `bool Space::get_lines() property` | Whether only the edges of triangles are drawn. |
 | `void Space::set_lines(bool) property` | Draws only those, to see how things are made. |
 | `void Space::shadows(float strength, float distance = 40)` | How dark they are, 0 to 1, and how far they reach. Simple ones are drawn where the GPU can't do real ones. |
@@ -614,7 +620,7 @@ The scene in three dimensions: x right, y up, z towards you, in metres. Entities
 | `void Space::landColors(const Color &in low, const Color &in middle, const Color &in high, const Color &in steep, float lowHeight, float highHeight)` | Colours them by height and slope. |
 | `void Space::flatten(float x, float z, float radius)` | Levels the land around a place, to build on. |
 | `void Space::flatten(float x, float z, float radius, float height)` | The same, to a height. |
-| `void Space::raise(float x, float z, float radius, float by)` | Raises the land by hand, most in the middle; lowers it if that is less than 0. For land that has an end. |
+| `void Space::raise(float x, float z, float radius, float by)` | Raises the land by hand, most in the middle; lowers it if that is less than 0. Endless land too, and what is done is kept when it goes. |
 | `void Space::smooth(float x, float z, float radius, float amount)` | Wears it down towards what is round about: from 0, nothing, to 1. |
 | `void Space::level(float x, float z, float radius, float height, float amount)` | Brings it nearer to a height: from 0, nothing, to 1, all the way. Over what flatten() did. |
 | `void Space::paint(float x, float z, float radius, const Color &in color, float amount)` | Colours it. A clear colour takes paint away. |
@@ -623,7 +629,7 @@ The scene in three dimensions: x right, y up, z towards you, in metres. Entities
 | `void Space::set_edges(bool) property` | Puts walls there, that can't be seen: nothing with a collider that moves can leave the land. |
 | `void Space::skyPicture(Texture@+ picture)` | A picture all round, twice as wide as high, instead of the sky's colours. Null for none. |
 | `string Space::get_landEdits() property` | All that was raised and painted by hand, as text to keep. Empty if there is nothing. |
-| `bool Space::restoreLand(const string &in edits)` | Puts all that back, instead of what there is, on land of as many squares. False if it doesn't fit. |
+| `bool Space::restoreLand(const string &in edits)` | Puts all that back, instead of what there is. False if it is damaged. |
 | `float Space::height(float x, float z)` | How high the land or the ground is. Far below if there is none. |
 | `Vec3 Space::normal(float x, float z)` | Which way it faces there. |
 | `float Space::get_landSize() property` | Metres along a side. Its middle is at 0, 0. |

@@ -372,6 +372,65 @@ def surfaces(rng):
     png('picture', 'planks', boards * (0.92 + 0.08 * np.sin(x / 9.0 + 5 * grain * 3))[..., None])
 
 
+
+# --- Roads, as tiles of 8 metres: their sides at x or z of 4 ---
+
+ASPHALT, KERB, LINE, SIDE = (0.24, 0.25, 0.27), (0.75, 0.74, 0.70), (0.93, 0.92, 0.85), (0.56, 0.55, 0.52)
+
+
+def tile(kind, rng):
+    """Seen from above: a grid of cells, each road, kerb or pavement; and white lines down the middle."""
+    m = Mesh()
+    n = 32
+    cell = 8 / n
+
+    def what(x, z):
+        # x, z from -4 to 4: how far from the middle of each way it goes.
+        ways = {'straight': [(0, 1)], 'end': [(0, 1)], 'bend': [(1, 0), (0, 1)], 't': [(0, 1), (1, 0)], 'cross': [(0, 1), (1, 0)]}[kind]
+        near = 9
+        for wx, wz in ways:
+            if kind == 'bend':
+                # About the corner at x 4, z 4.
+                near = min(near, abs(math.hypot(x - 4, z - 4) - 4))
+            elif (wx, wz) == (0, 1):
+                near = min(near, abs(x) if (kind != 'end' or z > -1.0) else math.hypot(x, z + 1.0))
+            elif kind == 't':
+                near = min(near, abs(z) if x > 0 else 9)
+            else:
+                near = min(near, abs(z))
+        return near
+    kinds = [[None] * n for _ in range(n)]
+    for i in range(n):
+        for k in range(n):
+            x, z = -4 + (i + 0.5) * cell, -4 + (k + 0.5) * cell
+            d = what(x, z)
+            line = d < 0.1 and kind not in ('end', 'cross') and int(z + 8) % 2 == 0 and (kind != 't' or x < -2.8 or x > 2.8 or True)
+            kinds[i][k] = LINE if line else ASPHALT if d < 2.8 else KERB if d < 3.05 else SIDE
+    high = lambda c: 0.0 if c in (ASPHALT, LINE) else 0.12
+    # Runs of the same along z, each one quad.
+    for i in range(n):
+        k = 0
+        while k < n:
+            e = k
+            while e + 1 < n and kinds[i][e + 1] == kinds[i][k]:
+                e += 1
+            c, y = kinds[i][k], high(kinds[i][k])
+            x0, x1, z0, z1 = -4 + i * cell, -4 + (i + 1) * cell, -4 + k * cell, -4 + (e + 1) * cell
+            m.add([(x0, y, z0), (x1, y, z0), (x1, y, z1), (x0, y, z1)], [(0, 1, 0)] * 4, c + (1,), [(0, 2, 1), (0, 3, 2)])
+            k = e + 1
+    # Where the kerb steps up.
+    for i in range(n):
+        for k in range(n):
+            for di, dk in ((1, 0), (0, 1)):
+                if i + di < n and k + dk < n and high(kinds[i][k]) != high(kinds[i + di][k + dk]):
+                    x, z = -4 + (i + di) * cell, -4 + (k + dk) * cell
+                    a2, b2 = ((x, z), (x, z + cell)) if di else ((x, z), (x + cell, z))
+                    m.add([(a2[0], 0, a2[1]), (b2[0], 0, b2[1]), (b2[0], 0.12, b2[1]), (a2[0], 0.12, a2[1])], [(0, 1, 0)] * 4, KERB + (1,), [(0, 1, 2), (0, 2, 3)])
+    # Underneath, so that it isn't seen through from below a slope.
+    m.add([(-4, -0.3, -4), (4, -0.3, -4), (4, -0.3, 4), (-4, -0.3, 4)], [(0, -1, 0)] * 4, SIDE + (1,), [(0, 1, 2), (0, 2, 3)])
+    return m
+
+
 def main():
     rng = np.random.default_rng(11)
     two = matter(two_sided=True)
@@ -392,6 +451,8 @@ def main():
     save('bridge', [(bridge(), matter())])
     save('column', [(column(), matter())])
     save('wall', [(solid(4, 2.5, 0.4, (0.6, 0.55, 0.48, 1)), matter())])
+    for kind in ('straight', 'bend', 't', 'cross', 'end'):
+        save('road-' + kind, [(tile(kind, rng), matter(two_sided=True))])
     skies(rng)
     surfaces(rng)
 

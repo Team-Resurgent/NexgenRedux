@@ -283,7 +283,7 @@ Space::restoreLand(kept);                            // on land of as many squar
 
 `Space::hole(x, z, 3)` opens the land, so that there can be something under it: the cave pieces in `global:model` (`cave-mouth`,
 `cave-tunnel`, `cave-bend`, `cave-slope`, `cave-room` and `cave-end`) meet on a grid of 4 metres. A model of your own whose name begins with one of those joins them in the editor, so an entrance can look
-like anything. The sun doesn't reach what has a material whose name begins with `indoors`. `Space::edges = true` puts walls that
+like anything. Road pieces (`road-straight`, `road-bend`, `road-t`, `road-cross` and `road-end`) meet on a grid of 8 metres. The sun doesn't reach what has a material whose name begins with `indoors`. `Space::edges = true` puts walls that
 can't be seen at the sides of the land.
 
 `Space::lines = true` draws only the edges of triangles, to see how things are made.

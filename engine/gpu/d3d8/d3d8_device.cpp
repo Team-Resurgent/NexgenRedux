@@ -27,6 +27,8 @@ namespace nx::gpu
             PipelineDesc desc;
         };
 
+        constexpr u32 kShadowSide = 1024;
+
         constexpr DWORD kMeshFormat = D3DFVF_XYZ | D3DFVF_NORMAL | D3DFVF_DIFFUSE | D3DFVF_TEX1;
 
         struct MeshSlot
@@ -100,10 +102,22 @@ namespace nx::gpu
                     m_device->SetTexture(0, nullptr);
                     m_device->SetStreamSource(0, nullptr, 0);
                     m_device->SetIndices(nullptr, 0);
+                    m_device->SetPixelShader(0);
+                    if (m_shadowShader)
+                    {
+                        m_device->DeletePixelShader(m_shadowShader);
+                    }
                 }
                 m_buffers.forEach([](BufferSlot& b) { b.buffer->Release(); });
                 m_textures.forEach([](TextureSlot& t) { t.texture->Release(); });
                 m_meshes.forEach([](MeshSlot& m) { releaseMesh(m); });
+                for (IDirect3DTexture8* t : { m_shadowColor, m_shadowDepth })
+                {
+                    if (t)
+                    {
+                        t->Release();
+                    }
+                }
                 for (IDirect3DVertexBuffer8* stream : m_streams)
                 {
                     if (stream)
@@ -174,6 +188,7 @@ namespace nx::gpu
                         return false;
                     }
                 }
+                makeShadowShader();
                 const u8 white[4] = { 255, 255, 255, 255 };
                 m_white = createTexture(rgbaTexture(white, 1, 1));
                 return static_cast<bool>(m_white);
@@ -402,6 +417,12 @@ namespace nx::gpu
                 m_device->SetTextureStageState(0, D3DTSS_ADDRESSV, D3DTADDRESS_CLAMP);
                 m_device->SetTextureStageState(1, D3DTSS_COLOROP, D3DTOP_DISABLE);
                 m_device->SetTextureStageState(1, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
+                m_device->SetTextureStageState(2, D3DTSS_COLOROP, D3DTOP_DISABLE);
+                m_device->SetTextureStageState(2, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
+                m_device->SetTextureStageState(2, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_DISABLE);
+                m_device->SetTextureStageState(1, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_DISABLE);
+                m_device->SetTextureStageState(1, D3DTSS_TEXCOORDINDEX, 1);
+                m_device->SetTextureStageState(2, D3DTSS_TEXCOORDINDEX, 2);
                 m_device->SetTextureStageState(0, D3DTSS_MIPFILTER, D3DTEXF_NONE);
                 m_device->SetPixelShader(0);
                 m_device->SetVertexShader(kVertexFormat);
@@ -571,6 +592,16 @@ namespace nx::gpu
                     m_current.rejected++;
                     return;
                 }
+                if (m_inShadows)
+                {
+                    m_device->SetTransform(D3DTS_WORLD, reinterpret_cast<const D3DMATRIX*>(draw.world.m));
+                    m_device->SetStreamSource(0, m->vertices[m->current], sizeof(MeshVertex));
+                    m_device->SetIndices(m->indices, 0);
+                    m_device->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, m->vertexCount, draw.first, count / 3);
+                    m_current.draws++;
+                    m_current.triangles += count / 3;
+                    return;
+                }
                 useMeshes();
                 if (m_boundTexture != handle)
                 {
@@ -582,9 +613,19 @@ namespace nx::gpu
                 m_device->SetTextureStageState(0, D3DTSS_ADDRESSV, address);
                 m_device->SetTextureStageState(0, D3DTSS_MIPFILTER, draw.repeat ? D3DTEXF_LINEAR : D3DTEXF_NONE);
                 // The tint multiplies everything, after the lights.
-                m_device->SetRenderState(D3DRS_TEXTUREFACTOR, packed(draw.color));
                 const bool lit = draw.lit && draw.glow < 1;
+                // What is solid has no use for its alpha, so that says how dark a shadow is.
+                const bool shaded = m_shadowed && lit && draw.blend == Blend::None;
+                m_device->SetRenderState(D3DRS_TEXTUREFACTOR, packed(draw.color));
                 m_device->SetRenderState(D3DRS_LIGHTING, lit);
+                // The same as the stages do, and then some of the sun's light away.
+                m_device->SetPixelShader(shaded ? m_shadowShader : 0);
+                if (shaded)
+                {
+                    const float shade = m_shade * (1 - draw.glow);
+                    const float constants[2][4] = { { draw.color.r, draw.color.g, draw.color.b, draw.color.a }, { shade, shade, shade, 1 } };
+                    m_device->SetPixelShaderConstant(0, constants, 2);
+                }
                 if (lit)
                 {
                     D3DMATERIAL8 material = {};
@@ -627,8 +668,90 @@ namespace nx::gpu
 
             bool drawSky() override { return false; }
             bool drawField(const Field&) override { return false; }
-            bool beginShadows(const Mat4&) override { return false; }
-            void endShadows() override {}
+            // From the sun, into a depth texture, which the GPU compares as it reads it.
+            bool beginShadows(const Mat4& sun) override
+            {
+                NX_ASSERT(m_inFrame);
+                if (!m_shadowsTried)
+                {
+                    // Only once something has shadows: they take a megabyte.
+                    m_shadowsTried = true;
+                    if (FAILED(m_device->CreateTexture(kShadowSide, kShadowSide, 1, D3DUSAGE_RENDERTARGET, D3DFMT_LIN_R5G6B5, D3DPOOL_DEFAULT, &m_shadowColor)) ||
+                        FAILED(m_device->CreateTexture(kShadowSide, kShadowSide, 1, D3DUSAGE_DEPTHSTENCIL, D3DFMT_LIN_D16, D3DPOOL_DEFAULT, &m_shadowDepth)))
+                    {
+                        NX_WARN("d3d8: no memory for shadows");
+                    }
+                }
+                if (m_shadowDepth == nullptr || m_shadowColor == nullptr)
+                {
+                    return false;
+                }
+                IDirect3DSurface8* color = nullptr;
+                IDirect3DSurface8* depth = nullptr;
+                m_device->GetRenderTarget(&m_savedColor);
+                m_device->GetDepthStencilSurface(&m_savedDepth);
+                m_shadowColor->GetSurfaceLevel(0, &color);
+                m_shadowDepth->GetSurfaceLevel(0, &depth);
+                // It can't be read while it is written.
+                m_device->SetTexture(2, nullptr);
+                const bool ok = SUCCEEDED(m_device->SetRenderTarget(color, depth));
+                color->Release();
+                depth->Release();
+                if (!ok)
+                {
+                    endShadows();
+                    return false;
+                }
+                m_mode = Mode::None;
+                flatState();
+                // A clear edge, which is what there is beyond it.
+                const D3DVIEWPORT8 all = { 0, 0, kShadowSide, kShadowSide, 0.0f, 1.0f };
+                m_device->SetViewport(&all);
+                m_device->SetScissors(0, FALSE, nullptr);
+                m_device->Clear(0, nullptr, D3DCLEAR_ZBUFFER, 0, 1.0f, 0);
+                const D3DVIEWPORT8 within = { 2, 2, kShadowSide - 4, kShadowSide - 4, 0.0f, 1.0f };
+                m_device->SetViewport(&within);
+                m_device->SetTransform(D3DTS_PROJECTION, reinterpret_cast<const D3DMATRIX*>(sun.m));
+                m_device->SetVertexShader(kMeshFormat);
+                m_device->SetTexture(0, nullptr);
+                m_device->SetRenderState(D3DRS_COLORWRITEENABLE, 0);
+                m_device->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
+                m_device->SetRenderState(D3DRS_ZENABLE, D3DZB_TRUE);
+                m_device->SetRenderState(D3DRS_ZFUNC, D3DCMP_LESSEQUAL);
+                m_device->SetRenderState(D3DRS_ZWRITEENABLE, TRUE);
+                m_device->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
+                // Back a little, and more where it is steep to the sun, so that nothing shades itself.
+                const float back = 8, steep = 3;
+                DWORD bits;
+                memcpy(&bits, &back, sizeof(bits));
+                m_device->SetRenderState(D3DRS_POLYGONOFFSETZOFFSET, bits);
+                memcpy(&bits, &steep, sizeof(bits));
+                m_device->SetRenderState(D3DRS_POLYGONOFFSETZSLOPESCALE, bits);
+                m_device->SetRenderState(D3DRS_SOLIDOFFSETENABLE, TRUE);
+                m_inShadows = true;
+                return true;
+            }
+
+            u32 shadowSize() const override { return kShadowSide - 4; }
+
+            void endShadows() override
+            {
+                m_device->SetRenderTarget(m_savedColor, m_savedDepth);
+                for (IDirect3DSurface8** s : { &m_savedColor, &m_savedDepth })
+                {
+                    if (*s)
+                    {
+                        (*s)->Release();
+                        *s = nullptr;
+                    }
+                }
+                m_device->SetRenderState(D3DRS_COLORWRITEENABLE, D3DCOLORWRITEENABLE_ALL);
+                m_device->SetRenderState(D3DRS_SOLIDOFFSETENABLE, FALSE);
+                m_inShadows = false;
+                m_mode = Mode::None;
+                m_bound = {};
+                m_boundTexture = {};
+            }
 
             void endFrame() override
             {
@@ -758,6 +881,11 @@ namespace nx::gpu
                 m_device->SetTextureStageState(1, D3DTSS_ALPHAARG2, D3DTA_TFACTOR);
                 m_device->SetTextureStageState(2, D3DTSS_COLOROP, D3DTOP_DISABLE);
                 m_device->SetTextureStageState(2, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
+                m_shadowed = m_view.shadowStrength > 0 && m_shadowDepth && m_shadowShader;
+                if (m_shadowed)
+                {
+                    useShadows(view);
+                }
 
                 // Light from above and below: what is in common is ambient, and the rest comes straight down.
                 const Color& sky = m_view.ambientSky;
@@ -786,6 +914,81 @@ namespace nx::gpu
                 m_device->SetRenderState(D3DRS_FOGSTART, bits);
                 memcpy(&bits, &end, sizeof(bits));
                 m_device->SetRenderState(D3DRS_FOGEND, bits);
+            }
+
+            // The third texture is asked of each pixel whether the sun sees it. Only with a pixel shader does the GPU
+            // compare depths: with the fixed stages it reads them as a picture.
+            void useShadows(const Mat4& view)
+            {
+                // From the camera to the map, in its pixels, with depth as it is kept there.
+                Mat4 map;
+                const float half = (kShadowSide - 4) * 0.5f, middle = kShadowSide * 0.5f;
+                map.m[0] = half;
+                map.m[5] = -half;
+                map.m[10] = 65535.0f;
+                map.m[12] = middle + 0.5f;
+                map.m[13] = middle + 0.5f;
+                const Mat4 whole = map * m_view.shadows * view.inverse();
+                m_device->SetTransform(D3DTS_TEXTURE2, reinterpret_cast<const D3DMATRIX*>(whole.m));
+                m_device->SetTexture(2, m_shadowDepth);
+                m_device->SetTextureStageState(2, D3DTSS_TEXCOORDINDEX, D3DTSS_TCI_CAMERASPACEPOSITION | 2);
+                m_device->SetTextureStageState(2, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT4 | D3DTTFF_PROJECTED);
+                m_device->SetTextureStageState(2, D3DTSS_ADDRESSU, D3DTADDRESS_CLAMP);
+                m_device->SetTextureStageState(2, D3DTSS_ADDRESSV, D3DTADDRESS_CLAMP);
+                m_device->SetTextureStageState(2, D3DTSS_MINFILTER, D3DTEXF_LINEAR);
+                m_device->SetTextureStageState(2, D3DTSS_MAGFILTER, D3DTEXF_LINEAR);
+                m_device->SetTextureStageState(2, D3DTSS_MIPFILTER, D3DTEXF_NONE);
+                m_device->SetRenderState(D3DRS_SHADOWFUNC, D3DCMP_GREATEREQUAL);
+                // How much each corner faces the sun, as a colour.
+                const Vec3& d = m_view.sunDirection;
+                const float sunX = view.m[0] * d.x + view.m[4] * d.y + view.m[8] * d.z, sunY = view.m[1] * d.x + view.m[5] * d.y + view.m[9] * d.z, sunZ = view.m[2] * d.x + view.m[6] * d.y + view.m[10] * d.z;
+                Mat4 facing;
+                for (u32 i = 0; i < 3; i++)
+                {
+                    facing.m[i] = sunX;
+                    facing.m[4 + i] = sunY;
+                    facing.m[8 + i] = sunZ;
+                }
+                m_device->SetTransform(D3DTS_TEXTURE1, reinterpret_cast<const D3DMATRIX*>(facing.m));
+                // Its picture isn't looked at, but a stage without one makes no coordinates.
+                m_device->SetTexture(1, m_textures.get(m_white)->texture);
+                m_device->SetTextureStageState(1, D3DTSS_TEXCOORDINDEX, D3DTSS_TCI_CAMERASPACENORMAL | 1);
+                m_device->SetTextureStageState(1, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT3);
+                // Only the sun's part of the light goes.
+                const auto bright = [](const Color& c) { return c.r * 0.3f + c.g * 0.6f + c.b * 0.1f; };
+                const float sun = bright(m_view.sunColor), rest = (bright(m_view.ambientSky) + bright(m_view.ambientGround)) * 0.5f;
+                m_shade = m_view.shadowStrength * sun / (sun + rest + 0.001f);
+            }
+
+            void makeShadowShader()
+            {
+                D3DPIXELSHADERDEF def = {};
+                def.PSTextureModes = PS_TEXTUREMODES(PS_TEXTUREMODES_PROJECT2D, PS_TEXTUREMODES_PASSTHRU, PS_TEXTUREMODES_PROJECT3D, PS_TEXTUREMODES_NONE);
+                def.PSCombinerCount = PS_COMBINERCOUNT(5, PS_COMBINERCOUNT_UNIQUE_C0 | PS_COMBINERCOUNT_UNIQUE_C1);
+                // Texture by light.
+                def.PSRGBInputs[0] = PS_COMBINERINPUTS(PS_REGISTER_T0 | PS_CHANNEL_RGB, PS_REGISTER_V0 | PS_CHANNEL_RGB, PS_REGISTER_ZERO, PS_REGISTER_ZERO);
+                def.PSAlphaInputs[0] = PS_COMBINERINPUTS(PS_REGISTER_T0 | PS_CHANNEL_ALPHA, PS_REGISTER_V0 | PS_CHANNEL_ALPHA, PS_REGISTER_ZERO, PS_REGISTER_ZERO);
+                def.PSRGBOutputs[0] = def.PSAlphaOutputs[0] = PS_COMBINEROUTPUTS(PS_REGISTER_R0, PS_REGISTER_DISCARD, PS_REGISTER_DISCARD, 0);
+                // By tint.
+                def.PSRGBInputs[1] = PS_COMBINERINPUTS(PS_REGISTER_R0 | PS_CHANNEL_RGB, PS_REGISTER_C0 | PS_CHANNEL_RGB, PS_REGISTER_ZERO, PS_REGISTER_ZERO);
+                def.PSAlphaInputs[1] = PS_COMBINERINPUTS(PS_REGISTER_R0 | PS_CHANNEL_ALPHA, PS_REGISTER_C0 | PS_CHANNEL_ALPHA, PS_REGISTER_ZERO, PS_REGISTER_ZERO);
+                def.PSRGBOutputs[1] = def.PSAlphaOutputs[1] = PS_COMBINEROUTPUTS(PS_REGISTER_R0, PS_REGISTER_DISCARD, PS_REGISTER_DISCARD, 0);
+                // Where the sun doesn't reach, by how much this faces it: what turns away has already lost it, and would
+                // only show the steps of the map.
+                def.PSRGBInputs[2] = PS_COMBINERINPUTS(PS_REGISTER_T1 | PS_CHANNEL_RGB, PS_REGISTER_T2 | PS_CHANNEL_RGB | PS_INPUTMAPPING_UNSIGNED_INVERT, PS_REGISTER_ZERO, PS_REGISTER_ZERO);
+                def.PSRGBOutputs[2] = PS_COMBINEROUTPUTS(PS_REGISTER_R1, PS_REGISTER_DISCARD, PS_REGISTER_DISCARD, PS_COMBINEROUTPUT_SHIFTLEFT_1);
+                def.PSRGBInputs[3] = PS_COMBINERINPUTS(PS_REGISTER_R1 | PS_CHANNEL_RGB, PS_REGISTER_C0 | PS_CHANNEL_RGB, PS_REGISTER_ZERO, PS_REGISTER_ZERO);
+                def.PSRGBOutputs[3] = PS_COMBINEROUTPUTS(PS_REGISTER_R1, PS_REGISTER_DISCARD, PS_REGISTER_DISCARD, 0);
+                def.PSRGBInputs[4] = PS_COMBINERINPUTS(PS_REGISTER_R0 | PS_CHANNEL_RGB, PS_REGISTER_R1 | PS_CHANNEL_RGB | PS_INPUTMAPPING_UNSIGNED_INVERT, PS_REGISTER_ZERO, PS_REGISTER_ZERO);
+                def.PSRGBOutputs[4] = PS_COMBINEROUTPUTS(PS_REGISTER_R0, PS_REGISTER_DISCARD, PS_REGISTER_DISCARD, 0);
+                // Which of the constants each stage has: the tint, and how dark.
+                def.PSC0Mapping = PS_CONSTANTMAPPING(15, 0, 15, 1, 15, 15, 15, 15);
+                def.PSC1Mapping = PS_CONSTANTMAPPING(15, 15, 15, 15, 15, 15, 15, 15);
+                if (FAILED(m_device->CreatePixelShader(&def, &m_shadowShader)))
+                {
+                    NX_WARN("d3d8: no shadows");
+                    m_shadowShader = 0;
+                }
             }
 
             static size_t meshBytes(const MeshSlot& m)
@@ -830,6 +1033,13 @@ namespace nx::gpu
             HandlePool<PipelineSlot, PipelineTag> m_pipelines;
             HandlePool<TextureSlot, TextureTag> m_textures;
             HandlePool<MeshSlot, MeshTag> m_meshes;
+            IDirect3DTexture8* m_shadowColor = nullptr;
+            IDirect3DTexture8* m_shadowDepth = nullptr;
+            IDirect3DSurface8* m_savedColor = nullptr;
+            IDirect3DSurface8* m_savedDepth = nullptr;
+            bool m_shadowsTried = false, m_inShadows = false, m_shadowed = false;
+            float m_shade = 0;
+            DWORD m_shadowShader = 0;
             View m_view;
             Mode m_mode = Mode::None;
             Texture m_white;

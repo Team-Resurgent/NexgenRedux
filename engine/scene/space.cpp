@@ -893,7 +893,7 @@ namespace nx
             const Vec3 focus = m_from + view.forward * (reach * 0.8f);
             Mat4 look = Mat4::lookAt(focus + m_sun * (reach * 3), focus, { 0, 1, 0 });
             // In whole steps of the map, so that edges don't swim as the camera moves.
-            const float step = 2 * reach / static_cast<float>(gpu::kShadowSize);
+            const float step = 2 * reach / static_cast<float>(device.shadowSize());
             look.m[12] = floorf(look.m[12] / step) * step;
             look.m[13] = floorf(look.m[13] / step) * step;
             // Depth grows away from the light, which looks along -z.

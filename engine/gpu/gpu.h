@@ -254,6 +254,8 @@ namespace nx::gpu
         // Draws what casts shadows, seen from the sun, before beginView. False if this GPU can't.
         virtual bool beginShadows(const Mat4& sunViewProjection) = 0;
         virtual void endShadows() = 0;
+        // How many pixels across they are.
+        virtual u32 shadowSize() const { return kShadowSize; }
 
         // --- Effects. A GPU without shaders has none: then things are drawn as they are. ---
 

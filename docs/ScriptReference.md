@@ -449,7 +449,8 @@ Entities that move, collide and are drawn by the engine. Each screen has its own
 | `uint Scene::tile(const Vec2 &in position)` | What the map has there: 0 is nothing. |
 | `void Scene::setTile(const Vec2 &in position, uint tile)` | Changes the map. |
 | `Vec2 Scene::get_mapSize() property` | How large the map is. |
-| `uint Scene::get_particles() property` | How many particles there are. |
+| `uint Scene::get_particles() property` | How many particles there are, on the plane and in space. There may be 8000, or 1500 on the original Xbox; more are left out. |
+| `void Scene::clearParticles()` | Does away with all there are. Emitters go on. |
 | `uint Scene::get_drawn() property` | How many entities and tiles were drawn last. |
 | `uint Scene::get_pairs() property` | Pairs of colliders compared in the last step. |
 | `uint Scene::get_contacts() property` | Where rigid bodies touched in the last step. |

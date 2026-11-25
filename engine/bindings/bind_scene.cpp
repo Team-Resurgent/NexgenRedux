@@ -410,6 +410,7 @@ namespace nx
         u32 sceneCount() { return world().count(); }
         u32 sceneCountGroup(u32 group) { return world().countGroup(group); }
         u32 sceneParticles() { return world().stats().particles; }
+        void sceneClearParticles() { world().clearParticles(); }
         u32 sceneDrawn() { return world().stats().drawn; }
         u32 scenePairs() { return world().stats().pairsTested; }
         u32 sceneContacts() { return world().stats().contacts; }
@@ -562,7 +563,8 @@ namespace nx
         b.function("uint tile(const Vec2 &in position)", NX_FN(sceneTile), "What the map has there: 0 is nothing.");
         b.function("void setTile(const Vec2 &in position, uint tile)", NX_FN(sceneSetTile), "Changes the map.");
         b.function("Vec2 get_mapSize() property", NX_FN(sceneMapSize), "How large the map is.");
-        b.function("uint get_particles() property", NX_FN(sceneParticles), "How many particles there are.");
+        b.function("uint get_particles() property", NX_FN(sceneParticles), "How many particles there are, on the plane and in space. There may be 8000, or 1500 on the original Xbox; more are left out.");
+        b.function("void clearParticles()", NX_FN(sceneClearParticles), "Does away with all there are. Emitters go on.");
         b.function("uint get_drawn() property", NX_FN(sceneDrawn), "How many entities and tiles were drawn last.");
         b.function("uint get_pairs() property", NX_FN(scenePairs), "Pairs of colliders compared in the last step.");
         b.function("uint get_contacts() property", NX_FN(sceneContacts), "Where rigid bodies touched in the last step.");

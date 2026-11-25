@@ -84,7 +84,7 @@ namespace nx
                 atlas[i * 4 + 3] = 0;
             }
 
-            u32 x = 1, y = 1, rowHeight = 0;
+            u32 x = 2, y = 2, rowHeight = 0;
             float ascent = 0, descent = 0;
             bool fits = true;
             for (u32 i = 0; i < kGlyphCount && fits; i++)
@@ -130,13 +130,13 @@ namespace nx
                 }
                 const u32 w = right - left;
                 const u32 h = bottom - top;
-                if (x + w + 1 > width)
+                if (x + w + 2 > width)
                 {
-                    x = 1;
-                    y += rowHeight + 1;
+                    x = 2;
+                    y += rowHeight + 2;
                     rowHeight = 0;
                 }
-                if (x + w + 1 > width || y + h + 1 > height)
+                if (x + w + 2 > width || y + h + 2 > height)
                 {
                     fits = false;
                     break;
@@ -148,20 +148,23 @@ namespace nx
                         atlas[(static_cast<size_t>(y + py) * width + x + px) * 4 + 3] = scratch[(static_cast<size_t>(top + py) * cell + left + px) * 4 + 3];
                     }
                 }
-                g.x = static_cast<float>(static_cast<int>(left) - penX);
-                g.y = static_cast<float>(static_cast<int>(top) - penY);
-                g.width = static_cast<float>(w);
-                g.height = static_cast<float>(h);
-                g.u0 = static_cast<float>(x) / static_cast<float>(width);
-                g.v0 = static_cast<float>(y) / static_cast<float>(height);
-                g.u1 = static_cast<float>(x + w) / static_cast<float>(width);
-                g.v1 = static_cast<float>(y + h) / static_cast<float>(height);
+                // With a clear pixel all round: drawn smaller, an i or an l could otherwise fall between two of
+                // the screen's pixels and not be seen at all.
+                g.x = static_cast<float>(static_cast<int>(left) - penX - 1);
+                g.y = static_cast<float>(static_cast<int>(top) - penY - 1);
+                g.width = static_cast<float>(w + 2);
+                g.height = static_cast<float>(h + 2);
+                g.u0 = static_cast<float>(x - 1) / static_cast<float>(width);
+                g.v0 = static_cast<float>(y - 1) / static_cast<float>(height);
+                g.u1 = static_cast<float>(x + w + 1) / static_cast<float>(width);
+                g.v1 = static_cast<float>(y + h + 1) / static_cast<float>(height);
                 if (code < 0x80)
                 {
-                    ascent = -g.y > ascent ? -g.y : ascent;
-                    descent = g.y + g.height > descent ? g.y + g.height : descent;
+                    const float up = static_cast<float>(penY) - static_cast<float>(top), down = static_cast<float>(bottom) - static_cast<float>(penY);
+                    ascent = up > ascent ? up : ascent;
+                    descent = down > descent ? down : descent;
                 }
-                x += w + 1;
+                x += w + 2;
                 rowHeight = h > rowHeight ? h : rowHeight;
             }
 

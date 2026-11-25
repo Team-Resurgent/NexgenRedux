@@ -258,6 +258,16 @@ namespace nx
         return 0;
     }
 
+    void World::clearParticles()
+    {
+        for (auto& particles : m_particles)
+        {
+            particles.clear();
+        }
+        m_particleCount = 0;
+        m_space.clearParticles();
+    }
+
     void World::clear()
     {
         for (u32 i = 0; i < m_entities.count(); i++)
@@ -267,12 +277,7 @@ namespace nx
                 remove(i);
             }
         }
-        for (auto& particles : m_particles)
-        {
-            particles.clear();
-        }
-        m_particleCount = 0;
-        m_space.clearParticles();
+        clearParticles();
         m_pairs.clear();
         m_pairsBefore.clear();
         m_touches.clear();

@@ -249,6 +249,8 @@ namespace nx
 
         // --- Files ---
 
+        // What has been thrown out goes at once; emitters go on.
+        void clearParticles();
         // Prefabs, particles, groups, maps and entities. On failure, takeError() says why.
         bool load(const char* path, const char* folder);
         // Why the last load or spawn failed, forgetting it.

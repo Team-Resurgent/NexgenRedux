@@ -133,6 +133,26 @@ NX_TEST(fontsRender)
     w.assets.release(font);
 }
 
+NX_TEST(thinLettersAreNeverLost)
+{
+    // Drawn smaller than it was made, anything narrower than a pixel could fall between two.
+    Rig w;
+    for (const float scale : { 2.0f / 3, 1.0f, 1.5f })
+    {
+        w.assets.setFontScale(scale);
+        for (const u32 size : { 16u, 18u, 22u, 24u })
+        {
+            Asset* font = w.assets.font("global/freesans.sfn", size);
+            NX_EXPECT(font->font != nullptr);
+            for (const char c : { 'i', 'l', 'I', '.', '|' })
+            {
+                NX_EXPECT(font->font->glyphs[c - kFirstGlyph].width * font->font->scale * scale > 1);
+            }
+            w.assets.release(font);
+        }
+    }
+}
+
 NX_TEST(canvasBatches)
 {
     Rig w;

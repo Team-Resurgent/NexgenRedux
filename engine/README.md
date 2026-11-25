@@ -80,6 +80,7 @@ done again.
 | `assets/` | Cache of images, fonts, sounds and models; meshes being made | gpu, audio |
 | `canvas/` | 2D drawing | assets |
 | `scene/` | Entities, behaviours, collision, physics, particles, prefabs and maps; in space, with land, walkers and shapes that melt | canvas, script |
+| `ui/` | Widgets: layout, focus, themes, lists, dialogs, typing, pages from files | canvas, script, input |
 | `save/` | What players keep | platform |
 | `script/` | AngelScript host, coroutines, bindings and the reference writer | base |
 | `bindings/`, `screens/` | What scripts can call; the screen stack and the engine's menu | all above |

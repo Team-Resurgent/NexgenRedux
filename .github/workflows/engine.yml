@@ -134,6 +134,8 @@ jobs:
 
     - name: Stage RXDK clang, SDK and host tools
       shell: pwsh
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
       run: ./engine/tools/stage-rxdk.ps1
 
     - name: Build the cook tool

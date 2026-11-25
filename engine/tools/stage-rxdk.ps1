@@ -52,7 +52,9 @@ foreach ($t in 'Rxdk.Cli.exe', 'imagebld.exe', 'bundler.exe') {
 }
 
 # xdvdfs (asset names carry a commit suffix)
-$meta = Invoke-RestMethod https://api.github.com/repos/Team-Resurgent/XDVDFS-TR/releases/latest
+# Without a token the limit is shared with every other build at the same address.
+$headers = if ($env:GITHUB_TOKEN) { @{ Authorization = "Bearer $env:GITHUB_TOKEN" } } else { @{} }
+$meta = Invoke-RestMethod -Headers $headers https://api.github.com/repos/Team-Resurgent/XDVDFS-TR/releases/latest
 $asset = $meta.assets | Where-Object { $_.name -like 'xdvdfs-windows-x64-*.zip' } | Select-Object -First 1
 if (-not $asset) { throw 'xdvdfs-windows-x64 zip missing from the XDVDFS-TR release' }
 $zip = Fetch $asset.browser_download_url 'xdvdfs.zip'

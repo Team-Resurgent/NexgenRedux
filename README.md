@@ -21,7 +21,7 @@
   <img src="docs/screenshots/main.png" alt="The showcase's main menu" width="80%">
 </p>
 
-The same scripts run everywhere, 3D and all: every one of the 52 demos runs at 54 to 60 frames a second on a real 64 MB original Xbox. The engine is self-contained: it needs
+The same scripts run everywhere, 3D and all: every one of the 52 demos runs at 53 to 60 frames a second on a real 64 MB original Xbox. The engine is self-contained: it needs
 a compiler and the platform's SDK, downloads nothing, and uses no SDL or GLFW.
 
 ## Screenshots
@@ -77,8 +77,8 @@ a compiler and the platform's SDK, downloads nothing, and uses no SDL or GLFW.
 </p>
 <p align="center">
   <img src="docs/screenshots/xbox-explore.png" alt="Island on the original Xbox" width="32%">
-  <img src="docs/screenshots/xbox-forest.png" alt="Forest on the original Xbox" width="32%">
-  <img src="docs/screenshots/xbox-lights.png" alt="Night lights on the original Xbox" width="32%">
+  <img src="docs/screenshots/xbox-cases.png" alt="Cover flow on the original Xbox" width="32%">
+  <img src="docs/screenshots/xbox-skim.png" alt="Skimmer on the original Xbox" width="32%">
 </p>
 <p align="center"><sub>The last row is a real original Xbox</sub></p>
 

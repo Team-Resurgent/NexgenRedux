@@ -369,7 +369,9 @@ namespace
             m_loads = loads;
             if (m_round >= m_rounds)
             {
-                if (m_round > 2 && script > m_script + 64 * 1024)
+                // AngelScript keeps half a kilobyte for each array initialiser of a type that has gone, until it
+                // ends or another lands on the same address. With a sanitizer, which never reuses one, that is all of them.
+                if (m_round > 2 && script > m_script + 128 * 1024)
                 {
                     NX_ERROR("tour: script memory grew from %u to %u", static_cast<unsigned>(m_script), static_cast<unsigned>(script));
                     ok = false;

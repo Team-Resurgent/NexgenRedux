@@ -884,6 +884,8 @@ Left: decals, navigation, cooked models.
 | In space | Particles, with styles from the scene file; sounds that move with things |
 | Script API | Gone through as a whole: what something is, is a property, and what it does, is a function |
 | Showcase | 53 screens |
+| **Original Xbox hardware** | All 52 demos at 53 to 60 fps, 18 MB free at the worst point, three times round without a leak. A page and a picture over HTTPS in 1.1 seconds. Temperatures, fan, drives, folders and kernel read; the calls that leave for the dashboard, restart or turn it off compile but have not been tried on a console |
+| Tests | 93 tests and about 18,000 checks |
 
 Left: FTP; keeping entities in step between players; voice.
 

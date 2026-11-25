@@ -212,6 +212,7 @@ TOPICS = [
     ('Drawing', ['Canvas', 'Color', 'Texture', 'Font', 'Blend', 'Filter', 'Align']),
     ('Scene', ['Scene', 'Entity', 'Behaviour', 'IBehaviour']),
     ('Three dimensions', ['Space', 'Model', 'Mesh', 'Solid', 'FieldShape', 'FieldJoin', 'Vec3']),
+    ('Interfaces', ['Ui', 'Widget', 'Place', 'WidgetEvents', 'WidgetRows', 'WidgetDraws', 'WidgetAnswers']),
     ('Assets', ['Assets', 'Effect']),
     ('Sound', ['Sound', 'Voice', 'Bus', 'Audio']),
     ('Input', ['Input']),
@@ -220,7 +221,7 @@ TOPICS = [
     ('Networking', ['Net', 'Room', 'RoomState', 'Message', 'Request', 'Connection', 'Datagrams']),
     ('Original Xbox', ['Xbox', 'XboxText', 'Tray']),
 ]
-NAMESPACES = ['Screens', 'App', 'Scene', 'Space', 'Assets', 'Audio', 'Input', 'Save', 'Net', 'Xbox']
+NAMESPACES = ['Screens', 'App', 'Scene', 'Space', 'Assets', 'Audio', 'Input', 'Save', 'Net', 'Xbox', 'Ui']
 FUNCTIONS = ['Coroutines', 'Maths']  # sections that aren't a type or a namespace
 
 
@@ -230,7 +231,7 @@ def reference():
         if line.startswith('## ') or line.startswith('### '):
             title = line.lstrip('# ')
             # A function type is described with the calls that take it.
-            kind = re.match(r'void (\w+)\(\)$', title)
+            kind = re.match(r'void (\w+)\(.*\)$', title)
             name = kind.group(1) + 's' if kind else title
             current = sections.setdefault(name, {'text': [], 'rows': []})
             function_type = 'funcdef ' + title if kind else None
@@ -337,7 +338,7 @@ def main(folder):
     body, heads = markdown(open(os.path.join(DOCS, 'Guide.md'), encoding='utf-8').read())
     page(folder, 'guide.html', 'Nexgen Redux guide', body, [(slug(h), html.escape(h)) for h in heads])
 
-    captions = [('explore', 'A world to walk about in'), ('cases', 'Cover flow'), ('skim', 'Skimmer'), ('shaders', 'Shaders'), ('embers', 'Embers'), ('dashboard', 'Dashboard'), ('endless', 'Endless land'), ('melt', 'Ray marching'), ('blades', 'Blades'), ('tumble', '3D physics'), ('music', 'Music'), ('runes', 'Rune shift'), ('shooter', 'Shooter'), ('platformer', 'Platformer'), ('cracktro', 'Cracktro'), ('xbox-explore', 'On a real original Xbox')]
+    captions = [('explore', 'A world to walk about in'), ('cases', 'Cover flow'), ('skim', 'Skimmer'), ('shaders', 'Shaders'), ('embers', 'Embers'), ('widgets', 'Widgets'), ('inventory', 'Inventory'), ('dashboard', 'Dashboard'), ('endless', 'Endless land'), ('melt', 'Ray marching'), ('blades', 'Blades'), ('tumble', '3D physics'), ('music', 'Music'), ('runes', 'Rune shift'), ('shooter', 'Shooter'), ('platformer', 'Platformer'), ('cracktro', 'Cracktro'), ('xbox-explore', 'On a real original Xbox')]
     body = '''<h1>Nexgen Redux</h1>
 <p class="lead">A cross-platform engine for games and dashboards, scripted in AngelScript. The same scripts run on the original Xbox, Windows, Linux and macOS.</p>
 <div class="cards">

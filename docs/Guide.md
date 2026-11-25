@@ -205,8 +205,8 @@ void draw(Canvas@ c)
 A model is a `.glb`, or a `.gltf` with everything inside it, with up to 64 bones. The engine makes two simpler versions as it loads,
 and draws those when it is small on the screen. What can't be seen isn't drawn.
 
-`Space::sun`, `ambient`, `sky`, `fog` and `shadows` set the scene. Real shadows need a GPU with shaders; the original Xbox draws soft
-patches instead.
+`Space::sun`, `ambient`, `sky`, `fog` and `shadows` set the scene. Shadows are the shape of what casts them, on the original Xbox too,
+where the land casts none.
 
 ### A world to walk in
 
@@ -276,6 +276,77 @@ What is heard fades with distance from the camera, and moves from one side to th
 `Space::field` adds one of up to 24 shapes that are drawn by marching along rays, so that they join softly, cut each other and
 reflect. They mix with meshes. Clear them and add them again each update to move them. The original Xbox makes triangles of them.
 
+## Interfaces
+
+Menus and forms are widgets. Add them to `Ui::root`, say what to do when they are used, and draw the page:
+
+```cpp
+void onEnter()
+{
+    Widget@ page = Ui::root;
+    page.padding = 40;
+    page.label("Settings", "title");
+    Widget@ row = page.row();
+    row.label("Volume").grow = 1;                       // takes what is left over
+    row.slider(0.7f, 0, 1, WidgetEvent(this.onVolume));
+    page.toggle("Subtitles", true, WidgetEvent(this.onSubtitles));
+    page.button("Done", WidgetEvent(this.onDone));
+}
+
+void onVolume(Widget@ w) { Audio::masterVolume = w.value; }
+
+void draw(Canvas@ c)
+{
+    c.designHeight(720);
+    Ui::draw(c);
+}
+```
+
+Nothing has a position. Columns, rows, grids and stacks share out their room by `grow`, `gap`, `padding`, `align` and `justify`, and
+text that wraps is as tall as it needs. The d-pad, arrows and mouse all move the same focus, scrolling to what they reach, and the
+shoulder buttons turn tabs and pages of a list. What the interface does with a press isn't seen by `Input::pressed` too.
+
+| There are | Made with |
+|---|---|
+| Containers | `column`, `row`, `grid`, `stack`, `scroll`, `panel`, `tabs` |
+| Things to use | `button`, `toggle`, `slider`, `choice`, `field`, `list` |
+| Things to see | `label`, `paragraph`, `image`, `progress`, `line`, `space`, `custom` |
+
+A `list` may have any number of rows: it makes those that can be seen and uses them again. A `custom` widget is drawn by you, and may
+be a view of `Space`. With a gamepad, a `field` brings up a keyboard on the screen.
+
+`Ui::dialog` asks something, `Ui::toast` says something, and `Ui::popup` is a page in front of the page.
+
+### Pages, themes and languages from files
+
+```json
+{ "column": [
+  { "label": "@title", "style": "title" },
+  { "row": [ { "label": "@name", "grow": 1 }, { "field": "", "id": "name", "change": "onName" } ] },
+  { "button": "@send", "click": "onSend" }
+], "padding": 40, "gap": 16 }
+```
+
+`Ui::load("asset:page.json")` adds that; `click`, `change`, `focus`, `done`, `draw` and `makeRow` name methods of the screen, and
+`Ui::find("name")` finds a widget by its id. Text that begins with `@` is looked up in what `Ui::words("asset:english.json")` read,
+which is one name and text after another.
+
+A theme changes colours, or whole styles in each of their states:
+
+```json
+{
+  "colors": { "accent": "#ff2fb0", "panel": "#120026" },
+  "styles": {
+    "button": { "base": "control", "radius": 4, "focused": { "back": "$accent", "scale": 1.05 }, "pressed": { "scale": 0.97 } },
+    "big": { "base": "plain", "size": 60 }
+  }
+}
+```
+
+A style has `back`, `text`, `line`, `track`, `lineWidth`, `radius`, `scale` and `shadow`, all of which move smoothly between
+`hovered`, `checked`, `focused`, `pressed` and `disabled`; and `font`, `size`, `image` and `slice`, `padding`, `gap`, `minWidth`,
+`minHeight`, `align` and `seconds`.
+
 ## Shaders and bloom
 
 ```cpp
@@ -294,8 +365,9 @@ void draw(Canvas@ c)
 }
 ```
 
-An effect is one file, for every GPU that has shaders: Direct3D 11 and OpenGL now. Where there are none, as on the original Xbox,
-`bloom` and `effect` do nothing and give false, and things are drawn as they are, so a game need not ask. A mistake in one is in the
+An effect is one file, for every GPU that has shaders: Direct3D 11 and OpenGL now. The original Xbox has bloom but no such shaders;
+there, a line `// xbox: lava` in the file names something close that it can do: `lava`, `dissolve`, `hologram` or `flag` on a thing, and
+`tube`, `pixels`, `ripple`, `glitch` or `grade` over the picture. Without one, `effect` gives false and things are drawn as they are. A mistake in one is in the
 log with its line, and it is left out.
 
 Over the picture:
@@ -463,5 +535,5 @@ int best = int(parseInt(Save::get("best", "0")));
 - Build the disc with the cook tool, which makes images a quarter to an eighth of the size in memory and sounds a quarter,
   under the same names.
 - Three dimensions use the fixed pipeline: lights are worked out at corners, so give a floor plenty of squares. Ray-marched shapes
-  become triangles. There are no shaders, so no bloom or effects.
+  become triangles. Effects are stand-ins.
 - There is no live reload: edit on a PC and then build the disc.

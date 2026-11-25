@@ -905,7 +905,12 @@ namespace nx
             if (device.beginShadows(view.shadows))
             {
                 view.shadowStrength = m_shadowStrength;
-                drawLand(view, frustum, true);
+                // Where that is dear, only things cast them, as simply as they can be drawn.
+                const bool dear = device.shadowSize() < gpu::kShadowSize;
+                if (!dear)
+                {
+                    drawLand(view, frustum, true);
+                }
                 for (Appearance& a : m_appearances)
                 {
                     const World::Entity& e = m_world.m_entities[a.owner];
@@ -917,13 +922,14 @@ namespace nx
                     float radius;
                     boundsOf(a, m_spatials[e.parts3[0]].world, middle, radius);
                     const Vec3 d = middle - focus;
-                    if (d.dot(d) < (reach * 1.5f + radius) * (reach * 1.5f + radius))
+                    const float within = reach * (dear ? 1.0f : 1.5f) + radius;
+                    if (d.dot(d) < within * within && (!dear || radius > reach * 0.012f))
                     {
                         if (a.model && a.model->model && a.model->model->weights.count())
                         {
                             bend(a);
                         }
-                        drawAppearance(a, a.detail, view, true, false);
+                        drawAppearance(a, dear ? 2 : a.detail, view, true, false);
                     }
                 }
                 device.endShadows();

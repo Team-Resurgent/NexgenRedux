@@ -656,15 +656,20 @@ namespace nx::gpu
                     break;
                 case StandIn::Tube:
                 {
+                    // Beyond the glass is black.
+                    m_device->SetTextureStageState(0, D3DTSS_ADDRESSU, D3DTADDRESS_BORDER);
+                    m_device->SetTextureStageState(0, D3DTSS_ADDRESSV, D3DTADDRESS_BORDER);
+                    m_device->SetTextureStageState(0, D3DTSS_BORDERCOLOR, 0xFF000000);
                     grid(24, 18, [&](float& u, float& v, float x, float y) -> DWORD
                     {
                         const float px = x * 2 - 1, py = y * 2 - 1, r = px * px + py * py;
                         u = px * (1 + 0.09f * much * r) * 0.5f + 0.5f;
                         v = py * (1 + 0.09f * much * r) * 0.5f + 0.5f;
-                        const bool outside = u < -0.01f || v < -0.01f || u > 1.01f || v > 1.01f;
-                        const float edge = outside ? 0 : 1.12f - r * 0.34f;
+                        const float edge = 1.12f - r * 0.34f;
                         return packed({ edge, edge, edge, 1 });
                     });
+                    m_device->SetTextureStageState(0, D3DTSS_ADDRESSU, D3DTADDRESS_CLAMP);
+                    m_device->SetTextureStageState(0, D3DTSS_ADDRESSV, D3DTADDRESS_CLAMP);
                     // Every other line, darker.
                     static PictureVertex lines[2 * 288];
                     u32 n = 0;

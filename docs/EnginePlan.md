@@ -754,7 +754,7 @@ the design. Sizes are relative effort, not dates.
 | **3 Scene** | Entities, **pooled spawning**, hierarchy, sprites, animation, collision, prefabs | + Parallax, Shooter (script under 300 lines), Stress test | M |
 | **4 3D** (brought forward) | glTF, materials, lights, fog, skinning, **a world to walk around, 3D physics**, **LOD and culling, ray marching, streamed regions**, shadows | + 3D scenes, Dashboard, Blades. **Done** | L |
 | **5 Networking, platform calls and effects** | Sockets, HTTPS, rooms on the local network; on the original Xbox: back to the firmware or dashboard, launch a title, restart, SMBus temperatures and fan, LED, tray and drives; **shaders of your own and bloom; particles and sound in space** | + Together, Web, Launcher, Shaders, Embers, Skimmer, Cover flow, System panel. **Done** | L |
-| **6 UI** | Layout, focus, themes, lists, on-screen keyboard, layout files, dashboard module | Main menu rebuilt on UI; + UI gallery | L |
+| **6 UI** | Layout, focus, themes, lists, on-screen keyboard, layout files, dashboard module | Main menu rebuilt on UI; + Widgets, Long list, Form, Inventory. **Done** | L |
 | **7 Xbox 360 + Xbox One / Series** | D3D9 backend and 360 platform layer, hardware testing. The UWP layer is already done and runs on Windows; consoles remain | The same showcase on both | L |
 | **8 Extras** | Inspector, post effects, video, scene editor, full guides | One scene per module. **First full release** | L |
 
@@ -888,6 +888,21 @@ Left: decals, navigation, cooked models.
 | Tests | 93 tests and about 18,000 checks |
 
 Left: FTP; keeping entities in step between players; voice.
+
+### Phase 6 results: interfaces
+
+| Done | |
+|---|---|
+| Layout | Rows, columns, grids, stacks, scrolling and tabs that share out their room; text that wraps |
+| Focus | One for d-pad, keyboard and mouse, by where things are; popups that come first and give it back |
+| Widgets | Buttons, toggles, sliders, choices, fields, lists of any length, pictures, progress, and your own, which may be a view in 3D |
+| Typing | From a keyboard on Windows, UWP, Linux and macOS, and from one on the screen with a gamepad |
+| Files | Pages, themes with six states, and words for other languages, checked to the line and reloaded with `--dev` |
+| Parity on the original Xbox | Shadow maps compared by the GPU, weakened where a surface turns from the sun; bloom; stand-ins for nine effects. All at 53 to 60 fps |
+| Tests | 103 tests and about 18,000 checks, with nothing from the sanitizers in our code |
+| Showcase | 57 screens |
+
+Left: touch; text beyond Latin-1; the console's own drives in a file picker.
 
 ### Targets to measure against (goals, not results)
 

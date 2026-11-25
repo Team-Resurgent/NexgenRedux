@@ -581,6 +581,192 @@ The scene in three dimensions: x right, y up, z towards you, in metres. Entities
 | `uint Space::get_contacts() property` | Where rigid bodies touched in the last step. |
 | `Vec3 lerp(const Vec3 &in a, const Vec3 &in b, float t)` | From a to b as t goes from 0 to 1. |
 
+## Place
+
+Where things go in a container, across it or along it.
+
+| | |
+|---|---|
+| `PlaceStart` | At its left, or top. |
+| `PlaceCenter` | In its middle. |
+| `PlaceEnd` | At its right, or bottom. |
+| `PlaceStretch` | From one side to the other. |
+| `PlaceSpread` | With what is left over between them. |
+| `PlaceInherit` | As is usual there. |
+
+## Widget
+
+Something on a page: a button, some text, or a container of others. It belongs to its screen, and once that has closed it does nothing. Each call that adds one gives it back.
+
+| | |
+|---|---|
+
+## void WidgetEvent(Widget@)
+
+What to do when something happens to a widget, such as `WidgetEvent(this.onPlay)`.
+
+| | |
+|---|---|
+
+## void WidgetRow(Widget@, int)
+
+Fills a row of a list: it is given the row, which is empty, and which it is.
+
+| | |
+|---|---|
+
+## void WidgetDraw(Canvas@, Widget@)
+
+Draws a widget of your own, at its place and size.
+
+| | |
+|---|---|
+
+## void WidgetAnswer(int)
+
+Is told which of a dialog's buttons was pressed, or -1.
+
+| | |
+|---|---|
+
+### Widget
+
+| | |
+|---|---|
+| `Widget@ column(float gap = 12)` | Adds a container of things one under another. |
+| `Widget@ row(float gap = 12)` | One beside another. |
+| `Widget@ grid(uint columns, float gap = 12)` | In rows of so many, each as wide as the rest. |
+| `Widget@ stack()` | One over another. |
+| `Widget@ scroll(float gap = 12)` | A column that scrolls when there is more than fits. |
+| `Widget@ panel()` | A column with something behind it. |
+| `Widget@ label(const string &in text, const string &in style = "plain")` | Text. Anywhere on a page, `@name` is looked up in the words that have been read. |
+| `Widget@ paragraph(const string &in text, const string &in style = "plain")` | Text that goes on to other lines to fit. |
+| `Widget@ image(Texture@+ texture, float width = 0, float height = 0)` | A picture; 0 is its own size. |
+| `Widget@ button(const string &in text, WidgetEvent@ clicked = null)` | A button. Other widgets may be put into it. |
+| `Widget@ toggle(const string &in text, bool on = false, WidgetEvent@ changed = null)` | A switch. |
+| `Widget@ slider(float value, float low = 0, float high = 1, WidgetEvent@ changed = null)` | A value to slide. |
+| `Widget@ progress(float value)` | How far something has got, 0 to 1. |
+| `Widget@ choice(const array<string> &in items, int chosen = 0, WidgetEvent@ changed = null)` | One of several: left and right change it, and Accept shows them all. |
+| `Widget@ field(const string &in text = "", const string &in hint = "", WidgetEvent@ changed = null)` | Text to type, with a keyboard or with one on the screen. |
+| `Widget@ list(uint count, float rowHeight, WidgetRow@ row)` | Any number of rows: only those that can be seen are made. |
+| `Widget@ tabs()` | Pages, one of which shows. Add them with `tab`. |
+| `Widget@ tab(const string &in title)` | Adds a page to tabs: a column. |
+| `Widget@ space(float size = 0)` | Nothing; 0 takes whatever is left over. |
+| `Widget@ line()` | A line across. |
+| `Widget@ custom(WidgetDraw@ drawn)` | Whatever you draw: a scene, or a widget of your own. |
+| `Widget@ onClick(WidgetEvent@ event)` | When it is pressed, or a row of a list is. Gives itself back. |
+| `Widget@ onChange(WidgetEvent@ event)` | When its value, choice or text has been changed by someone. |
+| `Widget@ onFocus(WidgetEvent@ event)` | When it is come to. |
+| `Widget@ onDone(WidgetEvent@ event)` | When typing in a field is over. |
+| `string get_text() const property` | What it says, or what has been typed. |
+| `void set_text(const string &in) property` | Changes it. |
+| `string get_id() const property` | What Ui::find finds it by. |
+| `void set_id(const string &in) property` | Names it. |
+| `string get_hint() const property` | What an empty field says. |
+| `void set_hint(const string &in) property` | Changes it. |
+| `string get_style() const property` | Which of the theme's styles it has. |
+| `void set_style(const string &in) property` | Gives it another. |
+| `bool get_visible() const property` | Whether it is there at all. |
+| `void set_visible(bool) property` | Shows or hides it, and others close up. |
+| `bool get_enabled() const property` | Whether it, and what is in it, can be used. |
+| `void set_enabled(bool) property` | Lets it be, or not. |
+| `bool get_checked() const property` | Whether a toggle is on. |
+| `void set_checked(bool) property` | Turns it on or off. |
+| `bool get_secret() const property` | Whether what is typed is hidden. |
+| `void set_secret(bool) property` | Hides it. |
+| `bool get_numeric() const property` | Whether only a number can be typed. |
+| `void set_numeric(bool) property` | Allows only a number. |
+| `bool get_wrap() const property` | Whether text goes on to other lines. |
+| `void set_wrap(bool) property` | Lets it. |
+| `float get_value() const property` | Of a slider, or progress. |
+| `void set_value(float) property` | Moves it. |
+| `float get_low() const property` | The least it can be. |
+| `void set_low(float) property` | Changes it. |
+| `float get_high() const property` | The most. |
+| `void set_high(float) property` | Changes it. |
+| `float get_step() const property` | How far a press moves a slider, and what its value is a multiple of. 0: anything. |
+| `void set_step(float) property` | Changes it. |
+| `int get_chosen() const property` | Which of a choice, tabs or a list. |
+| `void set_chosen(int) property` | Chooses another. |
+| `string get_chosenText() const property` | What a choice's says. |
+| `void items(const array<string> &in items)` | What a choice is of. |
+| `uint get_count() const property` | How many rows a list has. |
+| `void set_count(uint) property` | Changes it, and makes them again. |
+| `void refresh()` | Makes a list's rows again, as what they show has changed. |
+| `uint get_columns() const property` | Of a grid or a list. 0: as many as fit. |
+| `void set_columns(uint) property` | Changes it. |
+| `float get_columnWidth() const property` | How wide they would like to be, when it is as many as fit. |
+| `void set_columnWidth(float) property` | Makes it as many as fit. |
+| `float get_rowHeight() const property` | Of a list's rows. |
+| `void set_rowHeight(float) property` | Changes it. |
+| `uint get_limit() const property` | The most characters a field takes. |
+| `void set_limit(uint) property` | Changes it. |
+| `int get_tag() const property` | A number for your own use. |
+| `void set_tag(int) property` | Changes it. |
+| `int get_index() const property` | Which row of a list this is, or -1. |
+| `float get_width() const property` | How wide it must be. 0: as wide as it is given, or needs. |
+| `void set_width(float) property` | Changes it. |
+| `float get_height() const property` | How tall it must be, the same way. |
+| `void set_height(float) property` | Changes it. |
+| `float get_minWidth() const property` | At least this wide. |
+| `void set_minWidth(float) property` | Changes it. |
+| `float get_maxWidth() const property` | At most this wide. 0: any. |
+| `void set_maxWidth(float) property` | Changes it. |
+| `float get_grow() const property` | Its share of what is left over in a row or a column. |
+| `void set_grow(float) property` | Changes it. |
+| `float get_gap() const property` | Between what is in it. |
+| `void set_gap(float) property` | Changes it. |
+| `float get_padding() const property` | Between its edges and what is in it. |
+| `void set_padding(float) property` | Changes it, on every side. |
+| `void pad(float left, float top, float right, float bottom)` | Changes it, on each side. |
+| `Place get_align() const property` | Where what is in it goes, across. |
+| `void set_align(Place) property` | Changes it. |
+| `Place get_justify() const property` | And along. |
+| `void set_justify(Place) property` | Changes it. |
+| `Place get_self() const property` | Where it goes itself, across what it is in. |
+| `void set_self(Place) property` | Changes it. |
+| `Color get_color() const property` | Multiplies its picture, or its text. |
+| `void set_color(const Color &in) property` | Changes it. |
+| `void set_picture(Texture@+) property` | The picture of an image, or in a button. |
+| `float get_scrolled() const property` | How far down it has scrolled. |
+| `void set_scrolled(float) property` | Scrolls it, smoothly. |
+| `Vec2 get_place() const property` | Its top left corner, in design units. |
+| `Vec2 get_size() const property` | How large it has turned out. |
+| `bool get_focused() const property` | Whether it is the one that Accept would press. |
+| `bool get_alive() const property` | Whether its screen is still open. |
+| `Widget@ get_parent() property` | What it is in, or null. |
+| `uint get_children() const property` | How many are in it. |
+| `Widget@ child(uint index)` | One of them, or null. |
+| `void focus()` | Goes to it, or to the first in it that can be gone to. |
+| `void press()` | As if someone had. |
+| `void remove()` | Takes it off the page. |
+| `void clear()` | Takes everything out of it. |
+| `void close()` | Closes a popup. |
+
+## Ui
+
+Pages of widgets, for gamepad, keyboard and mouse alike. Add to `Ui::root`, and draw it.
+
+| | |
+|---|---|
+| `Widget@ Ui::get_root() property` | The whole page: a column. |
+| `void Ui::draw(Canvas@ canvas)` | Draws it over all of the design, with whatever is in front of it. |
+| `void Ui::draw(Canvas@ canvas, float x, float y, float width, float height)` | Over part of it. |
+| `void Ui::theme(const string &in name)` | Reads how everything looks from a file, over the engine's own. "" for only that. |
+| `void Ui::load(const string &in name, Widget@+ into = null)` | Adds widgets from a file, to the page or to one of it. See the guide. |
+| `void Ui::words(const string &in name)` | Reads what `@name` says, for another language. Anything not in it says its own name. |
+| `string Ui::word(const string &in name)` | One of them. |
+| `Widget@ Ui::find(const string &in id)` | The widget with that id, or null. |
+| `void Ui::clear()` | Takes everything off the page. |
+| `Widget@ Ui::popup()` | Opens something in front, which must be dealt with first: an empty column to fill. Cancel closes it, or its `close`. |
+| `void Ui::dialog(const string &in title, const string &in text, const array<string> &in buttons, WidgetAnswer@ answer = null)` | Asks something. |
+| `void Ui::toast(const string &in text, float seconds = 2.5)` | Says something, for a moment. |
+| `Widget@ Ui::get_focused() property` | What Accept would press, or null. |
+| `bool Ui::get_busy() property` | Whether something is in front. |
+| `bool Ui::get_typing() property` | Whether someone is typing. Keys aren't actions then. |
+| `float Ui::get_safeArea() property` | What part of the screen's height is kept clear at its edges, as some televisions hide them. |
+| `void Ui::set_safeArea(float) property` | Changes it. |
+
 ## Message
 
 Numbers and text to send, up to 1000 bytes. Read it in the order it was written.

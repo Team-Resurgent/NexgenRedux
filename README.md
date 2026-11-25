@@ -21,7 +21,7 @@
   <img src="docs/screenshots/main.png" alt="The showcase's main menu" width="80%">
 </p>
 
-The same scripts run everywhere, 3D and all: every one of the 52 demos runs at 53 to 60 frames a second on a real 64 MB original Xbox. The engine is self-contained: it needs
+The same scripts run everywhere, 3D and all: every one of the 56 demos runs at 53 to 60 frames a second on a real 64 MB original Xbox. The engine is self-contained: it needs
 a compiler and the platform's SDK, downloads nothing, and uses no SDL or GLFW.
 
 ## Screenshots
@@ -39,6 +39,11 @@ a compiler and the platform's SDK, downloads nothing, and uses no SDL or GLFW.
   <img src="docs/screenshots/cases.png" alt="Cover flow" width="32%">
   <img src="docs/screenshots/skim.png" alt="Skimmer" width="32%">
   <img src="docs/screenshots/shaders.png" alt="Shaders" width="32%">
+</p>
+<p align="center">
+  <img src="docs/screenshots/widgets.png" alt="Widgets" width="32%">
+  <img src="docs/screenshots/form.png" alt="Form" width="32%">
+  <img src="docs/screenshots/inventory.png" alt="Inventory" width="32%">
 </p>
 <p align="center">
   <img src="docs/screenshots/forest.png" alt="Forest" width="32%">
@@ -92,6 +97,8 @@ a compiler and the platform's SDK, downloads nothing, and uses no SDL or GLFW.
 - **3D** — glTF models with animation, lights, shadows, fog, sky and water; hills and endless land that streams as you go; rigid
   bodies and characters that walk; culling and levels of detail; ray-marched shapes; particles; split screen.
 - **Shaders** — bloom, and effects of your own over the picture or on things: one file for every GPU that has shaders.
+- **Interfaces** — widgets with layout, gamepad focus, themes, lists of any length, dialogs and a keyboard on the screen; from
+  scripts or from files, in any of several languages.
 - **Networking** — rooms to play in on the local network, TCP, UDP, and HTTPS with certificates that are checked.
 - **Console calls** — on the original Xbox: temperatures, fan, light, tray, drives, launching titles, and back to the dashboard.
 - **Sound** — 32 voices with volume, pan, pitch and fades, or from a place in space; WAV, Ogg Vorbis and MP3; spectrum and waveform for visualisers.

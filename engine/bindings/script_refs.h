@@ -66,6 +66,10 @@ namespace nx
     void bindNet(Binder& binder);
     // bind_ui.cpp
     void bindUi(Binder& binder);
+    // bind_json.cpp
+    void bindJson(Binder& binder);
+    // A file of the screen's, as it was last written; or any other of its, or a shared one.
+    bool readOwn(const Services& services, const char* name, FileData& out);
     // bind_xbox.cpp
     void bindXbox(Binder& binder);
 }

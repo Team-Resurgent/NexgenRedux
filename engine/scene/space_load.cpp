@@ -26,15 +26,21 @@ namespace nx
 
     int Space::load(const char* path, const char* folder, const Vec3& at, bool streamed)
     {
-        m_world.m_error[0] = 0;
-        snprintf(m_world.m_folder, sizeof(m_world.m_folder), "%s", folder);
         FileData file;
-        JsonTree json;
         if (!m_assets.platform().readFile(path, file, MemTag::Scene))
         {
+            m_world.m_error[0] = 0;
             m_world.fail(path, 0, "%s", "cannot be read");
             return -1;
         }
+        return load(path, file, folder, at, streamed);
+    }
+
+    int Space::load(const char* path, const FileData& file, const char* folder, const Vec3& at, bool streamed)
+    {
+        m_world.m_error[0] = 0;
+        snprintf(m_world.m_folder, sizeof(m_world.m_folder), "%s", folder);
+        JsonTree json;
         if (!json.parse(reinterpret_cast<const char*>(file.data), file.size))
         {
             m_world.fail(path, json.errorLine(), "%s", json.error());
@@ -43,7 +49,8 @@ namespace nx
         int count = 0;
         for (Json v = json.root()["entities"].first(); v.exists(); v = v.next())
         {
-            if (!readThing(v, at, streamed, path))
+            u32 id = 0;
+            if (!readThing(v, at, streamed, path, id))
             {
                 return -1;
             }
@@ -52,9 +59,25 @@ namespace nx
         return count;
     }
 
-    bool Space::readThing(Json json, const Vec3& at, bool streamed, const char* file)
+    u32 Space::make(Json json, const char* folder, const Vec3& at)
     {
-        const u32 id = m_world.spawn({});
+        m_world.m_error[0] = 0;
+        snprintf(m_world.m_folder, sizeof(m_world.m_folder), "%s", folder);
+        u32 id = 0;
+        if (readThing(json, at, false, "json", id))
+        {
+            return id;
+        }
+        if (id)
+        {
+            m_world.destroyEntity(id);
+        }
+        return 0;
+    }
+
+    bool Space::readThing(Json json, const Vec3& at, bool streamed, const char* file, u32& id)
+    {
+        id = m_world.spawn({});
         if (id == 0)
         {
             return m_world.fail(file, json.line(), "%s", "too many entities");

@@ -338,7 +338,7 @@ def main(folder):
     body, heads = markdown(open(os.path.join(DOCS, 'Guide.md'), encoding='utf-8').read())
     page(folder, 'guide.html', 'Nexgen Redux guide', body, [(slug(h), html.escape(h)) for h in heads])
 
-    captions = [('explore', 'A world to walk about in'), ('cases', 'Cover flow'), ('skim', 'Skimmer'), ('shaders', 'Shaders'), ('embers', 'Embers'), ('widgets', 'Widgets'), ('inventory', 'Inventory'), ('dashboard', 'Dashboard'), ('endless', 'Endless land'), ('melt', 'Ray marching'), ('blades', 'Blades'), ('tumble', '3D physics'), ('music', 'Music'), ('runes', 'Rune shift'), ('shooter', 'Shooter'), ('platformer', 'Platformer'), ('cracktro', 'Cracktro'), ('xbox-explore', 'On a real original Xbox')]
+    captions = [('explore', 'A world to walk about in'), ('cases', 'Cover flow'), ('skim', 'Skimmer'), ('shaders', 'Shaders'), ('embers', 'Embers'), ('widgets', 'Widgets'), ('inventory', 'Inventory'), ('editor', 'Scene editor'), ('dashboard', 'Dashboard'), ('endless', 'Endless land'), ('melt', 'Ray marching'), ('blades', 'Blades'), ('tumble', '3D physics'), ('music', 'Music'), ('runes', 'Rune shift'), ('shooter', 'Shooter'), ('platformer', 'Platformer'), ('cracktro', 'Cracktro'), ('xbox-explore', 'On a real original Xbox')]
     body = '''<h1>Nexgen Redux</h1>
 <p class="lead">A cross-platform engine for games and dashboards, scripted in AngelScript. The same scripts run on the original Xbox, Windows, Linux and macOS.</p>
 <div class="cards">

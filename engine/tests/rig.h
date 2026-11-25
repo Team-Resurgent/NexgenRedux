@@ -11,6 +11,7 @@
 #include <atomic>
 #include <stdio.h>
 #include <string.h>
+#include <map>
 #include <string>
 
 namespace nx::test
@@ -21,7 +22,9 @@ namespace nx::test
     public:
         std::atomic<int> reads{ 0 };  // files are read by the loading thread too
         u64 time = 1;
-        std::string saved;
+        std::string saved, nothing;
+        std::map<std::string, std::string> kept;  // other saves, by name
+        std::string written;                       // the last file
         double now = 0;
         std::string extraPath, extraText;
         InputState state;
@@ -73,21 +76,29 @@ namespace nx::test
 
         u64 fileTime(const char*) override { return time; }
 
-        bool loadSave(const char*, FileData& out) override
+        bool loadSave(const char* name, FileData& out) override
         {
-            if (saved.empty())
+            const auto other = kept.find(name);
+            const std::string& from = strchr(name, '.') == nullptr ? saved : other != kept.end() ? other->second : nothing;
+            if (from.empty())
             {
                 return false;
             }
-            u8* data = static_cast<u8*>(memAlloc(saved.size() + 1, MemTag::General));
-            memcpy(data, saved.data(), saved.size());
-            out.take(data, saved.size());
+            u8* data = static_cast<u8*>(memAlloc(from.size() + 1, MemTag::General));
+            memcpy(data, from.data(), from.size());
+            out.take(data, from.size());
             return true;
         }
 
-        bool writeSave(const char*, const void* data, size_t size) override
+        bool writeSave(const char* name, const void* data, size_t size) override
         {
-            saved.assign(static_cast<const char*>(data), size);
+            (strchr(name, '.') == nullptr ? saved : kept[name]).assign(static_cast<const char*>(data), size);
+            return true;
+        }
+
+        bool writeFile(const char* path, const void*, size_t) override
+        {
+            written = path;
             return true;
         }
 

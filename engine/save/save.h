@@ -23,6 +23,7 @@ namespace nx
 
         // Nothing is written, as for unattended runs.
         void setReadOnly() { m_readOnly = true; }
+        bool readOnly() const { return m_readOnly; }
 
         // Writes if anything has changed.
         bool flush();

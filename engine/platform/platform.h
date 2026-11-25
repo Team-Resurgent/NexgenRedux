@@ -128,6 +128,8 @@ namespace nx
 
         // Small files that the player keeps: settings and scores. Names are plain, like "settings".
         virtual bool loadSave(const char* name, FileData& out) = 0;
+        // Over a file in the media, while developing. False where it can't be.
+        virtual bool writeFile(const char*, const void*, size_t) { return false; }
         virtual bool writeSave(const char* name, const void* data, size_t size) = 0;
 
         // Calls back with the name of each folder directly inside one.

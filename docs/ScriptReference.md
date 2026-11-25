@@ -225,6 +225,8 @@ Actions are `up`, `down`, `left`, `right`, `accept`, `cancel`, `fire`, `alternat
 | `bool Input::get_hasMouse() property` | Whether a mouse has moved. |
 | `Vec2 Input::get_mouse() property` | Where the mouse is, in design units. |
 | `bool Input::mouseDown(uint button)` | Left is 0, right 1, middle 2. |
+| `float Input::get_wheel() property` | How far the mouse's wheel has just turned: up is more than 0. |
+| `bool Input::key(const string &in name)` | Whether a key is down, by its name: `A`, `1`, `Up`, `Space`, `Shift`, `Control`. Not while someone is typing. Actions are better for playing with, as they can be changed. |
 | `bool Input::padConnected(uint pad)` | Whether a gamepad (0 to 3) is plugged in. |
 | `Vec2 Input::padLeft(uint pad)` | Left stick, -1 to 1, y up. |
 | `Vec2 Input::padRight(uint pad)` | Right stick, -1 to 1, y up. |
@@ -316,6 +318,48 @@ Text that is kept between runs, by name.
 | `void Save::set(const string &in key, const string &in value)` | Keeps something. |
 | `string Save::get(const string &in key, const string &in otherwise = "")` | What was kept, or otherwise. |
 | `void Save::remove(const string &in key)` | Forgets it. |
+
+## Json
+
+Numbers, text and flags, in lists and by name: for files, and for what comes from the web. One that isn't there is null, and can be asked things all the same: `j["player"]["score"].number()`.
+
+| | |
+|---|---|
+| `bool parse(const string &in text, string &out error)` | Reads it from text. False, with what was wrong, if it isn't JSON. |
+| `void copy(const Json@+ other)` | Becomes the same as another. |
+| `string write(bool oneLine = false) const` | The text of it. |
+| `Json@ opIndex(const string &in key)` | A part by name. |
+| `Json@ opIndex(uint index)` | A part by number, from 0. |
+| `bool has(const string &in key) const` | Whether there is one of that name. |
+| `uint get_count() const property` | How many parts it has. |
+| `string key(uint index) const` | The name of one. |
+| `bool get_isNull() const property` | Whether it is nothing, or isn't there. |
+| `bool get_isNumber() const property` | Whether it is a number. |
+| `bool get_isText() const property` | Whether it is text. |
+| `bool get_isFlag() const property` | Whether it is true or false. |
+| `bool get_isArray() const property` | Whether its parts are in a list. |
+| `bool get_isObject() const property` | Whether its parts have names. |
+| `double number(double otherwise = 0) const` | It as a number, or otherwise if it isn't one. |
+| `string text(const string &in otherwise = "") const` | It as text. |
+| `bool flag(bool otherwise = false) const` | It as true or false. |
+| `Vec3 vec3(const Vec3 &in otherwise = Vec3()) const` | It as a place: [x, y, z]. |
+| `Color color(const Color &in otherwise = White) const` | It as a colour: "#rrggbb", "#rrggbbaa" or [r, g, b, a]. |
+| `void set(const string &in key, double value)` | Gives it a part of that name, or changes the one there. |
+| `void set(const string &in key, bool value)` | The same. |
+| `void set(const string &in key, const string &in value)` | The same. |
+| `void set(const string &in key, const Vec3 &in value)` | The same. |
+| `void set(const string &in key, const Color &in value)` | The same. |
+| `void set(const string &in key, Json@+ value)` | The same, with a copy of another. |
+| `void add(double value)` | Puts one more at the end of a list. |
+| `void add(bool value)` | The same. |
+| `void add(const string &in value)` | The same. |
+| `void add(const Vec3 &in value)` | The same. |
+| `void add(const Color &in value)` | The same. |
+| `void add(Json@+ value)` | The same, with a copy of another. |
+| `void remove(const string &in key)` | Takes a part out. |
+| `void remove(uint index)` | The same, by number. |
+| `string Assets::read(const string &in name)` | What is in a text file, at once. If the screen has written one of that name, that is what it is. |
+| `bool Assets::write(const string &in name, const string &in text)` | Writes one of the screen's own files: `asset:` something `.json`. While developing it is the file itself; otherwise it is kept with the saves, and read from there from then on. False if it couldn't be. |
 
 ## Entity
 
@@ -558,6 +602,7 @@ The scene in three dimensions: x right, y up, z towards you, in metres. Entities
 | `uint Space::get_regions() property` | How many there are now. |
 | `uint Space::get_regionsWaiting() property` | How many are still to come. |
 | `int Space::load(const string &in name, const Vec3 &in at = Vec3(), bool streamed = false)` | Makes the entities listed in a file, around a place, and returns how many. Their models arrive in the background. See the guide. |
+| `Entity@ Space::make(Json@+ thing, const Vec3 &in at = Vec3())` | One entity, as such a file describes it. |
 | `void Space::landColors(const Color &in low, const Color &in middle, const Color &in high, const Color &in steep, float lowHeight, float highHeight)` | Colours them by height and slope. |
 | `void Space::flatten(float x, float z, float radius)` | Levels the land around a place, to build on. |
 | `void Space::flatten(float x, float z, float radius, float height)` | The same, to a height. |

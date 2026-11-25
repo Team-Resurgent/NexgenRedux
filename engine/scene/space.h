@@ -273,6 +273,10 @@ namespace nx
         void setStreamed(u32 id, bool streamed);
         // Entities from a file, at a place. How many, or -1 with the world's error set.
         int load(const char* path, const char* folder, const Vec3& at, bool streamed);
+        // The same, of what has been read already.
+        int load(const char* path, const FileData& file, const char* folder, const Vec3& at, bool streamed);
+        // One thing, as a file has them. 0 if there is something wrong with it.
+        u32 make(JsonTree::Value json, const char* folder, const Vec3& at);
         // Levels the land towards a height around a place.
         void flatten(float x, float z, float radius, float level);
         void setLandColors(const gpu::Color& low, const gpu::Color& middle, const gpu::Color& high, const gpu::Color& steep, float lowHeight, float highHeight);
@@ -455,7 +459,7 @@ namespace nx
         const Chunk* chunkAt(int x, int z) const;
         void stream();
         void startLand(u32 seed, float spacing, float height, float roughness);
-        bool readThing(JsonTree::Value json, const Vec3& at, bool streamed, const char* file);
+        bool readThing(JsonTree::Value json, const Vec3& at, bool streamed, const char* file, u32& id);
         void drawLand(const gpu::View& view, const Frustum& frustum, bool shadow);
         void drawWater(const gpu::View& view);
         gpu::Color landColor(float height, const Vec3& normal, float x, float z) const;

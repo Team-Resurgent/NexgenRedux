@@ -14,6 +14,7 @@ namespace nx
         u64 fileTime(const char* path) override;
         bool loadSave(const char* name, FileData& out) override;
         bool writeSave(const char* name, const void* data, size_t size) override;
+        bool writeFile(const char* path, const void* data, size_t size) override;
         void listFolders(const char* path, FolderCallback callback, void* user) override;
 
         // By virtual key code, which both use.

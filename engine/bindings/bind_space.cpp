@@ -1,3 +1,4 @@
+#include "base/json_value.h"
 #include "bindings/script_refs.h"
 
 #include <scriptarray/scriptarray.h>
@@ -351,12 +352,37 @@ namespace nx
                 scriptError("asset names start with asset: or global: (" + name + ")");
                 return 0;
             }
-            const int count = space().load(path, s.folder, at, streamed);
+            FileData file;
+            if (!readOwn(s, name.c_str(), file))
+            {
+                scriptError(std::string(path) + " cannot be read");
+                return 0;
+            }
+            const int count = space().load(path, file, s.folder, at, streamed);
             if (count < 0)
             {
                 scriptError(s.world->takeError());
             }
             return count;
+        }
+        EntityRef* spaceMake(JsonValue* json, const Vec3& at)
+        {
+            Services& s = services();
+            if (json == nullptr)
+            {
+                scriptError("null json");
+                return nullptr;
+            }
+            // As text, so that there is one thing that reads them.
+            const std::string text = json->write(true);
+            JsonTree tree;
+            const u32 id = tree.parse(text.data(), text.size()) ? space().make(tree.root(), s.folder, at) : 0;
+            if (id == 0)
+            {
+                scriptError(s.world->takeError());
+                return nullptr;
+            }
+            return s.world->ref(id);
         }
         void setStreamed(bool v, EntityRef* e) { if (e->world) e->world->space().setStreamed(e->id, v); }
         void spaceLandColors(const Color& low, const Color& middle, const Color& high, const Color& steep, float lowHeight, float highHeight) { space().setLandColors(low, middle, high, steep, lowHeight, highHeight); }
@@ -565,6 +591,7 @@ namespace nx
         b.function("uint get_regions() property", NX_FN(spaceRegions), "How many there are now.");
         b.function("uint get_regionsWaiting() property", NX_FN(spaceRegionsWaiting), "How many are still to come.");
         b.function("int load(const string &in name, const Vec3 &in at = Vec3(), bool streamed = false)", NX_FN(spaceLoad), "Makes the entities listed in a file, around a place, and returns how many. Their models arrive in the background. See the guide.");
+        b.function("Entity@ make(Json@+ thing, const Vec3 &in at = Vec3())", NX_FN(spaceMake), "One entity, as such a file describes it.");
         b.function("void landColors(const Color &in low, const Color &in middle, const Color &in high, const Color &in steep, float lowHeight, float highHeight)", NX_FN(spaceLandColors), "Colours them by height and slope.");
         b.function("void flatten(float x, float z, float radius)", NX_FN(spaceFlatten), "Levels the land around a place, to build on.");
         b.function("void flatten(float x, float z, float radius, float height)", NX_FN(spaceFlattenTo), "The same, to a height.");

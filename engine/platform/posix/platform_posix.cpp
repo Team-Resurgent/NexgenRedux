@@ -64,6 +64,19 @@ namespace nx
         }
     }
 
+    // Written beside the old one and then swapped in, so a crash never leaves half a file.
+    static bool swapIn(const char* full, const char* fresh, const char* name, const void* data, size_t size)
+    {
+        FILE* file = fopen(fresh, "wb");
+        if (file == nullptr)
+        {
+            NX_ERROR("cannot write %s (%s)", name, strerror(errno));
+            return false;
+        }
+        const bool ok = fwrite(data, 1, size, file) == size;
+        return fclose(file) == 0 && ok && rename(fresh, full) == 0;
+    }
+
     bool PlatformPosix::setFolders(const char* media, const char* saves)
     {
         m_start = now();
@@ -130,7 +143,6 @@ namespace nx
         return savePath(name, "", full) && readWhole(full, out, MemTag::General);
     }
 
-    // Written beside the old one and then swapped in, so a crash never leaves half a file.
     bool PlatformPosix::writeSave(const char* name, const void* data, size_t size)
     {
         char full[kMaxPath];
@@ -140,14 +152,19 @@ namespace nx
             return false;
         }
         makeFolders(m_saves);
-        FILE* file = fopen(fresh, "wb");
-        if (file == nullptr)
+        return swapIn(full, fresh, name, data, size);
+    }
+
+    bool PlatformPosix::writeFile(const char* path, const void* data, size_t size)
+    {
+        char full[kMaxPath];
+        char fresh[kMaxPath + 4];
+        if (!mediaPath(path, full))
         {
-            NX_ERROR("cannot save %s (%s)", name, strerror(errno));
             return false;
         }
-        const bool ok = fwrite(data, 1, size, file) == size;
-        return fclose(file) == 0 && ok && rename(fresh, full) == 0;
+        snprintf(fresh, sizeof(fresh), "%s.new", full);
+        return swapIn(full, fresh, path, data, size);
     }
 
     void PlatformPosix::listFolders(const char* path, FolderCallback callback, void* user)

@@ -256,6 +256,10 @@ A region may come from a file, or be made up from its numbers so that it is the 
 | `mass`, `friction`, `bounce`, `gravity`, `drag`, `walker` | How it moves |
 | `behaviour` | A class in the script |
 
+`Space::make` makes one entity from a `Json` of the same kind. The showcase's **Scene editor** makes such files: fly about, add
+things, move, turn, size and colour them, try the place, and save it. It is a screen like any other, in
+`showcase/editor`, and can be taken for your own tools.
+
 ### Particles and sounds in space
 
 Particles are described in a scene file, as on the plane, with lengths in metres. `spread` is in degrees: 90 is a cone, and 360 goes
@@ -521,12 +525,40 @@ if (Xbox::available)
 `Xbox::busRead` and `busWrite` reach anything on the SMBus but the console's settings, where a mistake can't be undone. Elsewhere
 readings are -1 or empty and the rest do nothing.
 
+Files can go to and from the console over the network. Nothing listens until it is asked to, and nothing can be changed unless
+that is asked for too:
+
+```cpp
+Xbox::startFtp("xbox", password, false);             // drives E, F and G; true lets it write
+```
+
+Only machines on the same network are answered. FTP hides nothing from them, so start it when it is wanted and then `Xbox::stopFtp()`.
+
 ## Saving
 
 ```cpp
 Save::set("best", formatInt(score));
 int best = int(parseInt(Save::get("best", "0")));
 ```
+
+## Files and JSON
+
+`Json` reads and makes JSON. What isn't there is null, and can be asked things all the same:
+
+```cpp
+Json j;
+string error;
+if (j.parse(Assets::read("asset:level.json"), error))
+{
+    float x = float(j["player"]["place"][0].number());
+    Vec3 at = j["door"].vec3();                      // [x, y, z]
+}
+j.set("score", 40);                                  // text, flags, places, colours and other Json too
+Assets::write("asset:level.json", j.write());
+```
+
+`Assets::write` writes only a screen's own `asset:` files that end in `.json`. With `--dev` it is the file in the media; otherwise
+it is kept with the saves, on consoles too, and `Assets::read` and `Space::load` read that one from then on.
 
 ## On the original Xbox
 

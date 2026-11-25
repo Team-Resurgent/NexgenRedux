@@ -715,6 +715,16 @@ namespace nx
         {
             focus(next, true);
         }
+        else if (f->index >= 0 && f->parent && f->parent->kind == WidgetKind::List && (way == Action::Left || way == Action::Right))
+        {
+            // Nothing beside a list: on to its next row, or back to the one before.
+            Widget& list = *f->parent;
+            const int to = list.chosen + (way == Action::Right ? 1 : -1);
+            if (gridColumns(list, list.w - list.pad(0) - list.pad(2)) > 1 && to >= 0 && to < static_cast<int>(list.count))
+            {
+                choose(list, to, true);
+            }
+        }
     }
 
     // --- Doing things ---

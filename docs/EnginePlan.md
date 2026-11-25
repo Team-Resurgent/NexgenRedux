@@ -887,7 +887,7 @@ Left: decals, navigation, cooked models.
 | **Original Xbox hardware** | All 52 demos at 53 to 60 fps, 18 MB free at the worst point, three times round without a leak. A page and a picture over HTTPS in 1.1 seconds. Temperatures, fan, drives, folders and kernel read; another title launched; restarted, and left for the dashboard and for the firmware. Only turning it off has not been tried |
 | Tests | 93 tests and about 18,000 checks |
 
-Left: FTP; keeping entities in step between players; voice.
+Left: keeping entities in step between players; voice.
 
 ### Phase 6 results: interfaces
 
@@ -903,6 +903,17 @@ Left: FTP; keeping entities in step between players; voice.
 | Showcase | 57 screens |
 
 Left: touch; text beyond Latin-1; the console's own drives in a file picker.
+
+### After phase 6
+
+| Done | |
+|---|---|
+| FTP | On the original Xbox: drives E, F and G, with a password, for the local network, read only unless it may write |
+| Ink | The tenth stand-in: four tones, and dark edges, by pixel shaders |
+| JSON | For scripts: read, made and written |
+| A screen's own files | Written while developing, or kept with the saves |
+| Scene editor | Adds, picks, moves, turns, sizes, colours, copies and undoes, with a mouse or a gamepad; plays what it has made; on the original Xbox too |
+| Showcase | 58 screens |
 
 ### Targets to measure against (goals, not results)
 

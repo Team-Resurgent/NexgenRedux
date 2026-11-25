@@ -63,6 +63,21 @@ namespace nx
         }
     }
 
+    // Written beside the old one and then swapped in, so a crash never leaves half a file.
+    static bool swapIn(const wchar_t* full, const wchar_t* fresh, const char* name, const void* data, size_t size)
+    {
+        const HANDLE file = CreateFile2(fresh, GENERIC_WRITE, 0, CREATE_ALWAYS, nullptr);
+        if (file == INVALID_HANDLE_VALUE)
+        {
+            NX_ERROR("cannot write %s (%lu)", name, GetLastError());
+            return false;
+        }
+        DWORD written = 0;
+        const bool ok = WriteFile(file, data, static_cast<DWORD>(size), &written, nullptr) && written == size;
+        CloseHandle(file);
+        return ok && MoveFileExW(fresh, full, MOVEFILE_REPLACE_EXISTING);
+    }
+
     bool PlatformWindows::setFolders(const wchar_t* base, const wchar_t* saves)
     {
         LARGE_INTEGER value;
@@ -113,7 +128,6 @@ namespace nx
         return savePath(name, L"", full) && readWhole(full, out, MemTag::General);
     }
 
-    // Written beside the old one and then swapped in, so a crash never leaves half a file.
     bool PlatformWindows::writeSave(const char* name, const void* data, size_t size)
     {
         wchar_t full[kMaxPath];
@@ -123,16 +137,14 @@ namespace nx
             return false;
         }
         CreateDirectoryW(m_saves, nullptr);
-        const HANDLE file = CreateFile2(fresh, GENERIC_WRITE, 0, CREATE_ALWAYS, nullptr);
-        if (file == INVALID_HANDLE_VALUE)
-        {
-            NX_ERROR("cannot save %s (%lu)", name, GetLastError());
-            return false;
-        }
-        DWORD written = 0;
-        const bool ok = WriteFile(file, data, static_cast<DWORD>(size), &written, nullptr) && written == size;
-        CloseHandle(file);
-        return ok && MoveFileExW(fresh, full, MOVEFILE_REPLACE_EXISTING);
+        return swapIn(full, fresh, name, data, size);
+    }
+
+    bool PlatformWindows::writeFile(const char* path, const void* data, size_t size)
+    {
+        wchar_t full[kMaxPath];
+        wchar_t fresh[kMaxPath];
+        return mediaPath(path, L"", full) && mediaPath(path, L".new", fresh) && swapIn(full, fresh, path, data, size);
     }
 
     void PlatformWindows::listFolders(const char* path, FolderCallback callback, void* user)

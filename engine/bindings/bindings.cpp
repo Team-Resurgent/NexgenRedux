@@ -329,6 +329,20 @@ namespace nx
         bool inputHasMouse() { return services().input->raw().hasMouse; }
         Vec2 inputMouse() { const InputState& i = services().input->raw(); return services().canvas->toDesign(i.mouseX, i.mouseY); }
         bool inputMouseDown(u32 button) { return button < 3 && services().input->raw().mouseButtons[button]; }
+        float inputWheel() { return services().input->wheel(); }
+        bool inputKey(const std::string& name)
+        {
+            const Input& input = *services().input;
+            for (size_t k = 1; k < static_cast<size_t>(Key::Count); k++)
+            {
+                if (name == Input::keyName(static_cast<Key>(k)))
+                {
+                    return !input.typing() && input.raw().keys[k];
+                }
+            }
+            scriptError("no key called " + name);
+            return false;
+        }
         const Gamepad* pad(u32 index) { return index < kMaxPads ? &services().input->raw().pads[index] : nullptr; }
         bool padConnected(u32 index) { const Gamepad* p = pad(index); return p && p->connected; }
         Vec2 padLeft(u32 index) { const Gamepad* p = pad(index); return p ? Vec2(p->leftX, p->leftY) : Vec2(); }
@@ -642,6 +656,8 @@ namespace nx
             b.function("bool get_hasMouse() property", NX_FN(inputHasMouse), "Whether a mouse has moved.");
             b.function("Vec2 get_mouse() property", NX_FN(inputMouse), "Where the mouse is, in design units.");
             b.function("bool mouseDown(uint button)", NX_FN(inputMouseDown), "Left is 0, right 1, middle 2.");
+            b.function("float get_wheel() property", NX_FN(inputWheel), "How far the mouse's wheel has just turned: up is more than 0.");
+            b.function("bool key(const string &in name)", NX_FN(inputKey), "Whether a key is down, by its name: `A`, `1`, `Up`, `Space`, `Shift`, `Control`. Not while someone is typing. Actions are better for playing with, as they can be changed.");
             b.function("bool padConnected(uint pad)", NX_FN(padConnected), "Whether a gamepad (0 to 3) is plugged in.");
             b.function("Vec2 padLeft(uint pad)", NX_FN(padLeft), "Left stick, -1 to 1, y up.");
             b.function("Vec2 padRight(uint pad)", NX_FN(padRight), "Right stick, -1 to 1, y up.");
@@ -840,6 +856,7 @@ namespace nx
         bindAudio(binder);
         bindCoroutines(binder);
         bindSave(binder);
+        bindJson(binder);
         bindScene(binder);
         bindSpace(binder);
         bindUi(binder);

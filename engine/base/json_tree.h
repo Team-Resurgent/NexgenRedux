@@ -52,6 +52,7 @@ namespace nx
 
             const char* text(const char* otherwise = "") const { return isString() ? m_tree->m_text + m_tree->m_nodes[m_index].text : otherwise; }
             float number(float otherwise = 0) const { return isNumber() ? static_cast<float>(m_tree->m_nodes[m_index].number) : otherwise; }
+            double exact() const { return isNumber() ? m_tree->m_nodes[m_index].number : 0; }
             bool flag(bool otherwise = false) const { return type() == Type::Bool ? m_tree->m_nodes[m_index].flag : otherwise; }
 
         private:

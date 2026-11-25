@@ -153,11 +153,13 @@ namespace
                 return true;
             }
             const ScreenInfo& info = *screens.info(m_next++);
+            NX_INFO("demo: %s", info.id);
             snprintf(m_script, sizeof(m_script), "%s", info.demo);
             m_at = m_script;
             m_hold = kBeforePlaying;
             m_pressed = 0;
-            m_left = m_seconds;
+            m_length = info.seconds > m_seconds ? info.seconds : m_seconds;
+            m_left = m_length;
             screens.push(info.id);
             return false;
         }
@@ -169,7 +171,7 @@ namespace
             {
                 return;
             }
-            const float shown = m_seconds - m_left;
+            const float shown = m_length - m_left;
             const float alpha = shown < 0.4f ? shown / 0.4f : shown > 2.6f ? (3.2f - shown) / 0.6f : 1;
             const ScreenInfo* info = m_next ? s.screens->info(m_next - 1) : nullptr;
             if (alpha <= 0 || info == nullptr)
@@ -281,7 +283,8 @@ namespace
         const char* m_only;
         float m_left = kAtHome;
         u32 m_next = 0;
-        char m_script[256] = {};
+        char m_script[400] = {};
+        float m_length = 0;
         const char* m_at = m_script;
         float m_hold = 0;
         u32 m_pressed = 0;
@@ -424,6 +427,7 @@ namespace
             services.solids = &solids;
             services.net = &net;
             secureSetPlatform(&platform);
+            assets.setWeb(webRead);
             solids.init(*device);
             services.input = &input;
             services.host = &host;
@@ -580,11 +584,12 @@ namespace
                 NX_ERROR("%u assets were still held", static_cast<unsigned>(assets.stats().inUse));
                 ok = false;
             }
+            webStop();
             net.shutdown();
-            secureShutdown();
             solids.shutdown();
             canvas.shutdown();
             assets.shutdown();
+            secureShutdown();
         }
         destroy(device);
         return ok;
@@ -592,9 +597,14 @@ namespace
 
     void findTour(const char* name, void* user)
     {
-        if (strcmp(name, "tour") == 0)
+        Options& options = *static_cast<Options*>(user);
+        if (strcmp(name, "tour") == 0 && options.tour == 0)
         {
-            *static_cast<bool*>(user) = true;
+            options.tour = 3;
+        }
+        else if (strcmp(name, "demo") == 0 && options.demo <= 0)
+        {
+            options.demo = 8;
         }
     }
 }
@@ -632,10 +642,8 @@ int main(int argc, char** argv)
     bool ok = platform != nullptr;
     if (platform)
     {
-        // Consoles have no command line: a folder called tour on the disc asks for one.
-        bool tour = false;
-        platform->listFolders("", findTour, &tour);
-        options.tour = tour && options.tour == 0 ? 3 : options.tour;
+        // Consoles have no command line: a folder called tour, or demo, on the disc asks for one.
+        platform->listFolders("", findTour, &options);
         ok = run(*platform, options);
     }
     nx::destroy(platform);

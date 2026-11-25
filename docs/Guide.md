@@ -256,10 +256,82 @@ A region may come from a file, or be made up from its numbers so that it is the 
 | `mass`, `friction`, `bounce`, `gravity`, `drag`, `walker` | How it moves |
 | `behaviour` | A class in the script |
 
+### Particles and sounds in space
+
+Particles are described in a scene file, as on the plane, with lengths in metres. `spread` is in degrees: 90 is a cone, and 360 goes
+every way. They face the camera, are lit by nothing, and hide behind things.
+
+```cpp
+Scene::load("asset:scene.json");                        // "particles": { "flame": {...}, "sparks": {...} }
+fire.emit("flame", 60);                                 // steadily, upwards from it as it is turned
+Space::burst("sparks", place, 40);                      // at once
+fire.sound(crackle, 0.9f, 18);                          // heard from where it is, within 18 metres
+boom.playAt(place, 1, 60);                              // once, from a place
+```
+
+What is heard fades with distance from the camera, and moves from one side to the other.
+
 ### Shapes that melt
 
 `Space::field` adds one of up to 24 shapes that are drawn by marching along rays, so that they join softly, cut each other and
 reflect. They mix with meshes. Clear them and add them again each update to move them. The original Xbox makes triangles of them.
+
+## Shaders and bloom
+
+```cpp
+Effect@ tube = Assets::effect("global:effect/tube.fx");
+Effect@ flag = Assets::effect("asset:flag.fx");
+
+cloth.effect(flag);                // on a thing in space
+flag.set(0, 1);                    // values[0].x
+
+void draw(Canvas@ c)
+{
+    Space::draw(c);
+    c.bloom(0.7f, 0.7f);           // light spills from what is brighter than 0.7
+    c.effect(tube);                // over all that has been drawn so far
+    c.text(font, "Not through it", 40, 40);
+}
+```
+
+An effect is one file, for every GPU that has shaders: Direct3D 11 and OpenGL now. Where there are none, as on the original Xbox,
+`bloom` and `effect` do nothing and give false, and things are drawn as they are, so a game need not ask. A mistake in one is in the
+log with its line, and it is left out.
+
+Over the picture:
+
+```hlsl
+float4 effect(float2 uv, float4 color)
+{
+    float grey = dot(color.rgb, float3(0.3, 0.6, 0.1));
+    return float4(lerp(color.rgb, float3(grey, grey, grey), values[0].x), 1.0);
+}
+```
+
+On a thing:
+
+```hlsl
+#define MOVES                                     // only if it has move()
+float3 move(float3 place, float3 normal, float2 uv)
+{
+    return place + normal * sin(time * 3.0 + place.y * 4.0) * values[0].x;
+}
+
+float4 paint(float4 color, float2 uv, float3 place, float3 normal, inout float glow)
+{
+    glow = max(glow, frac(uv.y * 8.0 - time));    // 1 is bright whatever the light
+    return color;                                 // before it is lit
+}
+```
+
+| There is | Which is |
+|---|---|
+| `picture(uv)` | The picture so far, anywhere; `uv` is 0 to 1 from the top left |
+| `size`, `time` | Of the picture in pixels, and seconds |
+| `values[0]` to `values[3]` | Sixteen numbers, set with `Effect::set` |
+
+It is written as HLSL is, and every number with a point in it. `float2` to `float4`, `lerp`, `frac`, `saturate` and `fmod` have their
+OpenGL names put in for you; keep to what both have. Don't name anything `out`, `in`, `sample` or `texture`.
 
 ## Assets
 
@@ -267,6 +339,8 @@ reflect. They mix with meshes. Clear them and add them again each update to move
 Texture@ ship = Assets::texture("asset:ship.png");   // this screen's asset folder
 Sound@ hit = Assets::sound("global:sound/hit.wav");  // shared by all screens
 ```
+
+A name can be an address too: `Assets::texture("https://...")` fetches a picture from the web.
 
 Ask for what a screen needs in its fields: `onEnter()` waits for those. Anything asked for later arrives in the background, and
 draws as nothing until `ready`. Asking twice gives the same one. Letting go doesn't unload it: it stays warm, so going back to a
@@ -315,6 +389,66 @@ void intro()
 A `Tween` is a number that moves by itself. There is nothing to update: read `value` when drawing. `go()` starts from wherever
 it is, so changing course never jumps.
 
+## Networking
+
+Nothing here waits: ask, and look each update at what has come. Who sends what is up to you, so never trust what arrives.
+
+### Playing together
+
+A `Room` is a game on the local network. One player hosts; others find it by the game's name and join.
+
+```cpp
+Room@ room = Room();
+
+room.host("my game", "Sam");                  // or
+room.find("my game");                         // ...and then, when room.found > 0,
+room.join("my game", 0, "Alex");
+
+Message@ m = Message();
+m.writeInt(1);
+m.writeVec2(position);
+room.send(m, false);                          // false: quickly; true: for sure, and in order
+
+for (Message@ m = room.receive(); m !is null; @m = room.receive())
+    if (m.readInt() == 1)
+        where[m.from] = m.readVec2();         // m.whole says whether it was all there
+```
+
+`room.state` is `RoomIn` once you are in, and `RoomLost` if the host goes. `arrived()` and `departed()` say who has come and gone. Use
+quick messages for what is out of date in a moment, such as where things are, and sure ones for what happened.
+
+### The web
+
+```cpp
+Request@ request = Net::get("https://example.com/scores");
+
+if (request.done && !request.failed)
+    show(request.status, request.text);
+```
+
+Certificates are checked, against those in `media/global/certificates.pem`: a server that can't be trusted is refused, and `error`
+says why. An answer may be up to 4 MB. `Net::post` sends something.
+
+### Anything else
+
+`Connection` is a stream of text over TCP, to a server or from those who connect to you; `Datagrams` sends short texts over UDP.
+
+## What only an Xbox can do
+
+`Xbox::available` is true on an original Xbox. Its temperatures, fan, light, tray, drives and files are there, as are ways out:
+
+```cpp
+if (Xbox::available)
+{
+    string cpu = formatInt(Xbox::cpuTemperature) + " C";
+    array<string>@ games = Xbox::folders("E:\\Games");
+    Xbox::launch("E:\\Games\\Thing\\default.xbe");   // or toDashboard(), toFirmware(), restart(), powerOff()
+}
+```
+
+`Xbox::busRead` and `busWrite` reach anything on the SMBus but the console's settings, where a mistake can't be undone. Elsewhere
+readings are -1 or empty and the rest do nothing.
+
 ## Saving
 
 ```cpp
@@ -329,5 +463,5 @@ int best = int(parseInt(Save::get("best", "0")));
 - Build the disc with the cook tool, which makes images a quarter to an eighth of the size in memory and sounds a quarter,
   under the same names.
 - Three dimensions use the fixed pipeline: lights are worked out at corners, so give a floor plenty of squares. Ray-marched shapes
-  become triangles.
+  become triangles. There are no shaders, so no bloom or effects.
 - There is no live reload: edit on a PC and then build the disc.

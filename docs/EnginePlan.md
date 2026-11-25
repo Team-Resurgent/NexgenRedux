@@ -753,7 +753,7 @@ the design. Sizes are relative effort, not dates.
 | **2 Assets + audio** | Cook tool, async loading, **budgets and eviction for every asset type, sound cache and voice pool**, audio, input actions, coroutines, tweens, script hot reload, debugger, CI on Win/Linux/macOS | + Paddle game, Block puzzle, Audio, Input, Memory | L |
 | **3 Scene** | Entities, **pooled spawning**, hierarchy, sprites, animation, collision, prefabs | + Parallax, Shooter (script under 300 lines), Stress test | M |
 | **4 3D** (brought forward) | glTF, materials, lights, fog, skinning, **a world to walk around, 3D physics**, **LOD and culling, ray marching, streamed regions**, shadows | + 3D scenes, Dashboard, Blades. **Done** | L |
-| **5 Networking and platform calls** | Sockets, HTTP, finding and joining games on the local network, keeping entities in step; calls that only some platforms have, behind names that say whether they are there. On the original Xbox: back to the firmware or dashboard, launch a title, restart, SMBus temperatures and fan, LED, tray, EEPROM and drive information. FTP | + a game for two consoles, Chat, System panel | L |
+| **5 Networking, platform calls and effects** | Sockets, HTTPS, rooms on the local network; on the original Xbox: back to the firmware or dashboard, launch a title, restart, SMBus temperatures and fan, LED, tray and drives; **shaders of your own and bloom; particles and sound in space** | + Together, Web, Launcher, Shaders, Embers, Skimmer, Cover flow, System panel. **Done** | L |
 | **6 UI** | Layout, focus, themes, lists, on-screen keyboard, layout files, dashboard module | Main menu rebuilt on UI; + UI gallery | L |
 | **7 Xbox 360 + Xbox One / Series** | D3D9 backend and 360 platform layer, hardware testing. The UWP layer is already done and runs on Windows; consoles remain | The same showcase on both | L |
 | **8 Extras** | Inspector, post effects, video, scene editor, full guides | One scene per module. **First full release** | L |
@@ -871,7 +871,21 @@ Left: entities from script in other layouts than JSON; a scene editor.
 | Speed | `--bench` runs without waiting for the display. On a PC each scene takes under 1 ms but ray marching, which took 14.8 ms at 720p until only the shapes near each ray were looked at, and now takes 1.3 |
 | Tests | 79 tests and about 17,000 checks; Windows, Linux, generic calls; sanitizers find nothing in our code beyond AngelScript's own alignment |
 
-Left: post effects, particles in space, decals, navigation, cooked models.
+Left: decals, navigation, cooked models.
+
+### Phase 5 results: networking, platform calls and effects
+
+| Done | |
+|---|---|
+| Networking | UDP and TCP for scripts; rooms of up to 8 on the local network, with sure and quick messages; HTTP and HTTPS on a worker thread, with redirects, TLS 1.2 and 1.3 (Mbed TLS 3.6.8) and certificates that are checked; pictures straight from the web |
+| Original Xbox | Temperatures, fan, light, tray, drives, folders, launching a title, ways out, and the SMBus but for its settings |
+| Shaders | One file for both Direct3D 11 and OpenGL, over the picture or on a thing; nothing where there are none. Ten in the showcase |
+| Bloom | Six steps down and up again, at a strength and a threshold |
+| In space | Particles, with styles from the scene file; sounds that move with things |
+| Script API | Gone through as a whole: what something is, is a property, and what it does, is a function |
+| Showcase | 53 screens |
+
+Left: FTP; keeping entities in step between players; voice.
 
 ### Targets to measure against (goals, not results)
 

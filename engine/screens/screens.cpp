@@ -85,6 +85,9 @@ namespace nx
         jsonString(text, "description", info.description, sizeof(info.description));
         jsonString(text, "category", info.category, sizeof(info.category));
         jsonString(text, "demo", info.demo, sizeof(info.demo));
+        double seconds = 0;
+        jsonNumber(text, "seconds", seconds);
+        info.seconds = static_cast<float>(seconds);
         double order = 1000;
         jsonNumber(text, "order", order);
         info.order = static_cast<int>(order);

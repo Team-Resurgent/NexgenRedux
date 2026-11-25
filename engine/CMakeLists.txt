@@ -114,6 +114,10 @@ nx_options(nx_scene)
 
 # TLS, for https. Where there is no network yet, its sockets say so.
 file(GLOB _tls CONFIGURE_DEPENDS third_party/mbedtls/library/*.c)
+if(XBOX360)
+  # The compiler chooses an instruction here that the console does differently, and says so.
+  set_source_files_properties(third_party/mbedtls/library/ssl_tls13_generic.c PROPERTIES COMPILE_OPTIONS "-O0")
+endif()
 add_library(nx_tls STATIC ${_tls})
 target_include_directories(nx_tls PUBLIC net/tls third_party/mbedtls/include)
 target_compile_definitions(nx_tls PUBLIC MBEDTLS_CONFIG_FILE="nexgen_tls_config.h")
@@ -123,7 +127,12 @@ else()
   target_compile_options(nx_tls PRIVATE -w)
 endif()
 
-add_library(nx_net STATIC net/http.cpp net/net.cpp net/room.cpp net/secure.cpp net/socket.cpp)
+if(XBOX360)
+  set(_socket net/socket_none.cpp)  # until its platform layer is written
+else()
+  set(_socket net/socket.cpp)
+endif()
+add_library(nx_net STATIC net/address.cpp net/http.cpp net/net.cpp net/room.cpp net/secure.cpp ${_socket})
 target_link_libraries(nx_net PUBLIC nx_base PRIVATE nx_tls)
 nx_options(nx_net)
 if(WIN32 AND NOT XBOXOG)

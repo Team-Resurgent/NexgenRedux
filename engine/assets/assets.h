@@ -49,8 +49,8 @@ namespace nx
         u64 lastUsed = 0;
         u64 hash = 0;
         u64 fileTime = 0;          // for reloading when it changes
-        char key[160] = {};        // empty: this slot is free
-        char path[128] = {};
+        char key[208] = {};        // empty: this slot is free
+        char path[192] = {};
 
         bool live() const { return key[0] != 0; }
     };
@@ -87,6 +87,9 @@ namespace nx
         Asset* sound(const char* path);
         // glTF. Arrives like a texture; until then there is nothing to draw.
         Asset* model(const char* path);
+        // How an image is read from the web, where there is one: called away from the game's thread.
+        using WebRead = bool (*)(const char* url, FileData& out);
+        void setWeb(WebRead read) { m_webRead = read; }
         // A shader. Ready, but no effect, where the GPU has none.
         Asset* effect(const char* path);
         // Size is in design units; the glyphs are made at the size they will appear on screen.
@@ -157,6 +160,9 @@ namespace nx
         gpu::Device* m_device = nullptr;
         Platform* m_platform = nullptr;
         JobQueue m_jobs;
+        JobQueue m_webJobs[2];    // which may wait for a long time
+        bool m_webStarted = false;
+        WebRead m_webRead = nullptr;
         Asset* m_assets = nullptr;
         gpu::Texture m_missing;
         gpu::Texture m_invisible;

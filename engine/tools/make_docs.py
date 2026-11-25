@@ -185,8 +185,25 @@ def markdown(text):
 
 def tidy(declaration):
     """How a property is written by someone using it."""
-    m = re.match(r'(.+?) get_(\w+)\(\) const property$', declaration)
-    return '%s %s' % m.groups() if m else declaration
+    m = re.match(r'(.+?) ((?:\w+::)?)get_(\w+)\(\)(?: const)? property$', declaration)
+    if m:
+        return '%s %s%s' % m.groups()
+    m = re.match(r'void ((?:\w+::)?)set_(\w+)\((?:const )?(.+?)(?: &in)?(?: \w+)?\) property$', declaration)
+    return '%s %s%s' % (m.group(3), m.group(1), m.group(2)) if m else declaration
+
+
+def together(rows):
+    """One row for a property that can be read and set."""
+    out, at = [], {}
+    for declaration, doc in rows:
+        if '(' not in declaration and declaration in at:
+            i = at[declaration]
+            if doc not in out[i][1]:
+                out[i] = (declaration, out[i][1] + ' ' + doc)
+        else:
+            at[declaration] = len(out)
+            out.append((declaration, doc))
+    return out
 
 
 # How the reference is arranged. A name that isn't here is put at the end.
@@ -195,13 +212,15 @@ TOPICS = [
     ('Drawing', ['Canvas', 'Color', 'Texture', 'Font', 'Blend', 'Filter', 'Align']),
     ('Scene', ['Scene', 'Entity', 'Behaviour', 'IBehaviour']),
     ('Three dimensions', ['Space', 'Model', 'Mesh', 'Solid', 'FieldShape', 'FieldJoin', 'Vec3']),
-    ('Assets', ['Assets']),
+    ('Assets', ['Assets', 'Effect']),
     ('Sound', ['Sound', 'Voice', 'Bus', 'Audio']),
     ('Input', ['Input']),
     ('Movement', ['Tween', 'Ease', 'Coroutines', 'Vec2', 'Maths']),
     ('Saving', ['Save']),
+    ('Networking', ['Net', 'Room', 'RoomState', 'Message', 'Request', 'Connection', 'Datagrams']),
+    ('Original Xbox', ['Xbox', 'XboxText', 'Tray']),
 ]
-NAMESPACES = ['Screens', 'App', 'Scene', 'Space', 'Assets', 'Audio', 'Input', 'Save']
+NAMESPACES = ['Screens', 'App', 'Scene', 'Space', 'Assets', 'Audio', 'Input', 'Save', 'Net', 'Xbox']
 FUNCTIONS = ['Coroutines', 'Maths']  # sections that aren't a type or a namespace
 
 
@@ -234,6 +253,7 @@ def reference():
         nav.append((None, topic))
         for name in names:
             section = sections[name]
+            section['rows'] = together(section['rows'])
             if name in FUNCTIONS:
                 kind = 'functions'
             elif name in NAMESPACES:
@@ -317,7 +337,7 @@ def main(folder):
     body, heads = markdown(open(os.path.join(DOCS, 'Guide.md'), encoding='utf-8').read())
     page(folder, 'guide.html', 'Nexgen Redux guide', body, [(slug(h), html.escape(h)) for h in heads])
 
-    captions = [('explore', 'A world to walk about in'), ('dashboard', 'Dashboard'), ('endless', 'Endless land'), ('melt', 'Ray marching'), ('blades', 'Blades'), ('tumble', '3D physics'), ('music', 'Music'), ('runes', 'Rune shift'), ('shooter', 'Shooter'), ('platformer', 'Platformer'), ('cracktro', 'Cracktro'), ('xbox-explore', 'On a real original Xbox')]
+    captions = [('explore', 'A world to walk about in'), ('cases', 'Cover flow'), ('skim', 'Skimmer'), ('shaders', 'Shaders'), ('embers', 'Embers'), ('dashboard', 'Dashboard'), ('endless', 'Endless land'), ('melt', 'Ray marching'), ('blades', 'Blades'), ('tumble', '3D physics'), ('music', 'Music'), ('runes', 'Rune shift'), ('shooter', 'Shooter'), ('platformer', 'Platformer'), ('cracktro', 'Cracktro'), ('xbox-explore', 'On a real original Xbox')]
     body = '''<h1>Nexgen Redux</h1>
 <p class="lead">A cross-platform engine for games and dashboards, scripted in AngelScript. The same scripts run on the original Xbox, Windows, Linux and macOS.</p>
 <div class="cards">

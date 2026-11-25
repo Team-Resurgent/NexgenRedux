@@ -21,7 +21,7 @@
   <img src="docs/screenshots/main.png" alt="The showcase's main menu" width="80%">
 </p>
 
-The same scripts run everywhere, 3D and all: every one of the 45 demos runs at 54 to 60 frames a second on a real 64 MB original Xbox. The engine is self-contained: it needs
+The same scripts run everywhere, 3D and all: every one of the 52 demos runs at 54 to 60 frames a second on a real 64 MB original Xbox. The engine is self-contained: it needs
 a compiler and the platform's SDK, downloads nothing, and uses no SDL or GLFW.
 
 ## Screenshots
@@ -34,6 +34,11 @@ a compiler and the platform's SDK, downloads nothing, and uses no SDL or GLFW.
   <img src="docs/screenshots/endless.png" alt="Endless land" width="32%">
   <img src="docs/screenshots/melt.png" alt="Ray marching" width="32%">
   <img src="docs/screenshots/tumble.png" alt="Tumble" width="32%">
+</p>
+<p align="center">
+  <img src="docs/screenshots/cases.png" alt="Cover flow" width="32%">
+  <img src="docs/screenshots/skim.png" alt="Skimmer" width="32%">
+  <img src="docs/screenshots/shaders.png" alt="Shaders" width="32%">
 </p>
 <p align="center">
   <img src="docs/screenshots/forest.png" alt="Forest" width="32%">
@@ -85,8 +90,11 @@ a compiler and the platform's SDK, downloads nothing, and uses no SDL or GLFW.
   shape of screen.
 - **Scenes** — entities with behaviours, prefabs, tile maps, particles, collision and 2D physics, described in plain text files.
 - **3D** — glTF models with animation, lights, shadows, fog, sky and water; hills and endless land that streams as you go; rigid
-  bodies and characters that walk; culling and levels of detail; ray-marched shapes; split screen.
-- **Sound** — 32 voices with volume, pan, pitch and fades; WAV, Ogg Vorbis and MP3; spectrum and waveform for visualisers.
+  bodies and characters that walk; culling and levels of detail; ray-marched shapes; particles; split screen.
+- **Shaders** — bloom, and effects of your own over the picture or on things: one file for every GPU that has shaders.
+- **Networking** — rooms to play in on the local network, TCP, UDP, and HTTPS with certificates that are checked.
+- **Console calls** — on the original Xbox: temperatures, fan, light, tray, drives, launching titles, and back to the dashboard.
+- **Sound** — 32 voices with volume, pan, pitch and fades, or from a place in space; WAV, Ogg Vorbis and MP3; spectrum and waveform for visualisers.
 - **Assets** — loaded in the background, shared, kept warm and unloaded only when a budget needs the room.
 - **Input** — keyboard, mouse and four gamepads as actions that players can rebind.
 - **Saving** — settings and scores, kept between runs.
@@ -185,5 +193,6 @@ Nexgen Redux is by Team Resurgent: EqUiNoX, HoRnEyDvL and RetroMura.
 
 The engine includes unmodified copies of [AngelScript](https://www.angelcode.com/angelscript/),
 [SSFN](https://gitlab.com/bztsrc/scalable-font2), [cgltf](https://github.com/jkuhlmann/cgltf), [stb](https://github.com/nothings/stb),
-[miniaudio](https://miniaud.io) and [dr_libs](https://github.com/mackron/dr_libs), under their own licences in
+[miniaudio](https://miniaud.io), [dr_libs](https://github.com/mackron/dr_libs) and
+[Mbed TLS](https://github.com/Mbed-TLS/mbedtls), under their own licences in
 `engine/third_party`.

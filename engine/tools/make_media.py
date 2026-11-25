@@ -86,6 +86,31 @@ def effects():
     save('bell', sum(tone(440 * r, 1.4) * fall(1.4, d) * a for r, d, a in ((1, 3, 1), (2.76, 5, 0.5), (5.4, 8, 0.25))), 0.6)
     save('pluck', tone(220, 0.6, 'saw') * fall(0.6, 8), 0.6)
 
+    # For going on and on: the end runs into the beginning.
+    def loop(x, over=0.25):
+        n = int(over * RATE)
+        ramp = np.linspace(0, 1, n)
+        x = x.copy()
+        x[:n] = x[:n] * np.sqrt(ramp) + x[-n:] * np.sqrt(1 - ramp)
+        return x[:-n]
+
+    t = seconds(2.25)
+    buzz = sum(np.sin(2 * np.pi * 55 * k * t + np.sin(2 * np.pi * 7 * t) * 0.15 * k) / k for k in (1, 2, 3, 4, 6))
+    save('engine', loop(buzz * 0.5 + smooth(noise(2.25), 18) * 0.9), 0.6)
+    crackle = smooth(noise(4.25), 60) * 1.6
+    for _ in range(70):
+        at = rng.integers(0, len(crackle) - 2000)
+        crackle[at:at + 1200] += np.diff(noise(0.04), prepend=0)[:1200] * np.exp(-np.arange(1200) / 120) * rng.uniform(0.2, 1)
+    save('fire', loop(crackle), 0.5)
+    t = seconds(6.25)
+    swell = 0.35 + 0.65 * np.sin(np.pi * t / 6) ** 2
+    save('waves', loop(smooth(noise(6.25), 9) * swell + smooth(noise(6.25), 90) * 2 * swell), 0.5)
+    save('step', (smooth(noise(0.09), 14) * 1.5 + tone([140, 70], 0.09)) * fall(0.09, 48), 0.45)
+    save('splash', smooth(noise(0.7), 5) * fall(0.7, 7, 0.01), 0.6)
+    save('boost', (smooth(noise(1.1), 10) * 1.2 + tone([120, 420], 1.1, 'saw') * 0.35) * np.sin(np.pi * np.minimum(seconds(1.1) / 1.1, 1)) ** 1.3, 0.6)
+    save('gate', np.concatenate([tone(784, 0.06, 'tri') * fall(0.06, 10), tone(1175, 0.35, 'tri') * fall(0.35, 8)]), 0.5)
+    save('case', (np.diff(noise(0.12), prepend=0) * 0.7 + tone([900, 500], 0.12, 'tri') * 0.4) * fall(0.12, 38, 0.001), 0.5)
+
 
 NOTE = {n: i for i, n in enumerate(('C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'))}
 
@@ -245,6 +270,43 @@ def climb(path):
     compress(wav, path, '-c:a', 'libvorbis', '-q:a', '3')
 
 
+def covers(folder):
+    """Two dozen made-up records: patterns, and names to go with them."""
+    from PIL import Image, ImageDraw, ImageFont
+    os.makedirs(folder, exist_ok=True)
+    size = 256
+    y, x = np.mgrid[0:size, 0:size] / size * 2 - 1
+    r, a = np.hypot(x, y), np.arctan2(y, x)
+    kinds = [lambda p: np.sin(12 * r - p * 6 + np.sin(a * (3 + p % 4)) * 2), lambda p: np.sin(x * (5 + p % 5) + np.sin(y * 4 + p) * 2), lambda p: np.sign(np.sin(a * (4 + p % 6) + r * 5)) * np.cos(r * 3),
+             lambda p: np.sin(np.floor(x * (3 + p % 3)) * 2.3 + p) * np.cos(np.floor(y * (3 + p % 4)) * 1.7 + p), lambda p: 1 - 2 * np.clip(np.abs(y + 0.3 * np.sin(x * 5 + p)) * 4, 0, 1), lambda p: np.cos(18 * np.maximum(np.abs(x), np.abs(y)) + p)]
+    words = [('Slow Comet', 'The Orbits'), ('Paper Moons', 'Ada Verne'), ('Glass Garden', 'Field Echo'), ('Night Ferry', 'Harbour Light'), ('Copper Sky', 'The Wiremen'), ('Small Hours', 'Nine to Noon'),
+             ('Tidal', 'Low Country'), ('Signal Fires', 'Beacon Hill'), ('Static Bloom', 'Violet Hum'), ('Long Division', 'Primes'), ('Kite Weather', 'Open Field'), ('Saltwater', 'Pier Nine'),
+             ('Half Light', 'Dusk Radio'), ('Mainframe', 'Punch Card'), ('Red Shift', 'Far Arms'), ('Soft Machines', 'Clockwork Sea'), ('Northern Line', 'Last Stop'), ('Echo Park', 'The Returns'),
+             ('Feather', 'Weightless'), ('Ironwood', 'Forest Press'), ('Lantern', 'Moth Club'), ('Overcast', 'Grey Area'), ('Prism', 'Split Beam'), ('Home Again', 'The Orbits')]
+    for i, (title, who) in enumerate(words):
+        wave = kinds[i % len(kinds)](i * 1.37)
+        wave = wave + 0.35 * kinds[(i + 2) % len(kinds)](i * 0.7)
+        hue, other = i * 0.381966 % 1, (i * 0.381966 + 0.12 + (i % 3) * 0.14) % 1
+        def paint(h, v):
+            return np.stack([0.5 + 0.5 * np.cos(2 * np.pi * (h + p)) for p in (0, 0.33, 0.67)], -1) * v
+        k = np.clip(wave * 0.5 + 0.5, 0, 1)[..., None]
+        picture = paint(hue, 0.95) * k + paint(other, 0.28) * (1 - k)
+        picture *= (1.08 - 0.45 * r ** 2)[..., None]
+        image = Image.fromarray((np.clip(picture, 0, 1) * 255).astype('uint8'))
+        draw = ImageDraw.Draw(image)
+        try:
+            big, small = ImageFont.truetype('DejaVuSans-Bold.ttf', 26), ImageFont.truetype('DejaVuSans.ttf', 15)
+        except OSError:
+            big, small = ImageFont.load_default(26), ImageFont.load_default(15)
+        low = i % 2 == 0
+        draw.rectangle((0, 196 if low else 0, 256, 256 if low else 60), fill=(12, 12, 16))
+        draw.text((14, 202 if low else 8), title, font=big, fill=(250, 248, 240))
+        draw.text((15, 234 if low else 38), who, font=small, fill=(190, 190, 200))
+        image.save(os.path.join(folder, 'cover%02d.jpg' % i), quality=86)
+    with open(os.path.join(folder, 'covers.txt'), 'w', encoding='utf-8', newline='\n') as f:
+        f.write('\n'.join('%s|%s' % w for w in words) + '\n')
+
+
 def pictures():
     from PIL import Image
     folder = os.path.join(MEDIA, 'showcase', 'loading', 'asset')
@@ -270,4 +332,5 @@ if __name__ == '__main__':
     os.makedirs(shared, exist_ok=True)
     chip(os.path.join(shared, 'chip.ogg'))
     climb(os.path.join(shared, 'climb.ogg'))
+    covers(os.path.join(MEDIA, 'showcase', 'cases', 'asset'))
     sys.exit(0)

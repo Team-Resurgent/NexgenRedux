@@ -4,6 +4,7 @@
 #include "base/math.h"
 #include "base/thread.h"
 #include "net/socket.h"
+#include "platform/platform.h"
 
 #include <atomic>
 #include <string>
@@ -206,6 +207,10 @@ namespace nx
 
     // Waits. http:// or https://, following where it is sent on to.
     bool httpFetch(Fetch& fetch);
+    // The same, for whoever only wants what is in a file.
+    bool webRead(const char* url, FileData& out);
+    // Calls off all of those, before closing.
+    void webStop();
 
     class Request : NonCopyable
     {

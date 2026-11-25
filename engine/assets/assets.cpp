@@ -12,6 +12,11 @@ namespace nx
 {
     namespace
     {
+        bool isWeb(const char* path)
+        {
+            return strncmp(path, "http://", 7) == 0 || strncmp(path, "https://", 8) == 0;
+        }
+
         constexpr double kThrashSeconds = 5.0;
         constexpr size_t kTakenInPerUpdate = 4 * 1024 * 1024;
 
@@ -33,13 +38,14 @@ namespace nx
         Asset* asset = nullptr;
         Platform* platform = nullptr;
         AssetType type = AssetType::Texture;
-        char path[128] = {};
+        char path[192] = {};
 
         FileData file;                // a cooked texture is used where it lies
         u8* decoded = nullptr;        // or a decoded one, to be freed with freeImage
         gpu::TextureData texture;
         SoundData* sound = nullptr;
         ModelData* model = nullptr;
+        WebRead webRead = nullptr;
         u64 fileTime = 0;
         std::atomic<bool> done{ false };
     };
@@ -137,6 +143,9 @@ namespace nx
         }
         finish();
         m_jobs.stop();
+        m_webJobs[0].stop();
+        m_webJobs[1].stop();
+        m_webStarted = false;
         for (u32 i = 0; i < kCapacity; i++)
         {
             if (m_assets[i].live())
@@ -228,10 +237,17 @@ namespace nx
 
     Asset* Assets::request(const char* path, AssetType type)
     {
-        char clean[128];
-        char key[160];
-        char lower[128];
-        const bool valid = cleanPath(path, clean, sizeof(clean), false) && cleanPath(path, lower, sizeof(lower), true);
+        char clean[192];
+        char key[208];
+        char lower[192];
+        // On the web, names are as they are.
+        const bool web = isWeb(path) && type == AssetType::Texture && strlen(path) < sizeof(clean);
+        if (web)
+        {
+            snprintf(clean, sizeof(clean), "%s", path);
+            snprintf(lower, sizeof(lower), "%s", path);
+        }
+        const bool valid = web || (cleanPath(path, clean, 128, false) && cleanPath(path, lower, 128, true));
         // The same file could be asked for as different things.
         snprintf(key, sizeof(key), "%s%s", type == AssetType::Sound ? "sound!" : type == AssetType::Model ? "model!" : type == AssetType::Effect ? "effect!" : "", valid ? lower : "?");
         const u64 hash = hashText(key);
@@ -268,7 +284,17 @@ namespace nx
         m_pending++;
         m_stats.loads++;
         // A full queue means a great deal is waiting: take some of it in and try again.
-        while (!m_jobs.add(loadInBackground, load))
+        JobQueue* queue = &m_jobs;
+        if (isWeb(load->path))
+        {
+            load->webRead = load->type == AssetType::Texture ? m_webRead : nullptr;
+            if (!m_webStarted)
+            {
+                m_webStarted = m_webJobs[0].start() && m_webJobs[1].start();
+            }
+            queue = m_webStarted ? &m_webJobs[m_stats.loads % 2] : queue;
+        }
+        while (!queue->add(loadInBackground, load))
         {
             sleepMilliseconds(1);
         }
@@ -277,8 +303,9 @@ namespace nx
     void Assets::loadInBackground(void* user)
     {
         Load& load = *static_cast<Load*>(user);
-        load.fileTime = load.platform->fileTime(load.path);
-        if (load.platform->readFile(load.path, load.file, load.type == AssetType::Sound ? MemTag::Audio : MemTag::Texture))
+        const bool web = isWeb(load.path);
+        load.fileTime = web ? 1 : load.platform->fileTime(load.path);
+        if (web ? load.webRead && load.webRead(load.path, load.file) : load.platform->readFile(load.path, load.file, load.type == AssetType::Sound ? MemTag::Audio : MemTag::Texture))
         {
             if (load.type == AssetType::Sound)
             {
@@ -403,6 +430,11 @@ namespace nx
         }
         else if (load.type == AssetType::Effect)
         {
+            if (load.file.size == 0)
+            {
+                fail(asset);
+                return;
+            }
             const std::string source(reinterpret_cast<const char*>(load.file.data), load.file.size);
             const gpu::EffectKind kind = source.find("paint(") != std::string::npos ? gpu::EffectKind::Surface : gpu::EffectKind::Picture;
             char error[512] = "";
@@ -552,7 +584,7 @@ namespace nx
             if (a.live() && a.ready && a.path[0] && a.type != AssetType::Font)
             {
                 // A sound may be playing from its memory, so only those that nobody holds.
-                const u64 time = m_platform->fileTime(a.path);
+                const u64 time = isWeb(a.path) ? 0 : m_platform->fileTime(a.path);
                 if (time && time != a.fileTime && (a.type == AssetType::Texture || a.refs == 0) && a.type != AssetType::Font)
                 {
                     NX_INFO("reloading %s", a.path);

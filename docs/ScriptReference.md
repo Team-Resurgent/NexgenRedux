@@ -66,6 +66,17 @@ Shapes that are always there, 1 metre across.
 | `SolidCapsule` | A round-ended cylinder, 2 metres tall. |
 | `SolidPlane` | Flat, facing up. |
 
+## Effect
+
+A shader of your own, over the whole picture or on a thing in space. See the guide.
+
+| | |
+|---|---|
+| `bool get_failed() const property` | Whether it could not be loaded, or has a mistake in it, which is in the log. |
+| `bool get_ready() const property` | Whether it has arrived. |
+| `bool get_works() const property` | Whether this GPU can do it. The original Xbox can't. |
+| `void set(uint index, float value)` | Changes one of its sixteen values: 0 to 3 are values[0].x to values[0].w, and so on. |
+
 ## Mesh
 
 Triangles made by a script. Shared by every entity that shows it.
@@ -108,21 +119,22 @@ Loading. Names start with `asset:` for the screen's own files or `global:` for s
 
 | | |
 |---|---|
-| `Texture@ Assets::texture(const string &in name)` | An image: PNG, JPEG, TGA, BMP or GIF, up to 2048 pixels a side. What a screen asks for as it is made is ready by onEnter(); later ones arrive in the background. |
+| `Texture@ Assets::texture(const string &in name)` | An image: PNG, JPEG, TGA, BMP or GIF, up to 2048 pixels a side; from the web too, by its https:// address. What a screen asks for as it is made is ready by onEnter(); later ones arrive in the background. |
 | `Sound@ Assets::sound(const string &in name)` | A sound. Arrives like an image. |
+| `Effect@ Assets::effect(const string &in name)` | A shader of your own: a .fx file. Each time gives one whose values are its own. |
 | `Model@ Assets::model(const string &in name)` | A 3D model: glTF, as a .glb or a .gltf with everything inside it. Arrives like an image. |
-| `uint Assets::pending()` | Files still on their way. |
-| `uint Assets::textureKilobytes()` | Memory that images and fonts take. |
-| `uint Assets::soundKilobytes()` | Memory that sounds take. |
-| `uint Assets::soundBudgetKilobytes()` | Memory that sounds may take. |
+| `uint Assets::get_pending() property` | Files still on their way. |
+| `uint Assets::get_textureKilobytes() property` | Memory that images and fonts take. |
+| `uint Assets::get_soundKilobytes() property` | Memory that sounds take. |
+| `uint Assets::get_soundBudgetKilobytes() property` | Memory that sounds may take. |
 | `Font@ Assets::font(const string &in name, uint size)` | A font at a size in design units. |
-| `uint Assets::inUse()` | Assets that something is holding. |
-| `uint Assets::warm()` | Assets kept ready though nothing holds them. |
-| `uint Assets::hits()` | Requests served without reading a file. |
-| `uint Assets::loads()` | Files read. |
-| `uint Assets::evictions()` | Assets unloaded to make room. |
-| `uint Assets::kilobytes()` | Memory the loaded assets take. |
-| `uint Assets::budgetKilobytes()` | Memory that images and fonts may take. |
+| `uint Assets::get_inUse() property` | Assets that something is holding. |
+| `uint Assets::get_warm() property` | Assets kept ready though nothing holds them. |
+| `uint Assets::get_hits() property` | Requests served without reading a file. |
+| `uint Assets::get_loads() property` | Files read. |
+| `uint Assets::get_evictions() property` | Assets unloaded to make room. |
+| `uint Assets::get_kilobytes() property` | Memory the loaded assets take. |
+| `uint Assets::get_budgetKilobytes() property` | Memory that images and fonts may take. |
 | `void Assets::trim()` | Unloads everything that isn't held. Rarely needed. |
 
 ## Blend
@@ -169,9 +181,12 @@ Which part of some text sits at its position.
 | `void translate(float x, float y)` | Moves what is drawn next. |
 | `void rotate(float degrees)` | Turns it clockwise. |
 | `void scale(float x, float y)` | Resizes it. |
-| `void setAlpha(float alpha)` | Fades everything drawn next. |
-| `void setBlend(Blend blend)` | Chooses how it combines. |
-| `void setFilter(Filter filter)` | Chooses how images are scaled. |
+| `float get_alpha() const property` | How opaque what is drawn next will be. |
+| `void set_alpha(float) property` | Fades everything drawn next. |
+| `Blend get_blend() const property` | How what is drawn next combines with what is behind. |
+| `void set_blend(Blend) property` | Chooses how it combines. |
+| `Filter get_filter() const property` | How images that are drawn larger will look. |
+| `void set_filter(Filter) property` | Chooses how images are scaled. |
 | `void clip(float x, float y, float w, float h)` | Draws nothing outside an area. Clips within clips overlap. |
 | `void noClip()` | Removes all clips. |
 | `void rect(float x, float y, float w, float h, const Color &in color)` | A filled rectangle. |
@@ -184,6 +199,8 @@ Which part of some text sits at its position.
 | `void arc(float x, float y, float radius, float thickness, float from, float to, const Color &in color)` | Part of a ring, or a slice of a circle, between two angles in degrees. |
 | `void glow(float x, float y, float radius, const Color &in color)` | A round glow, fading to nothing at its edge. With BlendAdd it is light. |
 | `void triangle(const Vec2 &in a, const Vec2 &in b, const Vec2 &in c, const Color &in ca, const Color &in cb, const Color &in cc)` | A triangle with a colour at each corner. |
+| `bool effect(Effect@+ effect)` | Puts all that has been drawn so far through a shader. False where there are none. |
+| `bool bloom(float strength = 0.8, float threshold = 0.7, float spread = 1)` | Lets light spill from what is bright, of all that has been drawn so far. False where it can't be done. |
 | `void image(const Texture@+ texture, float x, float y, const Color &in tint = White)` | An image at its own size. |
 | `void image(const Texture@+ texture, float x, float y, float w, float h, const Color &in tint = White)` | An image at any size. |
 | `void imagePart(const Texture@+ texture, float x, float y, float w, float h, float sx, float sy, float sw, float sh, const Color &in tint = White)` | Part of an image, given in its own pixels. |
@@ -203,10 +220,10 @@ Actions are `up`, `down`, `left`, `right`, `accept`, `cancel`, `fire`, `alternat
 | `bool Input::pressed(const string &in action)` | Whether it has just gone down. |
 | `bool Input::released(const string &in action)` | Whether it has just been let go. |
 | `bool Input::repeated(const string &in action)` | pressed(), then again at intervals while held. |
-| `Vec2 Input::move()` | Direction from keys, d-pad and left stick: x right, y down, never longer than 1. |
-| `bool Input::usingPad()` | Whether a gamepad was used last. |
-| `bool Input::hasMouse()` | Whether a mouse has moved. |
-| `Vec2 Input::mouse()` | Where the mouse is, in design units. |
+| `Vec2 Input::get_move() property` | Direction from keys, d-pad and left stick: x right, y down, never longer than 1. |
+| `bool Input::get_usingPad() property` | Whether a gamepad was used last. |
+| `bool Input::get_hasMouse() property` | Whether a mouse has moved. |
+| `Vec2 Input::get_mouse() property` | Where the mouse is, in design units. |
 | `bool Input::mouseDown(uint button)` | Left is 0, right 1, middle 2. |
 | `bool Input::padConnected(uint pad)` | Whether a gamepad (0 to 3) is plugged in. |
 | `Vec2 Input::padLeft(uint pad)` | Left stick, -1 to 1, y up. |
@@ -214,7 +231,7 @@ Actions are `up`, `down`, `left`, `right`, `accept`, `cancel`, `fire`, `alternat
 | `Vec2 Input::padTriggers(uint pad)` | Left and right triggers, 0 to 1. |
 | `bool Input::padButton(uint pad, uint button)` | In order: up, down, left, right, Start, Back, left stick, right stick, A, B, X, Y, left and right shoulder. |
 | `void Input::listen(const string &in action)` | The next key or button pressed will do this. Escape or Start calls it off. Not for `menu`. |
-| `bool Input::listening()` | Whether it is still waiting for one. |
+| `bool Input::get_listening() property` | Whether it is still waiting for one. |
 | `string Input::keys(const string &in action)` | The keys for an action, as text. |
 | `string Input::buttons(const string &in action)` | The gamepad buttons for an action, as text. |
 | `void Input::resetBindings()` | Puts them all back. |
@@ -239,16 +256,17 @@ Something that is playing. Safe to use after it has ended.
 | `bool get_playing() const property` | Whether it still is. |
 | `float get_position() const property` | Seconds in. |
 | `void stop(float fadeSeconds = 0)` | Ends it. |
-| `void setVolume(float volume, float seconds = 0)` | Changes how loud it is, over a time. |
-| `void setPan(float pan)` | From -1, left, to 1, right. |
-| `void setPitch(float pitch)` | 1 is normal; 2 is an octave up, and twice as fast. |
-| `void setPaused(bool paused)` | Holds it where it is. |
+| `void fade(float volume, float seconds)` | Changes how loud it is, over a time. |
+| `void set_pan(float) property` | From -1, left, to 1, right. |
+| `void set_pitch(float) property` | 1 is normal; 2 is an octave up, and twice as fast. |
+| `void set_paused(bool) property` | Holds it where it is. |
 
 ### Sound
 
 | | |
 |---|---|
 | `Voice play(float volume = 1, float pan = 0, float pitch = 1, bool loop = false)` | Plays it as an effect. Any number can play at once, up to the voices there are. |
+| `Voice playAt(const Vec3 &in place, float volume = 1, float range = 30, float pitch = 1)` | Plays it from a place in space: quieter farther from the camera, silent beyond a range, and from one side or the other. |
 | `Voice playMusic(float volume = 1, float fadeSeconds = 0, bool loop = true)` | Plays it as music, fading in. |
 | `float get_seconds() const property` | How long it is; 0 if that isn't known. |
 | `bool get_ready() const property` | Whether it has arrived. Until then it plays as silence. |
@@ -262,14 +280,14 @@ Volumes, and what is being heard. A screen's sounds pause while it is covered an
 |---|---|
 | `void Audio::setVolume(Bus bus, float volume)` | 0 to 1. |
 | `float Audio::volume(Bus bus)` | 0 to 1. |
-| `void Audio::setMasterVolume(float volume)` | Everything, 0 to 1. |
-| `float Audio::masterVolume()` | 0 to 1. |
-| `float Audio::level()` | How loud it has been lately, 0 to 1. |
+| `void Audio::set_masterVolume(float) property` | Everything, 0 to 1. |
+| `float Audio::get_masterVolume() property` | 0 to 1. |
+| `float Audio::get_level() property` | How loud it has been lately, 0 to 1. |
 | `float Audio::spectrum(uint band)` | How strong one of 32 bands is, low to high, 0 to 1. |
 | `float Audio::wave(uint index)` | One of the last 512 samples heard, -1 to 1. |
-| `uint Audio::voices()` | How many are playing. |
-| `uint Audio::voiceLimit()` | How many can. |
-| `string Audio::output()` | What is playing it. |
+| `uint Audio::get_voices() property` | How many are playing. |
+| `uint Audio::get_voiceLimit() property` | How many can. |
+| `string Audio::get_output() property` | What is playing it. |
 
 ## void Coroutine()
 
@@ -361,6 +379,7 @@ A script on an entity. Write a class that comes from it and any of these methods
 | `void set_color(const Color &in) property` | Changes it. |
 | `float get_alpha() const property` | The colour's alpha. |
 | `void set_alpha(float) property` | Fades it. |
+| `Blend get_blend() const property` | How it combines with what is behind. |
 | `void set_blend(Blend) property` | How it combines with what is behind. |
 | `bool get_flip() const property` | Whether the image is turned left to right. |
 | `void set_flip(bool) property` | Turns it. |
@@ -373,12 +392,17 @@ A script on an entity. Write a class that comes from it and any of these methods
 | `void set_velocity(const Vec2 &in) property` | Sets it going. |
 | `float get_spin() const property` | Degrees a second. |
 | `void set_spin(float) property` | Sets it turning. |
+| `float get_drag() const property` | Part of its speed lost each second. |
 | `void set_drag(float) property` | Part of its speed lost each second. |
+| `float get_gravity() const property` | How much of the gravity it feels. |
 | `void set_gravity(float) property` | How much of the scene's gravity it feels; 0 to begin with. |
+| `float get_bounce() const property` | Part of its speed kept when it hits something. |
 | `void set_bounce(float) property` | Part of its speed kept when it hits something. |
+| `bool get_solid() const property` | Whether solid tiles and walls stop it. |
 | `void set_solid(bool) property` | Makes solid tiles and walls stop it, without turning it: for characters. |
 | `float get_mass() const property` | 0 unless it is a rigid body. |
 | `void set_mass(float) property` | Above 0, makes it a rigid body, which pushes, stacks and turns. It needs a collider and no parent. |
+| `float get_friction() const property` | Of a rigid body. |
 | `void set_friction(float) property` | Of a rigid body: 0 is ice, 1 rubber. |
 | `void push(const Vec2 &in impulse)` | Pushes it at its middle. |
 | `void push(const Vec2 &in impulse, const Vec2 &in at)` | Pushes it at a place in the scene, which may turn it. |
@@ -387,10 +411,13 @@ A script on an entity. Write a class that comes from it and any of these methods
 | `int get_onWall() const property` | -1 for something solid on its left, 1 on its right, otherwise 0. |
 | `void circle(float radius, uint group = 0, uint hits = 0)` | Gives it a round collider in a group from 0 to 15. hits has a bit for each group it wants to know about: 1 << group. |
 | `void box(float w, float h, uint group = 0, uint hits = 0)` | The same with a box, which turns with it. |
+| `bool get_wall() const property` | Whether others stop at its collider. |
 | `void set_wall(bool) property` | Makes solid and rigid bodies stop at its collider. |
 | `int get_group() const property` | Its collider's group, or -1. |
+| `uint get_hits() const property` | The groups it wants to know about, a bit for each. |
 | `void set_hits(uint) property` | Changes the groups it wants to know about. |
 | `bool touching(Entity@+ other) const` | Whether their colliders overlap now. |
+| `float get_lifetime() const property` | Seconds until it is destroyed, or -1. |
 | `void set_lifetime(float) property` | Destroys it after some seconds. |
 | `void add(IBehaviour@+ behaviour)` | Adds a behaviour. |
 | `IBehaviour@ get_behaviour() const property` | Its first behaviour, or null. `cast<Enemy>(e.behaviour)` gives the class back. |
@@ -408,23 +435,24 @@ Entities that move, collide and are drawn by the engine. Each screen has its own
 | `void Scene::camera(const Vec2 &in position, float zoom = 1, float rotation = 0)` | Puts a place in the middle of the screen. Without it, the scene's corner is the screen's. |
 | `Vec2 Scene::toWorld(const Vec2 &in screen)` | A place on the screen, in the scene. |
 | `Vec2 Scene::toScreen(const Vec2 &in world)` | A place in the scene, on the screen. |
-| `uint Scene::count()` | How many entities there are. |
-| `uint Scene::count(uint group)` | How many have a collider in a group. |
+| `uint Scene::get_count() property` | How many entities there are. |
+| `uint Scene::countIn(uint group)` | How many have a collider in a group. |
 | `int Scene::group(const string &in name)` | The number of a group named in a scene file, or -1. |
 | `Entity@ Scene::find(const string &in name)` | The first of that name, or null. |
 | `Entity@ Scene::nearest(const Vec2 &in position, float radius, uint groups = 0xFFFF, Entity@+ except = null)` | The nearest with a collider in some groups (a bit for each), or null. |
 | `array<Entity@>@ Scene::within(const Vec2 &in position, float radius, uint groups = 0xFFFF)` | Everything whose collider touches a circle. |
 | `Entity@ Scene::raycast(const Vec2 &in from, const Vec2 &in to, Vec2 &out hit, uint groups = 0xFFFF)` | The first collider on a line, and where, or null. |
-| `void Scene::setGravity(const Vec2 &in gravity)` | Units a second, each second. |
+| `Vec2 Scene::get_gravity() property` | What pulls on those that feel it. |
+| `void Scene::set_gravity(const Vec2 &in) property` | Units a second, each second. |
 | `void Scene::burst(const string &in particles, const Vec2 &in position, uint count)` | Throws out some particles. |
 | `bool Scene::join(Entity@+ a, Entity@+ b, const Vec2 &in at, float softness = 0)` | Pins two rigid bodies together at a place; null for b pins to the scene. |
 | `uint Scene::tile(const Vec2 &in position)` | What the map has there: 0 is nothing. |
 | `void Scene::setTile(const Vec2 &in position, uint tile)` | Changes the map. |
-| `Vec2 Scene::mapSize()` | How large the map is. |
-| `uint Scene::particles()` | How many particles there are. |
-| `uint Scene::drawn()` | How many entities and tiles were drawn last. |
-| `uint Scene::pairs()` | Pairs of colliders compared in the last step. |
-| `uint Scene::contacts()` | Where rigid bodies touched in the last step. |
+| `Vec2 Scene::get_mapSize() property` | How large the map is. |
+| `uint Scene::get_particles() property` | How many particles there are. |
+| `uint Scene::get_drawn() property` | How many entities and tiles were drawn last. |
+| `uint Scene::get_pairs() property` | Pairs of colliders compared in the last step. |
+| `uint Scene::get_contacts() property` | Where rigid bodies touched in the last step. |
 
 ### Entity
 
@@ -433,7 +461,7 @@ Entities that move, collide and are drawn by the engine. Each screen has its own
 | `Vec3 get_place() const property` | In space: where it is, from its parent if it has one. |
 | `void set_place(const Vec3 &in) property` | Moves it. |
 | `Vec3 get_worldPlace() const property` | Where it is in space, whatever its parents. |
-| `Vec3 outward(const Vec3 &in place) const` | Where a place of its own is in space, as it is turned and sized: its hand, or the end of its gun. |
+| `Vec3 toSpace(const Vec3 &in place) const` | Where a place of its own is in space, as it is turned and sized: its hand, or the end of its gun. |
 | `Vec3 get_angles() const property` | Degrees it is tipped, turned and rolled: about x, y and z. |
 | `void set_angles(const Vec3 &in) property` | Turns it. |
 | `Vec3 get_size() const property` | Its size along each axis; 1 is normal. |
@@ -446,14 +474,20 @@ Entities that move, collide and are drawn by the engine. Each screen has its own
 | `void shape(Solid solid, const Color &in color = White)` | Looks like a simple shape. |
 | `void glow(float size, const Color &in color)` | Looks like a soft ball of light. `light` is what lights other things. |
 | `void skin(Texture@+ texture, bool repeat = false)` | Puts an image on it, instead of any of the model's own. |
+| `void effect(Effect@+ effect)` | Colours it, and may move its corners, with a shader of your own; null for none. Where there are no shaders it stays as it is. |
+| `float get_shine() const property` | How much it shows a highlight from the sun. |
 | `void set_shine(float) property` | How much it shows a highlight from the sun, 0 to 1. |
+| `float get_glowing() const property` | How bright it is by itself. |
 | `void set_glowing(float) property` | 1 is as bright as its colour, even in the dark. |
+| `bool get_twoSided() const property` | Whether the backs of its triangles are drawn. |
 | `void set_twoSided(bool) property` | Draws the backs of its triangles too. |
+| `bool get_shadow() const property` | Whether it casts one. |
 | `void set_shadow(bool) property` | Whether it casts one. |
 | `uint get_detail() const property` | The level it was last drawn at: 0 is all of it, 2 the least. |
 | `void light(const Color &in color, float range)` | Lights what is within so many metres. |
 | `bool animate(const string &in name, bool loop = true, float change = 0.25)` | Plays one of its model's animations, changing to it over some seconds. Asking again for what is playing does nothing. False if it isn't there, or hasn't arrived. |
 | `bool get_animated() const property` | Whether an animation that doesn't loop has finished. |
+| `float get_animationSpeed() const property` | How fast its animation plays. |
 | `void set_animationSpeed(float) property` | 1 is normal. |
 | `Vec3 get_motion() const property` | Metres a second. |
 | `void set_motion(const Vec3 &in) property` | Sets it going. |
@@ -462,12 +496,15 @@ Entities that move, collide and are drawn by the engine. Each screen has its own
 | `bool get_walker() const property` | Whether it is one. |
 | `void set_walker(bool) property` | Makes it a character: it stays upright, slides along walls, climbs steps and pushes what has mass. It needs a capsule, and feels gravity. |
 | `Vec3 get_groundNormal() const property` | Of a walker: which way the ground under it faces. |
+| `void emit(const string &in particles, float rate)` | Gives off so many particles a second, upwards from it as it is turned. The styles are read by Scene::load. |
 | `void push(const Vec3 &in impulse)` | Pushes it at its middle. |
 | `void push(const Vec3 &in impulse, const Vec3 &in at)` | Pushes it at a place, which may turn it. |
 | `void sphere(float radius, uint group = 0, uint hits = 0)` | Gives it a round collider. mass, wall, friction, bounce, gravity, drag, hits and touching are as on the plane. |
 | `void cube(const Vec3 &in size, uint group = 0, uint hits = 0)` | The same with a box, which turns with it. |
 | `void capsule(float radius, float height, uint group = 0, uint hits = 0)` | The same with an upright cylinder with round ends, included in its height. |
+| `Vec3 get_colliderAt() const property` | Where its collider is, from its place. |
 | `void set_colliderAt(const Vec3 &in) property` | Moves its collider from its place: up by half its height, for something whose place is at its feet. |
+| `bool get_streamed() const property` | Whether it goes with its region. |
 | `void set_streamed(bool) property` | Destroys it when the region of endless land that it is in goes. |
 
 ## FieldShape
@@ -509,37 +546,218 @@ The scene in three dimensions: x right, y up, z towards you, in metres. Entities
 | `void Space::fog(const Color &in color, float start, float end)` | Hides what is far away. |
 | `void Space::shadows(float strength, float distance = 40)` | How dark they are, 0 to 1, and how far they reach. Simple ones are drawn where the GPU can't do real ones. |
 | `void Space::farthest(float distance)` | Nothing beyond is drawn. |
-| `void Space::setGravity(const Vec3 &in gravity)` | Metres a second, each second. It starts as that of the Earth. |
+| `Vec3 Space::get_gravity() property` | What pulls on those that feel it. |
+| `void Space::set_gravity(const Vec3 &in) property` | Metres a second, each second. It starts as that of the Earth. |
 | `void Space::ground(float height)` | Something flat to stand on, everywhere. It isn't drawn. |
 | `void Space::water(float height, const Color &in color)` | Draws water, with waves, up to a height. |
 | `void Space::land(uint seed, uint squares, float spacing, float height, float roughness = 0.5, bool island = false)` | Makes hills: so many squares each way (a multiple of 32, up to 256), metres to a square, and about how high. An island goes down all round, to below 0. |
 | `void Space::endlessLand(uint seed, float spacing, float height, float roughness = 0.5, uint reach = 5)` | The same without end: regions of 32 squares are made in the background as the camera comes near, up to so many away, and go when it leaves. |
 | `bool Space::nextRegion(int &out x, int &out z, bool &out arrived)` | A region that has come or gone, or false when there is no more to tell. Ask each update, to put things in those that arrive; make them streamed and they go by themselves. |
-| `float Space::regionSize()` | Metres along a side. Region x, z begins at that many times x and z. |
-| `uint Space::regions()` | How many there are now. |
-| `uint Space::regionsWaiting()` | How many are still to come. |
+| `float Space::get_regionSize() property` | Metres along a side. Region x, z begins at that many times x and z. |
+| `uint Space::get_regions() property` | How many there are now. |
+| `uint Space::get_regionsWaiting() property` | How many are still to come. |
 | `int Space::load(const string &in name, const Vec3 &in at = Vec3(), bool streamed = false)` | Makes the entities listed in a file, around a place, and returns how many. Their models arrive in the background. See the guide. |
 | `void Space::landColors(const Color &in low, const Color &in middle, const Color &in high, const Color &in steep, float lowHeight, float highHeight)` | Colours them by height and slope. |
 | `void Space::flatten(float x, float z, float radius)` | Levels the land around a place, to build on. |
 | `void Space::flatten(float x, float z, float radius, float height)` | The same, to a height. |
 | `float Space::height(float x, float z)` | How high the land or the ground is. Far below if there is none. |
 | `Vec3 Space::normal(float x, float z)` | Which way it faces there. |
-| `float Space::landSize()` | Metres along a side. Its middle is at 0, 0. |
-| `void Space::shape(FieldShape kind, const Vec3 &in place, const Vec3 &in size, const Color &in color, float soft = 0, FieldJoin how = JoinAdd, float turn = 0)` | Adds one of up to 24 shapes drawn by marching along rays, which melt together where they are soft. |
-| `void Space::clearShapes()` | Takes them all away. To move them, clear and add them again each update. |
-| `void Space::shapeLook(float shine, float reflection = 0, float repeat = 0, float farthest = 60, uint steps = 80)` | How they look; repeat makes the whole thing again every so many metres. |
+| `float Space::get_landSize() property` | Metres along a side. Its middle is at 0, 0. |
+| `void Space::field(FieldShape kind, const Vec3 &in place, const Vec3 &in size, const Color &in color, float soft = 0, FieldJoin how = JoinAdd, float turn = 0)` | Adds one of up to 24 shapes drawn by marching along rays, which melt together where they are soft. |
+| `void Space::clearField()` | Takes them all away. To move them, clear and add them again each update. |
+| `void Space::fieldLook(float shine, float reflection = 0, float repeat = 0, float farthest = 60, uint steps = 80)` | How they look; repeat makes the whole thing again every so many metres. |
+| `void Space::burst(const string &in particles, const Vec3 &in place, uint count, const Vec3 &in aim = Vec3(0, 1, 0))` | Throws out some particles. A spread of 360 goes every way, 90 is a cone. |
 | `bool Space::raycast(const Vec3 &in from, const Vec3 &in to, Vec3 &out hit, Vec3 &out normal, uint groups = 0xFFFF, Entity@+ except = null)` | Whether there is anything on a line, where, and which way it faces. The land counts as group 0. |
 | `Entity@ Space::pick(const Vec3 &in from, const Vec3 &in to, Vec3 &out hit, uint groups = 0xFFFF, Entity@+ except = null)` | The first collider on a line, or null if there is none or the land comes first. |
 | `array<Entity@>@ Space::within(const Vec3 &in place, float radius, uint groups = 0xFFFF)` | Everything whose collider touches a ball. |
 | `bool Space::toScreen(const Vec3 &in place, Vec2 &out screen)` | Where a place was when last drawn. False if it is behind the camera. |
 | `Vec3 Space::ray(const Vec2 &in screen)` | The direction from the camera through a place on the screen. |
-| `Vec3 Space::eye()` | Where the camera is. |
-| `uint Space::drawn()` | How many entities were drawn last. |
+| `Vec3 Space::get_eye() property` | Where the camera is. |
+| `uint Space::get_drawn() property` | How many entities were drawn last. |
 | `uint Space::drawnAt(uint level)` | How many at a level of detail: 0 is all of it, 2 the least. |
-| `uint Space::hidden()` | How many were out of sight or too small. |
-| `uint Space::triangles()` | How many triangles there were in the last frame. |
-| `uint Space::contacts()` | Where rigid bodies touched in the last step. |
+| `uint Space::get_hidden() property` | How many were out of sight or too small. |
+| `uint Space::get_triangles() property` | How many triangles there were in the last frame. |
+| `uint Space::get_contacts() property` | Where rigid bodies touched in the last step. |
 | `Vec3 lerp(const Vec3 &in a, const Vec3 &in b, float t)` | From a to b as t goes from 0 to 1. |
+
+## Message
+
+Numbers and text to send, up to 1000 bytes. Read it in the order it was written.
+
+| | |
+|---|---|
+| `void writeInt(int value)` | Adds a whole number. |
+| `void writeFloat(float value)` | Adds a number. |
+| `void writeText(const string &in value)` | Adds some text. |
+| `void writeVec2(const Vec2 &in value)` | Adds a Vec2. |
+| `void writeVec3(const Vec3 &in value)` | Adds a Vec3. |
+| `int readInt()` | The next whole number. |
+| `float readFloat()` | The next number. Always a real one. |
+| `string readText()` | The next text. |
+| `Vec2 readVec2()` | The next Vec2. |
+| `Vec3 readVec3()` | The next Vec3. |
+| `bool get_more() const property` | Whether there is anything left to read. |
+| `bool get_whole() const property` | False if more was written than fits, or read than there was. |
+| `const int from` | The player who sent it. |
+
+## RoomState
+
+How a room is getting on.
+
+| | |
+|---|---|
+| `RoomIdle` | Doing nothing. |
+| `RoomFinding` | Looking for others. |
+| `RoomJoining` | Asking to come in. |
+| `RoomIn` | In it, or hosting it. |
+| `RoomLost` | It couldn't be joined, or the host has gone. |
+
+## Room
+
+A game for up to 8 players on the same network, one of whom is the host. Keep it in a field, and it lasts until the screen closes.
+
+| | |
+|---|---|
+| `bool host(const string &in game, const string &in name, uint most = 4)` | Opens a room. Those who look for the same game find it under a name. |
+| `bool find(const string &in game)` | Looks for rooms, until something else is done. |
+| `uint get_found() const property` | How many there are. |
+| `string foundName(uint index) const` | The name of one. |
+| `string foundAddress(uint index) const` | Where it is. |
+| `uint foundPlayers(uint index) const` | How many are in it. |
+| `uint foundMost(uint index) const` | How many could be. |
+| `bool join(const string &in game, uint found, const string &in name)` | Joins one that was found. |
+| `bool join(const string &in game, const string &in address, const string &in name)` | Joins one whose address is known. |
+| `void leave()` | Leaves, or closes it. |
+| `RoomState get_state() const property` | How it is getting on. |
+| `bool get_hosting() const property` | Whether it is this player's. |
+| `int get_me() const property` | Which player this is, or -1. The host is 0. |
+| `uint get_players() const property` | How many are in it. |
+| `uint get_most() const property` | How many could be. |
+| `bool present(int player) const` | Whether a player, from 0 to 7, is in it. |
+| `string playerName(int player) const` | What they are called. |
+| `int ping(int player) const` | Milliseconds there and back. For all but the host, to the host. |
+| `bool send(Message@+ message, bool sure = true, int to = -1)` | To one player, or to everyone else. A sure one arrives, and in order; one that isn't is sent once, and is for what is soon out of date. |
+| `Message@ receive()` | The next that has come, or null. |
+| `int arrived()` | A player who has come since it was last asked, or -1. |
+| `int departed()` | A player who has gone, or -1. |
+
+## Request
+
+Something asked of a web server, over http:// or https://, whose certificate is checked.
+
+| | |
+|---|---|
+| `bool get_done() const property` | Whether it is over, one way or the other. |
+| `bool get_failed() const property` | Whether there was no answer. `status` may still say that the server refused. |
+| `int get_status() const property` | 200 is fine, 404 is not there, and so on; 0 until it is done. |
+| `string get_text() const property` | The answer, up to 4 MB; empty until it is done. |
+| `string get_error() const property` | Why it failed. |
+| `uint get_received() const property` | Bytes that have come. |
+| `float get_progress() const property` | 0 to 1, or 0 while nobody knows. |
+
+## Connection
+
+A stream of text to or from another program, over TCP. What is sent arrives, and in order.
+
+| | |
+|---|---|
+| `bool connect(const string &in address)` | Begins to connect to "192.168.1.2:80". |
+| `bool listen(uint port)` | Waits for others to connect; 0 is any port that is free. |
+| `Connection@ accept()` | The next to have connected, or null. |
+| `void close()` | Ends it. |
+| `bool get_connected() const property` | Whether it is connected. |
+| `bool get_connecting() const property` | Whether it is still trying to. |
+| `bool get_listening() const property` | Whether it is waiting for others. |
+| `uint get_port() const property` | Where it is listening. |
+| `string get_address() const property` | Who is at the other end. |
+| `bool send(const string &in text)` | Sends some text. False if it isn't open, or too much is waiting. |
+| `string receive()` | All that has come. |
+| `bool receiveLine(string &out line)` | The next whole line, without its end. |
+
+## Datagrams
+
+Short texts to anyone, over UDP. They may not arrive, or not in order.
+
+| | |
+|---|---|
+| `bool open(uint port = 0)` | Opens a port; 0 is any that is free. |
+| `void close()` | Closes it. |
+| `bool get_opened() const property` | Whether it is open. |
+| `uint get_port() const property` | The port it has. |
+| `bool send(const string &in address, const string &in text)` | Sends up to 1400 bytes to "192.168.1.2:9000". |
+| `bool broadcast(uint port, const string &in text)` | Sends to everyone on the network who is listening there. |
+| `bool receive(string &out address, string &out text)` | The next to have come, and from whom. |
+
+## Net
+
+The network: rooms for games on the same one, the web, and connections of your own.
+
+| | |
+|---|---|
+| `bool Net::get_available() property` | Whether there is one. |
+| `string Net::get_address() property` | This machine's own, or empty while it has none. |
+| `Request@ Net::get(const string &in url)` | Asks for a web page, or anything else. |
+| `Request@ Net::post(const string &in url, const string &in body, const string &in type = "application/x-www-form-urlencoded")` | Sends something, and waits for the answer. |
+
+## Tray
+
+What the disc tray is doing.
+
+| | |
+|---|---|
+| `TrayClosed` | Closed, with a disc in it. |
+| `TrayOpen` | Open. |
+| `TrayMoving` | On its way. |
+| `TrayEmpty` | Closed, with nothing in it. |
+| `TrayUnknown` | It can't be told. |
+
+## XboxText
+
+Things a console can say about itself.
+
+| | |
+|---|---|
+| `XboxKernel` | The version of its kernel. |
+| `XboxHardware` | Which chips it has. |
+| `XboxSerial` | Its serial number. |
+| `XboxEthernet` | Its network hardware address. |
+| `XboxRegion` | Where it was sold. |
+| `XboxVideo` | Its kind of picture. |
+| `XboxCable` | The cable to the television. |
+
+## Xbox
+
+What only the original Xbox has. Elsewhere `available` is false, readings are -1 or empty, and the rest do nothing.
+
+| | |
+|---|---|
+| `bool Xbox::get_available() property` | Whether this is one. |
+| `int Xbox::get_cpuTemperature() property` | Degrees Celsius, or -1. |
+| `int Xbox::get_boardTemperature() property` | The same, of the board. |
+| `int Xbox::get_fan() property` | How fast it is turning, 0 to 100, or -1. |
+| `void Xbox::set_fan(int) property` | Sets its speed, to no less than 20; -1 lets the console decide again. |
+| `void Xbox::set_light(uint) property` | The light on the front: four moments, with a bit for each, red in the high four and green in the low four. 0x0F is green, 0xF0 red, 0xFF orange and 0xA5 blinks between two. 0 lets the console decide. |
+| `Tray Xbox::get_tray() property` | What it is doing. |
+| `bool Xbox::openTray()` | Opens it. |
+| `bool Xbox::closeTray()` | Closes it. |
+| `string Xbox::text(XboxText what)` | Something about the console. |
+| `uint Xbox::driveSize(const string &in letter)` | Megabytes on C, E, F, G, X, Y or Z, or 0 if it isn't there. |
+| `uint Xbox::driveFree(const string &in letter)` | Megabytes free. |
+| `array<string>@ Xbox::folders(const string &in path)` | The folders in one, such as "E:\\Games". |
+| `array<string>@ Xbox::files(const string &in path)` | The files in one. |
+| `bool Xbox::launch(const string &in path)` | Runs another title, such as "E:\\Games\\Thing\\default.xbe". False if it isn't there; otherwise this one ends. |
+| `void Xbox::toDashboard()` | Leaves for the dashboard. |
+| `void Xbox::toFirmware()` | Leaves for the firmware, as if it had just been turned on. |
+| `void Xbox::restart()` | Restarts, without the start-up animation. |
+| `void Xbox::powerOff()` | Turns the console off. |
+| `int Xbox::busRead(uint address, uint command, bool word = false)` | Reads from something on the SMBus, or -1. 0x20 is the system controller. The console's settings at 0xA8 are refused, as there are calls for what is in them. |
+| `bool Xbox::busWrite(uint address, uint command, uint value, bool word = false)` | Writes to something on the SMBus. The console's settings are refused: a mistake there can't be undone. |
+
+### Entity
+
+| | |
+|---|---|
+| `Voice sound(Sound@+ sound, float volume = 1, float range = 30, bool loop = true)` | Plays a sound from it, wherever it goes, until it is destroyed. |
 
 ## Screen
 
@@ -564,7 +782,7 @@ Moving between screens. Changes happen after the current update.
 | `void Screens::pop()` | Closes this screen and returns to the one below. |
 | `void Screens::replace(const string &in id)` | Closes this screen and opens another in its place. |
 | `void Screens::home()` | Closes everything above the first screen. |
-| `uint Screens::count()` | How many screens can be opened. |
+| `uint Screens::get_count() property` | How many screens can be opened. |
 | `string Screens::id(uint index)` | The name to pass to push(). |
 | `string Screens::title(uint index)` | From its screen.json. |
 | `string Screens::description(uint index)` | From its screen.json. |
@@ -576,16 +794,16 @@ The machine and how it is doing.
 
 | | |
 |---|---|
-| `float App::time()` | Seconds since the app started. |
-| `float App::fps()` | Frames a second, averaged. |
-| `uint App::draws()` | Draw calls in the last frame. |
-| `string App::platform()` | What it is running on. |
-| `string App::gpu()` | What is drawing. |
-| `uint App::memoryKilobytes()` | Memory the engine has allocated, not counting video memory. |
-| `uint App::scriptKilobytes()` | How much of that is scripts. |
-| `uint App::freeKilobytes()` | Memory the machine has left. |
-| `bool App::development()` | Whether it was started with --dev, so that changed files are reloaded. |
-| `uint App::reloads()` | How many times a script or image has been reloaded because its file changed. |
+| `float App::get_time() property` | Seconds since the app started. |
+| `float App::get_fps() property` | Frames a second, averaged. |
+| `uint App::get_draws() property` | Draw calls in the last frame. |
+| `string App::get_platform() property` | What it is running on. |
+| `string App::get_gpu() property` | What is drawing. |
+| `uint App::get_memoryKilobytes() property` | Memory the engine has allocated, not counting video memory. |
+| `uint App::get_scriptKilobytes() property` | How much of that is scripts. |
+| `uint App::get_freeKilobytes() property` | Memory the machine has left. |
+| `bool App::get_development() property` | Whether it was started with --dev, so that changed files are reloaded. |
+| `uint App::get_reloads() property` | How many times a script or image has been reloaded because its file changed. |
 
 ## Vec2
 

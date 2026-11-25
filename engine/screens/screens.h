@@ -14,7 +14,8 @@ namespace nx
         char title[64] = {};
         char description[160] = {};
         char category[32] = {};
-        char demo[256] = {};  // what to press when it is shown off by itself
+        char demo[400] = {};  // what to press when it is shown off by itself
+        float seconds = 0;    // and for how long, if it needs more than the others
         int order = 0;
     };
 

@@ -1,4 +1,5 @@
 #include "net/net.h"
+#include "base/log.h"
 #include "net/secure.h"
 
 #include <stdio.h>
@@ -373,5 +374,68 @@ namespace nx
         }
         fetch.error = "it sends on for ever";
         return false;
+    }
+
+    namespace
+    {
+        Mutex g_webLock;
+        Fetch* g_web[4] = {};
+        bool g_webStarted = false, g_webStopped = false;
+    }
+
+    void webStop()
+    {
+        Lock lock(g_webLock);
+        g_webStopped = true;
+        for (Fetch* fetch : g_web)
+        {
+            if (fetch)
+            {
+                fetch->cancelled.store(true);
+            }
+        }
+    }
+
+    bool webRead(const char* url, FileData& out)
+    {
+        Fetch fetch;
+        fetch.url = url;
+        {
+            Lock lock(g_webLock);
+            if (g_webStopped)
+            {
+                return false;
+            }
+            g_webStarted = g_webStarted || netStart();
+            for (Fetch*& slot : g_web)
+            {
+                if (slot == nullptr)
+                {
+                    slot = &fetch;
+                    break;
+                }
+            }
+        }
+        const bool ok = g_webStarted && httpFetch(fetch) && fetch.status == 200;
+        {
+            Lock lock(g_webLock);
+            for (Fetch*& slot : g_web)
+            {
+                slot = slot == &fetch ? nullptr : slot;
+            }
+        }
+        if (!ok)
+        {
+            NX_WARN("%s: %s", url, fetch.error[0] ? fetch.error : "the server refused");
+            return false;
+        }
+        u8* data = static_cast<u8*>(memAlloc(fetch.text.size() + 1, MemTag::Texture));
+        if (data == nullptr)
+        {
+            return false;
+        }
+        memcpy(data, fetch.text.data(), fetch.text.size());
+        out.take(data, fetch.text.size());
+        return true;
     }
 }

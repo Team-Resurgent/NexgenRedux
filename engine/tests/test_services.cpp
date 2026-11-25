@@ -323,3 +323,62 @@ NX_TEST(bindingsChange)
     other.resetBindings();
     NX_EXPECT(other.saveBindings() == Input().saveBindings());
 }
+
+namespace
+{
+    u32 g_fetched = 0;
+
+    // Anything from the web is this one picture, but for what isn't there.
+    bool pretendWeb(const char* url, FileData& out)
+    {
+        g_fetched++;
+        if (strstr(url, "missing"))
+        {
+            return false;
+        }
+        const u8 file[kTextureHeader + 16] = { 'N', 'X', 'T', '1', 5, 0, 3, 0, 8, 0, 4, 0, 1 };
+        u8* data = static_cast<u8*>(memAlloc(sizeof(file), MemTag::Texture));
+        memcpy(data, file, sizeof(file));
+        out.take(data, sizeof(file));
+        return true;
+    }
+}
+
+NX_TEST(picturesComeFromTheWeb)
+{
+    g_fetched = 0;
+    Rig w;
+    w.assets.setWeb(pretendWeb);
+    Asset* a = w.assets.texture("https://example.com/A.png");
+    Asset* same = w.assets.texture("https://example.com/A.png");
+    Asset* other = w.assets.texture("https://example.com/a.png");   // names there mind their case
+    Asset* missing = w.assets.texture("https://example.com/missing.png");
+    w.assets.finish();
+    NX_EXPECT(a == same && a != other && g_fetched == 3);
+    NX_EXPECT(a->ready && !a->failed && a->width == 5);
+    NX_EXPECT(missing->failed);
+    char longest[300];
+    memset(longest, 'x', sizeof(longest));
+    memcpy(longest, "https://", 8);
+    longest[sizeof(longest) - 1] = 0;
+    Asset* tooLong = w.assets.texture(longest);
+    Asset* sound = w.assets.sound("https://example.com/a.wav");
+    w.assets.finish();
+    NX_EXPECT(tooLong->failed && sound->failed);
+    for (Asset* each : { a, same, other, missing, tooLong, sound })
+    {
+        w.assets.release(each);
+    }
+}
+
+NX_TEST(effectsAreLeftOutWhereThereAreNone)
+{
+    Rig w;
+    openCode(w, "class S : Screen { Effect@ e = Assets::effect(\"global:effect/tube.fx\"); Effect@ none = Assets::effect(\"global:effect/nothing.fx\"); Entity@ box;"
+                "void onEnter() { e.set(0, 1); @box = Space::spawn(Vec3()); box.shape(SolidBox, Red); box.effect(e);"
+                "  Save::set(\"works\", e.works ? \"yes\" : \"no\"); Save::set(\"failed\", none.failed ? \"yes\" : \"no\"); }"
+                "void draw(Canvas@ c) { c.design(1280, 720); Space::draw(c); Save::set(\"bloom\", c.bloom() ? \"yes\" : \"no\"); Save::set(\"effect\", c.effect(e) ? \"yes\" : \"no\"); } }");
+    w.step(3);
+    NX_EXPECT(!w.screens.failed());
+    NX_EXPECT(saved(w, "works", "no") && saved(w, "failed", "yes") && saved(w, "bloom", "no") && saved(w, "effect", "no"));
+}

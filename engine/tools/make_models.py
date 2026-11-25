@@ -365,6 +365,76 @@ def well():
     return m
 
 
+def skimmer():
+    """Something to race: pointed, with fins, and engines that glow. It faces +z."""
+    hull, glow = Mesh(), Mesh()
+    white, dark = (1, 1, 1, 1), (0.16, 0.17, 0.22, 1)
+    # A body of rings along z: how wide, how tall, how high.
+    rings = [(-1.5, 0.42, 0.2, 0.06), (-1.2, 0.62, 0.3, 0.08), (-0.4, 0.6, 0.36, 0.12), (0.5, 0.44, 0.27, 0.06), (1.5, 0.2, 0.12, 0.0), (2.0, 0.03, 0.02, -0.04)]
+    n = 14
+    p, t = [], []
+    for z, w, h, up in rings:
+        for i in range(n):
+            a = i / n * 2 * math.pi
+            c, s = math.cos(a), math.sin(a)
+            p.append((c * w, up + s * h * (1 if s > 0 else 0.55), z))
+    for k in range(len(rings) - 1):
+        for i in range(n):
+            a, b, c, d = k * n + i, k * n + (i + 1) % n, (k + 1) * n + i, (k + 1) * n + (i + 1) % n
+            t += [[a, b, d], [a, d, c]]
+    hull.add(p, smooth(p, t), white, t)
+    back = len(p)
+    put(hull, ball(0.36, 14, 0.75), (0.1, 0.16, 0.26, 1), (0, 0.32, 0.25), None, (0.8, 1, 1.5))
+    for side in (-1, 1):
+        # Wings, swept back, and what hangs from them.
+        a = [(side * 0.4, 0.06, 0.7), (side * 1.35, -0.08, -0.5), (side * 1.4, -0.1, -1.25), (side * 0.5, 0.04, -1.1)]
+        for y, up in ((0.045, 1), (-0.045, -1)):
+            q = [(x, yy + y, z) for x, yy, z in a]
+            face = [[0, 2, 1], [0, 3, 2]] if side * up > 0 else [[0, 1, 2], [0, 2, 3]]
+            hull.add(q, [(0, up, 0)] * 4, (0.95, 0.95, 1, 1), face)
+        put(hull, lathe([(0.02, -0.75), (0.2, -0.55), (0.22, 0.35), (0.12, 0.75), (0.001, 0.8)], 10), dark, (side * 1.3, -0.08, -0.65), rotation(x=90))
+        put(glow, lathe([(0.001, -0.005), (0.16, 0), (0.001, 0.02)], 10), (0.4, 0.85, 1, 1), (side * 1.3, -0.08, -1.4), rotation(x=-90))
+        # A fin.
+        f = [(side * 0.38, 0.15, -0.55), (side * 0.55, 0.85, -1.45), (side * 0.5, 0.8, -1.75), (side * 0.42, 0.12, -1.4)]
+        hull.add(f, [(side, 0.2, 0)] * 4, (0.9, 0.9, 0.95, 1), [[0, 1, 2], [0, 2, 3]] if side < 0 else [[0, 2, 1], [0, 3, 2]])
+    put(glow, lathe([(0.001, 0), (0.3, 0.01), (0.001, 0.03)], 12), (0.4, 0.85, 1, 1), (0, 0.1, -1.53), rotation(x=-90), (1, 1, 0.6))
+    return [(hull, matter(two_sided=True)), (glow, matter(glow=True, two_sided=True))]
+
+
+def gate():
+    """A ring to go through, 9 metres across, standing up and facing +z."""
+    frame, light = Mesh(), Mesh()
+    n = 28
+    for mesh, ring, tube, color in ((frame, 4.6, 0.34, (0.3, 0.32, 0.4, 1)), (light, 4.28, 0.11, (1, 1, 1, 1))):
+        p, q, t = [], [], []
+        for i in range(n + 1):
+            a = i / n * 2 * math.pi
+            for k in range(9):
+                b = k / 8 * 2 * math.pi
+                d = (math.cos(a) * math.cos(b), math.sin(a) * math.cos(b), math.sin(b))
+                p.append((math.cos(a) * ring + d[0] * tube, math.sin(a) * ring + d[1] * tube, d[2] * tube))
+                q.append(d)
+        for i in range(n):
+            for k in range(8):
+                a, b = i * 9 + k, (i + 1) * 9 + k
+                t += [[a, b, b + 1], [a, b + 1, a + 1]]
+        mesh.add(p, q, color, t)
+    for i in range(4):
+        a = math.pi / 4 + i * math.pi / 2
+        put(frame, box(0.9, 0.9, 0.9, 0.2), (0.22, 0.23, 0.3, 1), (math.cos(a) * 4.6, math.sin(a) * 4.6, 0), rotation(z=math.degrees(a)))
+    return [(frame, matter()), (light, matter(glow=True))]
+
+
+def campfire():
+    m = Mesh()
+    for i in range(9):
+        a = i / 9 * 2 * math.pi
+        put(m, ball(0.2, 7, 0.8), (0.42, 0.41, 0.4, 1), (math.sin(a) * 0.75, 0.06, math.cos(a) * 0.75))
+    for i in range(4):
+        put(m, lathe([(0.08, -0.5), (0.08, 0.5)], 6), (0.3, 0.2, 0.13, 1), (0, 0.17, 0), rotation(x=62, y=i * 45))
+    return m
+
+
 # --- Someone to walk about ---
 
 def quat(x=0, y=0, z=0):
@@ -473,6 +543,9 @@ def main():
     save('house', house())
     save('lantern', lantern())
     save('well', [(well(), matter(two_sided=True))])
+    save('skimmer', skimmer())
+    save('gate', gate())
+    save('campfire', [(campfire(), matter())])
     robot()
 
 

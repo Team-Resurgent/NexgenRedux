@@ -85,10 +85,10 @@ done again.
 | `bindings/`, `screens/` | What scripts can call; the screen stack and the engine's menu | all above |
 | `app/` | The program that runs the showcase | all |
 | `tools/` | `cook`; `record`; `make_media.py` and `make_models.py`, which make the showcase's sounds, music and models; `make_docs.py`, which makes the web site; `stage-rxdk.ps1` | all |
-| `third_party/` | AngelScript, SSFN, stb, cgltf, miniaudio and dr_libs, unmodified | |
+| `third_party/` | AngelScript, SSFN, stb, cgltf, miniaudio, dr_libs and Mbed TLS, unmodified | |
 | `spike/`, `tests/` | Phase 0 app and tests | all |
 
-Platform `#if`s belong only in `platform/`, `gpu/`, `base/thread_*` and `audio/output_*`.
+Platform `#if`s belong only in `platform/`, `gpu/`, `base/thread_*`, `audio/output_*` and `net/`.
 
 The engine is self-contained: it needs a compiler and the platform's SDK, and nothing is downloaded. The
 small libraries in `third_party` are unmodified copies. The `self_contained` test enforces this.

@@ -360,7 +360,8 @@ NX_TEST(thereIsSomethingUnderTheLand)
     const std::string kept = p.space.landEdits();
     NX_EXPECT(!kept.empty() && p.space.setLandEdits("") && p.space.heightAt(0, 0) > 1.9f);
     NX_EXPECT(p.space.setLandEdits(kept) && p.space.heightAt(0, 0) < -1000 && p.space.landEdits() == kept);
-    for (size_t cut = 1; cut < kept.size(); cut++)
+    // The last letter may hold no more than what is left over.
+    for (size_t cut = 1; cut + 1 < kept.size(); cut++)
     {
         NX_EXPECT(!p.space.setLandEdits(kept.substr(0, cut)));
     }
@@ -486,7 +487,8 @@ NX_TEST(landIsChangedByHand)
     }
     NX_EXPECT(!p.space.setLandEdits("no!") && !p.space.setLandEdits("AAAA"));
     NX_EXPECT(p.space.setLandEdits(now) && p.space.landEdits() == now);
-    NX_EXPECT(p.space.makeLand(7, 32, 2, 8, 0.5f, false) && !p.space.setLandEdits(kept));
+    // By region, so they fit other land too.
+    NX_EXPECT(p.space.makeLand(7, 32, 2, 8, 0.5f, false) && p.space.setLandEdits(kept));
 
     // What rested on it falls when it goes.
     const u32 ball = p.thing({ 0, p.space.heightAt(0, 0) + 0.5f, 0 }, Shape3::Sphere, { 0.5f, 0, 0 }, 1);
@@ -496,7 +498,15 @@ NX_TEST(landIsChangedByHand)
     const Vec3 at = p.at(ball);
     NX_EXPECT(fabsf(at.y - p.space.heightAt(at.x, at.z) - 0.5f) < 0.3f);
     p.space.makeEndlessLand(9, 2, 30, 0.5f, 3);
-    NX_EXPECT(!p.space.raise(0, 0, 5, 1) && !p.space.paint(0, 0, 5, { 1, 1, 1, 1 }, 1));
+    // Endless land too, and what was done stays when the region goes and comes back.
+    NX_EXPECT(p.space.raise(0, 0, 5, 1) && p.space.paint(0, 0, 5, { 1, 1, 1, 1 }, 1));
+    const float raised = p.space.heightAt(0, 0);
+    NX_EXPECT(p.space.raise(2000, 2000, 5, 3) && !p.space.landEdits().empty());
+    p.space.setCamera({ 3000, 50, 3000 }, { 3000, 0, 2990 }, 60);
+    p.step(30);
+    p.space.setCamera({ 0, 50, 0 }, { 0, 0, -10 }, 60);
+    p.step(30);
+    NX_EXPECT(fabsf(p.space.heightAt(0, 0) - raised) < 0.01f);
 }
 
 NX_TEST(landHoldsThingsUp)

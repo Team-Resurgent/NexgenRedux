@@ -5,6 +5,9 @@
 class asIScriptObject;
 class asIScriptFunction;
 
+#include <string>
+#include <vector>
+
 namespace nx
 {
     // A screen that can be opened: a folder with a screen.json and a main.as.
@@ -94,6 +97,8 @@ namespace nx
         void enter(const Entry& entry);
         void setMenu(bool open);
         void arrive(Entry& entry);
+        bool include(FileData& source, const char* file, std::string& error, u32 depth);
+        static const char* shown(const Entry& entry);
         void addInfo(const char* folderName);
         const ScreenInfo* findInfo(const char* id) const;
         u32 menuItems(const char** items) const;
@@ -120,5 +125,6 @@ namespace nx
         u32 m_menuChoice = 0;
         bool m_canQuit = true;
         bool m_quit = false;
+        std::vector<std::string> m_included;
     };
 }

@@ -148,10 +148,21 @@ namespace nx
         return m ? m->GetTypeInfoByName(name) : nullptr;
     }
 
+    void ScriptHost::addSection(const char* file, const char* code, size_t length)
+    {
+        m_sections.emplace_back(file, std::string(code, length));
+    }
+
     bool ScriptHost::compile(const char* module, const char* file, const char* code, size_t length)
     {
         asIScriptModule* m = m_engine->GetModule(module, asGM_ALWAYS_CREATE);
-        if (m == nullptr || (m_prelude && m->AddScriptSection("engine", m_prelude) < 0) || m->AddScriptSection(file, code, length) < 0 || m->Build() < 0)
+        bool added = m != nullptr;
+        for (const auto& section : m_sections)
+        {
+            added = added && m->AddScriptSection(section.first.c_str(), section.second.data(), section.second.size()) >= 0;
+        }
+        m_sections.clear();
+        if (!added || (m_prelude && m->AddScriptSection("engine", m_prelude) < 0) || m->AddScriptSection(file, code, length) < 0 || m->Build() < 0)
         {
             snprintf(m_error, sizeof(m_error), "%s did not compile", file);
             discard(module);

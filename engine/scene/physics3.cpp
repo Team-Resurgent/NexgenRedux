@@ -571,7 +571,7 @@ namespace nx
         {
             const float height = heightAt(at.x, at.z);
             // With holes there is somewhere under the land, and it is no thicker than this.
-            if (height < -9e5f || at.y - radius * 1.5f > height + 1 || (m_holes.count() && at.y < height - radius - 0.8f))
+            if (height < -9e5f || at.y - radius * 1.5f > height + 1 || (m_anyHoles && at.y < height - radius - 0.8f))
             {
                 return;
             }
@@ -1384,7 +1384,7 @@ namespace nx
             const float length = way.length(), step = hasLand() ? m_landSpacing * 0.5f : 1;
             const u32 count = static_cast<u32>(clampFloat(length / step, 0, 2000)) + 1;
             // From under it, nothing is met until the line has come out.
-            bool above = m_holes.count() == 0 || from.y >= heightAt(from.x, from.z);
+            bool above = !m_anyHoles || from.y >= heightAt(from.x, from.z);
             for (u32 i = 1; i <= count; i++)
             {
                 float t = static_cast<float>(i) / static_cast<float>(count);

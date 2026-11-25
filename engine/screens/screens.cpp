@@ -2,6 +2,7 @@
 #include "ui/ui.h"
 #include "base/json.h"
 #include "base/log.h"
+#include "bindings/bindings.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -238,6 +239,15 @@ namespace nx
             snprintf(entry.error, sizeof(entry.error), "cannot read %s", path);
             return false;
         }
+        // `#include "global:scene.as"`: other files, which the screen shares. The line itself is made blank.
+        std::string included;
+        m_included.clear();
+        if (!include(source, shown(entry), included, 0))
+        {
+            entry.failed = true;
+            snprintf(entry.error, sizeof(entry.error), "%s", included.c_str());
+            return false;
+        }
         // Its path is in every error message, so leave out the part that is always the same.
         char shown[96];
         snprintf(shown, sizeof(shown), "%s/main.as", entry.info.id);
@@ -266,6 +276,63 @@ namespace nx
         entry.loading = true;
         arrive(entry);
         return !entry.failed;
+    }
+
+    const char* Screens::shown(const Entry& entry)
+    {
+        static char text[96];
+        snprintf(text, sizeof(text), "%s/main.as", entry.info.id);
+        return text;
+    }
+
+    bool Screens::include(FileData& source, const char* file, std::string& error, u32 depth)
+    {
+        char* text = reinterpret_cast<char*>(source.data);
+        for (size_t at = 0; at < source.size;)
+        {
+            size_t end = at;
+            while (end < source.size && text[end] != '\n')
+            {
+                end++;
+            }
+            size_t i = at;
+            while (i < end && (text[i] == ' ' || text[i] == '\t'))
+            {
+                i++;
+            }
+            if (end - i > 10 && strncmp(text + i, "#include", 8) == 0)
+            {
+                const char* open = static_cast<const char*>(memchr(text + i, '"', end - i));
+                const char* close = open ? static_cast<const char*>(memchr(open + 1, '"', static_cast<size_t>(text + end - open - 1))) : nullptr;
+                const std::string name = close ? std::string(open + 1, close) : std::string();
+                char path[192];
+                FileData other;
+                const bool known = !name.empty() && name.find("..") == std::string::npos && name.compare(0, 4, "http") != 0 && resolveAsset(*m_services, name.c_str(), path, sizeof(path));
+                if (depth > 4 || !known || !m_services->platform->readFile(path, other, MemTag::Script))
+                {
+                    error = std::string(file) + ": cannot include \"" + name + "\"";
+                    return false;
+                }
+                // The same file twice is once.
+                bool had = false;
+                for (const std::string& h : m_included)
+                {
+                    had = had || h == path;
+                }
+                if (!had)
+                {
+                    m_included.push_back(path);
+                    if (!include(other, path, error, depth + 1))
+                    {
+                        return false;
+                    }
+                    m_services->host->addSection(path, reinterpret_cast<const char*>(other.data), other.size);
+                }
+                memset(text + at, ' ', end - at);
+            }
+            at = end + 1;
+        }
+        return true;
     }
 
     void Screens::arrive(Entry& entry)

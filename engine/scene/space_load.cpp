@@ -269,6 +269,14 @@ namespace nx
                     }
                 }
             }
+            else if (is("animate"))
+            {
+                // Once its model has come, which is soon after.
+                if (!play(id, v.text(), true, 0))
+                {
+                    pendingAnimation(id, v.text());
+                }
+            }
             else if (is("moves"))
             {
                 // To there and back, for ever.

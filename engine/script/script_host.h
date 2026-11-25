@@ -8,6 +8,10 @@ class asIScriptFunction;
 class asIScriptObject;
 class asITypeInfo;
 
+#include <string>
+#include <utility>
+#include <vector>
+
 namespace nx
 {
     // Owns the AngelScript engine. All its memory is tagged MemTag::Script.
@@ -32,6 +36,8 @@ namespace nx
 
         // Compile errors are logged with file, line and column.
         bool compile(const char* module, const char* file, const char* code, size_t length);
+        // Other files, put in with the next to be compiled: those that it includes.
+        void addSection(const char* file, const char* code, size_t length);
         void discard(const char* module);
 
         // Looks up a function by declaration; nullptr if the module doesn't have it.
@@ -87,6 +93,7 @@ namespace nx
         static constexpr u32 kHeldTypes = 12;
         u32 m_heldCount = 0;
         const char* m_prelude = nullptr;
+        std::vector<std::pair<std::string, std::string>> m_sections;
         asITypeInfo* m_held[kHeldTypes] = {};
         u32 m_statementLimit = 20000000;
         u32 m_statements = 0;

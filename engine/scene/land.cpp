@@ -48,9 +48,7 @@ namespace nx
             removeChunk(m_chunks.count() - 1);
         }
         m_flats.clear();
-        m_sculpt.clear();
-        m_paint.clear();
-        m_holes.clear();
+        clearEdits();
         m_regionEvents.clear();
         m_regionNext = 0;
         m_landSeed = seed;
@@ -526,7 +524,7 @@ namespace nx
             draw.lines = m_lines && !shadow;
             draw.first = first[detail];
             draw.count = first[detail + 1] - first[detail];
-            if (draw.lines || (detail == 0 && m_holes.count()))
+            if (draw.lines || (detail == 0 && m_anyHoles))
             {
                 // Without the skirt, which comes last: from under the land it would be a curtain.
                 const u32 step = 1u << (detail * 2 > 3 ? 3 : detail * 2);

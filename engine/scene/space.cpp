@@ -337,6 +337,7 @@ namespace nx
         }
         m_waiting.clear();
         setSkyPicture(nullptr);
+        clearEdits();
         forget();
         gpu::Device* device = m_solids ? m_solids->device() : nullptr;
         if (device)
@@ -459,6 +460,14 @@ namespace nx
         return true;
     }
 
+    void Space::pendingAnimation(u32 id, const char* name)
+    {
+        if (Appearance* a = getAppearance(id))
+        {
+            snprintf(a->waiting, sizeof(a->waiting), "%s", name);
+        }
+    }
+
     bool Space::played(u32 id) const
     {
         const Appearance* a = const_cast<Space*>(this)->getAppearance(id);
@@ -529,6 +538,14 @@ namespace nx
     {
         for (Appearance& a : m_appearances)
         {
+            if (a.waiting[0] && a.model && a.model->model)
+            {
+                const int found = a.model->model->findAnimation(a.waiting);
+                a.waiting[0] = 0;
+                a.animation = found;
+                a.time = 0;
+                a.loop = true;
+            }
             if (a.animation < 0 || a.model == nullptr || a.model->model == nullptr)
             {
                 continue;

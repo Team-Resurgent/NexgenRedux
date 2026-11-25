@@ -123,6 +123,7 @@ namespace nx
         u8 detail;             // the level it was last drawn at
         // Movement of a model that bends.
         int animation, before;
+        char waiting[24];        // an animation to play once its model has come
         float time, beforeTime, speed;
         float change, changeFor;  // seconds left of changing from one to the other, and all of them
         bool loop;
@@ -229,6 +230,7 @@ namespace nx
         // Nothing if it is already playing.
         bool play(u32 id, const char* animation, bool loop, float change);
         bool played(u32 id) const;
+        void pendingAnimation(u32 id, const char* name);
         Vec3 worldPlace(u32 id) const;
         void removed(u32 index);
         void transform(u32 index);
@@ -291,7 +293,7 @@ namespace nx
         u32 make(JsonTree::Value json, const char* folder, const Vec3& at);
         // Levels the land towards a height around a place.
         void flatten(float x, float z, float radius, float level);
-        // By hand, where the land has an end: more in the middle of the radius than at its edge. False where
+        // By hand, on any land: more in the middle of the radius than at its edge. False where
         // there is none. Over what flatten() did.
         bool raise(float x, float z, float radius, float by);
         bool smooth(float x, float z, float radius, float amount);
@@ -303,7 +305,7 @@ namespace nx
         // Nothing that moves leaves the land by its sides.
         void setEdges(bool edges) { m_edges = edges; }
         bool edges() const { return m_edges; }
-        // All of that, as text. Empty if there is none. It only fits land of the same number of squares.
+        // All of that, as text, by region. Empty if there is none.
         std::string landEdits() const;
         bool setLandEdits(const std::string& text);
         void setLandColors(const gpu::Color& low, const gpu::Color& middle, const gpu::Color& high, const gpu::Color& steep, float lowHeight, float highHeight);
@@ -365,6 +367,16 @@ namespace nx
         static constexpr u32 kChunk = 32;      // squares along a side
         static constexpr u32 kRow = kChunk + 3;
         static constexpr u32 kChunkDetails = 3;
+
+        // What was done by hand, by region, made when something first is.
+        struct Edit
+        {
+            int x, z;
+            float raised[32 * 32];
+            u8 paint[32 * 32 * 4];
+            u8 holes[32 * 32];
+        };
+        static constexpr u32 kMostEdits = 1024;
 
         // A region of the land.
         struct Chunk
@@ -516,10 +528,12 @@ namespace nx
             int fromX, fromZ, toX, toZ;
         };
         bool brush(float x, float z, float radius, Brush& b);
-        bool makeSculpt();
         template <typename F>
         bool change(float x, float z, float radius, const F& by);
-        void moveCorners(int fromX, int fromZ, int toX, int toZ, const float* moved);
+        bool moveCorners(int fromX, int fromZ, int toX, int toZ, const float* moved);
+        Edit* editAt(int rx, int rz, bool make);
+        const Edit* editAt(int rx, int rz) const;
+        void clearEdits();
         float sculpted(int x, int z) const;
         const u8* painted(int x, int z) const;
         bool isHole(int x, int z) const;
@@ -590,9 +604,9 @@ namespace nx
         GrowArray<Chunk> m_chunks;
         u16 m_table[32 * 32] = {};   // of regions, by the last bits of where they are; 0 is none
         GrowArray<Flat> m_flats;
-        GrowArray<float> m_sculpt;   // by corner; empty until something is changed by hand
-        GrowArray<u8> m_holes;       // by square, likewise
-        GrowArray<u8> m_paint;       // colour and how much of it, likewise
+        GrowArray<Edit*> m_edits;
+        Edit* m_lastEdit = nullptr;
+        bool m_anyHoles = false;
         GrowArray<RegionEvent> m_regionEvents;
         u32 m_regionNext = 0;
         Vec3 m_focus[4], m_focusTo[4];

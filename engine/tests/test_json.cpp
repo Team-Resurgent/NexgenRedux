@@ -197,3 +197,16 @@ NX_TEST(playersBringFiles)
         NX_EXPECT(bad.screens.failed());
     }
 }
+
+NX_TEST(screensIncludeOtherFiles)
+{
+    Rig r;
+    r.platform.files["global/lib.as"] = "#include \"global:more.as\"\nint twice(int v) { return more(v) * 2; }\n";
+    r.platform.files["global/more.as"] = "int more(int v) { return v + 1; }\n";
+    open(r, "#include \"global:lib.as\"\n  #include \"global:more.as\"\nclass A : Screen { void onEnter() { Save::set(\"t\", \"\" + twice(4)); } }");
+    NX_EXPECT(!r.screens.failed() && strcmp(r.save.get("t", ""), "10") == 0);
+    Rig bad;
+    open(bad, "#include \"global:none.as\"\nclass A : Screen {}");
+    NX_EXPECT(bad.screens.failed() && strstr(bad.screens.error(), "none.as"));
+}
+

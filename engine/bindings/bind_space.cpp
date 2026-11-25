@@ -399,7 +399,7 @@ namespace nx
         {
             if (!done && (!space().hasLand() || space().streaming()))
             {
-                scriptError("only land that has an end can be changed by hand");
+                scriptError("there is no land there to change, or no more room for what was done to it");
             }
         }
         void spaceRaise(float x, float z, float radius, float by) { handWork(space().raise(x, z, radius, by)); }
@@ -622,7 +622,7 @@ namespace nx
         b.function("void landColors(const Color &in low, const Color &in middle, const Color &in high, const Color &in steep, float lowHeight, float highHeight)", NX_FN(spaceLandColors), "Colours them by height and slope.");
         b.function("void flatten(float x, float z, float radius)", NX_FN(spaceFlatten), "Levels the land around a place, to build on.");
         b.function("void flatten(float x, float z, float radius, float height)", NX_FN(spaceFlattenTo), "The same, to a height.");
-        b.function("void raise(float x, float z, float radius, float by)", NX_FN(spaceRaise), "Raises the land by hand, most in the middle; lowers it if that is less than 0. For land that has an end.");
+        b.function("void raise(float x, float z, float radius, float by)", NX_FN(spaceRaise), "Raises the land by hand, most in the middle; lowers it if that is less than 0. Endless land too, and what is done is kept when it goes.");
         b.function("void smooth(float x, float z, float radius, float amount)", NX_FN(spaceSmooth), "Wears it down towards what is round about: from 0, nothing, to 1.");
         b.function("void level(float x, float z, float radius, float height, float amount)", NX_FN(spaceLevel), "Brings it nearer to a height: from 0, nothing, to 1, all the way. Over what flatten() did.");
         b.function("void paint(float x, float z, float radius, const Color &in color, float amount)", NX_FN(spacePaint), "Colours it. A clear colour takes paint away.");
@@ -631,7 +631,7 @@ namespace nx
         b.function("void set_edges(bool) property", NX_FN(spaceSetEdges), "Puts walls there, that can't be seen: nothing with a collider that moves can leave the land.");
         b.function("void skyPicture(Texture@+ picture)", NX_FN(spaceSkyPicture), "A picture all round, twice as wide as high, instead of the sky's colours. Null for none.");
         b.function("string get_landEdits() property", NX_FN(spaceLandEdits), "All that was raised and painted by hand, as text to keep. Empty if there is nothing.");
-        b.function("bool restoreLand(const string &in edits)", NX_FN(spaceRestoreLand), "Puts all that back, instead of what there is, on land of as many squares. False if it doesn't fit.");
+        b.function("bool restoreLand(const string &in edits)", NX_FN(spaceRestoreLand), "Puts all that back, instead of what there is. False if it is damaged.");
         b.function("float height(float x, float z)", NX_FN(spaceHeight), "How high the land or the ground is. Far below if there is none.");
         b.function("Vec3 normal(float x, float z)", NX_FN(spaceNormal), "Which way it faces there.");
         b.function("float get_landSize() property", NX_FN(spaceLandSize), "Metres along a side. Its middle is at 0, 0.");

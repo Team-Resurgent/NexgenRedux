@@ -27,6 +27,7 @@ namespace nx::test
         std::string written;                       // the last file
         double now = 0;
         std::string extraPath, extraText;
+        std::map<std::string, std::string> files;   // more, by path
         InputState state;
 
         bool openWindow(const WindowDesc&) override { return true; }
@@ -39,6 +40,12 @@ namespace nx::test
         bool readFile(const char* path, FileData& out, MemTag tag) override
         {
             reads++;
+            const auto other = files.find(path);
+            if (other != files.end())
+            {
+                extraPath = path;
+                extraText = other->second;
+            }
             if (extraPath == path)
             {
                 u8* data = static_cast<u8*>(memAlloc(extraText.size() + 1, tag));

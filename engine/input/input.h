@@ -54,6 +54,9 @@ namespace nx
         u32 typed(u32 i) const { return m_typed[i]; }
         // How far the wheel turned in this step.
         float wheel() const { return m_wheel; }
+        // How far the mouse moved in this step, in pixels.
+        float turnX() const { return m_turnX; }
+        float turnY() const { return m_turnY; }
         // While someone is typing, keys aren't actions, but for the way to the menu.
         void setTyping(bool typing) { m_typing = typing; }
         bool typing() const { return m_typing; }
@@ -113,5 +116,6 @@ namespace nx
         u32 m_typedSeen = 0;
         float m_wheelSeen = 0;
         float m_wheel = 0;
+        float m_turnSeenX = 0, m_turnSeenY = 0, m_turnX = 0, m_turnY = 0;
     };
 }

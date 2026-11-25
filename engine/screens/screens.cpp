@@ -379,6 +379,7 @@ namespace nx
             callOptional(entry, "void onExit()");
         }
         m_services->coroutines->stop(entry.group);
+        m_services->platform->lockMouse(false);
         m_services->audio->stopGroup(entry.group, 0.15f);
         // Before its module goes: the behaviours are from there.
         destroy(entry.world);

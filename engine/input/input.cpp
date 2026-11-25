@@ -219,6 +219,10 @@ namespace nx
         m_simulatedTyping = false;
         m_wheel = state.wheel - m_wheelSeen;
         m_wheelSeen = state.wheel;
+        m_turnX = state.turnX - m_turnSeenX;
+        m_turnY = state.turnY - m_turnSeenY;
+        m_turnSeenX = state.turnX;
+        m_turnSeenY = state.turnY;
         m_raw = state;
         if (listening())
         {

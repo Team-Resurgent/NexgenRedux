@@ -67,6 +67,12 @@ namespace nx
                     return false;
                 }
                 DragAcceptFiles(m_window, TRUE);
+                // How far the mouse moves, as it is told, whatever the pointer does.
+                RAWINPUTDEVICE mouse = {};
+                mouse.usUsagePage = 1;
+                mouse.usUsage = 2;
+                mouse.hwndTarget = m_window;
+                RegisterRawInputDevices(&mouse, 1, sizeof(mouse));
                 if (!desc.hidden)
                 {
                     ShowWindow(m_window, SW_SHOW);
@@ -89,6 +95,7 @@ namespace nx
                     DispatchMessageW(&message);
                 }
                 readPads();
+                keepMouse();
                 return !m_quit;
             }
 
@@ -161,6 +168,38 @@ namespace nx
                 }
             }
 
+            void lockMouse(bool on) override
+            {
+                m_wantLocked = on;
+                keepMouse();
+            }
+
+            // Hidden and in the middle while it is locked and the window is in front.
+            void keepMouse()
+            {
+                const bool locked = m_wantLocked && m_focused;
+                if (locked != m_locked)
+                {
+                    m_locked = locked;
+                    ShowCursor(locked ? FALSE : TRUE);
+                    if (!locked)
+                    {
+                        ClipCursor(nullptr);
+                    }
+                }
+                if (!locked)
+                {
+                    return;
+                }
+                RECT inside;
+                GetClientRect(m_window, &inside);
+                POINT corners[2] = { { inside.left, inside.top }, { inside.right, inside.bottom } };
+                MapWindowPoints(m_window, nullptr, corners, 2);
+                const RECT clip = { corners[0].x, corners[0].y, corners[1].x, corners[1].y };
+                ClipCursor(&clip);
+                SetCursorPos((clip.left + clip.right) / 2, (clip.top + clip.bottom) / 2);
+            }
+
             void mouse(u32 button, bool down)
             {
                 m_input.mouseButtons[button] = down;
@@ -222,6 +261,18 @@ namespace nx
                     DragFinish(drop);
                     return 0;
                 }
+                case WM_INPUT:
+                {
+                    RAWINPUT raw;
+                    UINT size = sizeof(raw);
+                    if (GetRawInputData(reinterpret_cast<HRAWINPUT>(lParam), RID_INPUT, &raw, &size, sizeof(RAWINPUTHEADER)) != static_cast<UINT>(-1) && raw.header.dwType == RIM_TYPEMOUSE &&
+                        !(raw.data.mouse.usFlags & MOUSE_MOVE_ABSOLUTE) && m_focused)
+                    {
+                        m_input.turnX += static_cast<float>(raw.data.mouse.lLastX);
+                        m_input.turnY += static_cast<float>(raw.data.mouse.lLastY);
+                    }
+                    return DefWindowProcW(window, message, wParam, lParam);
+                }
                 case WM_MOUSEWHEEL:
                     m_input.wheel += static_cast<float>(GET_WHEEL_DELTA_WPARAM(wParam)) / WHEEL_DELTA;
                     return 0;
@@ -251,6 +302,7 @@ namespace nx
             InputState m_input;
             double m_nextPadSearch = 0;
             bool m_focused = false;
+            bool m_wantLocked = false, m_locked = false;
             bool m_quit = false;
         };
     }

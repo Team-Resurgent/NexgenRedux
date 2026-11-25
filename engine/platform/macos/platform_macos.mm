@@ -349,8 +349,29 @@ namespace nx
                 [NSApp sendEvent:event];
             }
 
+            void lockMouse(bool on) override
+            {
+                if (on == m_locked || m_window == nil)
+                {
+                    return;
+                }
+                m_locked = on;
+                // The pointer stays where it is, and moving the mouse only tells how far.
+                CGAssociateMouseAndMouseCursorPosition(on ? false : true);
+                if (on)
+                {
+                    [NSCursor hide];
+                }
+                else
+                {
+                    [NSCursor unhide];
+                }
+            }
+
             void moveMouse(NSEvent* event)
             {
+                m_input.turnX += static_cast<float>([event deltaX]);
+                m_input.turnY += static_cast<float>([event deltaY]);
                 NSView* view = [m_window contentView];
                 const NSPoint at = [view convertPointToBacking:[view convertPoint:[event locationInWindow] fromView:nil]];
                 u32 width = 0, height = 0;
@@ -422,7 +443,8 @@ namespace nx
             void* m_library = nullptr;
             GlWindow m_gl;
             InputState m_input;
-            bool m_hidden = false;
+            bool m_locked = false;
+        bool m_hidden = false;
         };
     }
 

@@ -75,6 +75,7 @@ namespace nx
         bool keys[static_cast<size_t>(Key::Count)] = {};
         float mouseX = 0, mouseY = 0;  // pixels from the top left
         float wheel = 0;               // turned since the start: up is more
+        float turnX = 0, turnY = 0;    // how far the mouse has moved since the start, in pixels, even where the pointer can't
         bool mouseButtons[3] = {};     // left, right, middle
         bool hasMouse = false;
         Gamepad pads[kMaxPads];
@@ -151,6 +152,9 @@ namespace nx
         // Files that the player brought: in the folder "own", which is beside the saves, or in the media on the
         // original Xbox. Those that have just been dropped on the window are put there, and are told of once.
         virtual bool takeDropped(std::string&) { return false; }
+
+        // The pointer is hidden and kept in the window, for looking about with the mouse. Let go when the window is left.
+        virtual void lockMouse(bool) {}
 
         // Physical memory in bytes; 0 if unknown.
         virtual u64 totalMemory() = 0;

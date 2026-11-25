@@ -334,6 +334,13 @@ namespace nx
         Vec2 inputMouse() { const InputState& i = services().input->raw(); return services().canvas->toDesign(i.mouseX, i.mouseY); }
         bool inputMouseDown(u32 button) { return button < 3 && services().input->raw().mouseButtons[button]; }
         float inputWheel() { return services().input->wheel(); }
+        // In design units, as the pointer is.
+        Vec2 inputTurn()
+        {
+            const Vec2 a = services().canvas->toDesign(0, 0), b = services().canvas->toDesign(services().input->turnX(), services().input->turnY());
+            return { b.x - a.x, b.y - a.y };
+        }
+        void inputLock(bool on) { services().platform->lockMouse(on); }
         bool inputKey(const std::string& name)
         {
             const Input& input = *services().input;
@@ -660,6 +667,8 @@ namespace nx
             b.function("bool get_hasMouse() property", NX_FN(inputHasMouse), "Whether a mouse has moved.");
             b.function("Vec2 get_mouse() property", NX_FN(inputMouse), "Where the mouse is, in design units.");
             b.function("bool mouseDown(uint button)", NX_FN(inputMouseDown), "Left is 0, right 1, middle 2.");
+            b.function("Vec2 get_mouseMove() property", NX_FN(inputTurn), "How far the mouse has just moved, in design units, even while it is locked.");
+            b.function("void lockMouse(bool locked)", NX_FN(inputLock), "Hides the pointer and keeps it in the window, for looking about. It is let go when the window is left, and when the screen closes.");
             b.function("float get_wheel() property", NX_FN(inputWheel), "How far the mouse's wheel has just turned: up is more than 0.");
             b.function("bool key(const string &in name)", NX_FN(inputKey), "Whether a key is down, by its name: `A`, `1`, `Up`, `Space`, `Shift`, `Control`. Not while someone is typing. Actions are better for playing with, as they can be changed.");
             b.function("bool padConnected(uint pad)", NX_FN(padConnected), "Whether a gamepad (0 to 3) is plugged in.");

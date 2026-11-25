@@ -386,6 +386,28 @@ namespace nx
                     }
                     break;
                 case MotionNotify:
+                {
+                    // Where it was put back to, which isn't a move.
+                    const int cx = static_cast<int>(m_width / 2), cy = static_cast<int>(m_height / 2);
+                    if (m_locked && event.xmotion.x == cx && event.xmotion.y == cy)
+                    {
+                        break;
+                    }
+                    if (m_seenMouse)
+                    {
+                        m_input.turnX += static_cast<float>(event.xmotion.x) - m_input.mouseX;
+                        m_input.turnY += static_cast<float>(event.xmotion.y) - m_input.mouseY;
+                    }
+                    m_seenMouse = true;
+                    if (m_locked)
+                    {
+                        XWarpPointer(m_display, 0, m_window, 0, 0, 0, 0, cx, cy);
+                        m_input.mouseX = static_cast<float>(cx);
+                        m_input.mouseY = static_cast<float>(cy);
+                        m_input.hasMouse = true;
+                        break;
+                    }
+                }
                     m_input.hasMouse = true;
                     m_input.mouseX = static_cast<float>(event.xmotion.x);
                     m_input.mouseY = static_cast<float>(event.xmotion.y);
@@ -488,6 +510,36 @@ namespace nx
                 }
             }
 
+            void lockMouse(bool on) override
+            {
+                if (m_display == nullptr || on == m_locked)
+                {
+                    return;
+                }
+                m_locked = on;
+                if (on)
+                {
+                    // A cursor of nothing.
+                    char none[8] = {};
+                    XColor black = {};
+                    const Pixmap empty = XCreateBitmapFromData(m_display, m_window, none, 8, 8);
+                    m_hidden = XCreatePixmapCursor(m_display, empty, empty, &black, &black, 0, 0);
+                    XFreePixmap(m_display, empty);
+                    XDefineCursor(m_display, m_window, m_hidden);
+                    XGrabPointer(m_display, m_window, True, ButtonPressMask | ButtonReleaseMask | PointerMotionMask, GrabModeAsync, GrabModeAsync, m_window, m_hidden, CurrentTime);
+                }
+                else
+                {
+                    XUngrabPointer(m_display, CurrentTime);
+                    XUndefineCursor(m_display, m_window);
+                    if (m_hidden)
+                    {
+                        XFreeCursor(m_display, m_hidden);
+                        m_hidden = 0;
+                    }
+                }
+            }
+
             void readPads()
             {
                 // Looking for new ones means going through the devices, so only now and then.
@@ -548,6 +600,8 @@ namespace nx
             Colormap m_colormap = 0;
             GLXContext m_context = nullptr;
             Atom m_closeMessage = 0;
+            bool m_locked = false, m_seenMouse = false;
+            Cursor m_hidden = 0;
             Atom m_drop[kDropAtoms] = {};
             Window m_dropFrom = 0;
             GlWindow m_gl;

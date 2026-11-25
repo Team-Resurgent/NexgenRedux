@@ -96,6 +96,8 @@ namespace nx::test
             return true;
         }
 
+        void removeSave(const char* name) override { kept.erase(name); }
+
         bool writeFile(const char* path, const void*, size_t) override
         {
             written = path;

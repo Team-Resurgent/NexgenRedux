@@ -147,6 +147,14 @@ NX_TEST(screensWriteTheirOwnFiles)
     NX_EXPECT(strstr(r.save.get("read", ""), "sphere") != nullptr && strcmp(r.save.get("made", ""), "2 5it") == 0);
     NX_EXPECT(r.platform.kept.count("shapes.rooms.first") == 1 && r.platform.written.empty());
 
+    // And back to what came with it.
+    Rig f;
+    open(f, "class A : Screen { void onEnter() { Assets::write(\"asset:first.json\", \"[]\"); Assets::write(\"asset:other.json\", \"[]\"); Assets::forget(\"asset:first.json\"); Assets::forget(\"asset:never.json\"); } }");
+    NX_EXPECT(!f.screens.failed() && f.platform.kept.count("shapes.first") == 0 && f.platform.kept.count("shapes.other") == 1);
+    Rig no;
+    open(no, "class A : Screen { void onEnter() { Assets::forget(\"global:a.json\"); } }");
+    NX_EXPECT(no.screens.failed());
+
     // While developing, it is the file itself.
     Rig d;
     d.services.development = true;

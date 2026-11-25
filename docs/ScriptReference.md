@@ -359,6 +359,7 @@ Numbers, text and flags, in lists and by name: for files, and for what comes fro
 | `void remove(const string &in key)` | Takes a part out. |
 | `void remove(uint index)` | The same, by number. |
 | `string Assets::read(const string &in name)` | What is in a text file, at once. If the screen has written one of that name, that is what it is. |
+| `void Assets::forget(const string &in name)` | Goes back to the file that came with the screen, and loses what was written over it. While developing it is the only one, and nothing is done. |
 | `bool Assets::write(const string &in name, const string &in text)` | Writes one of the screen's own files: `asset:` something `.json`. While developing it is the file itself; otherwise it is kept with the saves, and read from there from then on. False if it couldn't be. |
 
 ## Entity

@@ -250,6 +250,20 @@ namespace nx
             }
             return s.development && s.platform->writeFile(path, text.data(), text.size()) ? true : !s.development && s.platform->writeSave(kept.c_str(), text.data(), text.size());
         }
+
+        void forgetText(const std::string& name)
+        {
+            Services& s = services();
+            std::string kept;
+            if (!keptName(s, name, kept))
+            {
+                scriptError("only what can be written can be forgotten (" + name + ")");
+            }
+            else if (!s.development && !s.save->readOnly())
+            {
+                s.platform->removeSave(kept.c_str());
+            }
+        }
     }
 
     bool readOwn(const Services& s, const char* name, FileData& out)
@@ -306,6 +320,7 @@ namespace nx
 
         b.names("Assets");
         b.function("string read(const string &in name)", NX_FN(readText), "What is in a text file, at once. If the screen has written one of that name, that is what it is.");
+        b.function("void forget(const string &in name)", NX_FN(forgetText), "Goes back to the file that came with the screen, and loses what was written over it. While developing it is the only one, and nothing is done.");
         b.function("bool write(const string &in name, const string &in text)", NX_FN(writeText), "Writes one of the screen's own files: `asset:` something `.json`. While developing it is the file itself; otherwise it is kept with the saves, and read from there from then on. False if it couldn't be.");
         b.names("");
     }

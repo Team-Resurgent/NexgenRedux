@@ -558,7 +558,8 @@ Assets::write("asset:level.json", j.write());
 ```
 
 `Assets::write` writes only a screen's own `asset:` files that end in `.json`. With `--dev` it is the file in the media; otherwise
-it is kept with the saves, on consoles too, and `Assets::read` and `Space::load` read that one from then on.
+it is kept with the saves, on consoles too, and `Assets::read` and `Space::load` read that one from then on. `Assets::forget` goes
+back to the one that came with the screen.
 
 ## On the original Xbox
 

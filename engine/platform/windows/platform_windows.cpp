@@ -140,6 +140,21 @@ namespace nx
         return swapIn(full, fresh, name, data, size);
     }
 
+    void PlatformWindows::removeSave(const char* name)
+    {
+        wchar_t full[kMaxPath];
+        if (savePath(name, L"", full))
+        {
+            DeleteFileW(full);
+        }
+    }
+
+    bool PlatformWindows::setSaveFolder(const char* path)
+    {
+        wchar_t full[kMaxPath];
+        return MultiByteToWideChar(CP_UTF8, 0, path, -1, full, kMaxPath) > 1 && wcscpy_s(m_saves, full) == 0;
+    }
+
     bool PlatformWindows::writeFile(const char* path, const void* data, size_t size)
     {
         wchar_t full[kMaxPath];

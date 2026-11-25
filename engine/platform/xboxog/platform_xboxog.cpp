@@ -106,11 +106,10 @@ namespace nx
 
             u64 fileTime(const char*) override { return 0; }
 
-            // T: is the title's own place on the hard disk.
             bool loadSave(const char* name, FileData& out) override
             {
                 char full[64];
-                if (snprintf(full, sizeof(full), "T:\\%s.sav", name) >= static_cast<int>(sizeof(full)))
+                if (!savePath(name, "sav", full))
                 {
                     return false;
                 }
@@ -137,7 +136,7 @@ namespace nx
             {
                 char full[64];
                 char fresh[64];
-                if (snprintf(full, sizeof(full), "T:\\%s.sav", name) >= static_cast<int>(sizeof(full)) || snprintf(fresh, sizeof(fresh), "T:\\%s.new", name) >= static_cast<int>(sizeof(fresh)))
+                if (!savePath(name, "sav", full) || !savePath(name, "new", fresh))
                 {
                     return false;
                 }
@@ -156,6 +155,21 @@ namespace nx
                 }
                 DeleteFileA(full);
                 return MoveFileA(fresh, full) != 0;
+            }
+
+            void removeSave(const char* name) override
+            {
+                char full[64];
+                if (savePath(name, "sav", full))
+                {
+                    DeleteFileA(full);
+                }
+            }
+
+            bool setSaveFolder(const char* path) override
+            {
+                m_saves = path;
+                return true;
             }
 
             void listFolders(const char* path, FolderCallback callback, void* user) override
@@ -186,6 +200,13 @@ namespace nx
             const char* name() const override { return "Original Xbox"; }
 
         private:
+            bool savePath(const char* name, const char* ending, char (&full)[64]) const
+            {
+                return snprintf(full, sizeof(full), "%s\\%s.%s", m_saves, name, ending) < static_cast<int>(sizeof(full));
+            }
+
+            const char* m_saves = "T:";  // the title's own place on the hard disk
+
             static MEMORYSTATUS memory()
             {
                 MEMORYSTATUS status = {};

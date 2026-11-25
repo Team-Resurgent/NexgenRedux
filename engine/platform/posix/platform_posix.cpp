@@ -155,6 +155,21 @@ namespace nx
         return swapIn(full, fresh, name, data, size);
     }
 
+    void PlatformPosix::removeSave(const char* name)
+    {
+        char full[kMaxPath];
+        if (savePath(name, "", full))
+        {
+            unlink(full);
+        }
+    }
+
+    bool PlatformPosix::setSaveFolder(const char* path)
+    {
+        const int length = snprintf(m_saves, sizeof(m_saves), "%s", path);
+        return length > 0 && static_cast<size_t>(length) < sizeof(m_saves);
+    }
+
     bool PlatformPosix::writeFile(const char* path, const void* data, size_t size)
     {
         char full[kMaxPath];

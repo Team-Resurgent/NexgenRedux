@@ -131,6 +131,9 @@ namespace nx
         // Over a file in the media, while developing. False where it can't be.
         virtual bool writeFile(const char*, const void*, size_t) { return false; }
         virtual bool writeSave(const char* name, const void* data, size_t size) = 0;
+        virtual void removeSave(const char* name) = 0;
+        // Somewhere else for them, so that a trial leaves the player's own alone. False if there is no such place.
+        virtual bool setSaveFolder(const char*) { return false; }
 
         // Calls back with the name of each folder directly inside one.
         using FolderCallback = void (*)(const char* name, void* user);

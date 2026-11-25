@@ -39,6 +39,7 @@ it appears in the menu.
 
 | Option | |
 |---|---|
+| `--saves FOLDER` | Keep saves there, with `--demo` too. On the original Xbox, an empty folder `media/trial` is where they go |
 | `--dev` | Reload scripts and images when their files change |
 | `--screen ID` | Start with a screen open |
 | `--demo SECONDS` | Show every screen, or the one given with `--screen`, for a while, playing it, then stop |

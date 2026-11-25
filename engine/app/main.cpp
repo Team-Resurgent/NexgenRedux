@@ -27,6 +27,7 @@
 //   --docs FILE     write the script reference and stop
 //   --budget MB     how much images and fonts may take
 //   --dev           reload scripts and images when their files change
+//   --saves FOLDER  keep saves there, and keep them with --demo too
 //   --size W H      window size
 //   --hidden (and silent), --null, --menu (open the engine's menu for a capture)
 namespace
@@ -40,6 +41,7 @@ namespace
         const char* screen = nullptr;
         const char* capture = nullptr;
         const char* docs = nullptr;
+        const char* saves = nullptr;
         const char* record = nullptr;
         const char* recordSound = "";
         int frames = 0;
@@ -414,6 +416,13 @@ namespace
                     NX_ERROR("tour: a save did not come back");
                     ok = false;
                 }
+                s.platform->removeSave("selftest");
+                FileData gone;
+                if (s.platform->loadSave("selftest", gone))
+                {
+                    NX_ERROR("tour: a save did not go");
+                    ok = false;
+                }
             }
             // What a screen unloads on purpose in one round is read again in the next.
             m_trimsBefore = m_trims;
@@ -496,7 +505,7 @@ namespace
             audio.onFinished([](void* asset, void* cache) { static_cast<Assets*>(cache)->release(static_cast<Asset*>(asset)); }, &assets);
             coroutines.init(host);
             save.init(platform, "showcase");
-            if (options.frames || options.tour || options.demo > 0 || options.docs)
+            if (options.frames || options.tour || (options.demo > 0 && !options.saves) || options.docs)
             {
                 save.setReadOnly();
             }
@@ -678,6 +687,12 @@ namespace
         {
             options.demo = 8;
         }
+#if defined(NX_GPU_D3D8)
+        else if (strcmp(name, "trial") == 0)
+        {
+            options.saves = "D:\\media\\trial";
+        }
+#endif
     }
 }
 
@@ -699,6 +714,7 @@ int main(int argc, char** argv)
         else if (strcmp(a, "--capture") == 0) options.capture = value(i);
         else if (strcmp(a, "--record") == 0) options.record = value(i);
         else if (strcmp(a, "--record-sound") == 0) options.recordSound = value(i);
+        else if (strcmp(a, "--saves") == 0) options.saves = value(i);
         else if (strcmp(a, "--docs") == 0) options.docs = value(i);
         else if (strcmp(a, "--frames") == 0) options.frames = atoi(value(i));
         else if (strcmp(a, "--tour") == 0) options.tour = atoi(value(i));
@@ -716,9 +732,15 @@ int main(int argc, char** argv)
     bool ok = platform != nullptr;
     if (platform)
     {
-        // Consoles have no command line: a folder called tour, or demo, on the disc asks for one.
+        // Consoles have no command line: a folder called tour, or demo, on the disc asks for one. One called
+        // trial has the saves.
         platform->listFolders("", findTour, &options);
-        ok = run(*platform, options);
+        if (options.saves && !platform->setSaveFolder(options.saves))
+        {
+            NX_ERROR("cannot keep saves in %s", options.saves);
+            ok = false;
+        }
+        ok = ok && run(*platform, options);
     }
     nx::destroy(platform);
 

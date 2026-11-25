@@ -3,6 +3,7 @@
 #include <xtl.h>
 #include <xgraphics.h>
 
+#include <math.h>
 #include <string.h>
 
 // Direct3D 8 on the original Xbox.
@@ -71,6 +72,23 @@ namespace nx::gpu
             }
         }
 
+        // What can be done here instead of a shader someone wrote, if it says which with "// xbox: name".
+        enum class StandIn : u8 { Lava, Dissolve, Hologram, Flag, Tube, Pixels, Ripple, Glitch, Grade, Count };
+        const char* const kStandIns[] = { "lava", "dissolve", "hologram", "flag", "tube", "pixels", "ripple", "glitch", "grade" };
+        static_assert(sizeof(kStandIns) / sizeof(kStandIns[0]) == static_cast<size_t>(StandIn::Count));
+
+        struct EffectSlot
+        {
+            StandIn kind;
+        };
+
+        struct PictureVertex
+        {
+            float x, y, z, rhw;
+            DWORD color;
+            float u, v;
+        };
+
         D3DCOLORVALUE colorValue(const Color& c)
         {
             const D3DCOLORVALUE v = { c.r, c.g, c.b, c.a };
@@ -112,7 +130,7 @@ namespace nx::gpu
                 m_buffers.forEach([](BufferSlot& b) { b.buffer->Release(); });
                 m_textures.forEach([](TextureSlot& t) { t.texture->Release(); });
                 m_meshes.forEach([](MeshSlot& m) { releaseMesh(m); });
-                for (IDirect3DTexture8* t : { m_shadowColor, m_shadowDepth, m_bloom[0], m_bloom[1] })
+                for (IDirect3DTexture8* t : { m_shadowColor, m_shadowDepth, m_bloom[0], m_bloom[1], m_copy })
                 {
                     if (t)
                     {
@@ -138,7 +156,7 @@ namespace nx::gpu
 
             bool init()
             {
-                if (!m_buffers.init(1024, MemTag::Buffer) || !m_pipelines.init(64, MemTag::Buffer) || !m_textures.init(1024, MemTag::Texture) || !m_meshes.init(2048, MemTag::Buffer))
+                if (!m_buffers.init(1024, MemTag::Buffer) || !m_pipelines.init(64, MemTag::Buffer) || !m_textures.init(1024, MemTag::Texture) || !m_meshes.init(2048, MemTag::Buffer) || !m_effects.init(128, MemTag::Buffer))
                 {
                     return false;
                 }
@@ -421,6 +439,8 @@ namespace nx::gpu
                 m_device->SetTextureStageState(1, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
                 m_device->SetTextureStageState(2, D3DTSS_COLOROP, D3DTOP_DISABLE);
                 m_device->SetTextureStageState(2, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
+                m_device->SetTextureStageState(3, D3DTSS_COLOROP, D3DTOP_DISABLE);
+                m_device->SetTextureStageState(3, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
                 m_device->SetTextureStageState(2, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_DISABLE);
                 m_device->SetTextureStageState(1, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_DISABLE);
                 m_device->SetTextureStageState(1, D3DTSS_TEXCOORDINDEX, 1);
@@ -560,6 +580,161 @@ namespace nx::gpu
                 }
             }
 
+            Effect createEffect(EffectKind kind, const char* source, char* error, size_t errorSize) override
+            {
+                if (errorSize)
+                {
+                    error[0] = 0;
+                }
+                const char* at = strstr(source, "// xbox: ");
+                for (u32 i = 0; at && i < static_cast<u32>(StandIn::Count); i++)
+                {
+                    const size_t length = strlen(kStandIns[i]);
+                    const bool picture = i >= static_cast<u32>(StandIn::Tube);
+                    if (strncmp(at + 9, kStandIns[i], length) == 0 && static_cast<u8>(at[9 + length]) <= ' ' && picture == (kind == EffectKind::Picture))
+                    {
+                        return m_effects.add({ static_cast<StandIn>(i) });
+                    }
+                }
+                return {};
+            }
+
+            void destroyEffect(Effect effect) override { m_effects.remove(effect); }
+
+            bool applyEffect(Effect effect, const float (&values)[16], float time, const Scissor& area) override
+            {
+                const EffectSlot* e = m_effects.get(effect);
+                if (!m_inFrame || e == nullptr || !makeCopy())
+                {
+                    return false;
+                }
+                IDirect3DSurface8* target = nullptr;
+                IDirect3DSurface8* depth = nullptr;
+                IDirect3DSurface8* copy = nullptr;
+                m_device->GetRenderTarget(&target);
+                m_device->GetDepthStencilSurface(&depth);
+                m_copy->GetSurfaceLevel(0, &copy);
+                const float w = static_cast<float>(m_width), h = static_cast<float>(m_height);
+                readScreen(target);
+                m_device->SetVertexShader(D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_TEX1);
+                m_device->SetTexture(0, &m_screen);
+                m_device->SetTextureStageState(0, D3DTSS_MINFILTER, D3DTEXF_LINEAR);
+                m_device->SetTextureStageState(0, D3DTSS_MAGFILTER, D3DTEXF_LINEAR);
+                const auto plain = [](float&, float&, float, float) -> DWORD { return 0xFFFFFFFF; };
+                const bool pixels = e->kind == StandIn::Pixels && makeBloom();
+                if (pixels)
+                {
+                    into(0);
+                    const PictureVertex v[6] = { { -0.5f, -0.5f, 0, 1, 0xFFFFFFFF, 0, 0 }, { kBloomWidth - 0.5f, -0.5f, 0, 1, 0xFFFFFFFF, w, 0 }, { kBloomWidth - 0.5f, kBloomHeight - 0.5f, 0, 1, 0xFFFFFFFF, w, h },
+                        { -0.5f, -0.5f, 0, 1, 0xFFFFFFFF, 0, 0 }, { kBloomWidth - 0.5f, kBloomHeight - 0.5f, 0, 1, 0xFFFFFFFF, w, h }, { -0.5f, kBloomHeight - 0.5f, 0, 1, 0xFFFFFFFF, 0, h } };
+                    picture(v, 6);
+                }
+                else
+                {
+                    m_device->SetRenderTarget(copy, nullptr);
+                    grid(1, 1, plain);
+                }
+                m_device->SetRenderTarget(target, depth);
+                wholeViewport();
+                if (area.enabled)
+                {
+                    setScissor(area);
+                }
+                m_device->SetTexture(0, pixels ? m_bloom[0] : m_copy);
+                const float much = values[0];
+                switch (e->kind)
+                {
+                case StandIn::Pixels:
+                    m_device->SetTextureStageState(0, D3DTSS_MINFILTER, D3DTEXF_POINT);
+                    m_device->SetTextureStageState(0, D3DTSS_MAGFILTER, D3DTEXF_POINT);
+                    grid(1, 1, [&](float& u, float& v, float, float) -> DWORD
+                    {
+                        u *= kBloomWidth / w;
+                        v *= kBloomHeight / h;
+                        return 0xFFFFFFFF;
+                    });
+                    break;
+                case StandIn::Tube:
+                {
+                    grid(24, 18, [&](float& u, float& v, float x, float y) -> DWORD
+                    {
+                        const float px = x * 2 - 1, py = y * 2 - 1, r = px * px + py * py;
+                        u = px * (1 + 0.09f * much * r) * 0.5f + 0.5f;
+                        v = py * (1 + 0.09f * much * r) * 0.5f + 0.5f;
+                        const bool outside = u < -0.01f || v < -0.01f || u > 1.01f || v > 1.01f;
+                        const float edge = outside ? 0 : 1.12f - r * 0.34f;
+                        return packed({ edge, edge, edge, 1 });
+                    });
+                    // Every other line, darker.
+                    static PictureVertex lines[2 * 288];
+                    u32 n = 0;
+                    for (u32 y = 0; y + 1 < m_height && n + 2 <= 576; y += 2)
+                    {
+                        lines[n++] = { 0, static_cast<float>(y), 0, 1, 0x58000000, 0, 0 };
+                        lines[n++] = { w, static_cast<float>(y), 0, 1, 0x58000000, 0, 0 };
+                    }
+                    m_device->SetTexture(0, m_textures.get(m_white)->texture);
+                    m_device->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
+                    m_device->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
+                    m_device->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
+                    m_device->DrawPrimitiveUP(D3DPT_LINELIST, n / 2, lines, sizeof(PictureVertex));
+                    break;
+                }
+                case StandIn::Ripple:
+                    grid(24, 18, [&](float& u, float& v, float x, float y) -> DWORD
+                    {
+                        u += sinf(y * 18 + time * 2.2f) * 0.006f * much + sinf((x + y) * 11 - time * 1.6f) * 0.004f * much;
+                        v += sinf(x * 15 + time * 1.8f) * 0.007f * much;
+                        const float bright = 0.5f + 0.5f * sinf(x * 9 + sinf(y * 8 + time) * 2 + time * 1.3f);
+                        return packed({ 0.45f + bright * 0.12f, 0.72f + bright * 0.2f, 0.85f + bright * 0.15f, 1 });
+                    });
+                    break;
+                case StandIn::Glitch:
+                {
+                    const u32 beat = static_cast<u32>(time * 9);
+                    grid(1, 18, [&](float& u, float&, float, float y) -> DWORD
+                    {
+                        const u32 strip = static_cast<u32>(y * 17.99f) * 7919u + beat * 104729u;
+                        const u32 r = (strip * 1103515245u + 12345u) >> 16;
+                        u += r % 5 == 0 ? (static_cast<float>(r % 101) / 100 - 0.5f) * 0.09f * much : 0;
+                        return 0xFFFFFFFF;
+                    });
+                    // Some colour that has slipped.
+                    m_device->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
+                    m_device->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_ONE);
+                    m_device->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE);
+                    const float slip = 0.006f * much * (beat % 3 == 0 ? 2.5f : 1);
+                    grid(1, 1, [&](float& u, float&, float, float) -> DWORD { u += slip; return 0xFF500000; });
+                    grid(1, 1, [&](float& u, float&, float, float) -> DWORD { u -= slip; return 0xFF000050; });
+                    break;
+                }
+                case StandIn::Grade:
+                    m_device->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE2X);
+                    grid(16, 12, [&](float&, float&, float x, float y) -> DWORD
+                    {
+                        const float px = x * 2 - 1, py = y * 2 - 1, edge = 1 - (px * px + py * py) * 0.22f * values[1];
+                        const float warm = values[0] * (1 - y);
+                        return packed({ 0.54f * edge, 0.5f * edge, (0.47f + warm * 0.07f) * edge, 1 });
+                    });
+                    m_device->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
+                    break;
+                default:
+                    grid(1, 1, plain);
+                    break;
+                }
+                m_device->SetTexture(0, nullptr);
+                copy->Release();
+                target->Release();
+                if (depth)
+                {
+                    depth->Release();
+                }
+                m_bound = {};
+                m_boundTexture = {};
+                m_mode = Mode::None;
+                return true;
+            }
+
             void destroyMesh(Mesh handle) override
             {
                 if (MeshSlot* m = m_meshes.get(handle))
@@ -617,7 +792,7 @@ namespace nx::gpu
                 // The tint multiplies everything, after the lights.
                 const bool lit = draw.lit && draw.glow < 1;
                 // What is solid has no use for its alpha, so that says how dark a shadow is.
-                const bool shaded = m_shadowed && lit && draw.blend == Blend::None;
+                const bool shaded = m_shadowed && lit && draw.blend == Blend::None && !draw.effect;
                 m_device->SetRenderState(D3DRS_TEXTUREFACTOR, packed(draw.color));
                 m_device->SetRenderState(D3DRS_LIGHTING, lit);
                 // The same as the stages do, and then some of the sun's light away.
@@ -663,6 +838,11 @@ namespace nx::gpu
                 m_device->SetTransform(D3DTS_WORLD, reinterpret_cast<const D3DMATRIX*>(draw.world.m));
                 m_device->SetStreamSource(0, m->vertices[m->current], sizeof(MeshVertex));
                 m_device->SetIndices(m->indices, 0);
+                if (const EffectSlot* effect = m_effects.get(draw.effect))
+                {
+                    drawStandIn(draw, *m, count, effect->kind);
+                    return;
+                }
                 m_device->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, m->vertexCount, draw.first, count / 3);
                 m_current.draws++;
                 m_current.triangles += count / 3;
@@ -683,20 +863,7 @@ namespace nx::gpu
                 {
                     return false;
                 }
-                // The same memory, to be read. It is in pixels, as anything that isn't a power of two.
-                m_screen.Common = 1 | D3DCOMMON_TYPE_TEXTURE;
-                m_screen.Data = target->Data;
-                m_screen.Lock = 0;
-                m_screen.Format = target->Format;
-                m_screen.Size = target->Size;
-
-                m_mode = Mode::None;
-                flatState();
-                m_device->SetScissors(0, FALSE, nullptr);
-                m_device->SetRenderState(D3DRS_ZENABLE, D3DZB_FALSE);
-                m_device->SetRenderState(D3DRS_ZWRITEENABLE, FALSE);
-                m_device->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
-                m_device->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
+                readScreen(target);
                 m_device->SetVertexShader(D3DFVF_XYZRHW | D3DFVF_TEX4);
                 for (DWORD i = 0; i < 4; i++)
                 {
@@ -1073,6 +1240,276 @@ namespace nx::gpu
                 m_shade = m_view.shadowStrength * sun / (sun + rest + 0.001f);
             }
 
+            void readScreen(IDirect3DSurface8* target)
+            {
+                // The same memory, to be read. It is in pixels, as anything that isn't a power of two.
+                m_screen.Common = 1 | D3DCOMMON_TYPE_TEXTURE;
+                m_screen.Data = target->Data;
+                m_screen.Lock = 0;
+                m_screen.Format = target->Format;
+                m_screen.Size = target->Size;
+                m_mode = Mode::None;
+                flatState();
+                m_device->SetScissors(0, FALSE, nullptr);
+                m_device->SetRenderState(D3DRS_ZENABLE, D3DZB_FALSE);
+                m_device->SetRenderState(D3DRS_ZWRITEENABLE, FALSE);
+                m_device->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
+                m_device->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
+                m_device->SetRenderState(D3DRS_BLENDOP, D3DBLENDOP_ADD);
+            }
+
+            // Small pictures that the stand-ins are made of.
+            void makePatterns()
+            {
+                if (m_lava)
+                {
+                    return;
+                }
+                constexpr u32 n = 64;
+                static u8 pixels[n * n * 4];
+                const auto wave = [](float x, float y, float a, float b, float c) { return sinf((x * a + y * b) * 6.28319f / n + c); };
+                const auto make = [&](auto&& fill)
+                {
+                    for (u32 y = 0; y < n; y++)
+                    {
+                        for (u32 x = 0; x < n; x++)
+                        {
+                            fill(static_cast<float>(x), static_cast<float>(y), &pixels[(y * n + x) * 4]);
+                        }
+                    }
+                    TextureData data = rgbaTexture(pixels, n, n);
+                    data.mips = true;
+                    return createTexture(data);
+                };
+                // Whole numbers of waves, so that it meets itself at the edges.
+                m_lava = make([&](float x, float y, u8* out)
+                {
+                    const float bend = wave(x, y, 1, 2, 0) * 5, bend2 = wave(x, y, 2, -1, 1) * 5;
+                    const float v = fabsf(wave(x + bend, y + bend2, 2, 1, 0.5f) + wave(x + bend2, y + bend, -1, 3, 2) * 0.8f) / 1.8f;
+                    const float hot = v < 0.22f ? 1 - v / 0.22f : 0;
+                    out[0] = static_cast<u8>(22 + hot * 233);
+                    out[1] = static_cast<u8>(14 + hot * hot * 170);
+                    out[2] = static_cast<u8>(12 + hot * hot * hot * 60);
+                    out[3] = 255;
+                });
+                m_noise = make([&](float x, float y, u8* out)
+                {
+                    const float v = wave(x, y, 2, 3, 0) + wave(x, y, -3, 2, 1) + wave(x, y, 5, 1, 2) * 0.7f + wave(x, y, -4, 7, 3) * 0.5f + wave(x, y, 9, -6, 1) * 0.3f;
+                    out[0] = out[1] = out[2] = 255;
+                    const float alpha = v / 7 + 0.5f;
+                    out[3] = static_cast<u8>(alpha < 0 ? 0 : alpha > 1 ? 255 : alpha * 255);
+                });
+                m_lines = make([&](float, float y, u8* out)
+                {
+                    const u32 at = static_cast<u32>(y) % 8;
+                    out[0] = out[1] = out[2] = static_cast<u8>(at < 4 ? 255 : 90);
+                    out[3] = 255;
+                });
+                m_stripes = make([&](float, float y, u8* out)
+                {
+                    out[0] = 242;
+                    out[1] = 237;
+                    out[2] = 224;
+                    out[3] = y < n / 2 ? 0 : 255;
+                });
+            }
+
+            // Where a texture goes on a thing, from where each part of it is: across and down.
+            void fromPlace(DWORD stage, const float (&across)[4], const float (&down)[4])
+            {
+                Mat4 m;
+                for (u32 i = 0; i < 4; i++)
+                {
+                    m.m[i * 4] = across[i];
+                    m.m[i * 4 + 1] = down[i];
+                }
+                m_device->SetTransform(static_cast<D3DTRANSFORMSTATETYPE>(D3DTS_TEXTURE0 + stage), reinterpret_cast<const D3DMATRIX*>(m.m));
+                m_device->SetTextureStageState(stage, D3DTSS_TEXCOORDINDEX, D3DTSS_TCI_OBJECT | stage);
+                m_device->SetTextureStageState(stage, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT2);
+                m_device->SetTextureStageState(stage, D3DTSS_ADDRESSU, D3DTADDRESS_WRAP);
+                m_device->SetTextureStageState(stage, D3DTSS_ADDRESSV, D3DTADDRESS_WRAP);
+                m_device->SetTextureStageState(stage, D3DTSS_MINFILTER, D3DTEXF_LINEAR);
+                m_device->SetTextureStageState(stage, D3DTSS_MAGFILTER, D3DTEXF_LINEAR);
+            }
+
+            // Everything else has been set as for any mesh.
+            void drawStandIn(const MeshDraw& draw, const MeshSlot& m, u32 count, StandIn kind)
+            {
+                makePatterns();
+                const float none[16] = {};
+                const float* v = draw.values ? draw.values : none;
+                const float time = m_view.time;
+                m_device->SetPixelShader(0);
+                const auto go = [&]
+                {
+                    m_device->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, m.vertexCount, draw.first, count / 3);
+                    m_current.draws++;
+                    m_current.triangles += count / 3;
+                };
+                const auto use = [&](DWORD stage, Texture t) { m_device->SetTexture(stage, m_textures.get(t)->texture); };
+                switch (kind)
+                {
+                case StandIn::Lava:
+                    use(0, m_lava);
+                    m_device->SetRenderState(D3DRS_LIGHTING, FALSE);
+                    m_device->SetRenderState(D3DRS_TEXTUREFACTOR, 0xFFFFFFFF);
+                    m_device->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
+                    fromPlace(0, { 0.9f, 0.4f, 0.25f, time * 0.02f }, { 0.1f, 0.8f, 0.85f, time * 0.05f });
+                    go();
+                    m_device->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
+                    break;
+                case StandIn::Hologram:
+                    use(0, m_lines);
+                    m_device->SetRenderState(D3DRS_LIGHTING, FALSE);
+                    m_device->SetRenderState(D3DRS_TEXTUREFACTOR, packed({ v[0], v[1], v[2], 1 }));
+                    m_device->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
+                    m_device->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
+                    m_device->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_ONE);
+                    m_device->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE);
+                    m_device->SetRenderState(D3DRS_ZWRITEENABLE, FALSE);
+                    fromPlace(0, { 0.1f, 0, 0, 0 }, { 0, 2.2f, 0, -time * 0.25f });
+                    go();
+                    m_device->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
+                    break;
+                case StandIn::Dissolve:
+                {
+                    use(2, m_noise);
+                    m_device->SetTextureStageState(2, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
+                    m_device->SetTextureStageState(2, D3DTSS_COLORARG1, D3DTA_CURRENT);
+                    m_device->SetTextureStageState(2, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
+                    m_device->SetTextureStageState(2, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
+                    fromPlace(2, { 1.1f, 0.5f, 0.3f, 0 }, { 0.2f, 0.9f, 0.9f, 0 });
+                    m_device->SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
+                    m_device->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATEREQUAL);
+                    const float cut = v[0] * 0.8f + 0.06f;
+                    const auto level = [](float x) { return static_cast<DWORD>(x <= 0 ? 0 : x >= 1 ? 255 : x * 255); };
+                    // What is left, and round it, what burns.
+                    m_device->SetRenderState(D3DRS_ALPHAREF, level(v[0] > 0.001f ? cut + 0.06f : 0));
+                    go();
+                    if (v[0] > 0.001f)
+                    {
+                        m_device->SetRenderState(D3DRS_LIGHTING, FALSE);
+                        m_device->SetRenderState(D3DRS_TEXTUREFACTOR, packed({ v[4], v[5], v[6], 1 }));
+                        m_device->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_SELECTARG2);
+                        m_device->SetRenderState(D3DRS_ALPHAREF, level(cut));
+                        m_device->SetRenderState(D3DRS_ZFUNC, D3DCMP_LESS);
+                        go();
+                        m_device->SetRenderState(D3DRS_ZFUNC, D3DCMP_LESSEQUAL);
+                        m_device->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
+                    }
+                    m_device->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
+                    m_device->SetTextureStageState(2, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
+                    m_device->SetTextureStageState(2, D3DTSS_COLOROP, D3DTOP_DISABLE);
+                    break;
+                }
+                case StandIn::Flag:
+                {
+                    // Its corners are moved here.
+                    constexpr u32 kMost = 512;
+                    static MeshVertex moved[kMost];
+                    BYTE* memory = nullptr;
+                    BYTE* indices = nullptr;
+                    if (m.vertexCount > kMost || FAILED(m.vertices[m.current]->Lock(0, 0, &memory, D3DLOCK_READONLY)))
+                    {
+                        go();
+                        break;
+                    }
+                    memcpy(moved, memory, m.vertexCount * sizeof(MeshVertex));
+                    m.vertices[m.current]->Unlock();
+                    for (u32 i = 0; i < m.vertexCount; i++)
+                    {
+                        MeshVertex& c = moved[i];
+                        const float out = c.u * v[0];
+                        c.y += sinf(c.u * 9 - time * 7) * 0.03f * out;
+                        c.z += (sinf(c.u * 11 - time * 8 + c.v * 2) * 0.16f + sinf(c.u * 5 - time * 5) * 0.12f) * out;
+                        const float lit = 0.8f + 0.2f * cosf(c.u * 11 - time * 8 + c.v * 2);
+                        c.r = c.g = c.b = static_cast<u8>(lit * 255);
+                    }
+                    use(0, m_stripes);
+                    m_device->SetTextureStageState(0, D3DTSS_ADDRESSU, D3DTADDRESS_WRAP);
+                    m_device->SetTextureStageState(0, D3DTSS_ADDRESSV, D3DTADDRESS_WRAP);
+                    Mat4 across;
+                    across.m[1] = 0.6f;
+                    across.m[5] = 3;
+                    m_device->SetTransform(D3DTS_TEXTURE0, reinterpret_cast<const D3DMATRIX*>(across.m));
+                    m_device->SetTextureStageState(0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT2);
+                    m_device->SetRenderState(D3DRS_TEXTUREFACTOR, packed(draw.color));
+                    m_device->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_LERP);
+                    m_device->SetTextureStageState(0, D3DTSS_COLORARG0, D3DTA_TEXTURE | D3DTA_ALPHAREPLICATE);
+                    m_device->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+                    m_device->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_TFACTOR);
+                    m_device->SetTextureStageState(1, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
+                    m.indices->Lock(0, 0, &indices, D3DLOCK_READONLY);
+                    m_device->DrawIndexedPrimitiveUP(D3DPT_TRIANGLELIST, 0, m.vertexCount, count / 3, reinterpret_cast<const u16*>(indices) + draw.first, D3DFMT_INDEX16, moved, sizeof(MeshVertex));
+                    m.indices->Unlock();
+                    m_current.draws++;
+                    m_current.triangles += count / 3;
+                    m_device->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
+                    m_device->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
+                    m_device->SetTextureStageState(1, D3DTSS_COLORARG2, D3DTA_TFACTOR);
+                    break;
+                }
+                default:
+                    go();
+                    break;
+                }
+                // The stages as they were, shadows and all.
+                m_device->SetTextureStageState(0, D3DTSS_TEXCOORDINDEX, 0);
+                m_device->SetTextureStageState(0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_DISABLE);
+                m_boundTexture = {};
+                m_mode = Mode::None;
+            }
+
+            bool makeCopy()
+            {
+                if (!m_copyTried)
+                {
+                    m_copyTried = true;
+                    if (FAILED(m_device->CreateTexture(m_width, m_height, 1, D3DUSAGE_RENDERTARGET, D3DFMT_LIN_X8R8G8B8, D3DPOOL_DEFAULT, &m_copy)))
+                    {
+                        NX_WARN("d3d8: no memory for effects");
+                        m_copy = nullptr;
+                    }
+                }
+                return m_copy != nullptr;
+            }
+
+            void picture(const PictureVertex* v, u32 count)
+            {
+                m_device->DrawPrimitiveUP(D3DPT_TRIANGLELIST, count / 3, v, sizeof(PictureVertex));
+                m_current.draws++;
+            }
+
+            // The whole picture as a grid, whose corners each look somewhere.
+            template <typename Look>
+            void grid(u32 columns, u32 rows, Look&& look)
+            {
+                static PictureVertex v[24 * 18 * 6];
+                u32 n = 0;
+                const float w = static_cast<float>(m_width), h = static_cast<float>(m_height);
+                for (u32 y = 0; y < rows; y++)
+                {
+                    for (u32 x = 0; x < columns; x++)
+                    {
+                        static const u32 corners[6][2] = { { 0, 0 }, { 1, 0 }, { 1, 1 }, { 0, 0 }, { 1, 1 }, { 0, 1 } };
+                        for (const auto& c : corners)
+                        {
+                            const float px = static_cast<float>(x + c[0]) / static_cast<float>(columns), py = static_cast<float>(y + c[1]) / static_cast<float>(rows);
+                            PictureVertex& out = v[n++];
+                            out.x = px * w - 0.5f;
+                            out.y = py * h - 0.5f;
+                            out.z = 0;
+                            out.rhw = 1;
+                            float u = px, t = py;
+                            out.color = look(u, t, px, py);
+                            out.u = u * w;
+                            out.v = t * h;
+                        }
+                    }
+                }
+                picture(v, n);
+            }
+
             bool makeBloom()
             {
                 if (!m_bloomTried)
@@ -1216,6 +1653,10 @@ namespace nx::gpu
             HandlePool<PipelineSlot, PipelineTag> m_pipelines;
             HandlePool<TextureSlot, TextureTag> m_textures;
             HandlePool<MeshSlot, MeshTag> m_meshes;
+            HandlePool<EffectSlot, EffectTag> m_effects;
+            Texture m_lava, m_noise, m_lines, m_stripes;
+            IDirect3DTexture8* m_copy = nullptr;
+            bool m_copyTried = false;
             IDirect3DTexture8* m_shadowColor = nullptr;
             IDirect3DTexture8* m_shadowDepth = nullptr;
             IDirect3DSurface8* m_savedColor = nullptr;

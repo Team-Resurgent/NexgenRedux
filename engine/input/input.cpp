@@ -208,6 +208,17 @@ namespace nx
 
     void Input::update(const InputState& state, float dt)
     {
+        m_typedCount = 0;
+        const InputState& from = m_simulatedTyping ? m_raw : state;
+        const u32 fresh = from.typedCount - m_typedSeen;
+        for (u32 i = fresh > InputState::kTyped ? fresh - InputState::kTyped : 0; i < fresh; i++)
+        {
+            m_typed[m_typedCount++] = from.typed[(m_typedSeen + i) % InputState::kTyped];
+        }
+        m_typedSeen = state.typedCount;
+        m_simulatedTyping = false;
+        m_wheel = state.wheel - m_wheelSeen;
+        m_wheelSeen = state.wheel;
         m_raw = state;
         if (listening())
         {
@@ -227,7 +238,8 @@ namespace nx
         {
             for (const Key k : m_bindings[a].keys)
             {
-                keys[a] = keys[a] || (k != Key::None && state.keys[static_cast<size_t>(k)]);
+                const bool counts = !m_typing || static_cast<Action>(a) == Action::Menu;
+                keys[a] = keys[a] || (counts && k != Key::None && state.keys[static_cast<size_t>(k)]);
             }
             now[a] = keys[a];
         }

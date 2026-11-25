@@ -112,6 +112,10 @@ add_library(nx_scene STATIC scene/physics.cpp scene/space.cpp scene/land.cpp sce
 target_link_libraries(nx_scene PUBLIC nx_canvas nx_script)
 nx_options(nx_scene)
 
+add_library(nx_ui STATIC ui/draw.cpp ui/keyboard.cpp ui/layout.cpp ui/load.cpp ui/theme.cpp ui/ui.cpp)
+target_link_libraries(nx_ui PUBLIC nx_canvas nx_script nx_input)
+nx_options(nx_ui)
+
 # TLS, for https. Where there is no network yet, its sockets say so.
 file(GLOB _tls CONFIGURE_DEPENDS third_party/mbedtls/library/*.c)
 if(XBOX360)
@@ -144,8 +148,8 @@ if(XBOXOG)
 else()
   set(_console platform/console_none.cpp)
 endif()
-add_library(nx_screens STATIC ${_console} bindings/bind_xbox.cpp bindings/bind_net.cpp bindings/bind_scene.cpp bindings/bind_space.cpp bindings/bindings.cpp save/save.cpp screens/screens.cpp)
-target_link_libraries(nx_screens PUBLIC nx_scene nx_input nx_net)
+add_library(nx_screens STATIC ${_console} bindings/bind_xbox.cpp bindings/bind_net.cpp bindings/bind_scene.cpp bindings/bind_space.cpp bindings/bind_ui.cpp bindings/bindings.cpp save/save.cpp screens/screens.cpp)
+target_link_libraries(nx_screens PUBLIC nx_scene nx_ui nx_input nx_net)
 nx_options(nx_screens)
 
 if(NX_PLATFORM)
@@ -252,7 +256,7 @@ if(NOT XBOXOG AND NOT XBOX360 AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
   endif()
 
   enable_testing()
-  add_executable(nx_tests tests/main.cpp tests/test_base.cpp tests/test_gpu_null.cpp tests/test_audio.cpp tests/test_services.cpp tests/test_script.cpp tests/test_engine.cpp tests/test_scene.cpp tests/test_space.cpp tests/test_net.cpp)
+  add_executable(nx_tests tests/main.cpp tests/test_base.cpp tests/test_gpu_null.cpp tests/test_audio.cpp tests/test_services.cpp tests/test_script.cpp tests/test_engine.cpp tests/test_scene.cpp tests/test_space.cpp tests/test_ui.cpp tests/test_net.cpp)
   target_link_libraries(nx_tests PRIVATE nx_screens)
   target_compile_definitions(nx_tests PRIVATE NX_MEDIA="${NX_MEDIA}")
   nx_options(nx_tests)

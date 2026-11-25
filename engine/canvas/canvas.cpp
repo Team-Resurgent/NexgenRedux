@@ -411,6 +411,34 @@ namespace nx
         }
     }
 
+    void Canvas::roundLine(float x, float y, float w, float h, float radius, float thickness, const Color& color)
+    {
+        use({}, 1, 1);
+        const u32 c = pack(color);
+        float r = radius < w * 0.5f ? radius : w * 0.5f;
+        r = r < h * 0.5f ? r : h * 0.5f;
+        const float t = thickness;
+        quad(x + r, y, w - 2 * r, t, 0, 0, 0, 0, c);
+        quad(x + r, y + h - t, w - 2 * r, t, 0, 0, 0, 0, c);
+        quad(x, y + r, t, h - 2 * r, 0, 0, 0, 0, c);
+        quad(x + w - t, y + r, t, h - 2 * r, 0, 0, 0, 0, c);
+        const float cx[4] = { x + w - r, x + r, x + r, x + w - r };
+        const float cy[4] = { y + h - r, y + h - r, y + r, y + r };
+        const float in = r > t ? r - t : 0;
+        constexpr int kSteps = 6;
+        for (int corner = 0; corner < 4 && r > 0; corner++)
+        {
+            for (int i = 0; i < kSteps; i++)
+            {
+                const float a0 = (static_cast<float>(corner) + static_cast<float>(i) / kSteps) * kPi * 0.5f;
+                const float a1 = (static_cast<float>(corner) + static_cast<float>(i + 1) / kSteps) * kPi * 0.5f;
+                const float c0 = cosf(a0), s0 = sinf(a0), c1 = cosf(a1), s1 = sinf(a1);
+                addQuad({ cx[corner] + c0 * in, cy[corner] + s0 * in, 0, 0, c }, { cx[corner] + c0 * r, cy[corner] + s0 * r, 0, 0, c },
+                    { cx[corner] + c1 * r, cy[corner] + s1 * r, 0, 0, c }, { cx[corner] + c1 * in, cy[corner] + s1 * in, 0, 0, c });
+            }
+        }
+    }
+
     void Canvas::line(float x1, float y1, float x2, float y2, float thickness, const Color& color)
     {
         const float dx = x2 - x1;
@@ -679,7 +707,42 @@ namespace nx
         }
     }
 
-    float Canvas::paragraph(const Asset& font, const char* text, float x, float y, float width, const Color& color)
+    // As many whole words as fit, but always at least one. Next is where the line after it begins.
+    const char* Canvas::lineEnd(const Canvas& canvas, const FontData& font, const char* line, float width, const char*& next)
+    {
+        const char* best = nullptr;
+        const char* p = line;
+        while (*p && *p != '\n')
+        {
+            const char* wordEnd = p;
+            while (*wordEnd == ' ')
+            {
+                wordEnd++;
+            }
+            while (*wordEnd && *wordEnd != ' ' && *wordEnd != '\n')
+            {
+                wordEnd++;
+            }
+            if (best && canvas.lineWidth(font, line, wordEnd) > width)
+            {
+                break;
+            }
+            best = p = wordEnd;
+        }
+        const char* stop = best ? best : line;
+        next = stop;
+        while (*next == ' ')
+        {
+            next++;
+        }
+        if (*next == '\n')
+        {
+            next++;
+        }
+        return stop;
+    }
+
+    float Canvas::paragraph(const Asset& font, const char* text, float x, float y, float width, const Color& color, Align align)
     {
         if (font.font == nullptr)
         {
@@ -688,44 +751,29 @@ namespace nx
         const gpu::TextureInfo info = m_device->textureInfo(font.texture);
         use(font.texture, info.uMax, info.vMax);
         const u32 c = pack(color);
-        const float lineHeight = font.font->lineHeight * font.font->scale;
         const float top = y;
-        const char* line = text;
-        while (*line)
+        for (const char* line = text; *line;)
         {
-            // As many whole words as fit, but always at least one.
-            const char* best = nullptr;
-            const char* p = line;
-            while (*p && *p != '\n')
-            {
-                const char* wordEnd = p;
-                while (*wordEnd == ' ')
-                {
-                    wordEnd++;
-                }
-                while (*wordEnd && *wordEnd != ' ' && *wordEnd != '\n')
-                {
-                    wordEnd++;
-                }
-                if (best && lineWidth(*font.font, line, wordEnd) > width)
-                {
-                    break;
-                }
-                best = p = wordEnd;
-            }
-            const char* stop = best ? best : line;
-            textRun(font, line, stop, x, y, c);
-            y += lineHeight;
-            line = stop;
-            while (*line == ' ')
-            {
-                line++;
-            }
-            if (*line == '\n')
-            {
-                line++;
-            }
+            const char* next;
+            const char* stop = lineEnd(*this, *font.font, line, width, next);
+            const float spare = align == Align::Left ? 0 : width - lineWidth(*font.font, line, stop);
+            textRun(font, line, stop, align == Align::Center ? x + spare * 0.5f : x + spare, y, c);
+            y += font.font->lineHeight * font.font->scale;
+            line = next;
         }
         return y - top;
+    }
+
+    float Canvas::paragraphHeight(const Asset& font, const char* text, float width) const
+    {
+        float height = 0;
+        for (const char* line = text; font.font && *line;)
+        {
+            const char* next;
+            lineEnd(*this, *font.font, line, width, next);
+            height += font.font->lineHeight * font.font->scale;
+            line = next;
+        }
+        return height;
     }
 }

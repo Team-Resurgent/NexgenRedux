@@ -47,6 +47,7 @@ namespace nx
                 if (m_window)
                 {
                     m_window.KeyDown(m_keyDown);
+                    m_window.CharacterReceived(m_typed);
                     m_window.KeyUp(m_keyUp);
                     m_window.PointerMoved(m_pointerMoved);
                     m_window.PointerPressed(m_pointerPressed);
@@ -85,6 +86,10 @@ namespace nx
                 };
                 m_keyDown = m_window.KeyDown([key](const CoreWindow&, const KeyEventArgs& args) { key(args, true); });
                 m_keyUp = m_window.KeyUp([key](const CoreWindow&, const KeyEventArgs& args) { key(args, false); });
+                m_typed = m_window.CharacterReceived([this](const CoreWindow&, const CharacterReceivedEventArgs& args)
+                {
+                    m_input.type(args.KeyCode());
+                });
                 const auto pointer = [this](const CoreWindow&, const PointerEventArgs& args)
                 {
                     const auto point = args.CurrentPoint();
@@ -130,7 +135,6 @@ namespace nx
 
             bool pumpEvents() override
             {
-                m_input.wheel = 0;
                 if (m_window)
                 {
                     m_window.Dispatcher().ProcessEvents(CoreProcessEventsOption::ProcessAllIfPresent);
@@ -208,7 +212,7 @@ namespace nx
             CoreWindow m_window{ nullptr };
             UwpWindow m_native;
             InputState m_input;
-            event_token m_keyDown, m_keyUp, m_pointerMoved, m_pointerPressed, m_pointerReleased, m_wheel, m_activated, m_closed, m_back;
+            event_token m_keyDown, m_keyUp, m_typed, m_pointerMoved, m_pointerPressed, m_pointerReleased, m_wheel, m_activated, m_closed, m_back;
             const bool m_xbox = winrt::Windows::System::Profile::AnalyticsInfo::VersionInfo().DeviceFamily() == L"Windows.Xbox";
             bool m_focused = true;
             bool m_quit = false;

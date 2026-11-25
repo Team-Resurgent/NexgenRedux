@@ -46,6 +46,19 @@ namespace nx
         // Forgets what is held, so a button that opened a screen doesn't also act in it.
         // Each action counts again once it has been let go.
         void consume();
+        // As above, but only one.
+        void consume(Action a) { m_blocked[index(a)] = true; m_held[index(a)] = m_before[index(a)] = m_repeat[index(a)] = false; }
+
+        // Characters from a keyboard in this step. Backspace is 8, Enter 13.
+        u32 typedCount() const { return m_typedCount; }
+        u32 typed(u32 i) const { return m_typed[i]; }
+        // How far the wheel turned in this step.
+        float wheel() const { return m_wheel; }
+        // While someone is typing, keys aren't actions, but for the way to the menu.
+        void setTyping(bool typing) { m_typing = typing; }
+        bool typing() const { return m_typing; }
+        // For tests and unattended runs.
+        void simulateTyping(u32 code) { m_raw.type(code); m_simulatedTyping = true; }
 
         // --- Bindings ---
 
@@ -93,5 +106,12 @@ namespace nx
         InputState m_raw;
         bool m_usingPad = false;
         bool m_usedKeys = false;
+        bool m_typing = false;
+        bool m_simulatedTyping = false;
+        u32 m_typed[InputState::kTyped] = {};
+        u32 m_typedCount = 0;
+        u32 m_typedSeen = 0;
+        float m_wheelSeen = 0;
+        float m_wheel = 0;
     };
 }

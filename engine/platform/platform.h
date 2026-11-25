@@ -72,10 +72,20 @@ namespace nx
     {
         bool keys[static_cast<size_t>(Key::Count)] = {};
         float mouseX = 0, mouseY = 0;  // pixels from the top left
-        float wheel = 0;               // since the last pumpEvents
+        float wheel = 0;               // turned since the start: up is more
         bool mouseButtons[3] = {};     // left, right, middle
         bool hasMouse = false;
         Gamepad pads[kMaxPads];
+        // What a keyboard types, after layouts and Shift: the latest, round and round. Backspace is 8, Enter 13.
+        static constexpr u32 kTyped = 32;
+        u32 typed[kTyped] = {};
+        u32 typedCount = 0;            // ever
+
+        void type(u32 code)
+        {
+            typed[typedCount % kTyped] = code;
+            typedCount++;
+        }
     };
 
     // Sticks rarely rest at exactly zero: ignores the middle and stretches the rest to 0..1.

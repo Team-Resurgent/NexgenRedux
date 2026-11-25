@@ -240,6 +240,31 @@ namespace nx
         return prepareMethod(object, method) && m_context->SetArgObject(0, argument) >= 0 && run();
     }
 
+    bool ScriptHost::callEvent(asIScriptFunction* function, void* first, void* second, const int* number)
+    {
+        const bool within = m_context->GetState() == asEXECUTION_ACTIVE;
+        const u32 statements = m_statements;
+        if (within && m_context->PushState() < 0)
+        {
+            snprintf(m_error, sizeof(m_error), "too many calls inside one another");
+            return false;
+        }
+        bool ok = prepare(function);
+        asUINT at = 0;
+        for (void* object : { first, second })
+        {
+            ok = ok && (object == nullptr || m_context->SetArgObject(at++, object) >= 0);
+        }
+        ok = ok && (number == nullptr || m_context->SetArgDWord(at, static_cast<asDWORD>(*number)) >= 0);
+        ok = ok && run();
+        if (within)
+        {
+            m_context->PopState();
+            m_statements = statements;
+        }
+        return ok;
+    }
+
     void ScriptHost::discard(const char* module)
     {
         m_context->Unprepare();

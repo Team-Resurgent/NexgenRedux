@@ -76,7 +76,6 @@ namespace nx
 
             bool pumpEvents() override
             {
-                m_input.wheel = 0;
                 MSG message;
                 while (PeekMessageW(&message, nullptr, 0, 0, PM_REMOVE))
                 {
@@ -193,6 +192,13 @@ namespace nx
                 case WM_KEYUP:
                     m_input.keys[static_cast<size_t>(translateKey(static_cast<u32>(wParam)))] = message == WM_KEYDOWN;
                     m_input.keys[static_cast<size_t>(Key::None)] = false;
+                    return 0;
+                case WM_CHAR:
+                    // In two halves outside the basic plane, which no font here has.
+                    if (wParam < 0xD800 || wParam > 0xDFFF)
+                    {
+                        m_input.type(static_cast<u32>(wParam));
+                    }
                     return 0;
                 case WM_MOUSEMOVE:
                     m_input.hasMouse = true;

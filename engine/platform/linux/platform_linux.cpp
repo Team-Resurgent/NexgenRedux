@@ -261,7 +261,6 @@ namespace nx
 
             bool pumpEvents() override
             {
-                m_input.wheel = 0;
                 while (m_display && XPending(m_display))
                 {
                     XEvent event;
@@ -350,6 +349,16 @@ namespace nx
                     // Unshifted, so a letter is the same key with Shift held.
                     m_input.keys[static_cast<size_t>(translateKey(XLookupKeysym(&event.xkey, 0)))] = event.type == KeyPress;
                     m_input.keys[static_cast<size_t>(Key::None)] = false;
+                    if (event.type == KeyPress)
+                    {
+                        // Latin-1, as it comes without an input method.
+                        char text[8];
+                        const int count = XLookupString(&event.xkey, text, sizeof(text), nullptr, nullptr);
+                        for (int i = 0; i < count; i++)
+                        {
+                            m_input.type(static_cast<u8>(text[i]));
+                        }
+                    }
                     break;
                 case MotionNotify:
                     m_input.hasMouse = true;

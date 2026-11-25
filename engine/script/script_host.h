@@ -53,6 +53,9 @@ namespace nx
         bool callMethod(asIScriptObject* object, asIScriptFunction* method);
         bool callMethod(asIScriptObject* object, asIScriptFunction* method, float argument);
         bool callMethod(asIScriptObject* object, asIScriptFunction* method, void* argument);
+        // A function, or a method bound to its object, with up to two objects and then a number. May be
+        // used inside another call, which waits.
+        bool callEvent(asIScriptFunction* function, void* first, void* second, const int* number);
 
         // For coroutines: a context of their own, with the same limits.
         asIScriptContext* createContext();

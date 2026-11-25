@@ -191,7 +191,6 @@ namespace nx
             {
                 @autoreleasepool
                 {
-                    m_input.wheel = 0;
                     if (m_window)
                     {
                         NSEvent* event = nil;
@@ -281,6 +280,19 @@ namespace nx
                         break;
                     }
                     m_input.keys[static_cast<size_t>(translateKey([event keyCode]))] = type == NSEventTypeKeyDown;
+                    if (type == NSEventTypeKeyDown)
+                    {
+                        NSString* text = [event characters];
+                        for (NSUInteger i = 0; i < [text length]; i++)
+                        {
+                            const unichar c = [text characterAtIndex:i];
+                            // The arrows and others are in here too, from F700 up; and Delete is 7F.
+                            if (c < 0xD800)
+                            {
+                                m_input.type(c == 0x7F ? 8 : c);
+                            }
+                        }
+                    }
                     m_input.keys[static_cast<size_t>(Key::None)] = false;
                     return;
                 case NSEventTypeFlagsChanged:

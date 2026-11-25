@@ -51,6 +51,8 @@ namespace nx
         bool loading() const { return m_depth && m_stack[m_depth - 1].loading; }
         bool failed() const { return m_depth && m_stack[m_depth - 1].failed; }
         const char* error() const { return m_depth ? m_stack[m_depth - 1].error : ""; }
+        // The script's object of the screen on top, or nullptr.
+        asIScriptObject* object() const { return m_depth ? m_stack[m_depth - 1].object : nullptr; }
         bool quitRequested() const { return m_quit; }
         // Off where closing the app makes no sense.
         void setCanQuit(bool can) { m_canQuit = can; }
@@ -77,6 +79,7 @@ namespace nx
             u32 group = 0;         // of its sounds and coroutines
             u64 scriptTime = 0;
             World* world = nullptr;
+            Ui* ui = nullptr;
             char error[256] = {};
         };
 

@@ -60,6 +60,7 @@ namespace nx
         void rectLine(float x, float y, float w, float h, float thickness, const Color& color);
         void gradient(float x, float y, float w, float h, const Color& top, const Color& bottom);
         void roundRect(float x, float y, float w, float h, float radius, const Color& color);
+        void roundLine(float x, float y, float w, float h, float radius, float thickness, const Color& color);
         void line(float x1, float y1, float x2, float y2, float thickness, const Color& color);
         void circle(float x, float y, float radius, const Color& color);
         void ring(float x, float y, float radius, float thickness, const Color& color);
@@ -89,7 +90,9 @@ namespace nx
         float text(const Asset& font, const char* text, float x, float y, const Color& color, Align align = Align::Left);
         Vec2 measure(const Asset& font, const char* text) const;
         // Breaks lines at spaces to fit a width. Returns the height.
-        float paragraph(const Asset& font, const char* text, float x, float y, float width, const Color& color);
+        float paragraph(const Asset& font, const char* text, float x, float y, float width, const Color& color, Align align = Align::Left);
+        // How tall that would be, with nothing drawn.
+        float paragraphHeight(const Asset& font, const char* text, float width) const;
 
         // Before something else draws: everything so far goes first.
         void finish() { flush(); }
@@ -130,6 +133,7 @@ namespace nx
         void quad(float x, float y, float w, float h, float u0, float v0, float u1, float v1, u32 color);
         void flush();
         float lineWidth(const FontData& font, const char* text, const char* end) const;
+        static const char* lineEnd(const Canvas& canvas, const FontData& font, const char* line, float width, const char*& next);
         float textRun(const Asset& font, const char* text, const char* end, float x, float y, u32 color);
 
         gpu::Device* m_device = nullptr;

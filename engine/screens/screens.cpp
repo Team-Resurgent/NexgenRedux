@@ -1,4 +1,5 @@
 #include "screens/screens.h"
+#include "ui/ui.h"
 #include "base/json.h"
 #include "base/log.h"
 
@@ -222,6 +223,9 @@ namespace nx
         {
             entry.world->space().init(m_services->solids, m_services->audio);
         }
+        char folder[160];
+        snprintf(folder, sizeof(folder), "%s/%s", m_folder, entry.info.id);
+        entry.ui = create<Ui>(MemTag::UI, *m_services->canvas, *m_services->assets, *m_services->audio, *m_services->input, host, *m_services->platform, folder);
         enter(entry);
 
         char path[192];
@@ -292,7 +296,7 @@ namespace nx
         char path[192];
         snprintf(path, sizeof(path), "%s/%s/main.as", m_folder, entry.info.id);
         const u64 time = m_services->platform->fileTime(path);
-        if ((time && time != entry.scriptTime) || (entry.world && entry.world->changed()))
+        if ((time && time != entry.scriptTime) || (entry.world && entry.world->changed()) || (entry.ui && entry.ui->changed()))
         {
             NX_INFO("reloading %s", path);
             m_services->reloads++;
@@ -312,6 +316,8 @@ namespace nx
         // Before its module goes: the behaviours are from there.
         destroy(entry.world);
         entry.world = nullptr;
+        destroy(entry.ui);
+        entry.ui = nullptr;
         ScriptHost& host = *m_services->host;
         host.release(entry.object);
         entry.object = nullptr;
@@ -325,6 +331,7 @@ namespace nx
     {
         snprintf(m_services->folder, sizeof(m_services->folder), "%s/%s", m_folder, entry.info.id);
         m_services->world = entry.world;
+        m_services->ui = entry.ui;
         m_services->audio->setGroup(entry.group);
         m_services->coroutines->setGroup(entry.group);
     }
@@ -383,7 +390,12 @@ namespace nx
         else
         {
             enter(entry);
-            if (entry.update && !m_services->host->callMethod(entry.object, entry.update, dt))
+            // First, so that what it does with a press isn't done again by the screen.
+            if (entry.ui && !entry.ui->update(dt))
+            {
+                fail(entry);
+            }
+            if (!entry.failed && entry.update && !m_services->host->callMethod(entry.object, entry.update, dt))
             {
                 fail(entry);
             }

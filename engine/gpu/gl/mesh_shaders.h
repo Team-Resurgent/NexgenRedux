@@ -147,6 +147,7 @@ vec4 finish(vec4 base, float glow)
     {
         vec3 normal = normalize(vertexNormal);
         float shadow = shadowAt(vertexPlace, clamp(dot(normal, sunDirection.xyz), 0.0, 1.0));
+        shadow = surface.z > 1.5 ? 0.0 : shadow;
         color = shade(base.rgb, normal, vertexPlace, surface.y, shadow);
         for (int i = 0; i < 4; i++)
         {

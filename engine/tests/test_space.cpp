@@ -277,6 +277,165 @@ NX_TEST(walkersPushCratesAndStandOnThem)
     NX_EXPECT(p.space.getBody(w)->onGround);
 }
 
+NX_TEST(shellsAreTheShapeOfTheirModels)
+{
+    Place p;
+    // A room: a floor, a ceiling and three walls, open towards z.
+    std::string obj;
+    const float c[8][3] = { { -4, 0, -4 }, { 4, 0, -4 }, { 4, 3, -4 }, { -4, 3, -4 }, { -4, 0, 4 }, { 4, 0, 4 }, { 4, 3, 4 }, { -4, 3, 4 } };
+    for (const auto& v : c)
+    {
+        char line[64];
+        snprintf(line, sizeof(line), "v %g %g %g\n", static_cast<double>(v[0]), static_cast<double>(v[1]), static_cast<double>(v[2]));
+        obj += line;
+    }
+    obj += "f 1 2 6 5\nf 4 3 7 8\nf 1 2 3 4\nf 1 5 8 4\nf 2 6 7 3\n";
+    // A step up, across the back.
+    obj += "v -4 0.3 -1\nv 4 0.3 -1\nv -4 0.3 -4\nv 4 0.3 -4\nv -4 0 -1\nv 4 0 -1\nf 9 10 12 11\nf 13 14 10 9\n";
+    p.rig.platform.extraPath = "global/room.obj";
+    p.rig.platform.extraText = obj;
+    JsonTree tree;
+    const char text[] = "{ \"model\": \"global:room.obj\", \"exact\": true, \"wall\": true, \"place\": [10, 5, 0], \"angles\": 90, \"size\": [1, 1, 1.5] }";
+    NX_EXPECT(tree.parse(text, sizeof(text) - 1));
+    const u32 room = p.space.make(tree.root(), "", {});
+    p.rig.assets.finish();
+    p.space.setGround(0);
+    p.step();
+    // It is open towards x now, and six metres each way along that.
+    u32 id = 0;
+    Vec3 hit, normal;
+    NX_EXPECT(p.space.raycast({ 10, 7, 0 }, { 10, 0, 0 }, kAllGroups, 0, id, hit, normal) && id == room && fabsf(hit.y - 5) < 0.01f && normal.y > 0.99f);
+    NX_EXPECT(p.space.raycast({ 10, 7, 0 }, { 10, 20, 0 }, kAllGroups, 0, id, hit, normal) && id == room && fabsf(hit.y - 8) < 0.01f && normal.y < -0.99f);
+    NX_EXPECT(p.space.raycast({ 30, 6, 0 }, { -30, 6, 0 }, kAllGroups, 0, id, hit, normal) && id == room && fabsf(hit.x - 4) < 0.01f);
+    NX_EXPECT(!p.space.raycast({ 12, 6, 0 }, { 30, 6, 0 }, kAllGroups, 0, id, hit, normal));
+    // Into it, over the step, as far as the back, and not through any of it.
+    const u32 w = p.walker({ 14, 5.1f, 1 });
+    for (u32 i = 0; i < 240; i++)
+    {
+        p.space.body(w)->velocity = { -5, p.space.body(w)->velocity.y, 0 };
+        p.step();
+        NX_EXPECT(p.at(w).y > 4.95f);
+    }
+    NX_EXPECT(p.at(w).x < 4.7f && p.at(w).x > 4 && fabsf(p.at(w).y - 5.3f) < 0.05f && p.space.body(w)->onGround);
+    for (u32 i = 0; i < 120; i++)
+    {
+        p.space.body(w)->velocity = { 0, p.space.body(w)->velocity.y, 6 };
+        p.step();
+    }
+    NX_EXPECT(p.at(w).z > 3 && p.at(w).z < 4 && p.at(w).y > 5.2f);
+    // Things rest in it, whatever their shape, and stay.
+    const u32 ball = p.thing({ 12, 6.5f, 0 }, Shape3::Sphere, { 0.4f, 0, 0 }, 2);
+    const u32 box = p.thing({ 12, 6.5f, 2 }, Shape3::Box, { 0.4f, 0.4f, 0.4f }, 2);
+    const u32 pill = p.thing({ 12, 6.8f, -2 }, Shape3::Capsule, { 0.3f, 0.7f, 0 }, 2);
+    p.step(400);
+    NX_EXPECT(fabsf(p.at(ball).y - 5.4f) < 0.05f && fabsf(p.at(box).y - 5.4f) < 0.05f && p.at(pill).y > 5.2f && p.at(pill).y < 6);
+    p.space.body(ball)->still = 0;
+    p.space.body(ball)->velocity = { -14, 3, 5 };
+    p.step(200);
+    NX_EXPECT(p.at(ball).y > 5.3f && p.at(ball).x > 4 && fabsf(p.at(ball).z) < 4);
+}
+
+NX_TEST(thereIsSomethingUnderTheLand)
+{
+    Place p;
+    NX_EXPECT(!p.space.hole(0, 0, 4, true));
+    NX_EXPECT(p.space.makeLand(7, 64, 2, 4, 0.5f, false));
+    p.space.flatten(0, 0, 30, 2);
+    p.thing({ 0, -10.5f, 0 }, Shape3::Box, { 30, 0.5f, 30 }, 0);
+    NX_EXPECT(p.space.hole(0, 0, 4, true) && p.space.heightAt(0, 0) < -1000 && p.space.heightAt(8, 0) > 1.9f);
+    u32 id = 0;
+    Vec3 hit, normal;
+    NX_EXPECT(p.space.raycast({ 0.5f, 10, 0.5f }, { 0.5f, -20, 0.5f }, kAllGroups, 0, id, hit, normal) && fabsf(hit.y + 10) < 0.05f);
+    NX_EXPECT(p.space.raycast({ 9, 10, 0.5f }, { 9, -20, 0.5f }, kAllGroups, 0, id, hit, normal) && fabsf(hit.y - 2) < 0.05f);
+    // Down through it, and then along underneath without being pushed up.
+    const u32 w = p.walker({ 0, 3, 0 });
+    p.step(160);
+    NX_EXPECT(fabsf(p.at(w).y + 10) < 0.1f);
+    for (u32 i = 0; i < 150; i++)
+    {
+        p.space.body(w)->velocity = { 5, p.space.body(w)->velocity.y, 0 };
+        p.step();
+    }
+    NX_EXPECT(p.at(w).x > 9 && fabsf(p.at(w).y + 10) < 0.1f);
+    const std::string kept = p.space.landEdits();
+    NX_EXPECT(!kept.empty() && p.space.setLandEdits("") && p.space.heightAt(0, 0) > 1.9f);
+    NX_EXPECT(p.space.setLandEdits(kept) && p.space.heightAt(0, 0) < -1000 && p.space.landEdits() == kept);
+    for (size_t cut = 1; cut < kept.size(); cut++)
+    {
+        NX_EXPECT(!p.space.setLandEdits(kept.substr(0, cut)));
+    }
+    NX_EXPECT(p.space.hole(0, 0, 6, false) && p.space.heightAt(0, 0) > 1.9f && p.space.landEdits().empty());
+}
+
+NX_TEST(landHasWallsAtItsSides)
+{
+    Place p;
+    NX_EXPECT(p.space.makeLand(7, 32, 2, 0.001f, 0.5f, false));
+    const u32 w = p.walker({ 28, 0.5f, 0 }), ball = p.thing({ 0, 1, 25 }, Shape3::Sphere, { 0.5f, 0, 0 }, 1);
+    for (const bool edges : { true, false })
+    {
+        p.space.setEdges(edges);
+        for (u32 i = 0; i < 120; i++)
+        {
+            p.space.body(w)->velocity = { 6, p.space.body(w)->velocity.y, 1 };
+            p.space.body(ball)->velocity = { 0, p.space.body(ball)->velocity.y, 10 };
+            p.step();
+        }
+        NX_EXPECT(edges ? p.at(w).x < 32 && p.at(w).x > 31 && p.at(ball).z < 32 && p.at(w).y > -0.1f && p.at(ball).y > 0 : p.at(w).x > 33 && p.at(ball).z > 33);
+    }
+}
+
+NX_TEST(whatMovesTakesWalkersAlong)
+{
+    Place p;
+    JsonTree tree;
+    const char text[] = "{ \"shape\": \"box\", \"size\": [4, 0.5, 4], \"cube\": [1, 1, 1], \"wall\": true, \"moves\": [12, 3, 0], \"seconds\": 4, \"place\": [0, 1, 0] }";
+    NX_EXPECT(tree.parse(text, sizeof(text) - 1));
+    const u32 lift = p.space.make(tree.root(), "", {});
+    p.space.setGround(-20);
+    const u32 w = p.walker({ 0.5f, 1.4f, 0 });
+    float farthest = 0;
+    for (u32 i = 0; i < 480; i++)
+    {
+        p.step();
+        farthest = fmaxf(farthest, p.at(lift).x);
+        NX_EXPECT(i < 5 || (fabsf(p.at(w).x - p.at(lift).x - 0.5f) < 0.4f && fabsf(p.at(w).y - p.at(lift).y - 0.25f) < 0.25f));
+    }
+    NX_EXPECT(farthest > 11.9f && fabsf(p.at(lift).x) < 0.2f);
+}
+
+NX_TEST(thingsMakeSounds)
+{
+    Place p;
+    JsonTree tree;
+    const char text[] = "{ \"sound\": \"global:sound/bell.wav\", \"reach\": 20, \"place\": [1, 0, 0] }";
+    NX_EXPECT(tree.parse(text, sizeof(text) - 1));
+    p.space.setCamera({ 0, 1, 0 }, { 0, 1, -5 }, 60);
+    const u32 id = p.space.make(tree.root(), "", {});
+    NX_EXPECT(id != 0);
+    p.rig.assets.finish();
+    p.step(2);
+    NX_EXPECT(p.rig.audio.voicesInUse() == 1);
+    // It goes with the thing.
+    p.world.destroyEntity(id);
+    p.step(2);
+    i16 mixed[4800 * 2];
+    for (u32 i = 0; i < 10; i++)
+    {
+        p.rig.audio.mix(mixed, 4800);
+        p.rig.audio.update();
+    }
+    NX_EXPECT(p.rig.audio.voicesInUse() == 0);
+    // Too far to hear; and gone before it arrived.
+    const char far[] = "{ \"sound\": \"global:sound/bell.wav\", \"reach\": 5, \"place\": [100, 0, 0] }";
+    JsonTree other;
+    NX_EXPECT(other.parse(far, sizeof(far) - 1) && p.space.make(other.root(), "", {}) != 0);
+    p.world.destroyEntity(p.space.make(tree.root(), "", {}));
+    p.rig.assets.finish();
+    p.step(2);
+    NX_EXPECT(p.rig.audio.voicesInUse() == 0);
+}
+
 NX_TEST(landIsChangedByHand)
 {
     Place p;

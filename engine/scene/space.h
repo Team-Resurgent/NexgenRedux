@@ -90,7 +90,7 @@ namespace nx
         }
     };
 
-    enum class Shape3 : u8 { Sphere, Box, Capsule };
+    enum class Shape3 : u8 { Sphere, Box, Capsule, Shell };   // a shell is the triangles of its model
 
     // Where something is. An entity that has one is in space rather than on the plane.
     struct Spatial
@@ -153,6 +153,8 @@ namespace nx
         Quat turn;
         Vec3 halves;
         Vec3 axes[3];
+        const ModelData* model;  // a shell's, once it has arrived
+        Vec3 size;
     };
 
     struct Body3
@@ -160,6 +162,9 @@ namespace nx
         u32 owner;
         Vec3 velocity, spin;   // spin in radians a second, about its direction
         float mass, friction, bounce, drag, gravity;
+        Vec3 pathFrom, pathBy;  // it goes to and fro, if pathSeconds isn't 0, whatever is in the way
+        float pathSeconds, pathTime;
+        u32 standsOn;           // for a walker: who is under it, or 0
         bool walker;           // an upright capsule that slides along things and climbs small steps
         bool onGround;
         Vec3 ground;           // which way the ground faces
@@ -258,6 +263,8 @@ namespace nx
         void setGravity(const Vec3& gravity) { m_gravity = gravity; }
         Vec3 gravity() const { return m_gravity; }
         void setGround(float height) { m_hasGround = true; m_ground = height; }
+        // A picture all round, instead of the sky's colours. nullptr for none.
+        void setSkyPicture(Asset* texture);
         void setWater(float height, const gpu::Color& color) { m_hasWater = true; m_water = height; m_waterColor = color; }
 
         // --- Land ---
@@ -291,6 +298,11 @@ namespace nx
         bool level(float x, float z, float radius, float height, float amount);
         // A colour that is clear takes paint away.
         bool paint(float x, float z, float radius, const gpu::Color& color, float amount);
+        // Opens the land, or closes it again: what is under it can be reached. Squares whose middles are within.
+        bool hole(float x, float z, float radius, bool open);
+        // Nothing that moves leaves the land by its sides.
+        void setEdges(bool edges) { m_edges = edges; }
+        bool edges() const { return m_edges; }
         // All of that, as text. Empty if there is none. It only fits land of the same number of squares.
         std::string landEdits() const;
         bool setLandEdits(const std::string& text);
@@ -385,6 +397,14 @@ namespace nx
             float gain, pan;   // as last told
         };
 
+        // A sound that an entity makes, over and over, once it has arrived and there is a voice for it.
+        struct Waiting
+        {
+            Asset* sound;
+            u32 entity;
+            float volume, range;
+        };
+
         struct Frustum
         {
             float planes[6][4];
@@ -407,6 +427,8 @@ namespace nx
             Quat turn;
             Vec3 half;
             Vec3 axes[3];
+            const ModelData* model;
+            Vec3 size;         // a shell's
             float inverseMass;
             Vec3 inverseInertia;  // along its own axes
             float friction, bounce;
@@ -463,6 +485,7 @@ namespace nx
         void moveParticles(float dt);
         void drawParticles(const gpu::View& view);
         void listen();
+        void startSounds();
 
         // land.cpp
         void buildChunk(Chunk& chunk);
@@ -479,6 +502,13 @@ namespace nx
         void drawWater(const gpu::View& view);
         gpu::Color landColor(float height, const Vec3& normal, float x, float z) const;
 
+        // shell.cpp
+        template <typename F>
+        static void eachTriangle(const Rigid& shell, const Vec3& low, const Vec3& high, const F& visit);
+        static u32 touchShell(const Rigid& a, const Rigid& shell, Contact (&contacts)[4]);
+        static float rayShell(const Rigid& shell, const Vec3& from, const Vec3& way, float most, Vec3& normal);
+        const ModelData* shellModel(u32 owner) const;
+
         // sculpt.cpp
         struct Brush
         {
@@ -492,6 +522,9 @@ namespace nx
         void moveCorners(int fromX, int fromZ, int toX, int toZ, const float* moved);
         float sculpted(int x, int z) const;
         const u8* painted(int x, int z) const;
+        bool isHole(int x, int z) const;
+        void changeHoles(int fromX, int fromZ, int toX, int toZ);
+        void keepIn(Vec3& place, Vec3& velocity, const Vec3& reach, float bounce) const;
 
         // physics3.cpp
         void physics(float dt);
@@ -505,6 +538,7 @@ namespace nx
         void refresh(const Collider3& c) const;
         static void shapeRigid(Rigid& r);
         u32 pushOut(Rigid& r, Body3* b);
+        void follow(float dt);
         bool visibleCollider(const Collider3& c) const;
         u32 idOf(u32 index) const;
         static u32 touchBoxes(const Rigid& a, const Rigid& b, Contact (&contacts)[4]);
@@ -530,6 +564,7 @@ namespace nx
         u32 m_particleMesh = 0;
         MeshData m_particleData;
         GrowArray<Heard> m_heard;
+        GrowArray<Waiting> m_waiting;
         Audio* m_audio = nullptr;
 
         Vec3 m_from = { 0, 2, 6 }, m_to;
@@ -541,8 +576,9 @@ namespace nx
         gpu::Color m_fog = { 0.75f, 0.85f, 0.95f, 1 };
         float m_fogStart = 1e6f, m_fogEnd = 2e6f;
         float m_shadowStrength = 0.75f, m_shadowDistance = 40;
-        bool m_lines = false, m_hasSky = false, m_hasGround = false, m_hasWater = false;
+        bool m_lines = false, m_edges = false, m_hasSky = false, m_hasGround = false, m_hasWater = false;
         float m_ground = 0, m_water = 0;
+        Asset* m_skyPicture = nullptr;
         gpu::Color m_waterColor = { 0.15f, 0.35f, 0.5f, 0.75f };
         Vec3 m_gravity = { 0, -9.8f, 0 };
         float m_time = 0;
@@ -555,6 +591,7 @@ namespace nx
         u16 m_table[32 * 32] = {};   // of regions, by the last bits of where they are; 0 is none
         GrowArray<Flat> m_flats;
         GrowArray<float> m_sculpt;   // by corner; empty until something is changed by hand
+        GrowArray<u8> m_holes;       // by square, likewise
         GrowArray<u8> m_paint;       // colour and how much of it, likewise
         GrowArray<RegionEvent> m_regionEvents;
         u32 m_regionNext = 0;

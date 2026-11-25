@@ -13,6 +13,7 @@
 #include <unistd.h>
 
 // Last, because they define a great many plain words.
+#include <X11/Xatom.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/keysym.h>
@@ -250,6 +251,14 @@ namespace nx
                 XStoreName(m_display, m_window, desc.title);
                 m_closeMessage = XInternAtom(m_display, "WM_DELETE_WINDOW", False);
                 XSetWMProtocols(m_display, m_window, &m_closeMessage, 1);
+                // Files may be dropped on it, as XDND has it.
+                for (u32 i = 0; i < kDropAtoms; i++)
+                {
+                    static const char* const names[kDropAtoms] = { "XdndAware", "XdndPosition", "XdndStatus", "XdndDrop", "XdndFinished", "XdndSelection", "XdndActionCopy", "text/uri-list", "NEXGEN_DROP" };
+                    m_drop[i] = XInternAtom(m_display, names[i], False);
+                }
+                const Atom version = 5;
+                XChangeProperty(m_display, m_window, m_drop[DropAware], XA_ATOM, 32, PropModeReplace, reinterpret_cast<const unsigned char*>(&version), 1);
                 if (!desc.hidden)
                 {
                     XMapWindow(m_display, m_window);
@@ -317,7 +326,23 @@ namespace nx
             {
                 switch (event.type)
                 {
+                case SelectionNotify:
+                    takeDrop(event.xselection);
+                    break;
                 case ClientMessage:
+                    if (event.xclient.message_type == m_drop[DropPosition])
+                    {
+                        // Anywhere will do.
+                        const long accept[5] = { static_cast<long>(m_window), 1, 0, 0, static_cast<long>(m_drop[DropCopy]) };
+                        sendDrop(static_cast<Window>(event.xclient.data.l[0]), DropStatus, accept);
+                        break;
+                    }
+                    if (event.xclient.message_type == m_drop[DropDrop])
+                    {
+                        m_dropFrom = static_cast<Window>(event.xclient.data.l[0]);
+                        XConvertSelection(m_display, m_drop[DropSelection], m_drop[DropList], m_drop[DropHere], m_window, static_cast<Time>(event.xclient.data.l[2]));
+                        break;
+                    }
                     m_quit = m_quit || static_cast<Atom>(event.xclient.data.l[0]) == m_closeMessage;
                     break;
                 case ConfigureNotify:
@@ -385,6 +410,84 @@ namespace nx
                 }
             }
 
+            enum : u32 { DropAware, DropPosition, DropStatus, DropDrop, DropFinished, DropSelection, DropCopy, DropList, DropHere, kDropAtoms };
+
+            void sendDrop(Window to, u32 what, const long (&data)[5])
+            {
+                XEvent event = {};
+                event.xclient.type = ClientMessage;
+                event.xclient.display = m_display;
+                event.xclient.window = to;
+                event.xclient.message_type = m_drop[what];
+                event.xclient.format = 32;
+                for (u32 i = 0; i < 5; i++)
+                {
+                    event.xclient.data.l[i] = data[i];
+                }
+                // Whoever it was may have gone.
+                int (*before)(Display*, XErrorEvent*) = XSetErrorHandler([](Display*, XErrorEvent*) { return 0; });
+                XSendEvent(m_display, to, False, NoEventMask, &event);
+                XSync(m_display, False);
+                XSetErrorHandler(before);
+            }
+
+            // A line for each, as "file:///home/someone/a%20chair.obj".
+            void takeDrop(const XSelectionEvent& selection)
+            {
+                unsigned char* text = nullptr;
+                if (selection.property != 0)
+                {
+                    Atom type = 0;
+                    int format = 0;
+                    unsigned long count = 0, left = 0;
+                    XGetWindowProperty(m_display, m_window, m_drop[DropHere], 0, 16384, True, AnyPropertyType, &type, &format, &count, &left, &text);
+                    std::string line;
+                    u32 files = 0;
+                    for (unsigned long i = 0; text && format == 8 && i <= count && files < 64; i++)
+                    {
+                        const char c = i < count ? static_cast<char>(text[i]) : '\n';
+                        if (c != '\n' && c != '\r')
+                        {
+                            line += c;
+                            continue;
+                        }
+                        if (line.compare(0, 7, "file://") == 0)
+                        {
+                            const size_t from = line.find('/', 7);
+                            std::string path;
+                            for (size_t k = from; from != std::string::npos && k < line.size(); k++)
+                            {
+                                if (line[k] == '%' && k + 2 < line.size())
+                                {
+                                    path += static_cast<char>(strtoul(line.substr(k + 1, 2).c_str(), nullptr, 16));
+                                    k += 2;
+                                }
+                                else
+                                {
+                                    path += line[k];
+                                }
+                            }
+                            if (!path.empty())
+                            {
+                                keepOwn(path.c_str());
+                                files++;
+                            }
+                        }
+                        line.clear();
+                    }
+                }
+                if (text)
+                {
+                    XFree(text);
+                }
+                if (m_dropFrom)
+                {
+                    const long done[5] = { static_cast<long>(m_window), selection.property != 0, static_cast<long>(m_drop[DropCopy]), 0, 0 };
+                    sendDrop(m_dropFrom, DropFinished, done);
+                    m_dropFrom = 0;
+                }
+            }
+
             void readPads()
             {
                 // Looking for new ones means going through the devices, so only now and then.
@@ -445,6 +548,8 @@ namespace nx
             Colormap m_colormap = 0;
             GLXContext m_context = nullptr;
             Atom m_closeMessage = 0;
+            Atom m_drop[kDropAtoms] = {};
+            Window m_dropFrom = 0;
             GlWindow m_gl;
             u32 m_width = 0;
             u32 m_height = 0;

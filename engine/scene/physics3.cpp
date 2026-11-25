@@ -82,7 +82,13 @@ namespace nx
             half.x = c.half.x * fmaxf(size.x, size.z);
             half.y = fmaxf(half.y, half.x);
         }
-        middle = m_spatials[m_world.m_entities[c.owner].parts3[0]].world.transformPoint(c.middle);
+        Vec3 from = c.middle;
+        if (c.shape == Shape3::Shell && c.model)
+        {
+            half = times((c.model->high - c.model->low) * 0.5f, size);
+            from = (c.model->low + c.model->high) * 0.5f;
+        }
+        middle = m_spatials[m_world.m_entities[c.owner].parts3[0]].world.transformPoint(from);
     }
 
     void Space::makeRigid(const Collider3& c, Rigid& r) const
@@ -99,8 +105,19 @@ namespace nx
         r.axes[0] = c.axes[0];
         r.axes[1] = c.axes[1];
         r.axes[2] = c.axes[2];
+        r.model = c.model;
+        r.size = c.size;
         r.low = c.at - c.reach;
         r.high = c.at + c.reach;
+    }
+
+    // What it looks like, if that has arrived and doesn't bend.
+    const ModelData* Space::shellModel(u32 owner) const
+    {
+        const u32 part = m_world.m_entities[owner].parts3[1];
+        const Asset* model = part != kNone ? m_appearances[part].model : nullptr;
+        const ModelData* data = model ? model->model : nullptr;
+        return data && data->weights.count() == 0 ? data : nullptr;
     }
 
     // Works out where a collider is, if it isn't known already.
@@ -108,10 +125,12 @@ namespace nx
     {
         Collider3& c = const_cast<Collider3&>(collider);
         const u32 version = m_spatials[m_world.m_entities[c.owner].parts3[0]].version;
-        if (c.version == version)
+        const ModelData* model = c.shape == Shape3::Shell ? shellModel(c.owner) : nullptr;
+        if (c.version == version && c.model == model)
         {
             return;
         }
+        c.model = model;
         Rigid r = {};
         r.shape = c.shape;
         place(c, r.place, r.turn, r.half);
@@ -124,6 +143,12 @@ namespace nx
         c.axes[0] = r.axes[0];
         c.axes[1] = r.axes[1];
         c.axes[2] = r.axes[2];
+        c.size = { 1, 1, 1 };
+        if (model)
+        {
+            const Vec3 half = (model->high - model->low) * 0.5f;
+            c.size = { half.x > 1e-5f ? r.half.x / half.x : 1, half.y > 1e-5f ? r.half.y / half.y : 1, half.z > 1e-5f ? r.half.z / half.z : 1 };
+        }
     }
 
     void Space::shapeRigid(Rigid& r)
@@ -136,7 +161,7 @@ namespace nx
         {
             reach = Vec3(1, 1, 1) * r.half.x;
         }
-        else if (r.shape == Shape3::Box)
+        else if (r.shape == Shape3::Box || r.shape == Shape3::Shell)
         {
             reach = absolute(r.axes[0]) * r.half.x + absolute(r.axes[1]) * r.half.y + absolute(r.axes[2]) * r.half.z;
         }
@@ -161,6 +186,8 @@ namespace nx
             r.spin = b.spin;
             r.friction = b.friction;
             r.bounce = b.bounce;
+            // What moves is solid.
+            r.shape = r.shape == Shape3::Shell ? Shape3::Box : r.shape;
             if (b.walker)
             {
                 r.inverseMass = 1 / (b.mass > 0 ? b.mass : 80);
@@ -265,6 +292,23 @@ namespace nx
 
     u32 Space::touchPair(const Rigid& a, const Rigid& b, Contact (&contacts)[4])
     {
+        if (a.shape == Shape3::Shell || b.shape == Shape3::Shell)
+        {
+            if (a.shape == b.shape)
+            {
+                return 0;
+            }
+            if (b.shape == Shape3::Shell)
+            {
+                return touchShell(a, b, contacts);
+            }
+            const u32 count = touchShell(b, a, contacts);
+            for (u32 i = 0; i < count; i++)
+            {
+                contacts[i].normal = -contacts[i].normal;
+            }
+            return count;
+        }
         if (a.shape == Shape3::Box && b.shape == Shape3::Box)
         {
             return touchBoxes(a, b, contacts);
@@ -526,7 +570,8 @@ namespace nx
         const auto add = [&](const Vec3& at, float radius)
         {
             const float height = heightAt(at.x, at.z);
-            if (height < -9e5f || at.y - radius * 1.5f > height + 1)
+            // With holes there is somewhere under the land, and it is no thicker than this.
+            if (height < -9e5f || at.y - radius * 1.5f > height + 1 || (m_holes.count() && at.y < height - radius - 0.8f))
             {
                 return;
             }
@@ -743,6 +788,7 @@ namespace nx
                 r.place.y += deepest / out.y;
                 if (b)
                 {
+                    b->standsOn = against == kLand ? 0 : idOf(m_rigid[against].entity);
                     b->ground = out.y > kSteepest ? out : Vec3(0, 1, 0);
                     b->velocity.y = fmaxf(b->velocity.y, 0);
                 }
@@ -786,6 +832,12 @@ namespace nx
         shapeRigid(r);
         const Vec3 offset = r.place - m_spatials[e.parts3[0]].place;
         const bool stood = b.onGround && b.velocity.y < 0.5f;
+        // What it stands on takes it along.
+        const Body3* under = stood && b.standsOn ? getBody(b.standsOn) : nullptr;
+        if (under && under->pathSeconds > 0)
+        {
+            r.place = r.place + under->velocity * dt;
+        }
         b.velocity = b.velocity + m_gravity * (b.gravity * dt);
         if (b.drag > 0)
         {
@@ -816,7 +868,9 @@ namespace nx
                 }
             }
         }
+        keepIn(r.place, b.velocity, r.high - r.place, 0);
         b.onGround = met & 1;
+        b.standsOn = b.onGround ? b.standsOn : 0;
         if (!b.onGround)
         {
             b.ground = { 0, 1, 0 };
@@ -831,6 +885,30 @@ namespace nx
                 other.turn = r.turn;
                 other.velocity = { wanted.x, b.velocity.y, wanted.z };
                 shapeRigid(other);
+            }
+        }
+    }
+
+    // Those that go to and fro.
+    void Space::follow(float dt)
+    {
+        for (Body3& b : m_bodies)
+        {
+            const World::Entity& e = m_world.m_entities[b.owner];
+            if (b.pathSeconds <= 0 || e.parts3[0] == kNone)
+            {
+                continue;
+            }
+            b.pathTime = fmodf(b.pathTime + dt, b.pathSeconds);
+            Spatial& s = m_spatials[e.parts3[0]];
+            const Vec3 at = b.pathFrom + b.pathBy * (0.5f - 0.5f * cosf(b.pathTime / b.pathSeconds * 6.2831853f));
+            b.velocity = dt > 0 ? (at - s.place) / dt : Vec3();
+            s.place = at;
+            transform(b.owner);
+            // What lies on it is awake.
+            for (Body3& other : m_bodies)
+            {
+                other.still = 0;
             }
         }
     }
@@ -886,7 +964,7 @@ namespace nx
             {
                 walkOne(i, dt);
             }
-            else if ((b.mass <= 0 || e.parts3[3] == kNone) && e.parts3[0] != kNone)
+            else if (b.pathSeconds <= 0 && (b.mass <= 0 || e.parts3[3] == kNone) && e.parts3[0] != kNone)
             {
                 // Nothing stops it.
                 Spatial& s = m_spatials[e.parts3[0]];
@@ -1195,6 +1273,7 @@ namespace nx
             const Quat w(r.spin.x * 0.5f * dt, r.spin.y * 0.5f * dt, r.spin.z * 0.5f * dt, 0);
             const Quat d = w * r.turn;
             r.turn = Quat(r.turn.x + d.x, r.turn.y + d.y, r.turn.z + d.z, r.turn.w + d.w).normalized();
+            keepIn(r.place, r.velocity, (r.high - r.low) * 0.5f, r.bounce);
         }
     }
 
@@ -1266,6 +1345,10 @@ namespace nx
                     }
                 }
             }
+            else if (r.shape == Shape3::Shell)
+            {
+                t = rayShell(r, from, way, best, n);
+            }
             else
             {
                 const Vec3 d = from - r.place;
@@ -1300,6 +1383,8 @@ namespace nx
         {
             const float length = way.length(), step = hasLand() ? m_landSpacing * 0.5f : 1;
             const u32 count = static_cast<u32>(clampFloat(length / step, 0, 2000)) + 1;
+            // From under it, nothing is met until the line has come out.
+            bool above = m_holes.count() == 0 || from.y >= heightAt(from.x, from.z);
             for (u32 i = 1; i <= count; i++)
             {
                 float t = static_cast<float>(i) / static_cast<float>(count);
@@ -1307,6 +1392,11 @@ namespace nx
                 if (static_cast<float>(i - 1) / static_cast<float>(count) > best)
                 {
                     break;
+                }
+                if (!above)
+                {
+                    above = p.y >= heightAt(p.x, p.z);
+                    continue;
                 }
                 if (p.y < heightAt(p.x, p.z))
                 {

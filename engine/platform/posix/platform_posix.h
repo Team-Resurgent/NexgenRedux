@@ -2,6 +2,8 @@
 
 #include "platform/platform.h"
 
+#include <vector>
+
 namespace nx
 {
     // Time and files, which Linux and macOS share. Windows and input are in the classes made from it.
@@ -18,11 +20,15 @@ namespace nx
         bool setSaveFolder(const char* path) override;
         bool writeFile(const char* path, const void* data, size_t size) override;
         void list(const char* path, bool folders, FolderCallback callback, void* user) override;
+        bool takeDropped(std::string& name) override;
         u64 totalMemory() override;
         u64 freeMemory() override;
 
     protected:
         static constexpr size_t kMaxPath = 1024;
+
+        // Copies a file to the player's own.
+        void keepOwn(const char* from);
 
         // Where the media and the saves are.
         bool setFolders(const char* media, const char* saves);
@@ -33,6 +39,7 @@ namespace nx
 
         char m_media[kMaxPath] = {};
         char m_saves[kMaxPath] = {};
+        std::vector<std::string> m_dropped;
         double m_start = 0;
     };
 }

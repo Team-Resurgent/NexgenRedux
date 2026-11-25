@@ -916,8 +916,11 @@ Left: touch; text beyond Latin-1; the console's own drives in a file picker.
 | Land by hand | Raised, smoothed, levelled and painted, and kept as text; on the original Xbox too |
 | Models | FBX (with ufbx), OBJ, STL, PLY and glTF in several files, turned into `.glb` by the cook tool or as they load; 128 bones |
 | Cook tool | Models and single files too; JSON for other programs; a window made with Avalonia; downloads for three systems on x64 and arm64 |
+| Colliders | Every triangle of a model, for what is walked in, on or under |
+| Caves | Holes in the land, and pieces that join |
+| Things that move to and fro, and take walkers along; sounds from things; a picture for a sky; walls at the edge of the land | All from a scene's file |
 | Players' own files | Dropped on the window, or put in a folder |
-| Scene editor | Adds, picks, moves, turns, sizes, colours, copies and undoes, with a mouse or a gamepad; plays what it has made; on the original Xbox too |
+| Scene editor | Several scenes; roads, caves, platforms, pools, pictures, sounds, sky and fog; walks, drives against the clock, or flies. Adds, picks, moves, turns, sizes, colours, copies and undoes, with a mouse or a gamepad; plays what it has made; on the original Xbox too |
 | Showcase | 58 screens |
 
 ### Targets to measure against (goals, not results)

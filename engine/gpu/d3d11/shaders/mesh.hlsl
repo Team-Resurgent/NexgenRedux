@@ -138,6 +138,7 @@ float4 finish(MeshOut input, float4 base, float glow)
     {
         float3 normal = normalize(input.normal);
         float shadow = shadowAt(input.place, saturate(dot(normal, sunDirection.xyz)));
+        shadow = surface.z > 1.5 ? 0.0 : shadow;
         color = shade(base.rgb, normal, input.place, surface.y, shadow);
         [unroll] for (int i = 0; i < 4; i++)
         {

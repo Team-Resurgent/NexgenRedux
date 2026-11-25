@@ -552,6 +552,7 @@ Entities that move, collide and are drawn by the engine. Each screen has its own
 | `void sphere(float radius, uint group = 0, uint hits = 0)` | Gives it a round collider. mass, wall, friction, bounce, gravity, drag, hits and touching are as on the plane. |
 | `void cube(const Vec3 &in size, uint group = 0, uint hits = 0)` | The same with a box, which turns with it. |
 | `void capsule(float radius, float height, uint group = 0, uint hits = 0)` | The same with an upright cylinder with round ends, included in its height. |
+| `void exact(uint group = 0, uint hits = 0)` | The same with every triangle of its model, from both sides, so that what has an inside can be gone into. For walls: what moves is a box instead, as is a model with bones. |
 | `Vec3 get_colliderAt() const property` | Where its collider is, from its place. |
 | `void set_colliderAt(const Vec3 &in) property` | Moves its collider from its place: up by half its height, for something whose place is at its feet. |
 | `bool get_streamed() const property` | Whether it goes with its region. |
@@ -617,6 +618,10 @@ The scene in three dimensions: x right, y up, z towards you, in metres. Entities
 | `void Space::smooth(float x, float z, float radius, float amount)` | Wears it down towards what is round about: from 0, nothing, to 1. |
 | `void Space::level(float x, float z, float radius, float height, float amount)` | Brings it nearer to a height: from 0, nothing, to 1, all the way. Over what flatten() did. |
 | `void Space::paint(float x, float z, float radius, const Color &in color, float amount)` | Colours it. A clear colour takes paint away. |
+| `void Space::hole(float x, float z, float radius, bool open = true)` | Opens the land, or closes it again, so that there can be something under it. |
+| `bool Space::get_edges() property` | Whether there are walls at the sides of the land. |
+| `void Space::set_edges(bool) property` | Puts walls there, that can't be seen: nothing with a collider that moves can leave the land. |
+| `void Space::skyPicture(Texture@+ picture)` | A picture all round, twice as wide as high, instead of the sky's colours. Null for none. |
 | `string Space::get_landEdits() property` | All that was raised and painted by hand, as text to keep. Empty if there is nothing. |
 | `bool Space::restoreLand(const string &in edits)` | Puts all that back, instead of what there is, on land of as many squares. False if it doesn't fit. |
 | `float Space::height(float x, float z)` | How high the land or the ground is. Far below if there is none. |

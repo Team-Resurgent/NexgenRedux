@@ -15,6 +15,7 @@ namespace nx
         gpu::Color color;
         int texture;        // in the model, or -1
         bool twoSided;
+        bool indoors;       // of a material whose name begins so: the sun doesn't reach it
         bool see;           // through: drawn after everything solid
         float glow;
     };
@@ -80,6 +81,15 @@ namespace nx
         Vec3 low, high;                      // a box around it, at rest
         gpu::Mesh gpuMesh;
         size_t bytes = 0;
+
+        // Which triangles of the first level are in which part of the box, made when it is first needed. False if
+        // there is no room.
+        bool makeCells() const;
+        void cellsOf(const Vec3& least, const Vec3& most, int (&from)[3], int (&to)[3]) const;
+        mutable GrowArray<u32, MemTag::General> cellStarts;
+        mutable GrowArray<u16, MemTag::General> cellTriangles;
+        mutable u32 cellCount[3] = {};
+        mutable float cellSize[3] = {};
 
         int findAnimation(const char* name) const;
         // The bones at a time, ready for the vertices. Room for kModelBones.

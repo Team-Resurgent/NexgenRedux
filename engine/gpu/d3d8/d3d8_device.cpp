@@ -855,7 +855,7 @@ namespace nx::gpu
                 // The tint multiplies everything, after the lights.
                 const bool lit = draw.lit && draw.glow < 1;
                 // What is solid has no use for its alpha, so that says how dark a shadow is.
-                const bool shaded = m_shadowed && lit && draw.blend == Blend::None && !draw.effect;
+                const bool shaded = m_shadowed && lit && !draw.indoors && draw.blend == Blend::None && !draw.effect;
                 m_device->SetRenderState(D3DRS_TEXTUREFACTOR, packed(draw.color));
                 m_device->SetRenderState(D3DRS_LIGHTING, lit);
                 // The same as the stages do, and then some of the sun's light away.
@@ -866,6 +866,7 @@ namespace nx::gpu
                     const float constants[2][4] = { { draw.color.r, draw.color.g, draw.color.b, draw.color.a }, { shade, shade, shade, 1 } };
                     m_device->SetPixelShaderConstant(0, constants, 2);
                 }
+                m_device->LightEnable(0, !draw.indoors);
                 if (lit)
                 {
                     D3DMATERIAL8 material = {};

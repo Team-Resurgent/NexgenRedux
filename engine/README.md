@@ -89,7 +89,7 @@ cook tool that was built. Both are a download of their own, for Windows, Linux a
 | `script/` | AngelScript host, coroutines, bindings and the reference writer | base |
 | `bindings/`, `screens/` | What scripts can call; the screen stack and the engine's menu | all above |
 | `app/` | The program that runs the showcase | all |
-| `tools/` | `cook`, and `cook-ui`, a window for it; `record`; `make_media.py` and `make_models.py`, which make the showcase's sounds, music and models; `make_docs.py`, which makes the web site; `stage-rxdk.ps1` | all |
+| `tools/` | `cook`, and `cook-ui`, a window for it; `record`; `make_media.py`, `make_models.py` and `make_pieces.py`, which make the showcase's sounds, music and models; `make_docs.py`, which makes the web site; `stage-rxdk.ps1` | all |
 | `third_party/` | AngelScript, SSFN, stb, cgltf, ufbx, miniaudio, dr_libs and Mbed TLS, unmodified | |
 | `spike/`, `tests/` | Phase 0 app and tests | all |
 

@@ -256,12 +256,16 @@ A region may come from a file, or be made up from its numbers so that it is the 
 | `light`, `range` | Lights other things |
 | `sphere`, `cube`, `capsule`, `colliderAt`, `group`, `hits`, `wall` | Its collider |
 | `mass`, `friction`, `bounce`, `gravity`, `drag`, `walker` | How it moves |
+| `exact` | Every triangle of its model is its collider |
+| `moves`, `seconds`, `pathTime` | It goes that far and back again, for ever, and takes walkers along |
+| `sound`, `reach`, `volume` | Something to hear from where it is, over and over |
 | `behaviour` | A class in the script |
 
 `Space::make` makes one entity from a `Json` of the same kind. The showcase's **Scene editor** makes such files: fly about, add
-things, move, turn, size and colour them, shape and paint the land, try the place, and save it. It is a screen like any other, in
-`showcase/editor`, and can be taken for your own tools. Models of your own appear at the end of its list: drop them on the window (on
-Windows), or put them in the folder `own` beside the saves, or in `media/own` on the original Xbox. Names there are small letters,
+things, move, turn, size and colour them, shape and paint the land, lay roads, join caves together, set the sky and the fog, then walk,
+drive or fly through the place, and save it; there can be several. It is a screen like any other, in
+`showcase/editor`, and can be taken for your own tools. Models of your own appear at the end of its list: drop them on the window,
+or put them in the folder `own` beside the saves, or in `media/own` on the original Xbox. Names there are small letters,
 digits, dots and dashes.
 
 ### Land by hand
@@ -276,6 +280,11 @@ Space::paint(x, z, 4, Color(0.55f, 0.42f, 0.28f), 1);  // a path; a clear colour
 string kept = Space::landEdits;                      // all of it, as text for a Json
 Space::restoreLand(kept);                            // on land of as many squares
 ```
+
+`Space::hole(x, z, 3)` opens the land, so that there can be something under it: the cave pieces in `global:model` (`cave-mouth`,
+`cave-tunnel`, `cave-bend`, `cave-slope`, `cave-room` and `cave-end`) meet on a grid of 4 metres. A model of your own whose name begins with one of those joins them in the editor, so an entrance can look
+like anything. The sun doesn't reach what has a material whose name begins with `indoors`. `Space::edges = true` puts walls that
+can't be seen at the sides of the land.
 
 `Space::lines = true` draws only the edges of triangles, to see how things are made.
 

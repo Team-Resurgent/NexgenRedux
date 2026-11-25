@@ -295,6 +295,7 @@ namespace nx
         void entitySphere(float radius, u32 group, u32 hits, EntityRef* e) { collide(e, Shape3::Sphere, { radius, radius, radius }, group, hits); }
         void entityCube(const Vec3& size, u32 group, u32 hits, EntityRef* e) { collide(e, Shape3::Box, size * 0.5f, group, hits); }
         void entityCapsule(float radius, float height, u32 group, u32 hits, EntityRef* e) { collide(e, Shape3::Capsule, { radius, height * 0.5f, radius }, group, hits); }
+        void entityExact(u32 group, u32 hits, EntityRef* e) { collide(e, Shape3::Shell, { 0.01f, 0.01f, 0.01f }, group, hits); }
         void setColliderAt(const Vec3& v, EntityRef* e) { if (Collider3* c = e->world ? e->world->space().getCollider(e->id) : nullptr) c->middle = v; }
 
         // --- Space:: ---
@@ -405,6 +406,10 @@ namespace nx
         void spaceSmooth(float x, float z, float radius, float amount) { handWork(space().smooth(x, z, radius, amount)); }
         void spaceLevel(float x, float z, float radius, float height, float amount) { handWork(space().level(x, z, radius, height, amount)); }
         void spacePaint(float x, float z, float radius, const Color& color, float amount) { handWork(space().paint(x, z, radius, color, amount)); }
+        void spaceHole(float x, float z, float radius, bool open) { handWork(space().hole(x, z, radius, open)); }
+        bool spaceEdges() { return space().edges(); }
+        void spaceSetEdges(bool v) { space().setEdges(v); }
+        void spaceSkyPicture(const TextureRef* t) { space().setSkyPicture(t ? t->asset : nullptr); }
         std::string spaceLandEdits() { return space().landEdits(); }
         bool spaceRestoreLand(const std::string& text) { return space().setLandEdits(text); }
         float spaceLandSize() { return space().landSize(); }
@@ -569,6 +574,7 @@ namespace nx
         b.method("void sphere(float radius, uint group = 0, uint hits = 0)", NX_OBJ_LAST(entitySphere), "Gives it a round collider. mass, wall, friction, bounce, gravity, drag, hits and touching are as on the plane.");
         b.method("void cube(const Vec3 &in size, uint group = 0, uint hits = 0)", NX_OBJ_LAST(entityCube), "The same with a box, which turns with it.");
         b.method("void capsule(float radius, float height, uint group = 0, uint hits = 0)", NX_OBJ_LAST(entityCapsule), "The same with an upright cylinder with round ends, included in its height.");
+        b.method("void exact(uint group = 0, uint hits = 0)", NX_OBJ_LAST(entityExact), "The same with every triangle of its model, from both sides, so that what has an inside can be gone into. For walls: what moves is a box instead, as is a model with bones.");
         b.method("Vec3 get_colliderAt() const property", NX_OBJ_LAST(getColliderAt), "Where its collider is, from its place.");
         b.method("void set_colliderAt(const Vec3 &in) property", NX_OBJ_LAST(setColliderAt), "Moves its collider from its place: up by half its height, for something whose place is at its feet.");
 
@@ -620,6 +626,10 @@ namespace nx
         b.function("void smooth(float x, float z, float radius, float amount)", NX_FN(spaceSmooth), "Wears it down towards what is round about: from 0, nothing, to 1.");
         b.function("void level(float x, float z, float radius, float height, float amount)", NX_FN(spaceLevel), "Brings it nearer to a height: from 0, nothing, to 1, all the way. Over what flatten() did.");
         b.function("void paint(float x, float z, float radius, const Color &in color, float amount)", NX_FN(spacePaint), "Colours it. A clear colour takes paint away.");
+        b.function("void hole(float x, float z, float radius, bool open = true)", NX_FN(spaceHole), "Opens the land, or closes it again, so that there can be something under it.");
+        b.function("bool get_edges() property", NX_FN(spaceEdges), "Whether there are walls at the sides of the land.");
+        b.function("void set_edges(bool) property", NX_FN(spaceSetEdges), "Puts walls there, that can't be seen: nothing with a collider that moves can leave the land.");
+        b.function("void skyPicture(Texture@+ picture)", NX_FN(spaceSkyPicture), "A picture all round, twice as wide as high, instead of the sky's colours. Null for none.");
         b.function("string get_landEdits() property", NX_FN(spaceLandEdits), "All that was raised and painted by hand, as text to keep. Empty if there is nothing.");
         b.function("bool restoreLand(const string &in edits)", NX_FN(spaceRestoreLand), "Puts all that back, instead of what there is, on land of as many squares. False if it doesn't fit.");
         b.function("float height(float x, float z)", NX_FN(spaceHeight), "How high the land or the ground is. Far below if there is none.");

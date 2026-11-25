@@ -157,6 +157,7 @@ namespace nx::gpu
         Blend blend = Blend::None;
         Cull cull = Cull::Back;
         bool depthWrite = true;
+        bool indoors = false;    // the sun doesn't reach it
         bool lines = false;      // only the edges of its triangles
         bool lit = true;
         bool fogged = true;

@@ -50,6 +50,7 @@ namespace nx
         m_flats.clear();
         m_sculpt.clear();
         m_paint.clear();
+        m_holes.clear();
         m_regionEvents.clear();
         m_regionNext = 0;
         m_landSeed = seed;
@@ -364,6 +365,10 @@ namespace nx
             ix = ix >= static_cast<int>(half) ? ix - 1 : ix;
             iz = iz >= static_cast<int>(half) ? iz - 1 : iz;
         }
+        if (isHole(ix, iz))
+        {
+            return flat;
+        }
         const float tx = gx - static_cast<float>(ix), tz = gz - static_cast<float>(iz);
         float a, b, c, d;
         const int cx = ix >> 5, cz = iz >> 5;
@@ -459,8 +464,10 @@ namespace nx
                 for (u32 x = 0; x < kChunk; x += step)
                 {
                     const u32 a = z * row + x, b = a + step, c = a + step * row, e = c + step;
-                    d.triangle(a, e, b);
-                    d.triangle(a, c, e);
+                    // A hole has triangles too, with nothing in them, as each level has as many everywhere.
+                    const bool hole = isHole(chunk.x * 32 + static_cast<int>(x + step / 2), chunk.z * 32 + static_cast<int>(z + step / 2));
+                    d.triangle(a, hole ? a : e, hole ? a : b);
+                    d.triangle(a, hole ? a : c, hole ? a : e);
                 }
             }
             for (u32 i = 0; i < 4 * kChunk; i += step)
@@ -519,9 +526,9 @@ namespace nx
             draw.lines = m_lines && !shadow;
             draw.first = first[detail];
             draw.count = first[detail + 1] - first[detail];
-            if (draw.lines)
+            if (draw.lines || (detail == 0 && m_holes.count()))
             {
-                // Without the skirt, which comes last.
+                // Without the skirt, which comes last: from under the land it would be a curtain.
                 const u32 step = 1u << (detail * 2 > 3 ? 3 : detail * 2);
                 draw.count -= 4 * kChunk / step * 6;
             }

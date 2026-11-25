@@ -29,7 +29,7 @@ endforeach()
 
 # Headers: the standard libraries, platform SDKs and AngelScript. Quoted includes must be ours.
 set(_standard "pthread|time|errno|assert|atomic|algorithm|bit|float|limits|map|math|new|stdarg|stddef|stdint|stdio|stdlib|string|type_traits|utility|vector|wchar")
-set(_platform "windows|shellapi|d3d11|d3dcompiler|dxgi1_3|xinput|xtl|xboxkrnl/xboxkrnl|xgraphics|dirent|fcntl|linux/input|sys/ioctl|sys/stat|unistd|dlfcn|winsock2|ws2tcpip|winsockx|bcrypt|arpa/inet|ifaddrs|net/if|netdb|netinet/in|netinet/tcp|sys/select|sys/socket|sys/time|mach-o/dyld|X11/Xlib|X11/Xutil|X11/keysym|GL/glx|Cocoa/Cocoa|GameController/GameController")
+set(_platform "windows|shellapi|d3d11|d3dcompiler|dxgi1_3|xinput|xtl|xboxkrnl/xboxkrnl|xgraphics|dirent|fcntl|linux/input|sys/ioctl|sys/stat|unistd|dlfcn|winsock2|ws2tcpip|winsockx|bcrypt|arpa/inet|ifaddrs|net/if|netdb|netinet/in|netinet/tcp|sys/select|sys/socket|sys/time|mach-o/dyld|X11/Xatom|X11/Xlib|X11/Xutil|X11/keysym|GL/glx|Cocoa/Cocoa|GameController/GameController")
 file(GLOB_RECURSE _sources "${ROOT}/*.cpp" "${ROOT}/*.h" "${ROOT}/*.mm")
 foreach(_file IN LISTS _sources)
   if(_file MATCHES "/(build|third_party)/")

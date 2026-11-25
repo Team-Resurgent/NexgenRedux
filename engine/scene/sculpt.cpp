@@ -145,6 +145,73 @@ namespace nx
         return &m_paint[(static_cast<u32>(z + half) * (m_landSquares + 1) + static_cast<u32>(x + half)) * 4];
     }
 
+    // Squares, by the corner that is least.
+    bool Space::isHole(int x, int z) const
+    {
+        const int half = static_cast<int>(m_landSquares) / 2;
+        return m_holes.count() && x >= -half && z >= -half && x < half && z < half && m_holes[static_cast<u32>(z + half) * m_landSquares + static_cast<u32>(x + half)];
+    }
+
+    void Space::changeHoles(int fromX, int fromZ, int toX, int toZ)
+    {
+        for (Chunk& c : m_chunks)
+        {
+            c.changed = c.changed || (c.x * 32 <= toX && c.x * 32 + 32 > fromX && c.z * 32 <= toZ && c.z * 32 + 32 > fromZ);
+        }
+        for (Body3& b : m_bodies)
+        {
+            b.still = 0;
+        }
+    }
+
+    bool Space::hole(float x, float z, float radius, bool open)
+    {
+        Brush b;
+        if (!brush(x, z, radius, b))
+        {
+            return false;
+        }
+        if (m_holes.count() == 0 && (!open || !zeros(m_holes, m_landSquares * m_landSquares)))
+        {
+            return !open;
+        }
+        const int half = static_cast<int>(m_landSquares) / 2;
+        for (int sz = b.fromZ - 1; sz <= b.toZ; sz++)
+        {
+            for (int sx = b.fromX - 1; sx <= b.toX; sx++)
+            {
+                const float dx = static_cast<float>(sx) + 0.5f - b.x, dz = static_cast<float>(sz) + 0.5f - b.z;
+                if (sx >= -half && sz >= -half && sx < half && sz < half && dx * dx + dz * dz <= b.radius * b.radius)
+                {
+                    m_holes[static_cast<u32>(sz + half) * m_landSquares + static_cast<u32>(sx + half)] = open ? 1 : 0;
+                }
+            }
+        }
+        changeHoles(b.fromX - 1, b.fromZ - 1, b.toX, b.toZ);
+        return true;
+    }
+
+    // Walls at the sides of the land.
+    void Space::keepIn(Vec3& place, Vec3& velocity, const Vec3& reach, float bounce) const
+    {
+        if (!m_edges || !m_landOn || m_landSquares == 0)
+        {
+            return;
+        }
+        const float half = landSize() * 0.5f;
+        const auto keep = [&](float& at, float& speed, float out)
+        {
+            const float limit = half > out ? half - out : 0;
+            if (at > limit || at < -limit)
+            {
+                speed = (at > 0) == (speed > 0) ? -speed * bounce : speed;
+                at = at > 0 ? limit : -limit;
+            }
+        };
+        keep(place.x, velocity.x, reach.x);
+        keep(place.z, velocity.z, reach.z);
+    }
+
     bool Space::brush(float x, float z, float radius, Brush& b)
     {
         if (!m_landOn || m_landSquares == 0 || !(radius > 0) || !(x > -1e5f && x < 1e5f && z > -1e5f && z < 1e5f))
@@ -339,14 +406,19 @@ namespace nx
         {
             colored = colored || m_paint[i];
         }
-        if (!raised && !colored)
+        bool open = false;
+        for (const u8 h : m_holes)
+        {
+            open = open || h;
+        }
+        if (!raised && !colored && !open)
         {
             return "";
         }
         std::string out;
         out += 1;
         putNumber(out, m_landSquares);
-        out += static_cast<char>((raised ? 1 : 0) | (colored ? 2 : 0));
+        out += static_cast<char>((raised ? 1 : 0) | (colored ? 2 : 0) | (open ? 4 : 0));
         if (raised)
         {
             int last = 0;
@@ -389,6 +461,17 @@ namespace nx
             }
             i += run * 4;
         }
+        // How many squares are closed, then open, and so on.
+        for (u32 i = 0, now = 0; open && i < m_holes.count(); now ^= 1)
+        {
+            u32 run = 0;
+            while (i < m_holes.count() && m_holes[i] == now)
+            {
+                run++;
+                i++;
+            }
+            putNumber(out, run);
+        }
         return toText(out);
     }
 
@@ -400,7 +483,7 @@ namespace nx
         }
         const u32 corners = (m_landSquares + 1) * (m_landSquares + 1);
         GrowArray<float> heights;
-        GrowArray<u8> paint;
+        GrowArray<u8> paint, holes;
         if (!text.empty())
         {
             std::string data;
@@ -411,7 +494,7 @@ namespace nx
             Bytes in = { data, 0, true };
             const bool ours = in.byte() == 1 && in.number() == m_landSquares;
             const u8 what = in.byte();
-            if (!ours || !in.ok || (what & 1 && !zeros(heights, corners)) || (what & 2 && !zeros(paint, corners * 4)))
+            if (!ours || !in.ok || (what & 1 && !zeros(heights, corners)) || (what & 2 && !zeros(paint, corners * 4)) || (what & 4 && !zeros(holes, m_landSquares * m_landSquares)))
             {
                 return false;
             }
@@ -448,6 +531,18 @@ namespace nx
                     memcpy(&paint[i], c, 4);
                 }
             }
+            for (u32 i = 0, now = 0; i < holes.count() && in.ok; now ^= 1)
+            {
+                const u32 run = in.number();
+                if (run > holes.count() - i || (run == 0 && i))
+                {
+                    return false;
+                }
+                for (u32 k = 0; k < run; k++)
+                {
+                    holes[i++] = static_cast<u8>(now);
+                }
+            }
             if (!in.ok || in.at != data.size())
             {
                 return false;
@@ -466,6 +561,18 @@ namespace nx
             }
             const int half = static_cast<int>(m_landSquares) / 2;
             moveCorners(-half, -half, half, half, moved.begin());
+        }
+        if (holes.count() || m_holes.count())
+        {
+            if (holes.count())
+            {
+                m_holes.swap(holes);
+            }
+            else
+            {
+                m_holes.clear();
+            }
+            changeHoles(-200, -200, 200, 200);
         }
         if (paint.count() || m_paint.count())
         {

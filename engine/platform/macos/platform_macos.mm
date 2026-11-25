@@ -20,6 +20,8 @@
     bool quit;
     bool focused;
     bool resized;
+    void (*dropped)(const char* path, void* user);
+    void* droppedUser;
 }
 @end
 
@@ -49,6 +51,24 @@
 {
     (void)notification;
     focused = false;
+}
+
+// The window passes these on to its delegate.
+- (NSDragOperation)draggingEntered:(id<NSDraggingInfo>)sender
+{
+    (void)sender;
+    return NSDragOperationCopy;
+}
+
+- (BOOL)performDragOperation:(id<NSDraggingInfo>)sender
+{
+    NSArray* files = [[sender draggingPasteboard] readObjectsForClasses:@[ [NSURL class] ] options:@{ NSPasteboardURLReadingFileURLsOnlyKey : @YES }];
+    NSUInteger count = [files count] < 64 ? [files count] : 64;
+    for (NSUInteger i = 0; i < count && dropped; i++)
+    {
+        dropped([[(NSURL*)[files objectAtIndex:i] path] fileSystemRepresentation], droppedUser);
+    }
+    return count > 0;
 }
 
 - (void)windowDidResize:(NSNotification*)notification
@@ -171,6 +191,9 @@ namespace nx
                     [m_window setTitle:[NSString stringWithUTF8String:desc.title]];
                     [m_window setDelegate:m_delegate];
                     [m_window setAcceptsMouseMovedEvents:YES];
+                    m_delegate->dropped = [](const char* path, void* user) { static_cast<PlatformMacOS*>(user)->keepOwn(path); };
+                    m_delegate->droppedUser = this;
+                    [m_window registerForDraggedTypes:@[ NSPasteboardTypeFileURL ]];
                     [m_window setCollectionBehavior:NSWindowCollectionBehaviorFullScreenPrimary];
                     // Real pixels on a Retina screen, except when hidden, where the size should be exact.
                     [[m_window contentView] setWantsBestResolutionOpenGLSurface:desc.hidden ? NO : YES];

@@ -188,6 +188,7 @@ namespace nx
                     part.texture = readTexture(model, m->pbr_metallic_roughness.base_color_texture, images, imageCount, name);
                 }
                 part.twoSided = m->double_sided;
+                part.indoors = m->name && strncmp(m->name, "indoors", 7) == 0;
                 part.see = m->alpha_mode == cgltf_alpha_mode_blend;
                 part.glow = m->emissive_factor[0] + m->emissive_factor[1] + m->emissive_factor[2] > 0.1f ? 1.0f : 0.0f;
             }

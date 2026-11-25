@@ -331,6 +331,12 @@ namespace nx
 
     void Space::clear()
     {
+        for (const Waiting& w : m_waiting)
+        {
+            m_assets.release(w.sound);
+        }
+        m_waiting.clear();
+        setSkyPicture(nullptr);
         forget();
         gpu::Device* device = m_solids ? m_solids->device() : nullptr;
         if (device)
@@ -512,6 +518,7 @@ namespace nx
         listen();
         stream();
         animate(dt);
+        follow(dt);
         walk(dt);
         physics(dt);
         emitParticles(dt);
@@ -728,6 +735,7 @@ namespace nx
                 d.count = part.count[detail];
                 d.color = { a.color.r * part.color.r, a.color.g * part.color.g, a.color.b * part.color.b, a.color.a * part.color.a };
                 d.glow = part.glow > a.glow ? part.glow : a.glow;
+                d.indoors = part.indoors;
                 d.cull = part.twoSided ? gpu::Cull::None : draw.cull;
                 if (part.see)
                 {
@@ -969,6 +977,18 @@ namespace nx
             gpu::MeshDraw d;
             d.mesh = m_solids->dome();
             d.world = compose(m_from, Quat(), Vec3(1, 1, 1) * (m_far * 0.5f));
+            d.cull = gpu::Cull::None;
+            d.depthWrite = d.lit = d.fogged = false;
+            device.drawMesh(d);
+        }
+        if (m_skyPicture && m_skyPicture->ready && !m_skyPicture->failed)
+        {
+            gpu::MeshDraw d;
+            d.mesh = m_solids->get(Solid::Sphere, 0);
+            d.texture = m_skyPicture->texture;
+            d.repeat = true;
+            // From the inside, which turns it round.
+            d.world = compose(m_from, Quat(), Vec3(-m_far, m_far, m_far) * 0.9f);
             d.cull = gpu::Cull::None;
             d.depthWrite = d.lit = d.fogged = false;
             device.drawMesh(d);
@@ -1381,6 +1401,51 @@ namespace nx
     }
 
     // Where the cameras were, and what can be heard from there.
+    void Space::setSkyPicture(Asset* texture)
+    {
+        if (texture)
+        {
+            m_assets.addRef(texture);
+        }
+        if (m_skyPicture)
+        {
+            m_assets.release(m_skyPicture);
+        }
+        m_skyPicture = texture;
+    }
+
+    void Space::startSounds()
+    {
+        for (u32 i = 0; i < m_waiting.count();)
+        {
+            const Waiting w = m_waiting[i];
+            bool over = w.sound->failed || !m_world.alive(w.entity);
+            if (!over && w.sound->sound)
+            {
+                PlayOptions o;
+                const Vec3 place = worldPlace(w.entity);
+                hear(place, w.volume, w.range, o.volume, o.pan);
+                o.loop = true;
+                o.priority = 140;
+                // Whoever is too far to hear it needs no voice yet.
+                const Voice voice = o.volume > 0 ? m_audio->play(*w.sound->sound, w.sound, o) : Voice();
+                if (voice)
+                {
+                    m_assets.addRef(w.sound);  // for the voice
+                    follow(voice, w.entity, place, w.volume, w.range);
+                    over = true;
+                }
+            }
+            if (over)
+            {
+                m_assets.release(w.sound);
+                m_waiting.swapRemove(i);
+                continue;
+            }
+            i++;
+        }
+    }
+
     void Space::listen()
     {
         if (m_focusCount)
@@ -1397,6 +1462,7 @@ namespace nx
             m_heard.clear();
             return;
         }
+        startSounds();
         for (u32 i = 0; i < m_heard.count();)
         {
             Heard& h = m_heard[i];

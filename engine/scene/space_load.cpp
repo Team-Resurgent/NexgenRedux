@@ -119,7 +119,7 @@ namespace nx
         {
             const char* key = v.key();
             const auto is = [key](const char* name) { return strcmp(key, name) == 0; };
-            if (is("place") || is("onLand") || is("angles") || is("size") || is("group") || is("hits") || is("colliderAt") || is("wall") || is("range") || is("rate"))
+            if (is("place") || is("onLand") || is("angles") || is("size") || is("group") || is("hits") || is("colliderAt") || is("wall") || is("range") || is("rate") || is("reach") || is("volume") || is("seconds") || is("pathTime"))
             {
                 continue;
             }
@@ -147,6 +147,19 @@ namespace nx
                 setTexture(id, texture);
                 m_assets.release(texture);
             }
+            else if (is("sound"))
+            {
+                Asset* sound = m_world.readAsset(v, AssetType::Sound, 0, file);
+                if (sound == nullptr)
+                {
+                    return false;
+                }
+                const float reach = json["reach"].number(12);
+                if (!m_waiting.push({ sound, id, json["volume"].number(1), reach > 0.1f ? reach : 0.1f }))
+                {
+                    m_assets.release(sound);
+                }
+            }
             else if (is("shape"))
             {
                 static const char* const names[] = { "none", "box", "sphere", "cylinder", "cone", "torus", "capsule", "plane" };
@@ -171,6 +184,12 @@ namespace nx
                 if (Appearance* a = appearance(id))
                 {
                     a->color = color;
+                    // What can be seen through.
+                    if (color.a < 1 && !json["glow"].exists())
+                    {
+                        a->blend = gpu::Blend::Alpha;
+                        a->casts = false;
+                    }
                 }
             }
             else if (is("shine") || is("glowing") || is("twoSided") || is("shadow"))
@@ -218,6 +237,18 @@ namespace nx
                     c->middle = triple(json["colliderAt"], {});
                 }
             }
+            else if (is("exact"))
+            {
+                Collider3* c = v.flag() ? collider(id) : nullptr;
+                if (c)
+                {
+                    c->shape = Shape3::Shell;
+                    c->half = { 0.01f, 0.01f, 0.01f };
+                    c->group = static_cast<u8>(group);
+                    c->hits = static_cast<u16>(hits);
+                    c->wall = json["wall"].flag();
+                }
+            }
             else if (is("mass") || is("friction") || is("bounce") || is("gravity") || is("drag") || is("walker"))
             {
                 if (Body3* b = body(id))
@@ -236,6 +267,17 @@ namespace nx
                         b->walker = v.flag();
                         b->gravity = json["gravity"].exists() ? b->gravity : 1;
                     }
+                }
+            }
+            else if (is("moves"))
+            {
+                // To there and back, for ever.
+                if (Body3* b = body(id))
+                {
+                    b->pathFrom = getSpatial(id)->place;
+                    b->pathBy = triple(v, {});
+                    b->pathSeconds = json["seconds"].number(6);
+                    b->pathTime = json["pathTime"].number();
                 }
             }
             else if (is("emit"))

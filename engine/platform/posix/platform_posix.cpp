@@ -171,6 +171,47 @@ namespace nx
         return length > 0 && static_cast<size_t>(length) < sizeof(m_saves);
     }
 
+    void PlatformPosix::keepOwn(const char* from)
+    {
+        // Under names that are the same on every machine.
+        const char* slash = strrchr(from, '/');
+        std::string name;
+        for (const char* c = slash ? slash + 1 : from; *c; c++)
+        {
+            name += plainLetter(*c);
+        }
+        struct stat info = {};
+        if (stat(from, &info) != 0 || !S_ISREG(info.st_mode) || info.st_size > 64 * 1024 * 1024 || name.empty() || name.size() > 60 || name[0] == '.')
+        {
+            NX_WARN("a file that was dropped is too large, or isn't one");
+            return;
+        }
+        FileData data;
+        char folder[kMaxPath], full[kMaxPath + 64], fresh[kMaxPath + 70];
+        if (!mediaPath("own", folder) || !readWhole(from, data, MemTag::General))
+        {
+            return;
+        }
+        makeFolders(folder);
+        snprintf(full, sizeof(full), "%s/%s", folder, name.c_str());
+        snprintf(fresh, sizeof(fresh), "%s.new", full);
+        if (swapIn(full, fresh, name.c_str(), data.data, data.size))
+        {
+            m_dropped.push_back(name);
+        }
+    }
+
+    bool PlatformPosix::takeDropped(std::string& name)
+    {
+        if (m_dropped.empty())
+        {
+            return false;
+        }
+        name = m_dropped.front();
+        m_dropped.erase(m_dropped.begin());
+        return true;
+    }
+
     bool PlatformPosix::writeFile(const char* path, const void* data, size_t size)
     {
         char full[kMaxPath];

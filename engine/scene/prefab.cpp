@@ -135,10 +135,10 @@ namespace nx
         }
         else
         {
-            fail(file, json.line(), "%s: asset names start with asset: or global:", name);
+            fail(file, json.line(), "%s: asset names start with asset:, global: or own:", name);
             return nullptr;
         }
-        return type == AssetType::Font ? m_assets.font(path, size) : type == AssetType::Model ? m_assets.model(path) : m_assets.texture(path);
+        return type == AssetType::Font ? m_assets.font(path, size) : type == AssetType::Model ? m_assets.model(path) : type == AssetType::Sound ? m_assets.sound(path) : m_assets.texture(path);
     }
 
     const Prefab* World::prefabNamed(const char* name) const

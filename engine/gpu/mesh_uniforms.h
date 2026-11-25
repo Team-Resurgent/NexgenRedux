@@ -83,7 +83,7 @@ namespace nx::gpu
         put(u.tint, d.color, d.color.a);
         u.surface[0] = d.glow;
         u.surface[1] = d.shine;
-        u.surface[2] = d.lit ? 1.0f : 0.0f;
+        u.surface[2] = d.lit ? d.indoors ? 2.0f : 1.0f : 0.0f;
         u.surface[3] = d.fogged ? 1.0f : 0.0f;
         for (u32 i = 0; i < 4; i++)
         {

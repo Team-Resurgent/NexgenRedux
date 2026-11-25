@@ -367,7 +367,7 @@ void draw(Canvas@ c)
 
 An effect is one file, for every GPU that has shaders: Direct3D 11 and OpenGL now. The original Xbox has bloom but no such shaders;
 there, a line `// xbox: lava` in the file names something close that it can do: `lava`, `dissolve`, `hologram` or `flag` on a thing, and
-`tube`, `pixels`, `ripple`, `glitch` or `grade` over the picture. Without one, `effect` gives false and things are drawn as they are. A mistake in one is in the
+`tube`, `pixels`, `ripple`, `glitch`, `grade` or `ink` over the picture. Without one, `effect` gives false and things are drawn as they are. A mistake in one is in the
 log with its line, and it is left out.
 
 Over the picture:

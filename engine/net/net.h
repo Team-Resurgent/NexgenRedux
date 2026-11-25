@@ -3,6 +3,7 @@
 #include "base/grow_array.h"
 #include "base/math.h"
 #include "base/thread.h"
+#include "net/ftp.h"
 #include "net/socket.h"
 #include "platform/platform.h"
 
@@ -331,6 +332,7 @@ namespace nx
         void update(double now);
 
         double now() const { return m_now; }
+        FtpServer& ftp() { return m_ftp; }
         // Only this machine can be reached, and can reach it. For tests.
         void setOnlyHere(bool onlyHere) { m_onlyHere = onlyHere; }
         bool onlyHere() const { return m_onlyHere; }
@@ -360,6 +362,7 @@ namespace nx
         u32 m_nextWorker = 0;
         double m_now = 0;
         JobQueue m_jobs[kWorkers];
+        FtpServer m_ftp;
         GrowArray<Room*, MemTag::General> m_rooms;
         GrowArray<Connection*, MemTag::General> m_connections;
     };

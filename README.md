@@ -21,7 +21,7 @@
   <img src="docs/screenshots/main.png" alt="The showcase's main menu" width="80%">
 </p>
 
-The same scripts run everywhere, 3D and all: every one of the 56 demos runs at 53 to 60 frames a second on a real 64 MB original Xbox. The engine is self-contained: it needs
+The same scripts run everywhere, 3D and all: every one of the 57 demos runs at 53 to 60 frames a second on a real 64 MB original Xbox. The engine is self-contained: it needs
 a compiler and the platform's SDK, downloads nothing, and uses no SDL or GLFW.
 
 ## Screenshots

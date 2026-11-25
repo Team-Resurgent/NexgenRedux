@@ -73,8 +73,8 @@ namespace nx::gpu
         }
 
         // What can be done here instead of a shader someone wrote, if it says which with "// xbox: name".
-        enum class StandIn : u8 { Lava, Dissolve, Hologram, Flag, Tube, Pixels, Ripple, Glitch, Grade, Count };
-        const char* const kStandIns[] = { "lava", "dissolve", "hologram", "flag", "tube", "pixels", "ripple", "glitch", "grade" };
+        enum class StandIn : u8 { Lava, Dissolve, Hologram, Flag, Tube, Pixels, Ripple, Glitch, Grade, Ink, Count };
+        const char* const kStandIns[] = { "lava", "dissolve", "hologram", "flag", "tube", "pixels", "ripple", "glitch", "grade", "ink" };
         static_assert(sizeof(kStandIns) / sizeof(kStandIns[0]) == static_cast<size_t>(StandIn::Count));
 
         struct EffectSlot
@@ -122,9 +122,12 @@ namespace nx::gpu
                     m_device->SetStreamSource(0, nullptr, 0);
                     m_device->SetIndices(nullptr, 0);
                     m_device->SetPixelShader(0);
-                    if (m_shadowShader)
+                    for (const DWORD shader : { m_shadowShader, m_toneShader, m_edgeShader })
                     {
-                        m_device->DeletePixelShader(m_shadowShader);
+                        if (shader)
+                        {
+                            m_device->DeletePixelShader(shader);
+                        }
                     }
                 }
                 m_buffers.forEach([](BufferSlot& b) { b.buffer->Release(); });
@@ -713,6 +716,47 @@ namespace nx::gpu
                     grid(1, 1, [&](float& u, float&, float, float) -> DWORD { u -= slip; return 0xFF000050; });
                     break;
                 }
+                case StandIn::Ink:
+                    if (!makeInk())
+                    {
+                        grid(1, 1, plain);
+                        break;
+                    }
+                    // Four flat tones of each colour, a step at a time.
+                    m_device->Clear(0, nullptr, D3DCLEAR_TARGET, 0, 1, 0);
+                    m_device->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
+                    m_device->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_ONE);
+                    m_device->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE);
+                    m_device->SetPixelShader(m_toneShader);
+                    for (u32 i = 0; i < 4; i++)
+                    {
+                        const float at = 0.1f + 0.22f * static_cast<float>(i);
+                        const float constants[2][4] = { { at, at, at, 0 }, { 0.25f, 0.25f, 0.25f, 0 } };
+                        m_device->SetPixelShaderConstant(0, constants, 2);
+                        grid(1, 1, plain);
+                    }
+                    // And dark where a picture changes from one side to the other, or from above to below.
+                    m_device->SetPixelShader(m_edgeShader);
+                    m_device->SetVertexShader(D3DFVF_XYZRHW | D3DFVF_TEX4);
+                    for (DWORD i = 0; i < 4; i++)
+                    {
+                        m_device->SetTexture(i, m_copy);
+                        m_device->SetTextureStageState(i, D3DTSS_ADDRESSU, D3DTADDRESS_CLAMP);
+                        m_device->SetTextureStageState(i, D3DTSS_ADDRESSV, D3DTADDRESS_CLAMP);
+                        m_device->SetTextureStageState(i, D3DTSS_TEXCOORDINDEX, i);
+                        m_device->SetTextureStageState(i, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_DISABLE);
+                        m_device->SetTextureStageState(i, D3DTSS_MINFILTER, D3DTEXF_LINEAR);
+                        m_device->SetTextureStageState(i, D3DTSS_MAGFILTER, D3DTEXF_LINEAR);
+                    }
+                    m_device->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_ZERO);
+                    m_device->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_SRCCOLOR);
+                    quad(w, h, w, h, 0.9f, 0.9f, false);
+                    m_device->SetPixelShader(0);
+                    for (DWORD i = 1; i < 4; i++)
+                    {
+                        m_device->SetTexture(i, nullptr);
+                    }
+                    break;
                 case StandIn::Grade:
                     m_device->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE2X);
                     grid(16, 12, [&](float&, float&, float x, float y) -> DWORD
@@ -1585,6 +1629,56 @@ namespace nx::gpu
                 m_current.draws++;
             }
 
+            bool makeInk()
+            {
+                if (m_toneShader && m_edgeShader)
+                {
+                    return true;
+                }
+                constexpr DWORD kOne = PS_REGISTER_ZERO | PS_INPUTMAPPING_UNSIGNED_INVERT;
+                constexpr DWORD kMinus = PS_REGISTER_ZERO | PS_INPUTMAPPING_EXPAND_NORMAL;
+                D3DPIXELSHADERDEF tone = {};
+                tone.PSTextureModes = PS_TEXTUREMODES(PS_TEXTUREMODES_PROJECT2D, PS_TEXTUREMODES_NONE, PS_TEXTUREMODES_NONE, PS_TEXTUREMODES_NONE);
+                tone.PSCombinerCount = PS_COMBINERCOUNT(4, PS_COMBINERCOUNT_UNIQUE_C0);
+                // How far over a level, sixteen times, so that it is all or nothing.
+                tone.PSRGBInputs[0] = PS_COMBINERINPUTS(PS_REGISTER_T0 | PS_CHANNEL_RGB, kOne, PS_REGISTER_C0 | PS_CHANNEL_RGB, kMinus);
+                tone.PSRGBOutputs[0] = PS_COMBINEROUTPUTS(PS_REGISTER_DISCARD, PS_REGISTER_DISCARD, PS_REGISTER_R0, PS_COMBINEROUTPUT_SHIFTLEFT_2);
+                tone.PSRGBInputs[1] = PS_COMBINERINPUTS(PS_REGISTER_R0 | PS_CHANNEL_RGB, kOne, PS_REGISTER_ZERO, PS_REGISTER_ZERO);
+                tone.PSRGBOutputs[1] = PS_COMBINEROUTPUTS(PS_REGISTER_R0, PS_REGISTER_DISCARD, PS_REGISTER_DISCARD, PS_COMBINEROUTPUT_SHIFTLEFT_2);
+                tone.PSRGBInputs[2] = PS_COMBINERINPUTS(PS_REGISTER_R0 | PS_CHANNEL_RGB, PS_REGISTER_C0 | PS_CHANNEL_RGB, PS_REGISTER_ZERO, PS_REGISTER_ZERO);
+                tone.PSRGBOutputs[2] = PS_COMBINEROUTPUTS(PS_REGISTER_R0, PS_REGISTER_DISCARD, PS_REGISTER_DISCARD, 0);
+                tone.PSRGBInputs[3] = PS_COMBINERINPUTS(PS_REGISTER_R0 | PS_CHANNEL_RGB, kOne, PS_REGISTER_ZERO, PS_REGISTER_ZERO);
+                tone.PSRGBOutputs[3] = PS_COMBINEROUTPUTS(PS_REGISTER_R0, PS_REGISTER_DISCARD, PS_REGISTER_DISCARD, 0);
+                tone.PSC0Mapping = PS_CONSTANTMAPPING(0, 15, 1, 15, 15, 15, 15, 15);
+                tone.PSC1Mapping = PS_CONSTANTMAPPING(15, 15, 15, 15, 15, 15, 15, 15);
+
+                D3DPIXELSHADERDEF edge = {};
+                edge.PSTextureModes = PS_TEXTUREMODES(PS_TEXTUREMODES_PROJECT2D, PS_TEXTUREMODES_PROJECT2D, PS_TEXTUREMODES_PROJECT2D, PS_TEXTUREMODES_PROJECT2D);
+                edge.PSCombinerCount = PS_COMBINERCOUNT(5, 0);
+                // The corners, across from one another; squared, so that either way counts.
+                edge.PSRGBInputs[0] = PS_COMBINERINPUTS(PS_REGISTER_T0 | PS_CHANNEL_RGB, kOne, PS_REGISTER_T3 | PS_CHANNEL_RGB, kMinus);
+                edge.PSRGBOutputs[0] = PS_COMBINEROUTPUTS(PS_REGISTER_DISCARD, PS_REGISTER_DISCARD, PS_REGISTER_R0, PS_COMBINEROUTPUT_SHIFTLEFT_1);
+                edge.PSRGBInputs[1] = PS_COMBINERINPUTS(PS_REGISTER_T1 | PS_CHANNEL_RGB, kOne, PS_REGISTER_T2 | PS_CHANNEL_RGB, kMinus);
+                edge.PSRGBOutputs[1] = PS_COMBINEROUTPUTS(PS_REGISTER_DISCARD, PS_REGISTER_DISCARD, PS_REGISTER_R1, PS_COMBINEROUTPUT_SHIFTLEFT_1);
+                constexpr DWORD r0 = PS_REGISTER_R0 | PS_CHANNEL_RGB | PS_INPUTMAPPING_SIGNED_IDENTITY, r1 = PS_REGISTER_R1 | PS_CHANNEL_RGB | PS_INPUTMAPPING_SIGNED_IDENTITY;
+                edge.PSRGBInputs[2] = PS_COMBINERINPUTS(r0, r0, r1, r1);
+                edge.PSRGBOutputs[2] = PS_COMBINEROUTPUTS(PS_REGISTER_DISCARD, PS_REGISTER_DISCARD, PS_REGISTER_R0, PS_COMBINEROUTPUT_SHIFTLEFT_2);
+                edge.PSRGBInputs[3] = PS_COMBINERINPUTS(PS_REGISTER_R0 | PS_CHANNEL_RGB, kOne, PS_REGISTER_ZERO, PS_REGISTER_ZERO);
+                edge.PSRGBOutputs[3] = PS_COMBINEROUTPUTS(PS_REGISTER_R0, PS_REGISTER_DISCARD, PS_REGISTER_DISCARD, PS_COMBINEROUTPUT_AB_DOT_PRODUCT | PS_COMBINEROUTPUT_SHIFTLEFT_1);
+                edge.PSRGBInputs[4] = PS_COMBINERINPUTS(PS_REGISTER_R0 | PS_CHANNEL_RGB | PS_INPUTMAPPING_UNSIGNED_INVERT, kOne, PS_REGISTER_ZERO, PS_REGISTER_ZERO);
+                edge.PSRGBOutputs[4] = PS_COMBINEROUTPUTS(PS_REGISTER_R0, PS_REGISTER_DISCARD, PS_REGISTER_DISCARD, 0);
+                edge.PSC0Mapping = edge.PSC1Mapping = PS_CONSTANTMAPPING(15, 15, 15, 15, 15, 15, 15, 15);
+                if (FAILED(m_device->CreatePixelShader(&tone, &m_toneShader)))
+                {
+                    m_toneShader = 0;
+                }
+                if (FAILED(m_device->CreatePixelShader(&edge, &m_edgeShader)))
+                {
+                    m_edgeShader = 0;
+                }
+                return m_toneShader && m_edgeShader;
+            }
+
             void makeShadowShader()
             {
                 D3DPIXELSHADERDEF def = {};
@@ -1668,7 +1762,7 @@ namespace nx::gpu
             IDirect3DSurface8* m_savedDepth = nullptr;
             bool m_shadowsTried = false, m_inShadows = false, m_shadowed = false;
             float m_shade = 0;
-            DWORD m_shadowShader = 0;
+            DWORD m_shadowShader = 0, m_toneShader = 0, m_edgeShader = 0;
             IDirect3DTexture8* m_bloom[2] = {};
             D3DTexture m_screen;
             bool m_bloomTried = false;

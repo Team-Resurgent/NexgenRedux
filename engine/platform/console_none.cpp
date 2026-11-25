@@ -1,4 +1,5 @@
 #include "platform/console.h"
+#include "net/ftp.h"
 
 namespace nx
 {
@@ -16,4 +17,5 @@ namespace nx
     void consoleList(const char*, bool, std::vector<std::string>&) {}
     void consoleExit(ConsoleExit) {}
     bool consoleLaunch(const char*) { return false; }
+    FtpFiles* consoleFiles() { return nullptr; }
 }

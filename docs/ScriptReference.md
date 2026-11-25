@@ -933,6 +933,12 @@ What only the original Xbox has. Elsewhere `available` is false, readings are -1
 | `array<string>@ Xbox::folders(const string &in path)` | The folders in one, such as "E:\\Games". |
 | `array<string>@ Xbox::files(const string &in path)` | The files in one. |
 | `bool Xbox::launch(const string &in path)` | Runs another title, such as "E:\\Games\\Thing\\default.xbe". False if it isn't there; otherwise this one ends. |
+| `bool Xbox::startFtp(const string &in user, const string &in password, bool mayWrite = false, uint port = 21)` | Serves drives E, F and G to FTP programs on the same network, until it is stopped. The password must be four characters or more. Nothing can be changed unless it may write. Whoever has the password, and whoever can listen on the network, sees everything: FTP hides nothing. |
+| `void Xbox::stopFtp()` | Ends it. |
+| `bool Xbox::get_ftpRunning() property` | Whether it is going. |
+| `uint Xbox::get_ftpClients() property` | How many are connected. |
+| `string Xbox::get_ftpLast() property` | The latest thing that happened. |
+| `uint Xbox::get_ftpKilobytes() property` | How much has gone either way. |
 | `void Xbox::toDashboard()` | Leaves for the dashboard. |
 | `void Xbox::toFirmware()` | Leaves for the firmware, as if it had just been turned on. |
 | `void Xbox::restart()` | Restarts, without the start-up animation. |

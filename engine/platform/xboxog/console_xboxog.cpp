@@ -1,4 +1,5 @@
 #include "platform/console.h"
+#include "net/ftp.h"
 #include "base/log.h"
 
 #include <xtl.h>
@@ -324,4 +325,143 @@ namespace nx
         link("\\??\\D:", back);
         return false;
     }
+
+    namespace
+    {
+        // The drives that are the player's: not the one with the dashboard, nor those that are cleared.
+        class Drives final : public FtpFiles
+        {
+        public:
+            bool list(const std::string& path, std::vector<FtpEntry>& out) override
+            {
+                if (path == "/")
+                {
+                    for (const char letter : { 'E', 'F', 'G' })
+                    {
+                        u32 total, free;
+                        if (consoleDrive(letter, total, free) && total)
+                        {
+                            out.push_back({ std::string(1, letter), 0, true });
+                        }
+                    }
+                    return true;
+                }
+                char here[280];
+                if (!where(path, here))
+                {
+                    return false;
+                }
+                char pattern[288];
+                snprintf(pattern, sizeof(pattern), "%s%s*", here, here[strlen(here) - 1] == '\\' ? "" : "\\");
+                WIN32_FIND_DATAA found;
+                const HANDLE search = FindFirstFileA(pattern, &found);
+                if (search == INVALID_HANDLE_VALUE)
+                {
+                    FtpEntry entry;
+                    return find(path, entry) && entry.folder;   // an empty one
+                }
+                do
+                {
+                    out.push_back({ found.cFileName, static_cast<u64>(found.nFileSizeHigh) << 32 | found.nFileSizeLow, (found.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0 });
+                } while (out.size() < 4000 && FindNextFileA(search, &found));
+                FindClose(search);
+                return true;
+            }
+
+            bool find(const std::string& path, FtpEntry& out) override
+            {
+                char here[280];
+                if (!where(path, here))
+                {
+                    return false;
+                }
+                if (path.size() == 2)
+                {
+                    u32 total, free;
+                    out.folder = true;
+                    return consoleDrive(path[1], total, free) && total;
+                }
+                WIN32_FIND_DATAA found;
+                const HANDLE search = FindFirstFileA(here, &found);
+                if (search == INVALID_HANDLE_VALUE)
+                {
+                    return false;
+                }
+                FindClose(search);
+                out.name = found.cFileName;
+                out.size = static_cast<u64>(found.nFileSizeHigh) << 32 | found.nFileSizeLow;
+                out.folder = (found.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+                return true;
+            }
+
+            void* open(const std::string& path, bool write) override
+            {
+                char here[280];
+                if (!where(path, here) || path.size() < 4)
+                {
+                    return nullptr;
+                }
+                const HANDLE file = CreateFileA(here, write ? GENERIC_WRITE : GENERIC_READ, write ? 0 : FILE_SHARE_READ, nullptr, write ? CREATE_ALWAYS : OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, nullptr);
+                return file == INVALID_HANDLE_VALUE ? nullptr : file;
+            }
+
+            bool seek(void* file, u64 at) override
+            {
+                LONG high = static_cast<LONG>(at >> 32);
+                return SetFilePointer(file, static_cast<LONG>(at & 0xFFFFFFFF), &high, FILE_BEGIN) != 0xFFFFFFFF;
+            }
+
+            size_t read(void* file, void* data, size_t size) override
+            {
+                DWORD got = 0;
+                return ReadFile(file, data, static_cast<DWORD>(size), &got, nullptr) ? got : 0;
+            }
+
+            size_t write(void* file, const void* data, size_t size) override
+            {
+                DWORD put = 0;
+                return WriteFile(file, data, static_cast<DWORD>(size), &put, nullptr) ? put : 0;
+            }
+
+            void close(void* file) override { CloseHandle(file); }
+
+            bool remove(const std::string& path, bool folder) override
+            {
+                char here[280];
+                return where(path, here) && path.size() > 3 && (folder ? RemoveDirectoryA(here) : DeleteFileA(here));
+            }
+
+            bool makeFolder(const std::string& path) override
+            {
+                char here[280];
+                return where(path, here) && CreateDirectoryA(here, nullptr);
+            }
+
+            bool rename(const std::string& from, const std::string& to) override
+            {
+                char a[280], b[280];
+                return where(from, a) && where(to, b) && MoveFileA(a, b);
+            }
+
+        private:
+            // "/E/Games" as "E:\Games", and then as the system has it.
+            static bool where(const std::string& path, char (&out)[280])
+            {
+                if (path.size() < 2 || (path.size() > 2 && path[2] != '/') || (path[1] & ~32) < 'E' || (path[1] & ~32) > 'G')
+                {
+                    return false;
+                }
+                std::string plain = std::string(1, path[1]) + ":\\" + (path.size() > 3 ? path.substr(3) : "");
+                for (char& c : plain)
+                {
+                    c = c == '/' ? '\\' : c;
+                }
+                return local(plain.c_str(), out);
+            }
+        };
+
+        Drives g_drives;
+    }
+
+    FtpFiles* consoleFiles() { return &g_drives; }
 }

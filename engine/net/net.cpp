@@ -28,6 +28,7 @@ namespace nx
 
     void Net::shutdown()
     {
+        m_ftp.stop();
         for (u32 i = 0; i < kWorkers; i++)
         {
             m_jobs[i].stop();
@@ -42,6 +43,7 @@ namespace nx
 
     void Net::update(double now)
     {
+        m_ftp.update(now);
         m_now = now;
         for (u32 i = 0; i < m_rooms.count(); i++)
         {

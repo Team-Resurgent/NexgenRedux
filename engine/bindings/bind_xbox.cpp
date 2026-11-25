@@ -1,4 +1,5 @@
 #include "bindings/script_refs.h"
+#include "net/net.h"
 #include "platform/console.h"
 
 #include <scriptarray/scriptarray.h>
@@ -43,6 +44,17 @@ namespace nx
         void toDashboard() { consoleExit(ConsoleExit::Dashboard); }
         void powerOff() { consoleExit(ConsoleExit::Off); }
         bool launch(const std::string& path) { return consoleLaunch(path.c_str()); }
+        bool startFtp(const std::string& user, const std::string& password, bool mayWrite, u32 port)
+        {
+            Net& net = *services().net;
+            FtpFiles* files = consoleFiles();
+            return files && port < 65536 && net.start() && net.ftp().start(*files, user, password, mayWrite, static_cast<u16>(port), net.onlyHere());
+        }
+        void stopFtp() { services().net->ftp().stop(); }
+        bool ftpRunning() { return services().net->ftp().running(); }
+        u32 ftpClients() { return services().net->ftp().clients(); }
+        std::string ftpLast() { return services().net->ftp().running() ? services().net->ftp().last() : ""; }
+        u32 ftpKilobytes() { return static_cast<u32>((services().net->ftp().sent() + services().net->ftp().received()) / 1024); }
     }
 
     void bindXbox(Binder& b)
@@ -80,6 +92,12 @@ namespace nx
         b.function("array<string>@ folders(const string &in path)", NX_FN(folders), "The folders in one, such as \"E:\\\\Games\".");
         b.function("array<string>@ files(const string &in path)", NX_FN(files), "The files in one.");
         b.function("bool launch(const string &in path)", NX_FN(launch), "Runs another title, such as \"E:\\\\Games\\\\Thing\\\\default.xbe\". False if it isn't there; otherwise this one ends.");
+        b.function("bool startFtp(const string &in user, const string &in password, bool mayWrite = false, uint port = 21)", NX_FN(startFtp), "Serves drives E, F and G to FTP programs on the same network, until it is stopped. The password must be four characters or more. Nothing can be changed unless it may write. Whoever has the password, and whoever can listen on the network, sees everything: FTP hides nothing.");
+        b.function("void stopFtp()", NX_FN(stopFtp), "Ends it.");
+        b.function("bool get_ftpRunning() property", NX_FN(ftpRunning), "Whether it is going.");
+        b.function("uint get_ftpClients() property", NX_FN(ftpClients), "How many are connected.");
+        b.function("string get_ftpLast() property", NX_FN(ftpLast), "The latest thing that happened.");
+        b.function("uint get_ftpKilobytes() property", NX_FN(ftpKilobytes), "How much has gone either way.");
         b.function("void toDashboard()", NX_FN(toDashboard), "Leaves for the dashboard.");
         b.function("void toFirmware()", NX_FN(toFirmware), "Leaves for the firmware, as if it had just been turned on.");
         b.function("void restart()", NX_FN(restart), "Restarts, without the start-up animation.");

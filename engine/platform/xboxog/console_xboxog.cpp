@@ -58,21 +58,40 @@ namespace nx
             }
         }
 
-        // Titles are given only their own drives to begin with. D is theirs, and left as it is.
-        bool mount(char letter)
+        bool link(const char* name, const char* target)
         {
-            letter = static_cast<char>(letter >= 'a' ? letter - 32 : letter);
-            const char* where = device(letter);
-            if (where == nullptr || letter == 'D')
+            OBJECT_STRING from, to;
+            RtlInitAnsiString(reinterpret_cast<PANSI_STRING>(&from), name);
+            RtlInitAnsiString(reinterpret_cast<PANSI_STRING>(&to), target);
+            return NT_SUCCESS(IoCreateSymbolicLink(&from, &to));
+        }
+
+        void unlink(const char* name)
+        {
+            OBJECT_STRING from;
+            RtlInitAnsiString(reinterpret_cast<PANSI_STRING>(&from), name);
+            IoDeleteSymbolicLink(&from);
+        }
+
+        // A path as the system can open it. Titles are given only their own drives to begin with, and on a
+        // development kit some letters are taken for something else: so each gets a name of ours. D is the title's.
+        bool local(const char* path, char (&out)[280])
+        {
+            const char letter = static_cast<char>(path[0] >= 'a' ? path[0] - 32 : path[0]);
+            const char* where = path[0] && path[1] == ':' ? device(letter) : nullptr;
+            if (where == nullptr || strlen(path) > 240)
             {
-                return where != nullptr;
+                return false;
             }
-            char name[16];
-            snprintf(name, sizeof(name), "\\??\\%c:", letter);
-            OBJECT_STRING link, target;
-            RtlInitAnsiString(reinterpret_cast<PANSI_STRING>(&link), name);
-            RtlInitAnsiString(reinterpret_cast<PANSI_STRING>(&target), where);
-            IoCreateSymbolicLink(&link, &target);   // fails if it is there already, which is as good
+            if (letter == 'D')
+            {
+                snprintf(out, sizeof(out), "%s", path);
+                return true;
+            }
+            char name[24];
+            snprintf(name, sizeof(name), "\\??\\Nexgen-%c:", letter);
+            link(name, where);   // fails if it has been done, which is as good
+            snprintf(out, sizeof(out), "Nexgen-%c:%s", letter, path + 2);
             return true;
         }
 
@@ -212,12 +231,12 @@ namespace nx
     bool consoleDrive(char letter, u32& total, u32& free)
     {
         total = free = 0;
-        if (!mount(letter))
+        const char drive[] = { letter, ':', '\\', 0 };
+        char root[280];
+        if (!local(drive, root))
         {
             return false;
         }
-        char root[8];
-        snprintf(root, sizeof(root), "%c:\\", letter);
         ULARGE_INTEGER mine, all, left;
         if (!GetDiskFreeSpaceExA(root, &mine, &all, &left))
         {
@@ -230,13 +249,14 @@ namespace nx
 
     void consoleList(const char* path, bool folders, std::vector<std::string>& out)
     {
-        if (path[0] == 0 || path[1] != ':' || !mount(path[0]))
+        char folder[280];
+        if (!local(path, folder))
         {
             return;
         }
-        char pattern[280];
-        const size_t length = strlen(path);
-        snprintf(pattern, sizeof(pattern), "%s%s*", path, path[length - 1] == '\\' ? "" : "\\");
+        char pattern[288];
+        const size_t length = strlen(folder);
+        snprintf(pattern, sizeof(pattern), "%s%s*", folder, folder[length - 1] == '\\' ? "" : "\\");
         WIN32_FIND_DATAA found;
         const HANDLE search = FindFirstFileA(pattern, &found);
         if (search == INVALID_HANDLE_VALUE)
@@ -274,31 +294,34 @@ namespace nx
 
     bool consoleLaunch(const char* path)
     {
+        char here[280];
         const char* file = strrchr(path, '\\');
-        if (path[0] == 0 || path[1] != ':' || path[2] != '\\' || file == nullptr || strlen(path) > 250 || !mount(path[0]))
+        if (file == nullptr || path[0] == 'D' || path[0] == 'd' || !local(path, here))
         {
             return false;
         }
-        const DWORD attributes = GetFileAttributesA(path);
+        const DWORD attributes = GetFileAttributesA(here);
         if (attributes == 0xFFFFFFFF || (attributes & FILE_ATTRIBUTE_DIRECTORY))
         {
             return false;
         }
-        // The kernel is told where by its own names, with the folder, which becomes D, before a semicolon.
-        if (LaunchDataPage == nullptr)
+        // Its folder becomes D, as it will be for the title, and the launch finds it there.
+        char folder[320], image[280], back[320];
+        snprintf(folder, sizeof(folder), "%s%.*s", device(path[0]), static_cast<int>(file - path - 2), path + 2);
+        snprintf(image, sizeof(image), "D:\\%s", file + 1);
+        snprintf(back, sizeof(back), "%.*s", static_cast<int>(XeImageFileName->Length), XeImageFileName->Buffer);
+        if (char* end = strrchr(back, '\\'))
         {
-            LaunchDataPage = static_cast<PLAUNCH_DATA_PAGE>(MmAllocateContiguousMemory(4096));
+            *end = 0;
         }
-        if (LaunchDataPage == nullptr)
+        unlink("\\??\\D:");
+        if (link("\\??\\D:", folder))
         {
-            return false;
+            XLaunchNewImageA(image, nullptr);
         }
-        MmPersistContiguousMemory(LaunchDataPage, 4096, TRUE);
-        memset(LaunchDataPage, 0, 4096);
-        LaunchDataPage->Header.dwLaunchDataType = 0xFFFFFFFF;   // none
-        const size_t folder = static_cast<size_t>(file - path);
-        snprintf(LaunchDataPage->Header.szLaunchPath, sizeof(LaunchDataPage->Header.szLaunchPath), "%s%.*s;%s", device(path[0]), static_cast<int>(folder - 2), path + 2, file + 1);
-        HalReturnToFirmware(HalQuickRebootRoutine);
-        return true;
+        // Only if it didn't work: this title needs its own again.
+        unlink("\\??\\D:");
+        link("\\??\\D:", back);
+        return false;
     }
 }

@@ -56,10 +56,10 @@ Saves are in `%LOCALAPPDATA%\Nexgen` (Windows), `~/.local/share/nexgen` (Linux),
 
 ## Record a video
 
-On Windows, with ffmpeg 8 or later. The app isn't involved: its window and the computer's sound are recorded from outside.
+On Windows, with ffmpeg. The app hands over each frame and its sound, so none is missed, and nothing is shown or heard meanwhile.
 
 ```powershell
-python tools/record/record.py build/windows/showcase/Release/nexgen.exe build/windows/Release/loopback.exe demos.mp4 8
+python tools/record/record.py build/windows/showcase/Release/nexgen.exe demos.mp4 8
 ```
 
 ## Cook

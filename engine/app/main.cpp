@@ -23,6 +23,7 @@
 //   --tour N        open every screen N times over, unattended, then stop
 //   --bench         with --frames: don't wait for the display, and say how long frames took
 //   --demo SECONDS  show every screen, or the one given, for a while, playing it, then stop
+//   --record FILE --record-sound FILE   with --demo: write each frame (RGBA), and the sound (16-bit, stereo, 48 kHz)
 //   --docs FILE     write the script reference and stop
 //   --budget MB     how much images and fonts may take
 //   --dev           reload scripts and images when their files change
@@ -39,6 +40,8 @@ namespace
         const char* screen = nullptr;
         const char* capture = nullptr;
         const char* docs = nullptr;
+        const char* record = nullptr;
+        const char* recordSound = "";
         int frames = 0;
         int tour = 0;
         float demo = 0;
@@ -91,6 +94,48 @@ namespace
         return ok;
     }
 
+    // Every frame and all that is heard, whatever the machine can keep up with showing.
+    class Recording
+    {
+    public:
+        bool open(const char* path, const char* sound, gpu::Device& device)
+        {
+            device.size(m_width, m_height);
+            m_pixels = static_cast<u8*>(memAlloc(bytes(), MemTag::General));
+            m_video = fopen(path, "wb");
+            m_sound = fopen(sound, "wb");
+            return m_pixels && m_video && m_sound;
+        }
+
+        ~Recording()
+        {
+            for (FILE* file : { m_video, m_sound })
+            {
+                if (file)
+                {
+                    fclose(file);
+                }
+            }
+            memFree(m_pixels);
+        }
+
+        bool frame(gpu::Device& device, Audio& audio)
+        {
+            constexpr u32 heard = kMixRate / 60;
+            i16 sound[heard * 2];
+            audio.mix(sound, heard);
+            return device.capture(m_pixels, bytes()) && fwrite(m_pixels, 1, bytes(), m_video) == bytes() && fwrite(sound, 1, sizeof(sound), m_sound) == sizeof(sound);
+        }
+
+    private:
+        size_t bytes() const { return static_cast<size_t>(m_width) * m_height * 4; }
+
+        u32 m_width = 0, m_height = 0;
+        u8* m_pixels = nullptr;
+        FILE* m_video = nullptr;
+        FILE* m_sound = nullptr;
+    };
+
     bool writeText(const char* path, const std::string& text)
     {
         FILE* file = fopen(path, "wb");
@@ -114,8 +159,10 @@ namespace
         bool step(Services& s, float dt)
         {
             Screens& screens = *s.screens;
+            m_steps++;
             if (screens.loading())
             {
+                s.time = screens.depth() > 1 && m_clock > 0 ? m_clock : s.time;
                 return false;
             }
             m_left -= dt;
@@ -153,13 +200,17 @@ namespace
                 return true;
             }
             const ScreenInfo& info = *screens.info(m_next++);
-            NX_INFO("demo: %s", info.id);
+            NX_INFO("demo: %s frame %u", info.id, static_cast<unsigned>(m_steps));
             snprintf(m_script, sizeof(m_script), "%s", info.demo);
             m_at = m_script;
             m_hold = kBeforePlaying;
             m_pressed = 0;
             m_length = info.seconds > m_seconds ? info.seconds : m_seconds;
             m_left = m_length;
+            // Each begins alike, on every machine and however long the others took to load. The time never goes back.
+            s.random = 2463534242u;
+            m_clock = m_next * 60.0 > s.time ? m_next * 60.0 : s.time;
+            s.time = m_clock;
             screens.push(info.id);
             return false;
         }
@@ -288,7 +339,8 @@ namespace
         const char* m_at = m_script;
         float m_hold = 0;
         u32 m_pressed = 0;
-        u32 m_moves = 0, m_beat = 0;
+        u32 m_moves = 0, m_beat = 0, m_steps = 0;
+        double m_clock = 0;
         Asset* m_title = nullptr;
         Asset* m_text = nullptr;
     };
@@ -440,7 +492,7 @@ namespace
             const bool small = platform.totalMemory() && platform.totalMemory() <= 128u * 1024 * 1024;
             const size_t textures = options.budget ? options.budget : (small ? 20u : 256u) * 1024 * 1024;
             ok = assets.init(*device, platform, textures, (small ? 6u : 64u) * 1024 * 1024) && canvas.init(*device, assets) && host.init();
-            ok = ok && audio.init(options.null || options.docs || options.hidden ? createNullAudioOutput(true) : createAudioOutput());
+            ok = ok && audio.init(options.null || options.docs || options.hidden || options.record ? createNullAudioOutput(options.record == nullptr) : createAudioOutput());
             audio.onFinished([](void* asset, void* cache) { static_cast<Assets*>(cache)->release(static_cast<Asset*>(asset)); }, &assets);
             coroutines.init(host);
             save.init(platform, "showcase");
@@ -470,15 +522,23 @@ namespace
                 {
                     screens.push(options.screen);
                 }
+                bool done = false;
                 Tour tour(options.tour);
-                device->setWait(!options.bench);
+                device->setWait(!options.bench && !options.record);
+                Recording recording;
+                if (options.record && !recording.open(options.record, options.recordSound, *device))
+                {
+                    NX_ERROR("cannot write %s", options.record);
+                    ok = false;
+                    done = true;
+                }
+                const double recordingBegan = platform.seconds();
                 double updating = 0, drawing = 0, began = 0;
                 Demo demo(options.demo, options.screen);
                 double last = platform.seconds();
                 double nextLook = 0;
                 float unspent = 0, between = 0;
                 int frame = 0;
-                bool done = false;
                 while (!done && platform.pumpEvents() && !screens.quitRequested())
                 {
                     const double now = platform.seconds();
@@ -512,7 +572,7 @@ namespace
 
                     // Whole steps of a fixed length, so every machine runs the same. After a long stall
                     // the time is dropped rather than caught up on.
-                    const bool fixed = options.frames > 0 || options.tour > 0;
+                    const bool fixed = options.frames > 0 || options.tour > 0 || options.record;
                     unspent = fixed ? kStep : unspent + (elapsed > 0.1f ? 0.1f : elapsed);
                     // Half a frame early is close enough, and avoids a stutter when the display is 60 Hz.
                     while (unspent >= kStep * 0.5f && !screens.quitRequested())
@@ -548,9 +608,19 @@ namespace
                         drawing += platform.seconds() - updated;
                         device->endFrame();
                         services.draws = canvas.draws();
+                        if (options.record && !recording.frame(*device, audio))
+                        {
+                            NX_ERROR("the recording stopped");
+                            done = true;
+                        }
                     }
                     host.collectStep();
                     frame++;
+                    // No faster than it is seen, as some of it waits for a disk or a network.
+                    if (const double ahead = options.record ? recordingBegan + frame / 60.0 - platform.seconds() : 0; ahead > 0.002)
+                    {
+                        platform.sleep(ahead);
+                    }
                     done = done || (options.frames > 0 && frame >= options.frames);
                 }
                 if (screens.failed())
@@ -627,6 +697,8 @@ int main(int argc, char** argv)
         const char* a = argv[i];
         if (strcmp(a, "--screen") == 0) options.screen = value(i);
         else if (strcmp(a, "--capture") == 0) options.capture = value(i);
+        else if (strcmp(a, "--record") == 0) options.record = value(i);
+        else if (strcmp(a, "--record-sound") == 0) options.recordSound = value(i);
         else if (strcmp(a, "--docs") == 0) options.docs = value(i);
         else if (strcmp(a, "--frames") == 0) options.frames = atoi(value(i));
         else if (strcmp(a, "--tour") == 0) options.tour = atoi(value(i));

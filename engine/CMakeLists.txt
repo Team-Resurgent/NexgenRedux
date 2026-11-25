@@ -248,12 +248,6 @@ if(NOT XBOXOG AND NOT XBOX360 AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
   target_link_libraries(cook PRIVATE nx_assets)
   nx_options(cook)
   nx_no_warnings(tools/cook/third_party.c)
-  if(WIN32)
-    # For recording videos of the window; nothing in the app uses it.
-    add_executable(loopback tools/record/loopback.c)
-    target_include_directories(loopback PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-    nx_no_warnings(tools/record/loopback.c)
-  endif()
 
   enable_testing()
   add_executable(nx_tests tests/main.cpp tests/test_base.cpp tests/test_gpu_null.cpp tests/test_audio.cpp tests/test_services.cpp tests/test_script.cpp tests/test_engine.cpp tests/test_scene.cpp tests/test_space.cpp tests/test_ui.cpp tests/test_net.cpp tests/test_ftp.cpp tests/test_json.cpp)

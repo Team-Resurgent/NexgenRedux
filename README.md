@@ -136,6 +136,7 @@ The [latest release](https://github.com/Team-Resurgent/NexgenRedux/releases/late
 | `Nexgen-macos-arm64`, `-macos-x64` | Unzip and open the app. It isn't notarised: the first time, right-click it and choose Open |
 | `Nexgen-uwp-x64` | Xbox One, Xbox Series or Windows, in Developer Mode: install the `.cer` and then the package, or upload the package in the Xbox Device Portal |
 | `Nexgen-xbox-og` | Copy the folder to the console, or run the `.iso` in xemu or from an ODE |
+| `Nexgen-vscode.vsix` | Debugs scripts in VS Code: `code --install-extension Nexgen-vscode.vsix` |
 
 To change a demo, edit its `main.as` in `media/showcase` (inside the app on macOS, under `Contents/Resources`). Started with
 `--dev`, the showcase reloads scripts and images as they are saved.

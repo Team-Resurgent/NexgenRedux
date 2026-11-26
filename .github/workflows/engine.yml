@@ -61,6 +61,15 @@ jobs:
       if: runner.os == 'Linux'
       run: xvfb-run -a -s "-screen 0 1280x720x24" build/showcase/nexgen --hidden --tour 1
 
+    # Through the VS Code extension, as VS Code would: a breakpoint, stepping, and what the scripts hold.
+    - name: Debug a script
+      if: runner.os != 'macOS'
+      run: |
+        case "$RUNNER_OS" in
+          Windows) node engine/tools/vscode/test.js build/showcase/Release/nexgen.exe build/showcase/Release/media ;;
+          Linux)   xvfb-run -a -s "-screen 0 1280x720x24" node engine/tools/vscode/test.js build/showcase/nexgen build/showcase/media ;;
+        esac
+
     - name: Package
       run: |
         package="Nexgen-${{ matrix.name }}"
@@ -294,9 +303,32 @@ jobs:
         path: dist/*.zip
         if-no-files-found: error
 
+  # The extension that debugs scripts in VS Code, packed to be installed.
+  vscode:
+    name: vscode
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v5
+
+    - name: Check and pack
+      run: |
+        node --check engine/tools/vscode/extension.js
+        node --check engine/tools/vscode/test.js
+        for f in engine/tools/vscode/*.json; do python3 -m json.tool "$f" > /dev/null; done
+        mkdir -p dist
+        python3 engine/tools/vscode/package.py dist/Nexgen-vscode.vsix
+        python3 -c "import zipfile; names = zipfile.ZipFile('dist/Nexgen-vscode.vsix').namelist(); assert 'extension/extension.js' in names and 'extension.vsixmanifest' in names, names"
+
+    - uses: actions/upload-artifact@v5
+      with:
+        name: Nexgen-vscode
+        path: dist/*.vsix
+        if-no-files-found: error
+
   release:
     name: Release
-    needs: [ desktop, cook, variants, xboxog, uwp ]
+    needs: [ desktop, cook, variants, xboxog, uwp, vscode ]
     if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
     permissions:
@@ -324,6 +356,7 @@ jobs:
         | `macos-arm64`, `macos-x64` | Unzip and open the app. It is not notarised: the first time, right-click it and choose Open |
         | `uwp-x64` | Xbox One, Xbox Series or Windows, in Developer Mode: install the `.cer` and then the package, or upload the package in the Xbox Device Portal |
         | `xbox-og` | Copy the folder to the console, or run the `.iso` in xemu or from an ODE |
+        | `vscode` | Debugs scripts in VS Code: `code --install-extension Nexgen-vscode.vsix`, then Run > Add Configuration > Nexgen Redux |
         | `cook-*` | The cook tool by itself, for x64 and arm64: `cook` is the command, `nexgen-cook` the window. On macOS, right-click the app and choose Open the first time |
 
         EOF

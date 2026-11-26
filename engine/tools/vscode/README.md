@@ -13,6 +13,8 @@ It also colours AngelScript.
 
 ## Installing
 
+Each release has it as `Nexgen-vscode.vsix`: `code --install-extension Nexgen-vscode.vsix`. Or make it from here:
+
 ```
 python engine/tools/vscode/package.py
 code --install-extension engine/tools/vscode/nexgen-redux-1.0.0.vsix

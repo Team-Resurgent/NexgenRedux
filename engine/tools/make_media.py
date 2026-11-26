@@ -110,6 +110,9 @@ def effects():
     save('boost', (smooth(noise(1.1), 10) * 1.2 + tone([120, 420], 1.1, 'saw') * 0.35) * np.sin(np.pi * np.minimum(seconds(1.1) / 1.1, 1)) ** 1.3, 0.6)
     save('gate', np.concatenate([tone(784, 0.06, 'tri') * fall(0.06, 10), tone(1175, 0.35, 'tri') * fall(0.35, 8)]), 0.5)
     save('case', (np.diff(noise(0.12), prepend=0) * 0.7 + tone([900, 500], 0.12, 'tri') * 0.4) * fall(0.12, 38, 0.001), 0.5)
+    # Without noise, so the others stay as they were.
+    save('laser', tone([1800, 520], 0.09, 'square') * fall(0.09, 30, 0.001) * 0.6 + tone([3600, 1040], 0.09) * fall(0.09, 45, 0.001) * 0.3, 0.32)
+    save('zap', tone([480, 1150], 0.16, 'tri', 0.3) * fall(0.16, 14, 0.002), 0.4)
 
 
 NOTE = {n: i for i, n in enumerate(('C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'))}

@@ -12,7 +12,8 @@ import subprocess
 import sys
 
 PIPE = r'\\.\pipe\nexgen-record-%d' % os.getpid()
-WIDTH, HEIGHT = 1280, 720
+# RECORD_SIZE=1920x1080 for another size.
+WIDTH, HEIGHT = (int(n) for n in os.environ.get('RECORD_SIZE', '1280x720').split('x'))
 
 
 def main(app, video, seconds, screen):
@@ -21,7 +22,7 @@ def main(app, video, seconds, screen):
     pipe = ctypes.c_void_p(kernel.CreateNamedPipeW(PIPE, 1, 0, 1, 0, 1 << 24, 0, None))  # to be read, as bytes
     # Not called PIPE.pcm, which would be a pipe too.
     pcm = os.path.abspath(video) + '.pcm'
-    game = subprocess.Popen([app, '--hidden', '--demo', seconds, '--record', PIPE, '--record-sound', pcm] + (['--screen', screen] if screen else []),
+    game = subprocess.Popen([app, '--hidden', '--size', str(WIDTH), str(HEIGHT), '--demo', seconds, '--record', PIPE, '--record-sound', pcm] + (['--screen', screen] if screen else []),
                             cwd=os.path.dirname(os.path.abspath(app)), stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
     kernel.ConnectNamedPipe(pipe, None)
     picture = video + '.part.mp4'

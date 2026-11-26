@@ -388,6 +388,21 @@ namespace nx
         addQuad({ x, y, 0, 0, a }, { x + w, y, 0, 0, a }, { x + w, y + h, 0, 0, b }, { x, y + h, 0, 0, b });
     }
 
+    // Slices for a quarter circle of this radius: as few as stay within a quarter of a pixel of the true curve, as
+    // arc() does, so that small corners on a small screen cost little.
+    int Canvas::cornerSteps(float radius) const
+    {
+        const float* m = m_state.m;
+        const float pixels = radius * sqrtf(fabsf(m[0] * m[3] - m[1] * m[2]));
+        if (pixels <= 1)
+        {
+            return 1;
+        }
+        const float side = 2 * acosf(1 - 0.25f / pixels);
+        const int steps = static_cast<int>(ceilf(kPi * 0.5f / side));
+        return steps < 1 ? 1 : steps > 12 ? 12 : steps;
+    }
+
     void Canvas::roundRect(float x, float y, float w, float h, float radius, const Color& color)
     {
         use({}, 1, 1);
@@ -399,7 +414,7 @@ namespace nx
         quad(x + w - r, y + r, r, h - 2 * r, 0, 0, 0, 0, c);
         const float cx[4] = { x + w - r, x + r, x + r, x + w - r };
         const float cy[4] = { y + h - r, y + h - r, y + r, y + r };
-        constexpr int kSteps = 6;
+        const int kSteps = cornerSteps(r);
         for (int corner = 0; corner < 4; corner++)
         {
             for (int i = 0; i < kSteps; i++)
@@ -425,7 +440,7 @@ namespace nx
         const float cx[4] = { x + w - r, x + r, x + r, x + w - r };
         const float cy[4] = { y + h - r, y + h - r, y + r, y + r };
         const float in = r > t ? r - t : 0;
-        constexpr int kSteps = 6;
+        const int kSteps = cornerSteps(r);
         for (int corner = 0; corner < 4 && r > 0; corner++)
         {
             for (int i = 0; i < kSteps; i++)

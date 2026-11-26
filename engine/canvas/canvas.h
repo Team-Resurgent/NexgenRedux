@@ -124,6 +124,7 @@ namespace nx
         };
 
         static constexpr u32 kMaxVertices = 6144;
+        int cornerSteps(float radius) const;
         static constexpr u32 kMaxStates = 32;
 
         u32 pack(const Color& color) const;

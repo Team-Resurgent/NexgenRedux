@@ -147,6 +147,27 @@ namespace nx
                 setTexture(id, texture);
                 m_assets.release(texture);
             }
+            else if (is("sprite"))
+            {
+                // A picture that faces the camera; "views" across it and "frames" down.
+                Asset* sheet = m_world.readAsset(v, AssetType::Texture, 0, file);
+                if (sheet == nullptr)
+                {
+                    return false;
+                }
+                const Appearance* a = appearance(id);
+                setSprite(id, sheet, a && a->spriteAngles ? a->spriteAngles : 1, a && a->spriteFrames ? a->spriteFrames : 1);
+                m_assets.release(sheet);
+            }
+            else if (is("views") || is("frames"))
+            {
+                if (Appearance* a = appearance(id))
+                {
+                    const double n = v.number();
+                    const u8 count = static_cast<u8>(n < 1 ? 1 : n > 64 ? 64 : n);
+                    (is("views") ? a->spriteAngles : a->spriteFrames) = count;
+                }
+            }
             else if (is("sound"))
             {
                 Asset* sound = m_world.readAsset(v, AssetType::Sound, 0, file);

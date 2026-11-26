@@ -391,6 +391,7 @@ namespace nx
         // --- App and maths ---
 
         float appTime() { return static_cast<float>(services().time); }
+        double appNow() { return services().platform->seconds(); }
         float appFps() { return services().fps; }
         bool appDevelopment() { return services().development; }
         u32 appReloads() { return services().reloads; }
@@ -416,6 +417,8 @@ namespace nx
         }
         float lerp(float a, float b, float t) { return a + (b - a) * t; }
         float clampFloat(float v, float low, float high) { return v < low ? low : v > high ? high : v; }
+        float leastOf(float a, float b) { return a < b ? a : b; }
+        float mostOf(float a, float b) { return a > b ? a : b; }
         float smooth(float t) { t = clampFloat(t, 0, 1); return t * t * (3 - 2 * t); }
         float bounce(float t)
         {
@@ -773,6 +776,7 @@ namespace nx
             b.section("App", "The machine and how it is doing.");
             b.names("App");
             b.function("float get_time() property", NX_FN(appTime), "Seconds since the app started.");
+            b.function("double get_now() property", NX_FN(appNow), "Seconds from some moment, to a millionth or so: for timing how long something takes. Unlike `time`, it goes on during a frame.");
             b.function("float get_fps() property", NX_FN(appFps), "Frames a second, averaged.");
             b.function("uint get_draws() property", NX_FN(appDraws), "Draw calls in the last frame.");
             b.function("string get_platform() property", NX_FN(appPlatform), "What it is running on.");
@@ -807,6 +811,8 @@ namespace nx
             b.function("int randomInt(int low, int high)", NX_FN(randomInt), "A whole number from low to high, including both.");
             b.function("float lerp(float a, float b, float t)", NX_FN(lerp), "From a to b as t goes from 0 to 1.");
             b.function("float clamp(float value, float low, float high)", NX_FN(clampFloat), "Kept within limits.");
+            b.function("float min(float a, float b)", NX_FN(leastOf), "The smaller of two.");
+            b.function("float max(float a, float b)", NX_FN(mostOf), "The larger of two.");
             b.function("float smooth(float t)", NX_FN(smooth), "0 to 1, starting and ending gently.");
             b.function("float bounce(float t)", NX_FN(bounce), "0 to 1, bouncing as it lands.");
 

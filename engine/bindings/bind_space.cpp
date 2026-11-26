@@ -344,6 +344,28 @@ namespace nx
         Vec3 spaceWind() { return space().wind(); }
         void spaceGrass(const ModelRef* tuft, float perSquareMetre, float distance) { space().setGrass(tuft ? tuft->asset : nullptr, perSquareMetre, distance); }
         float spaceImpostors() { return space().impostors(); }
+        bool spaceNavigate(const Vec3& middle, float size, float cell, float climb, u32 groups) { return space().navigate(middle, size, cell, climb, groups); }
+        bool spacePath(const Vec3& from, const Vec3& to, CScriptArray* out)
+        {
+            GrowArray<Vec3> way;
+            const bool reached = space().findPath(from, to, way);
+            if (out)
+            {
+                out->Resize(way.count());
+                for (u32 i = 0; i < way.count(); i++)
+                {
+                    *static_cast<Vec3*>(out->At(i)) = way[i];
+                }
+            }
+            return reached;
+        }
+        bool spaceWalkable(const Vec3& at) { return space().walkable(at); }
+        Vec3 spaceNearestWalkable(const Vec3& at)
+        {
+            Vec3 out = at;
+            space().nearestWalkable(at, out);
+            return out;
+        }
         void spaceSetImpostors(float v) { space().setImpostors(v); }
         void spaceSetWind(const Vec3& v) { space().setWind(v); }
         bool spaceLines() { return space().lines(); }
@@ -635,6 +657,10 @@ namespace nx
         b.function("void sky(const Color &in top, const Color &in horizon)", NX_FN(spaceSky), "Draws a sky, with the sun in it. Without one, what is on the canvas already is behind.");
         b.function("void fog(const Color &in color, float start, float end)", NX_FN(spaceFog), "Hides what is far away.");
         b.function("void grass(Model@+ tuft, float perSquareMetre = 3, float distance = 30)", NX_FN(spaceGrass), "Grows tufts of a model over the land near the camera, where it is green, flat enough and dry, coloured as the land is there; they bend in the wind. null for none.");
+        b.function("bool navigate(const Vec3 &in middle, float size, float cell = 1, float climb = 0.6f, uint groups = 0xFFFD)", NX_FN(spaceNavigate), "Works out where things can walk, in squares over a part of the world as it is now: what is under each square, of the groups given (all but group 1, those that walk, unless told otherwise), not too steep and not under water; a step from one to the next no higher than a climb. Up to 256 squares a side. Again if the world changes.");
+        b.function("bool path(const Vec3 &in from, const Vec3 &in to, array<Vec3>@+ way)", NX_FN(spacePath), "The way from one place to another, round what is in the way, made as straight as it can be: the places to go through, the first where it starts. False if the end can't be reached, and then the way as near to it as can be got.");
+        b.function("bool walkable(const Vec3 &in at)", NX_FN(spaceWalkable), "Whether something can walk there, as `navigate` worked it out.");
+        b.function("Vec3 nearestWalkable(const Vec3 &in at)", NX_FN(spaceNearestWalkable), "The nearest place that can be walked on, or the place itself if there is none.");
         b.function("float get_impostors() property", NX_FN(spaceImpostors), "How far away things with `impostor` become pictures of themselves; 0 for never.");
         b.function("void set_impostors(float) property", NX_FN(spaceSetImpostors), "How far away things with `impostor` become pictures of themselves; 0 for never.");
         b.function("Vec3 get_wind() property", NX_FN(spaceWind), "Which way the wind blows, and how hard: 1 is a breeze. Things with `sway` lean with it.");

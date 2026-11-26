@@ -273,6 +273,16 @@ namespace nx
         void setImpostor(u32 id, bool on);
         void setSprite(u32 id, Asset* sheet, u32 angles, u32 frames);
         void setSpriteFrame(u32 id, u32 frame);
+        // Where things can walk, in squares over a part of the world: what is under each, from above, of the
+        // groups given; a step between squares no higher than a climb. Up to 256 squares a side.
+        bool navigate(const Vec3& middle, float size, float cell, float climb, u32 groups);
+        void clearNav();
+        bool hasNav() const { return m_navSide != 0; }
+        // The way from one place to another, straightened, from where it starts. False if the end can't be
+        // reached: then as near as it can get.
+        bool findPath(const Vec3& from, const Vec3& to, GrowArray<Vec3>& out);
+        bool walkable(const Vec3& at) const;
+        bool nearestWalkable(const Vec3& at, Vec3& out) const;
         // Pictures drawn instead of things, last frame.
         u32 cardsDrawn() const { return m_cardsDrawn; }
         // Which way the wind blows, and how hard: 1 is a breeze.
@@ -564,6 +574,12 @@ namespace nx
         bool buildGrass(GrassCell& cell);
         // The land there changed: its grass is made again, a few squares a frame.
         void grassChanged(float fromX, float fromZ, float toX, float toZ);
+        // nav.cpp
+        bool navStep(u32 a, u32 b) const;
+        bool navCellOf(const Vec3& at, u32& cell) const;
+        bool navNearest(const Vec3& at, u32& cell) const;
+        Vec3 navPlace(u32 cell) const;
+        bool navStraight(u32 from, u32 to) const;
         gpu::Color groundColor(float x, float z) const;
         const Impostor* impostorOf(Asset* model);
         bool card(const Appearance& a, const Mat4& world, const gpu::View& view);
@@ -662,6 +678,13 @@ namespace nx
         GrowArray<CardBatch> m_batches;
         GrowArray<Card> m_cards;
         u32 m_cardsDrawn = 0;
+        u32 m_animFrame = 0;
+        u32 m_navSide = 0, m_navVisit = 0;
+        float m_navCell = 1, m_navClimb = 0.6f;
+        Vec3 m_navLow;
+        GrowArray<float> m_navHeight, m_navCost;
+        GrowArray<u8> m_navFlags;
+        GrowArray<u32> m_navFrom, m_navSeen;
 
         bool m_landOn = false, m_island = false, m_started = false;
         u32 m_landSquares = 0;       // 0: endless

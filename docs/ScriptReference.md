@@ -605,6 +605,10 @@ The scene in three dimensions: x right, y up, z towards you, in metres. Entities
 | `void Space::sky(const Color &in top, const Color &in horizon)` | Draws a sky, with the sun in it. Without one, what is on the canvas already is behind. |
 | `void Space::fog(const Color &in color, float start, float end)` | Hides what is far away. |
 | `void Space::grass(Model@+ tuft, float perSquareMetre = 3, float distance = 30)` | Grows tufts of a model over the land near the camera, where it is green, flat enough and dry, coloured as the land is there; they bend in the wind. null for none. |
+| `bool Space::navigate(const Vec3 &in middle, float size, float cell = 1, float climb = 0.6f, uint groups = 0xFFFD)` | Works out where things can walk, in squares over a part of the world as it is now: what is under each square, of the groups given (all but group 1, those that walk, unless told otherwise), not too steep and not under water; a step from one to the next no higher than a climb. Up to 256 squares a side. Again if the world changes. |
+| `bool Space::path(const Vec3 &in from, const Vec3 &in to, array<Vec3>@+ way)` | The way from one place to another, round what is in the way, made as straight as it can be: the places to go through, the first where it starts. False if the end can't be reached, and then the way as near to it as can be got. |
+| `bool Space::walkable(const Vec3 &in at)` | Whether something can walk there, as `navigate` worked it out. |
+| `Vec3 Space::nearestWalkable(const Vec3 &in at)` | The nearest place that can be walked on, or the place itself if there is none. |
 | `float Space::get_impostors() property` | How far away things with `impostor` become pictures of themselves; 0 for never. |
 | `void Space::set_impostors(float) property` | How far away things with `impostor` become pictures of themselves; 0 for never. |
 | `Vec3 Space::get_wind() property` | Which way the wind blows, and how hard: 1 is a breeze. Things with `sway` lean with it. |
@@ -1065,6 +1069,7 @@ The machine and how it is doing.
 | | |
 |---|---|
 | `float App::get_time() property` | Seconds since the app started. |
+| `double App::get_now() property` | Seconds from some moment, to a millionth or so: for timing how long something takes. Unlike `time`, it goes on during a frame. |
 | `float App::get_fps() property` | Frames a second, averaged. |
 | `uint App::get_draws() property` | Draw calls in the last frame. |
 | `string App::get_platform() property` | What it is running on. |
@@ -1114,6 +1119,8 @@ As well as AngelScript's own `sin`, `cos`, `sqrt` and so on, in radians.
 | `int randomInt(int low, int high)` | A whole number from low to high, including both. |
 | `float lerp(float a, float b, float t)` | From a to b as t goes from 0 to 1. |
 | `float clamp(float value, float low, float high)` | Kept within limits. |
+| `float min(float a, float b)` | The smaller of two. |
+| `float max(float a, float b)` | The larger of two. |
 | `float smooth(float t)` | 0 to 1, starting and ending gently. |
 | `float bounce(float t)` | 0 to 1, bouncing as it lands. |
 

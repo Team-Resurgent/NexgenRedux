@@ -337,6 +337,7 @@ namespace nx
     void Space::clear()
     {
         freeCards();
+        clearNav();
         for (const Waiting& w : m_waiting)
         {
             m_assets.release(w.sound);
@@ -542,6 +543,7 @@ namespace nx
 
     void Space::animate(float dt)
     {
+        m_animFrame++;
         for (Appearance& a : m_appearances)
         {
             if (a.waiting[0] && a.model && a.model->model)
@@ -573,7 +575,9 @@ namespace nx
                 a.change -= dt;
                 a.beforeTime += dt * a.speed;
             }
-            a.bentReady = false;
+            // Bent again every frame when near; further away, every second or fourth, a few at a time.
+            const u32 every = a.detail == 0 ? 1 : a.detail == 1 ? 2 : 4;
+            a.bentReady = a.bentReady && (m_animFrame + a.owner) % every != 0;
         }
     }
 

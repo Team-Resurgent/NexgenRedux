@@ -888,6 +888,45 @@ NX_TEST(thingsComeFromFiles)
     NX_EXPECT(p.space.load("none.json", "showcase/shapes", {}, false) == -1);
 }
 
+NX_TEST(waysRoundWhatIsInTheWay)
+{
+    Place p;
+    p.space.setGround(0);
+    // A wall across the middle, with a gap only at one end; and a low step that can be climbed.
+    p.rig.platform.extraPath = "walls.json";
+    p.rig.platform.extraText = R"({ "entities": [
+        { "shape": "box", "place": [-6, 1.5, 0], "size": [32, 3, 1], "cube": [1, 1, 1], "wall": true, "group": 2 },
+        { "shape": "box", "place": [12, 0.15, 8], "size": [4, 0.3, 4], "cube": [1, 1, 1], "wall": true, "group": 2 } ] })";
+    NX_EXPECT(p.space.load("walls.json", "showcase/shapes", {}, false) == 2);
+    p.step(2);
+    NX_EXPECT(p.space.navigate({ 0, 0, 0 }, 40, 1, 0.6f, 0xFFFD));
+    NX_EXPECT(!p.space.walkable({ 0, 0, 0 }) && p.space.walkable({ 0, 0, 5 }) && p.space.walkable({ 12, 0.3f, 8 }));
+    GrowArray<Vec3> way;
+    NX_EXPECT(p.space.findPath({ 0, 0, -6 }, { 0, 0, 6 }, way));
+    // Round the end of the wall, at x 10 or so, never through it.
+    bool round = false;
+    for (u32 i = 0; i + 1 < way.count(); i++)
+    {
+        round = round || way[i + 1].x > 9.5f;
+        for (u32 k = 0; k <= 10; k++)
+        {
+            const Vec3 at = way[i] + (way[i + 1] - way[i]) * (static_cast<float>(k) / 10);
+            NX_EXPECT(!(at.x < 10.2f && fabsf(at.z) < 0.9f));
+        }
+    }
+    NX_EXPECT(round && way.count() >= 3 && way.count() < 8);
+    NX_EXPECT(fabsf(way[way.count() - 1].z - 6) < 0.01f);
+    // Straight, where nothing is in the way.
+    NX_EXPECT(p.space.findPath({ -15, 0, 5 }, { 15, 0, 5 }, way) && way.count() == 2);
+    // Somewhere that can't be reached: as near as can be got.
+    p.rig.platform.extraText = R"({ "entities": [
+        { "shape": "box", "place": [0, 1.5, -15], "size": [40, 3, 1], "cube": [1, 1, 1], "wall": true, "group": 2 } ] })";
+    NX_EXPECT(p.space.load("walls.json", "showcase/shapes", {}, false) == 1);
+    p.step(2);
+    NX_EXPECT(p.space.navigate({ 0, 0, 0 }, 40, 1, 0.6f, 0xFFFD));
+    NX_EXPECT(!p.space.findPath({ 0, 0, -6 }, { 0, 0, -18 }, way) && way.count() >= 2 && way[way.count() - 1].z > -15);
+}
+
 NX_TEST(everyModelCanBeUsed)
 {
     Place p;

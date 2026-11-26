@@ -316,6 +316,28 @@ can't be seen at the sides of the land.
 
 `Space::lines = true` draws only the edges of triangles, to see how things are made.
 
+### Those who move by themselves
+
+`#include "global:ai.as"` brings in `Agent` and `Crowd`. An agent is a walker with a role: a **guard** stands where it was
+put and chases what it sees, a **patrol** walks a route of places, a **wanderer** walks about near home, and there are
+**chase**, **flee**, **follow** and **still**. It sees with a range and a field of view, and only what no wall is in front of;
+it hears noises the game makes; it searches where it last saw you, and goes back to what it was doing. Its `state`
+("walking", "chasing", "searching" and so on) is there for animations and sounds, and `onEvent` tells the game when it
+spots, loses, catches or hears something.
+
+```cpp
+Crowd crowd;
+Agent@ guard = crowd.add(robot, "patrol");
+guard.route = { Vec3(-10, 0, 0), Vec3(10, 0, 0), Vec3(10, 0, 12) };
+@guard.target = player;
+...each update: crowd.update(dt);         // crowd.noise(place) when the player runs; crowd.draw(c) shows what they see
+```
+
+Ways round what is in the way come from the engine: `Space::navigate(middle, size)` works out where things can walk, in
+squares over a part of the world, and `Space::path(from, to, way)` gives the shortest way between two places, made as
+straight as it can be. In a scene file, a thing with a `"role"` moves by itself as the level's crowd, and a patrol's
+`"route"` is the waypoints of that name; the editor has both. The **Guards** showcase is a game of getting past them.
+
 ### Wind
 
 Plants lean with the wind: give a thing a `sway`, how far its top moves for each metre of height (about 0.02 for a tree, 0.15 for
@@ -344,7 +366,8 @@ wisp.spriteFrame = uint(App::time * 5) % 2;
 ```
 
 Across the sheet is how it looks from each side, the first from in front and then going round to its left; which one is
-shown follows from where the camera is and which way it faces. The **Wisps** showcase is a maze of them.
+shown follows from where the camera is and which way it faces. In a scene file it is `"sprite"`, with `"views"` and
+`"frames"`. The **Wisps** showcase is a maze of them, and the wisps in **Guards** run from you.
 
 ### Files that players bring
 

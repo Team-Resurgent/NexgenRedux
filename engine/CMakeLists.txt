@@ -113,7 +113,7 @@ add_library(nx_canvas STATIC canvas/canvas.cpp)
 target_link_libraries(nx_canvas PUBLIC nx_assets)
 nx_options(nx_canvas)
 
-add_library(nx_scene STATIC scene/physics.cpp scene/space.cpp scene/land.cpp scene/sculpt.cpp scene/shell.cpp scene/cards.cpp scene/physics3.cpp scene/space_load.cpp scene/prefab.cpp scene/world.cpp)
+add_library(nx_scene STATIC scene/physics.cpp scene/space.cpp scene/land.cpp scene/sculpt.cpp scene/shell.cpp scene/cards.cpp scene/nav.cpp scene/physics3.cpp scene/space_load.cpp scene/prefab.cpp scene/world.cpp)
 target_link_libraries(nx_scene PUBLIC nx_canvas nx_script)
 nx_options(nx_scene)
 

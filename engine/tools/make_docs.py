@@ -258,15 +258,16 @@ def reference():
             if name in FUNCTIONS:
                 kind = 'functions'
             elif name in NAMESPACES:
-                kind = name + '::'
+                kind = 'namespace'
             elif all('(' not in d and ' ' not in d for d, _ in section['rows']):
                 kind = 'enum'
             else:
                 kind = 'type'
-            shown = name
-            anchor = 'ns-' + slug(name) if kind.endswith('::') else slug(name)
-            nav.append((anchor, shown + (' <i>%s</i>' % kind if kind.endswith('::') else '')))
-            out.append('<section id="%s" data-title="%s"><h2>%s <span class="kind">%s</span></h2>' % (anchor, html.escape((topic + ' ' + name + ' ' + kind).lower(), True), shown, kind))
+            # A namespace is shown once, as it is written: Screens::
+            shown = name + '::' if kind == 'namespace' else name
+            anchor = 'ns-' + slug(name) if kind == 'namespace' else slug(name)
+            nav.append((anchor, shown))
+            out.append('<section id="%s" data-title="%s"><h2>%s <span class="kind">%s</span></h2>' % (anchor, html.escape((topic + ' ' + shown + ' ' + kind).lower(), True), shown, kind))
             out += ['<p>%s</p>' % inline(t) for t in section['text']]
             if section['rows']:
                 out.append('<table class="api">')

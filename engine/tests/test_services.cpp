@@ -2,6 +2,10 @@
 #include "rig.h"
 
 #include "assets/formats.h"
+#include "canvas/look.h"
+
+#include <math.h>
+#include <string.h>
 
 #include <stdlib.h>
 
@@ -381,4 +385,46 @@ NX_TEST(effectsAreLeftOutWhereThereAreNone)
     w.step(3);
     NX_EXPECT(!w.screens.failed());
     NX_EXPECT(saved(w, "works", "no") && saved(w, "failed", "yes") && saved(w, "bloom", "no") && saved(w, "effect", "no"));
+}
+
+NX_TEST(looksTurnColoursIntoOthers)
+{
+    ColorLook look;
+    float c[3] = { 0.2f, 0.5f, 0.8f };
+    look.apply(c);
+    NX_EXPECT(fabsf(c[0] - 0.2f) < 1e-4f && fabsf(c[1] - 0.5f) < 1e-4f && fabsf(c[2] - 0.8f) < 1e-4f);
+    NX_EXPECT(look.preset("noir") && !look.preset("nowhere"));
+    float grey[3] = { 0.9f, 0.2f, 0.1f };
+    look.apply(grey);
+    NX_EXPECT(fabsf(grey[0] - grey[1]) < 1e-4f && fabsf(grey[1] - grey[2]) < 1e-4f);
+    NX_EXPECT(look.preset("warm"));
+    float warm[3] = { 0.5f, 0.5f, 0.5f };
+    look.apply(warm);
+    NX_EXPECT(warm[0] > warm[2]);
+
+    // A table that swaps red and blue, two a side, with comments and a title.
+    const char* cube = "# made by hand\nTITLE \"swap\"\nLUT_3D_SIZE 2\n\n0 0 0\n0 0 1\n0 1 0\n0 1 1\n1 0 0\n1 0 1\n1 1 0\n1 1 1\n";
+    look.preset("none");
+    NX_EXPECT(look.readCube(cube, strlen(cube)) && look.hasCube());
+    float swapped[3] = { 0.75f, 0.5f, 0.25f };
+    look.apply(swapped);
+    NX_EXPECT(fabsf(swapped[0] - 0.25f) < 1e-4f && fabsf(swapped[1] - 0.5f) < 1e-4f && fabsf(swapped[2] - 0.75f) < 1e-4f);
+    const char* broken = "LUT_3D_SIZE 2\n0 0 0\n1 1 1\n";
+    NX_EXPECT(!look.readCube(broken, strlen(broken)) && look.hasCube());
+    const char* flat = "LUT_1D_SIZE 2\n0 0 0\n1 1 1\n";
+    NX_EXPECT(!look.readCube(flat, strlen(flat)));
+    look.forgetCube();
+    NX_EXPECT(!look.hasCube());
+}
+
+NX_TEST(looksAreLeftOutWhereColoursCantBeGraded)
+{
+    Rig w;
+    openCode(w, "class S : Screen { Look@ look = Look(); Look@ dusk = Look(\"dusk\");"
+                "void onEnter() { look.saturation = 0; Color c = look.apply(Color(1, 0, 0)); Save::set(\"grey\", abs(c.r - c.g) < 0.001 ? \"yes\" : \"no\");"
+                "  Save::set(\"known\", look.preset(\"cold\") && !look.preset(\"nowhere\") ? \"yes\" : \"no\"); Save::set(\"loaded\", look.loaded ? \"yes\" : \"no\"); }"
+                "void draw(Canvas@ c) { c.design(1280, 720); Save::set(\"graded\", c.grade(look, 0.5) ? \"yes\" : \"no\"); } }");
+    w.step(3);
+    NX_EXPECT(!w.screens.failed());
+    NX_EXPECT(saved(w, "grey", "yes") && saved(w, "known", "yes") && saved(w, "loaded", "no") && saved(w, "graded", "no"));
 }

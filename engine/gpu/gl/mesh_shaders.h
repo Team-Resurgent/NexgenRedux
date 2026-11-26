@@ -292,6 +292,28 @@ void main()
 }
 )";
 
+    // Grading: each colour looked up in a table of what it becomes, and mixed with what it was.
+    inline const char kGradeFragment[] = R"(
+uniform sampler2D image;
+uniform sampler3D volumeImage;
+layout(location = 0) out vec4 result;
+in vec2 at;
+layout(std140) uniform EffectValues
+{
+    vec4 values[4];
+    vec4 effectArea;
+    vec4 effectInfo;
+};
+void main()
+{
+    vec2 uv = at * 0.5 + 0.5;
+    vec3 color = clamp(texture(image, uv).rgb, 0.0, 1.0);
+    float n = values[0].y;
+    vec3 graded = texture(volumeImage, color * ((n - 1.0) / n) + 0.5 / n).rgb;
+    result = vec4(mix(color, graded, values[0].x), 1.0);
+}
+)";
+
     inline const char kSkyFragment[] = R"(
 in vec2 at;
 void main()

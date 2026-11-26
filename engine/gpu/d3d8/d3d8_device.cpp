@@ -123,7 +123,7 @@ namespace nx::gpu
                     m_device->SetStreamSource(0, nullptr, 0);
                     m_device->SetIndices(nullptr, 0);
                     m_device->SetPixelShader(0);
-                    for (const DWORD shader : { m_shadowShader, m_toneShader, m_edgeShader })
+                    for (const DWORD shader : { m_shadowShader, m_toneShader, m_edgeShader, m_gradeShader })
                     {
                         if (shader)
                         {
@@ -132,7 +132,17 @@ namespace nx::gpu
                     }
                 }
                 m_buffers.forEach([](BufferSlot& b) { b.buffer->Release(); });
-                m_textures.forEach([](TextureSlot& t) { t.texture->Release(); });
+                m_textures.forEach([](TextureSlot& t)
+                {
+                    if (t.texture)
+                    {
+                        t.texture->Release();
+                    }
+                    if (t.volume)
+                    {
+                        t.volume->Release();
+                    }
+                });
                 m_meshes.forEach([](MeshSlot& m) { releaseMesh(m); });
                 for (IDirect3DTexture8* t : { m_shadowColor, m_shadowDepth, m_bloom[0], m_bloom[1], m_copy })
                 {
@@ -436,6 +446,60 @@ namespace nx::gpu
                 }
                 m_textureBytes += bytes;
                 return handle;
+            }
+
+            // The GPU looks a colour up where the dot products of its parts fall: from where black is the near edge of the
+            // first cell, and white the far edge of the last, not their middles. So each cell is what is halfway across
+            // it.
+            Texture createGrade(const u8* pixels, u32 size) override
+            {
+                if (pixels == nullptr || size < 2 || size > 64 || (size & (size - 1)) != 0)
+                {
+                    return {};
+                }
+                u8* moved = static_cast<u8*>(memAlloc(size * size * size * 4, MemTag::Texture));
+                if (moved == nullptr)
+                {
+                    return {};
+                }
+                const float last = static_cast<float>(size - 1);
+                u32 i0[64], i1[64];
+                float f[64];
+                for (u32 i = 0; i < size; i++)
+                {
+                    const float p = (static_cast<float>(i) + 0.5f) / static_cast<float>(size) * last;
+                    i0[i] = static_cast<u32>(p) < size - 2 ? static_cast<u32>(p) : size - 2;
+                    i1[i] = i0[i] + 1;
+                    f[i] = p - static_cast<float>(i0[i]);
+                }
+                for (u32 b = 0; b < size; b++)
+                {
+                    for (u32 g = 0; g < size; g++)
+                    {
+                        for (u32 r = 0; r < size; r++)
+                        {
+                            float sum[4] = { 0, 0, 0, 0 };
+                            for (u32 corner = 0; corner < 8; corner++)
+                            {
+                                const u32 x = corner & 1 ? i1[r] : i0[r], y = corner & 2 ? i1[g] : i0[g], z = corner & 4 ? i1[b] : i0[b];
+                                const float w = (corner & 1 ? f[r] : 1 - f[r]) * (corner & 2 ? f[g] : 1 - f[g]) * (corner & 4 ? f[b] : 1 - f[b]);
+                                const u8* from = pixels + (x + y * size + z * size * size) * 4;
+                                for (u32 k = 0; k < 4; k++)
+                                {
+                                    sum[k] += static_cast<float>(from[k]) * w;
+                                }
+                            }
+                            u8* out = moved + (r + g * size + b * size * size) * 4;
+                            for (u32 k = 0; k < 4; k++)
+                            {
+                                out[k] = static_cast<u8>(sum[k] + 0.5f);
+                            }
+                        }
+                    }
+                }
+                const Texture made = createVolume(moved, size);
+                memFree(moved);
+                return made;
             }
 
             void destroyTexture(Texture handle) override
@@ -1095,6 +1159,96 @@ namespace nx::gpu
                 m_device->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE);
                 quad(w, h, bw, bh, 0, 0, false);
                 m_device->SetTexture(0, nullptr);
+                target->Release();
+                if (depth)
+                {
+                    depth->Release();
+                }
+                m_bound = {};
+                m_boundTexture = {};
+                m_mode = Mode::None;
+                return true;
+            }
+
+            // A copy of the picture, and then from it each colour's parts made into a place in the table, in the GPU's
+            // texture stages, and looked up there.
+            bool grade(Texture table, float strength, const Scissor& area) override
+            {
+                const TextureSlot* t = m_textures.get(table);
+                if (!m_inFrame || t == nullptr || t->volume == nullptr || !makeCopy() || !makeGradeShader())
+                {
+                    return false;
+                }
+                IDirect3DSurface8* target = nullptr;
+                IDirect3DSurface8* depth = nullptr;
+                IDirect3DSurface8* copy = nullptr;
+                m_device->GetRenderTarget(&target);
+                m_device->GetDepthStencilSurface(&depth);
+                if (target == nullptr)
+                {
+                    if (depth)
+                    {
+                        depth->Release();
+                    }
+                    return false;
+                }
+                m_copy->GetSurfaceLevel(0, &copy);
+                readScreen(target);
+                m_device->SetVertexShader(D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_TEX1);
+                m_device->SetTexture(0, &m_screen);
+                m_device->SetTextureStageState(0, D3DTSS_MINFILTER, D3DTEXF_POINT);
+                m_device->SetTextureStageState(0, D3DTSS_MAGFILTER, D3DTEXF_POINT);
+                m_device->SetRenderTarget(copy, nullptr);
+                grid(1, 1, [](float&, float&, float, float) -> DWORD { return 0xFFFFFFFF; });
+                m_device->SetRenderTarget(target, depth);
+                wholeViewport();
+                if (area.enabled)
+                {
+                    setScissor(area);
+                }
+
+                m_device->SetTexture(0, m_copy);
+                m_device->SetTexture(1, nullptr);
+                m_device->SetTexture(2, nullptr);
+                m_device->SetTexture(3, t->volume);
+                for (DWORD i = 0; i < 4; i++)
+                {
+                    m_device->SetTextureStageState(i, D3DTSS_TEXCOORDINDEX, i);
+                    m_device->SetTextureStageState(i, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_DISABLE);
+                }
+                m_device->SetTextureStageState(3, D3DTSS_ADDRESSU, D3DTADDRESS_CLAMP);
+                m_device->SetTextureStageState(3, D3DTSS_ADDRESSV, D3DTADDRESS_CLAMP);
+                m_device->SetTextureStageState(3, D3DTSS_ADDRESSW, D3DTADDRESS_CLAMP);
+                m_device->SetTextureStageState(3, D3DTSS_MINFILTER, D3DTEXF_LINEAR);
+                m_device->SetTextureStageState(3, D3DTSS_MAGFILTER, D3DTEXF_LINEAR);
+                m_device->SetTextureStageState(3, D3DTSS_MIPFILTER, D3DTEXF_NONE);
+                const float much[4] = { strength, strength, strength, strength };
+                m_device->SetPixelShader(m_gradeShader);
+                m_device->SetPixelShaderConstant(0, much, 1);
+                m_device->SetVertexShader(D3DFVF_XYZRHW | D3DFVF_TEX4 | D3DFVF_TEXCOORDSIZE2(0) | D3DFVF_TEXCOORDSIZE3(1) | D3DFVF_TEXCOORDSIZE3(2) | D3DFVF_TEXCOORDSIZE3(3));
+                struct Corner
+                {
+                    float x, y, z, rhw;
+                    float u, v;
+                    float red[3], green[3], blue[3];
+                };
+                const float w = static_cast<float>(m_width), h = static_cast<float>(m_height);
+                Corner c[4];
+                for (u32 i = 0; i < 4; i++)
+                {
+                    const bool right = (i & 1) != 0, low = (i & 2) != 0;
+                    c[i] = { (right ? w : 0) - 0.5f, (low ? h : 0) - 0.5f, 0, 1, right ? w : 0, low ? h : 0, { 1, 0, 0 }, { 0, 1, 0 }, { 0, 0, 1 } };
+                }
+                m_device->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, c, sizeof(Corner));
+                m_current.draws++;
+
+                m_device->SetPixelShader(0);
+                m_device->SetTexture(0, nullptr);
+                m_device->SetTexture(3, nullptr);
+                m_device->SetTextureStageState(3, D3DTSS_ADDRESSU, D3DTADDRESS_WRAP);
+                m_device->SetTextureStageState(3, D3DTSS_ADDRESSV, D3DTADDRESS_WRAP);
+                m_device->SetTextureStageState(3, D3DTSS_ADDRESSW, D3DTADDRESS_WRAP);
+                copy->Release();
                 target->Release();
                 if (depth)
                 {
@@ -1790,6 +1944,36 @@ namespace nx::gpu
                 return m_toneShader && m_edgeShader;
             }
 
+            bool makeGradeShader()
+            {
+                if (m_gradeShader || m_gradeTried)
+                {
+                    return m_gradeShader != 0;
+                }
+                m_gradeTried = true;
+                constexpr DWORD kOne = PS_REGISTER_ZERO | PS_INPUTMAPPING_UNSIGNED_INVERT;
+                D3DPIXELSHADERDEF def = {};
+                // The picture; its red, green and blue, each a dot product with one of them; and the table, there.
+                def.PSTextureModes = PS_TEXTUREMODES(PS_TEXTUREMODES_PROJECT2D, PS_TEXTUREMODES_DOTPRODUCT, PS_TEXTUREMODES_DOTPRODUCT, PS_TEXTUREMODES_DOT_STR_3D);
+                def.PSDotMapping = PS_DOTMAPPING(0, PS_DOTMAPPING_ZERO_TO_ONE, PS_DOTMAPPING_ZERO_TO_ONE, PS_DOTMAPPING_ZERO_TO_ONE);
+                def.PSInputTexture = PS_INPUTTEXTURE(0, 0, 0, 0);
+                def.PSCombinerCount = PS_COMBINERCOUNT(1, PS_COMBINERCOUNT_UNIQUE_C0);
+                // As much of what the table says as is asked for, and the rest of what it was.
+                def.PSRGBInputs[0] = PS_COMBINERINPUTS(PS_REGISTER_T3 | PS_CHANNEL_RGB, PS_REGISTER_C0 | PS_CHANNEL_RGB, PS_REGISTER_T0 | PS_CHANNEL_RGB,
+                                                       PS_REGISTER_C0 | PS_CHANNEL_RGB | PS_INPUTMAPPING_UNSIGNED_INVERT);
+                def.PSRGBOutputs[0] = PS_COMBINEROUTPUTS(PS_REGISTER_DISCARD, PS_REGISTER_DISCARD, PS_REGISTER_R0, 0);
+                def.PSAlphaInputs[0] = PS_COMBINERINPUTS(kOne | PS_CHANNEL_ALPHA, kOne | PS_CHANNEL_ALPHA, PS_REGISTER_ZERO, PS_REGISTER_ZERO);
+                def.PSAlphaOutputs[0] = PS_COMBINEROUTPUTS(PS_REGISTER_R0, PS_REGISTER_DISCARD, PS_REGISTER_DISCARD, 0);
+                def.PSC0Mapping = PS_CONSTANTMAPPING(0, 15, 15, 15, 15, 15, 15, 15);
+                def.PSC1Mapping = PS_CONSTANTMAPPING(15, 15, 15, 15, 15, 15, 15, 15);
+                if (FAILED(m_device->CreatePixelShader(&def, &m_gradeShader)))
+                {
+                    NX_WARN("d3d8: no grading");
+                    m_gradeShader = 0;
+                }
+                return m_gradeShader != 0;
+            }
+
             void makeShadowShader()
             {
                 D3DPIXELSHADERDEF def = {};
@@ -1873,7 +2057,8 @@ namespace nx::gpu
             IDirect3DSurface8* m_savedDepth = nullptr;
             bool m_shadowsTried = false, m_inShadows = false, m_shadowed = false;
             float m_shade = 0;
-            DWORD m_shadowShader = 0, m_toneShader = 0, m_edgeShader = 0;
+            DWORD m_shadowShader = 0, m_toneShader = 0, m_edgeShader = 0, m_gradeShader = 0;
+            bool m_gradeTried = false;
             IDirect3DTexture8* m_bloom[2] = {};
             D3DTexture m_screen;
             bool m_bloomTried = false;

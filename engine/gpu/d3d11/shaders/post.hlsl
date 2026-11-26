@@ -32,3 +32,15 @@ float4 blurPs(float2 at : TEXCOORD0) : SV_Target
         image.SampleLevel(imageSampler, uv + float2(along.x, -along.y), 0).rgb + image.SampleLevel(imageSampler, uv + float2(-along.x, along.y), 0).rgb) * 2.0;
     return float4(sum / 12.0 * values[0].z, 1.0);
 }
+
+// Grading: each colour looked up in a table of what it becomes, and mixed with what it was.
+Texture3D gradeTable : register(t1);
+
+float4 gradePs(float2 at : TEXCOORD0) : SV_Target
+{
+    float2 uv = float2(at.x * 0.5 + 0.5, 0.5 - at.y * 0.5);
+    float3 color = saturate(image.SampleLevel(imageSampler, uv, 0).rgb);
+    float n = values[0].y;
+    float3 graded = gradeTable.SampleLevel(imageSampler, color * ((n - 1.0) / n) + 0.5 / n, 0).rgb;
+    return float4(lerp(color, graded, values[0].x), 1.0);
+}

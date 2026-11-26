@@ -2,6 +2,7 @@
 
 #include "assets/assets.h"
 #include "base/math.h"
+#include "canvas/look.h"
 #include "gpu/gpu.h"
 
 namespace nx
@@ -103,6 +104,8 @@ namespace nx
         bool effect(const Asset& effect, const float (&values)[16], float time);
         // Light that spills from what is bright.
         bool bloom(float strength, float threshold, float spread);
+        // Each colour of it as a look says, mixed with what it was by strength.
+        bool grade(ColorLook& look, float strength);
 
         // Draws so far this frame.
         u32 draws() const { return m_draws; }

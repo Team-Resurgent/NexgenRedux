@@ -168,6 +168,27 @@ Which part of some text sits at its position.
 | `AlignCenter` | Its middle. |
 | `AlignRight` | Its right edge. |
 
+## Look
+
+What each colour of a picture becomes: warmer, colder, faded, harder. Settings, a preset by name, or a .cube table from a grading program, or all of them: the table first, then the settings. Given to `Canvas.grade`.
+
+| | |
+|---|---|
+| `float exposure` | Stops brighter: 1 is twice as bright, -1 half. 0 to begin with. |
+| `float warmth` | -1 bluer to 1 more orange. |
+| `float tint` | -1 greener to 1 more magenta. |
+| `float contrast` | How far colours are from the middle: 1 as they are, more is harder, less is flatter. |
+| `float saturation` | How colourful: 0 is grey, 1 as it is, more is stronger. |
+| `float fade` | 0 to 1: blacks lifted and whites dimmed, as old film. |
+| `float gamma` | More than 1 lifts the middle, less sinks it. |
+| `Color shadows` | A colour for what is dark, keeping how bright it is; its alpha is how much. None to begin with. |
+| `Color highlights` | A colour for what is bright, the same way. |
+| `bool preset(const string &in name)` | Sets everything to one ready-made: `none`, `warm`, `cold`, `faded`, `noir`, `sepia`, `dusk`, `vivid`, `bleach` or `night`. False if there is none of that name. A table that was loaded stays. |
+| `bool load(const string &in name)` | A .cube 3D table from a grading program (Resolve, Photoshop and others write them), up to 64 a side, read now. Colours go through it before the settings. False if it can't be read. |
+| `void unload()` | Forgets the table. |
+| `bool get_loaded() const property` | Whether it has a table. |
+| `Color apply(const Color &in color)` | What it makes of one colour, worked out here rather than on the GPU. |
+
 ## Canvas
 
 2D drawing, passed to a screen's draw(). Positions are in design units from the top left, y down.
@@ -203,6 +224,7 @@ Which part of some text sits at its position.
 | `void triangle(const Vec2 &in a, const Vec2 &in b, const Vec2 &in c, const Color &in ca, const Color &in cb, const Color &in cc)` | A triangle with a colour at each corner. |
 | `bool effect(Effect@+ effect)` | Puts all that has been drawn so far through a shader. False where there are none. |
 | `bool bloom(float strength = 0.8, float threshold = 0.7, float spread = 1)` | Lets light spill from what is bright, of all that has been drawn so far. False where it can't be done. |
+| `bool grade(Look@+ look, float strength = 1)` | Turns each colour of all that has been drawn so far into what a look makes of it, mixed with what it was by strength (0 to 1). Only inside the clip, if there is one, so a part can be shown before and after. One pass over the screen, on every GPU; the look is worked out again only when it changes. Usually last, before text that should stay as it is. False where it can't be done. |
 | `void image(const Texture@+ texture, float x, float y, const Color &in tint = White)` | An image at its own size. |
 | `void image(const Texture@+ texture, float x, float y, float w, float h, const Color &in tint = White)` | An image at any size. |
 | `void imagePart(const Texture@+ texture, float x, float y, float w, float h, float sx, float sy, float sw, float sh, const Color &in tint = White)` | Part of an image, given in its own pixels. |

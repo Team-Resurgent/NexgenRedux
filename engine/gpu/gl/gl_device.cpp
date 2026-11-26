@@ -229,6 +229,7 @@ void main()
                 m_meshes.forEach([&](MeshSlot& m) { releaseMesh(m); });
                 m_effects.forEach([&](EffectSlot& e) { gl.DeleteProgram(e.program); });
                 gl.DeleteProgram(m_blurProgram);
+                gl.DeleteProgram(m_gradeProgram);
                 for (const GLuint program : m_programs)
                 {
                     gl.DeleteProgram(program);
@@ -265,6 +266,7 @@ void main()
                     gl.SamplerParameteri(m_samplers[i], GL_TEXTURE_MAG_FILTER, filter);
                     gl.SamplerParameteri(m_samplers[i], GL_TEXTURE_WRAP_S, wrap);
                     gl.SamplerParameteri(m_samplers[i], GL_TEXTURE_WRAP_T, wrap);
+                    gl.SamplerParameteri(m_samplers[i], GL_TEXTURE_WRAP_R, wrap);
                 }
                 // For volumes: repeated every way.
                 gl.GenSamplers(1, &m_volumeSampler);
@@ -760,6 +762,37 @@ void main()
                 }
                 step(2, m_blurs[0].width, m_blurs[0].height, bloom.strength * 0.5f);
                 pass(m_blurProgram, m_blurs[0].texture, m_target, all, m_width, m_height, true, area);
+                return true;
+            }
+
+            bool grade(Texture table, float strength, const Scissor& area) override
+            {
+                const TextureSlot* t = m_textures.get(table);
+                if (!m_inFrame || t == nullptr || !copyTargets())
+                {
+                    return false;
+                }
+                if (m_gradeProgram == 0)
+                {
+                    char error[256];
+                    const char* vertex[2] = { shaders::kMeshCommon, shaders::kScreenVertex };
+                    const char* fragment[2] = { "#version 330 core
+", shaders::kGradeFragment };
+                    m_gradeProgram = effectProgram(vertex, 2, fragment, 2, error, sizeof(error));
+                    if (m_gradeProgram == 0)
+                    {
+                        NX_ERROR("opengl: grade: %s", error);
+                        return false;
+                    }
+                }
+                copyPicture();
+                const float values[16] = { strength, static_cast<float>(t->info.width) };
+                setValues(values, 0, {});
+                gl.ActiveTexture(GL_TEXTURE2);
+                gl.BindTexture(GL_TEXTURE_3D, t->texture);
+                gl.BindSampler(2, m_samplers[0]);
+                gl.ActiveTexture(GL_TEXTURE0);
+                pass(m_gradeProgram, m_copy, m_target, {}, m_width, m_height, false, area);
                 return true;
             }
 
@@ -1353,7 +1386,7 @@ void main()
             HandlePool<PipelineDesc, PipelineTag> m_pipelines;
             HandlePool<TextureSlot, TextureTag> m_textures;
             HandlePool<EffectSlot, EffectTag> m_effects;
-            GLuint m_copy = 0, m_copyTarget = 0, m_blurProgram = 0;
+            GLuint m_copy = 0, m_copyTarget = 0, m_blurProgram = 0, m_gradeProgram = 0;
             Blur m_blurs[kBlurs] = {};
             bool m_copyFine = false;
             float m_viewTime = 0;

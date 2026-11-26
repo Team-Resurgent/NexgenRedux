@@ -500,7 +500,7 @@ A style has `back`, `text`, `line`, `track`, `lineWidth`, `radius`, `scale` and 
 `hovered`, `checked`, `focused`, `pressed` and `disabled`; and `font`, `size`, `image` and `slice`, `padding`, `gap`, `minWidth`,
 `minHeight`, `align` and `seconds`.
 
-## Shaders and bloom
+## Shaders, bloom and grading
 
 ```cpp
 Effect@ tube = Assets::effect("global:effect/tube.fx");
@@ -557,6 +557,35 @@ float4 paint(float4 color, float2 uv, float3 place, float3 normal, inout float g
 
 It is written as HLSL is, and every number with a point in it. `float2` to `float4`, `lerp`, `frac`, `saturate` and `fmod` have their
 OpenGL names put in for you; keep to what both have. Don't name anything `out`, `in`, `sample` or `texture`.
+
+### Grading
+
+```cpp
+Look@ look = Look("dusk");         // or Look(), and settings of your own
+look.saturation = 0.8f;
+look.shadows = Color(0.3f, 0.4f, 1, 0.4f);   // bluer where it is dark; alpha is how much
+look.load("asset:film.cube");      // a table from a grading program, first, if you like
+
+void draw(Canvas@ c)
+{
+    Space::draw(c);
+    c.bloom(0.3f, 0.8f);
+    c.grade(look);                 // strength 0 to 1 is a second number
+    c.text(font, "Not graded", 40, 40);
+}
+```
+
+A `Look` is what each colour of the picture becomes. It has settings: `exposure` in stops, `warmth` and `tint`, `contrast`,
+`saturation`, `fade` (blacks lifted, as old film), `gamma`, and colours for the `shadows` and the `highlights`. `preset` sets them all
+to one ready-made: `none`, `warm`, `cold`, `faded`, `noir`, `sepia`, `dusk`, `vivid`, `bleach` or `night`. `load` reads a .cube 3D
+table, as Resolve, Photoshop and other grading programs write them, and colours go through it before the settings; `apply` gives what
+it makes of one colour, without the GPU.
+
+Whatever it is, it is worked out once into a table of 32 by 32 by 32 colours, a texture with three dimensions, and again only when
+something about it changes. `grade` then looks each pixel up in it, in one pass over the screen: with a shader on Direct3D 11 and
+OpenGL, and on the original Xbox with its own texture stages, which can look a colour up in a table, so it costs little there too.
+Within a clip, only that part is graded. The **Looks** showcase shows them all, before and after, at 60 frames a second on the
+original Xbox.
 
 ## Assets
 

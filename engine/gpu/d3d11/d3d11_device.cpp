@@ -152,6 +152,7 @@ namespace nx::gpu
                 release(m_clipRaster);
                 release(m_noDepth);
                 release(m_blurPs);
+                release(m_gradePs);
                 release(m_meshVs);
                 release(m_meshPs);
                 release(m_shadowVs);
@@ -750,6 +751,24 @@ namespace nx::gpu
                 return true;
             }
 
+            bool grade(Texture table, float strength, const Scissor& area) override
+            {
+                const TextureSlot* t = m_textures.get(table);
+                if (!m_inFrame || t == nullptr || t->volume == nullptr || m_gradePs == nullptr || !copyTargets())
+                {
+                    return false;
+                }
+                m_context->CopyResource(m_copy, m_color);
+                const float values[16] = { strength, static_cast<float>(t->info.width) };
+                setValues(values, 0, {});
+                m_context->PSSetShaderResources(1, 1, &t->view);
+                pass(m_gradePs, m_copyView, m_colorView, {}, m_width, m_height, false, area);
+                ID3D11ShaderResourceView* none = nullptr;
+                m_context->PSSetShaderResources(1, 1, &none);
+                m_context->OMSetRenderTargets(1, &m_colorView, m_depthView);
+                return true;
+            }
+
             void endFrame() override
             {
                 NX_ASSERT(m_inFrame);
@@ -1007,7 +1026,8 @@ namespace nx::gpu
                 uniforms(sizeof(ObjectUniforms), &m_objectUniforms);
                 uniforms(sizeof(FieldUniforms), &m_fieldUniforms);
                 uniforms(sizeof(EffectUniforms), &m_effectUniforms);
-                fine = fine && ok(m_device->CreatePixelShader(blurPs, sizeof(blurPs), nullptr, &m_blurPs), "blur shader");
+                fine = fine && ok(m_device->CreatePixelShader(blurPs, sizeof(blurPs), nullptr, &m_blurPs), "blur shader") &&
+                       ok(m_device->CreatePixelShader(gradePs, sizeof(gradePs), nullptr, &m_gradePs), "grade shader");
                 for (u32 i = 0; i < 3; i++)
                 {
                     D3D11_BLEND_DESC desc = {};
@@ -1259,6 +1279,7 @@ namespace nx::gpu
             HandlePool<EffectSlot, EffectTag> m_effects;
             ID3D11Buffer* m_effectUniforms = nullptr;
             ID3D11PixelShader* m_blurPs = nullptr;
+            ID3D11PixelShader* m_gradePs = nullptr;
             ID3D11DepthStencilState* m_noDepth = nullptr;
             ID3D11RasterizerState* m_clipRaster = nullptr;
             ID3D11Texture2D* m_copy = nullptr;

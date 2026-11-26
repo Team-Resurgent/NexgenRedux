@@ -239,6 +239,10 @@ namespace nx::gpu
         // A cube of pixels, r, g, b, a, size on each side (a power of two), that repeats. Destroyed as a texture. None
         // where there are none.
         virtual Texture createVolume(const u8* pixels, u32 size) { (void)pixels; (void)size; return {}; }
+        // A table of what each colour becomes, size on each side (a power of two, up to 64): r, g, b, a, with red
+        // changing fastest, then green, then blue; the first is for black and the last for white. Destroyed as a
+        // texture. None where colours can't be graded.
+        virtual Texture createGrade(const u8* pixels, u32 size) { return createVolume(pixels, size); }
         virtual void destroyTexture(Texture texture) = 0;
         virtual TextureInfo textureInfo(Texture texture) = 0;
 
@@ -298,6 +302,16 @@ namespace nx::gpu
         virtual bool bloom(const Bloom& bloom, const Scissor& area)
         {
             (void)bloom;
+            (void)area;
+            return false;
+        }
+
+        // Turns each colour of all that has been drawn so far into what a table from createGrade says, mixed with what
+        // it was by strength (0 to 1).
+        virtual bool grade(Texture table, float strength, const Scissor& area)
+        {
+            (void)table;
+            (void)strength;
             (void)area;
             return false;
         }

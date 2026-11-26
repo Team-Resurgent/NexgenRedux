@@ -92,6 +92,82 @@ namespace nx
 
         bool canvasEffect(const EffectUse* effect, Canvas* c) { return effect && c->effect(*effect->asset, effect->values, static_cast<float>(services().time)); }
 
+        // A script's look: its settings are fields, so that they can be changed as numbers are.
+        struct LookRef
+        {
+            ColorLook::Settings settings;
+            ColorLook* look;
+            int refs;
+
+            void addRef() { refs++; }
+            void release()
+            {
+                if (--refs == 0)
+                {
+                    destroy(look);
+                    destroy(this);
+                }
+            }
+        };
+        static_assert(std::is_standard_layout_v<LookRef>);
+
+        LookRef* makeLook()
+        {
+            LookRef* l = create<LookRef>(MemTag::Script);
+            l->look = create<ColorLook>(MemTag::Script);
+            l->refs = 1;
+            return l;
+        }
+        LookRef* makeLookNamed(const std::string& name)
+        {
+            LookRef* l = makeLook();
+            if (!l->look->preset(name.c_str()))
+            {
+                l->release();
+                scriptError("no look is called " + name);
+                return nullptr;
+            }
+            l->settings = l->look->settings;
+            return l;
+        }
+        bool lookPreset(const std::string& name, LookRef* l)
+        {
+            l->look->settings = l->settings;
+            const bool known = l->look->preset(name.c_str());
+            l->settings = l->look->settings;
+            return known;
+        }
+        bool lookLoad(const std::string& name, LookRef* l)
+        {
+            Services& s = services();
+            char path[192];
+            FileData file;
+            if (!resolveAsset(s, name.c_str(), path, sizeof(path)) || strncmp(path, "http", 4) == 0)
+            {
+                scriptError("asset names start with asset: or global: (" + name + ")");
+                return false;
+            }
+            return s.platform->readFile(path, file, MemTag::General) && l->look->readCube(reinterpret_cast<const char*>(file.data), file.size);
+        }
+        void lookForget(LookRef* l) { l->look->forgetCube(); }
+        bool lookLoaded(const LookRef* l) { return l->look->hasCube(); }
+        Color lookApply(const Color& c, LookRef* l)
+        {
+            l->look->settings = l->settings;
+            float rgb[3] = { c.r, c.g, c.b };
+            l->look->apply(rgb);
+            return { rgb[0], rgb[1], rgb[2], c.a };
+        }
+        bool canvasGrade(LookRef* l, float strength, Canvas* c)
+        {
+            if (l == nullptr)
+            {
+                return false;
+            }
+            l->look->settings = l->settings;
+            return c->grade(*l->look, strength);
+        }
+
         FontRef* loadFont(const std::string& name, u32 size)
         {
             Services& s = services();
@@ -622,6 +698,27 @@ namespace nx
             b.enumValue("AlignCenter", static_cast<int>(Align::Center), "Its middle.");
             b.enumValue("AlignRight", static_cast<int>(Align::Right), "Its right edge.");
 
+            b.refType("Look", 0, "What each colour of a picture becomes: warmer, colder, faded, harder. Settings, a preset by name, or a .cube table from a grading program, or all of them: the table first, then the settings. Given to `Canvas.grade`.");
+            b.behaviour(asBEHAVE_FACTORY, "Look@ f()", NX_FN(makeLook));
+            b.behaviour(asBEHAVE_FACTORY, "Look@ f(const string &in preset)", NX_FN(makeLookNamed));
+            b.behaviour(asBEHAVE_ADDREF, "void f()", NX_METHOD(LookRef, addRef));
+            b.behaviour(asBEHAVE_RELEASE, "void f()", NX_METHOD(LookRef, release));
+            const size_t settings = offsetof(LookRef, settings);
+            b.property("float exposure", settings + offsetof(ColorLook::Settings, exposure), "Stops brighter: 1 is twice as bright, -1 half. 0 to begin with.");
+            b.property("float warmth", settings + offsetof(ColorLook::Settings, warmth), "-1 bluer to 1 more orange.");
+            b.property("float tint", settings + offsetof(ColorLook::Settings, tint), "-1 greener to 1 more magenta.");
+            b.property("float contrast", settings + offsetof(ColorLook::Settings, contrast), "How far colours are from the middle: 1 as they are, more is harder, less is flatter.");
+            b.property("float saturation", settings + offsetof(ColorLook::Settings, saturation), "How colourful: 0 is grey, 1 as it is, more is stronger.");
+            b.property("float fade", settings + offsetof(ColorLook::Settings, fade), "0 to 1: blacks lifted and whites dimmed, as old film.");
+            b.property("float gamma", settings + offsetof(ColorLook::Settings, gamma), "More than 1 lifts the middle, less sinks it.");
+            b.property("Color shadows", settings + offsetof(ColorLook::Settings, shadows), "A colour for what is dark, keeping how bright it is; its alpha is how much. None to begin with.");
+            b.property("Color highlights", settings + offsetof(ColorLook::Settings, highlights), "A colour for what is bright, the same way.");
+            b.method("bool preset(const string &in name)", NX_OBJ_LAST(lookPreset), "Sets everything to one ready-made: `none`, `warm`, `cold`, `faded`, `noir`, `sepia`, `dusk`, `vivid`, `bleach` or `night`. False if there is none of that name. A table that was loaded stays.");
+            b.method("bool load(const string &in name)", NX_OBJ_LAST(lookLoad), "A .cube 3D table from a grading program (Resolve, Photoshop and others write them), up to 64 a side, read now. Colours go through it before the settings. False if it can't be read.");
+            b.method("void unload()", NX_OBJ_LAST(lookForget), "Forgets the table.");
+            b.method("bool get_loaded() const property", NX_OBJ_LAST(lookLoaded), "Whether it has a table.");
+            b.method("Color apply(const Color &in color)", NX_OBJ_LAST(lookApply), "What it makes of one colour, worked out here rather than on the GPU.");
+
             b.refType("Canvas", asOBJ_NOCOUNT, "2D drawing, passed to a screen's draw(). Positions are in design units from the top left, y down.");
             b.method("void design(float width, float height)", NX_METHOD(Canvas, design), "Draws on a screen of this size, fitted inside the real one. Call it first.");
             b.method("void designHeight(float height)", NX_METHOD(Canvas, designHeight), "The same, but as wide as the real screen's shape allows. Lay out by width.");
@@ -652,6 +749,7 @@ namespace nx
             b.method("void triangle(const Vec2 &in a, const Vec2 &in b, const Vec2 &in c, const Color &in ca, const Color &in cb, const Color &in cc)", NX_METHOD(Canvas, triangle), "A triangle with a colour at each corner.");
             b.method("bool effect(Effect@+ effect)", NX_OBJ_LAST(canvasEffect), "Puts all that has been drawn so far through a shader. False where there are none.");
             b.method("bool bloom(float strength = 0.8, float threshold = 0.7, float spread = 1)", NX_METHOD(Canvas, bloom), "Lets light spill from what is bright, of all that has been drawn so far. False where it can't be done.");
+            b.method("bool grade(Look@+ look, float strength = 1)", NX_OBJ_LAST(canvasGrade), "Turns each colour of all that has been drawn so far into what a look makes of it, mixed with what it was by strength (0 to 1). Only inside the clip, if there is one, so a part can be shown before and after. One pass over the screen, on every GPU; the look is worked out again only when it changes. Usually last, before text that should stay as it is. False where it can't be done.");
             b.method("void image(const Texture@+ texture, float x, float y, const Color &in tint = White)", NX_OBJ_LAST(drawImage), "An image at its own size.");
             b.method("void image(const Texture@+ texture, float x, float y, float w, float h, const Color &in tint = White)", NX_OBJ_LAST(drawImageSized), "An image at any size.");
             b.method("void imagePart(const Texture@+ texture, float x, float y, float w, float h, float sx, float sy, float sw, float sh, const Color &in tint = White)", NX_OBJ_LAST(drawImagePart), "Part of an image, given in its own pixels.");

@@ -161,6 +161,17 @@ namespace nx
         return m_device->bloom(b, {});
     }
 
+    bool Canvas::grade(ColorLook& look, float strength)
+    {
+        flush();
+        if (strength <= 0)
+        {
+            return true;
+        }
+        const gpu::Texture table = look.table(*m_device);
+        return table && m_device->grade(table, strength > 1 ? 1 : strength, m_state.scissor);
+    }
+
     gpu::Scissor Canvas::toPixels(float x, float y, float w, float h) const
     {
         gpu::Scissor s;

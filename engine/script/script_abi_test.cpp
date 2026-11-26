@@ -98,7 +98,7 @@ int run()
     expect(abi::joinText("a", 5, "b") == "a5b", "return string");
     expect(abi::byValueText("hey") == "hey!", "string by value");
 
-    // Bugs 24 and 25 in the old engine: == and scaling.
+    // Equality and scaling of vectors.
     expect(Vec2(1, 2) == Vec2(1, 2) && Vec2(1, 2) != Vec2(2, 1), "Vec2 ==");
     expect(Vec3(1, 2, 3) == Vec3(1, 2, 3), "Vec3 ==");
     expect(Vec2(1, 2) * 2.0f == Vec2(2, 4) && 2.0f * Vec2(1, 2) == Vec2(2, 4), "Vec2 scale");

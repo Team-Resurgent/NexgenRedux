@@ -51,6 +51,9 @@ namespace nx
                 wc.lpfnWndProc = windowProc;
                 wc.hInstance = GetModuleHandleW(nullptr);
                 wc.hCursor = LoadCursorW(nullptr, MAKEINTRESOURCEW(32512));  // the arrow
+                // The program's own, from app/nexgen.rc, when it has one.
+                wc.hIcon = LoadIconW(wc.hInstance, MAKEINTRESOURCEW(1));
+                wc.hIconSm = wc.hIcon;
                 wc.lpszClassName = kWindowClass;
                 RegisterClassExW(&wc);
 

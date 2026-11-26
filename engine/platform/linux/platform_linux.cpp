@@ -1,5 +1,6 @@
 #include "base/log.h"
 #include "gpu/gl/gl_window.h"
+#include "platform/linux/icon.h"
 #include "platform/posix/platform_posix.h"
 
 #include <dirent.h>
@@ -249,6 +250,17 @@ namespace nx
                 XFree(visual);
                 XFree(configs);
                 XStoreName(m_display, m_window, desc.title);
+                // Its icon: the size, then the pixels, each in a long as the property has them.
+                {
+                    static unsigned long icon[2 + kIconSide * kIconSide];
+                    icon[0] = icon[1] = kIconSide;
+                    for (u32 i = 0; i < kIconSide * kIconSide; i++)
+                    {
+                        icon[2 + i] = kIconPixels[i];
+                    }
+                    const Atom property = XInternAtom(m_display, "_NET_WM_ICON", False);
+                    XChangeProperty(m_display, m_window, property, XA_CARDINAL, 32, PropModeReplace, reinterpret_cast<const unsigned char*>(icon), 2 + kIconSide * kIconSide);
+                }
                 m_closeMessage = XInternAtom(m_display, "WM_DELETE_WINDOW", False);
                 XSetWMProtocols(m_display, m_window, &m_closeMessage, 1);
                 // Files may be dropped on it, as XDND has it.

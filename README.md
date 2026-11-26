@@ -184,8 +184,7 @@ The Xbox build needs [RXDK](https://github.com/Team-Resurgent/RXDK-VSCode).
 | Folder | What it is |
 |---|---|
 | `engine/` | The engine |
-| `docs/` | [The plan](docs/EnginePlan.md), [the guide](docs/Guide.md) and [the script reference](docs/ScriptReference.md) |
-| `NexgenRedux-Shared`, `-PC`, `-OG`, `-360`, `-UWP` | The first engine, kept as it is |
+| `docs/` | [The guide](docs/Guide.md) and [the script reference](docs/ScriptReference.md) |
 | `NexgenRedux-Docs` | The [documentation site](https://team-resurgent.github.io/NexgenRedux-Docs/) (submodule) |
 | `NexgenRedux-Media` | The demos: their scripts, pictures and sounds (submodule; needed to build) |
 

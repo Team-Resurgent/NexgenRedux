@@ -1,16 +1,6 @@
 build/
-packages/
-
 .vs/
-.vscode/**/*
-!.vscode/c_cpp_properties.json
-!.vscode/settings.json
-!.vscode/launch.json
-!.vscode/extensions.json
-
-*.suo
-*.ncb
-*.sdf
+.vscode/
 
 # Videos, and what making them leaves behind: footage, shots and sound, wherever they are made
 *.mp4

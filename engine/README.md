@@ -1,7 +1,6 @@
 # Nexgen engine
 
-The new engine described in [docs/EnginePlan.md](../docs/EnginePlan.md). Scripts are described in
-[docs/ScriptReference.md](../docs/ScriptReference.md).
+The engine. Scripts are described in [docs/Guide.md](../docs/Guide.md) and [docs/ScriptReference.md](../docs/ScriptReference.md).
 
 ## Build
 
@@ -52,7 +51,7 @@ it appears in the menu.
 | `--budget MB` | How much memory images and fonts may take |
 
 For an OG Xbox self-test, configure with `-DNX_TOUR=ON`: that disc shows each screen for a moment, then opens them all rapidly
-twice more to check that nothing leaks, and stops. `spike` is the phase 0 test of script calls and memory.
+twice more to check that nothing leaks, and stops.
 
 Saves are in `%LOCALAPPDATA%\Nexgen` (Windows), `~/.local/share/nexgen` (Linux), `~/Library/Application Support/Nexgen`
 (macOS), the app's LocalState (UWP) and the title's own folder (Xbox).
@@ -92,8 +91,8 @@ cook tool that was built. Both are a download of their own, for Windows, Linux a
 | `bindings/`, `screens/` | What scripts can call; the screen stack and the engine's menu | all above |
 | `app/` | The program that runs the showcase | all |
 | `tools/` | `cook`, and `cook-ui`, a window for it; `record`; `make_media.py`, `make_models.py` and `make_pieces.py`, which make the showcase's sounds, music and models; `make_docs.py`, which makes the web site; `stage-rxdk.ps1` | all |
-| `third_party/` | AngelScript, SSFN, stb, cgltf, ufbx, miniaudio, dr_libs and Mbed TLS, unmodified | |
-| `spike/`, `tests/` | Phase 0 app and tests | all |
+| `third_party/` | AngelScript, SSFN, stb, cgltf, ufbx, miniaudio, dr_libs and Mbed TLS, unmodified but for cgltf, which reads its numbers the same way on a big-endian machine | |
+| `tests/` | The tests | all |
 
 Platform `#if`s belong only in `platform/`, `gpu/`, `base/thread_*`, `audio/output_*` and `net/`.
 

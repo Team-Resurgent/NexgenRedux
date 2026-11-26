@@ -3,6 +3,7 @@
 #include <angelscript.h>
 
 #include <new>
+#include <type_traits>
 #include <utility>
 
 // Bindings are written once and work with either calling convention. Native calls are faster but
@@ -16,10 +17,22 @@ namespace nx::bind
         T value;
     };
 
+    // A script's enums are 32-bit numbers, whatever size the C++ one is: read as such, so that a big-endian
+    // machine doesn't take the wrong end of it.
     template <typename T>
-    Proxy<T>& arg(asIScriptGeneric* gen, asUINT index)
+    constexpr bool kEnum = std::is_enum_v<T> && !std::is_reference_v<T>;
+
+    template <typename T>
+    decltype(auto) arg(asIScriptGeneric* gen, asUINT index)
     {
-        return *static_cast<Proxy<T>*>(gen->GetAddressOfArg(index));
+        if constexpr (kEnum<T>)
+        {
+            return Proxy<T>{ static_cast<T>(*static_cast<const asINT32*>(gen->GetAddressOfArg(index))) };
+        }
+        else
+        {
+            return *static_cast<Proxy<T>*>(gen->GetAddressOfArg(index));
+        }
     }
 
     template <typename R, typename Call>
@@ -28,6 +41,10 @@ namespace nx::bind
         if constexpr (std::is_void_v<R>)
         {
             call();
+        }
+        else if constexpr (kEnum<R>)
+        {
+            new (gen->GetAddressOfReturnLocation()) asINT32(static_cast<asINT32>(call()));
         }
         else
         {

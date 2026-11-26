@@ -94,7 +94,7 @@
     },
     {
       "clip": "build/nexgen-demos-xbox.mp4",
-      "from": 522,
+      "from": 521.98,
       "fit": 1,
       "speed": 0.7,
       "grade": "mono",
@@ -295,7 +295,7 @@
     },
     {
       "clip": "build/nexgen-demos-xbox.mp4",
-      "from": 527,
+      "from": 517.2,
       "fit": 1,
       "beats": 4,
       "in": "flash",
@@ -309,12 +309,12 @@
     },
     {
       "clip": "build/nexgen-demos-xbox.mp4",
-      "from": 474,
+      "from": 474.0,
       "fit": 1,
       "beats": 4,
       "in": "glitch",
       "caption": "REAL HARDWARE",
-      "captionSub": "Not slow, and not an emulator: that is the console's own counter",
+      "captionSub": "Not an emulator: the console itself, at 60 frames a second",
       "textIn": 0
     },
     {
@@ -492,7 +492,7 @@
     },
     {
       "clip": "build/nexgen-demos-xbox.mp4",
-      "from": 600,
+      "from": 600.57,
       "fit": 1,
       "beats": 1,
       "in": "glitch"
@@ -760,7 +760,7 @@
     },
     {
       "clip": "build/nexgen-demos-xbox.mp4",
-      "from": 560,
+      "from": 560.35,
       "fit": 1,
       "beats": 2,
       "in": "glitch"
@@ -1119,7 +1119,7 @@
     },
     {
       "clip": "build/nexgen-demos-xbox.mp4",
-      "from": 540,
+      "from": 548.0,
       "fit": 1,
       "beats": 2,
       "in": "glitch"

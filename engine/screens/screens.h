@@ -78,6 +78,7 @@ namespace nx
             asIScriptFunction* draw = nullptr;
             bool failed = false;
             bool loading = false;  // waiting for its assets
+            bool updated = false;  // once, before it is drawn: where its camera is may be set there
             float loadingFor = 0;
             u32 group = 0;         // of its sounds and coroutines
             u64 scriptTime = 0;

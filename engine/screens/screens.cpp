@@ -469,6 +469,7 @@ namespace nx
             {
                 fail(entry);
             }
+            entry.updated = true;
             if (!entry.failed && entry.world && !entry.world->update(dt))
             {
                 fail(entry);
@@ -489,8 +490,9 @@ namespace nx
         }
         Entry& entry = m_stack[m_depth - 1];
         Canvas& canvas = *m_services->canvas;
-        if (entry.loading && !entry.failed)
+        if ((entry.loading || !entry.updated) && !entry.failed)
         {
+            // Not until it has been updated once: before then a 3D screen's camera is wherever it began.
             drawLoading(entry);
         }
         else if (!entry.failed && entry.draw)

@@ -1,4 +1,6 @@
 #include "test.h"
+
+#include <math.h>
 #include "rig.h"
 
 #include "assets/decode.h"

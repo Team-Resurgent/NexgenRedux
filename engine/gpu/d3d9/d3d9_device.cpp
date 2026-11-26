@@ -9,6 +9,8 @@
 
 #include <string.h>
 
+#include <string>
+
 // Direct3D 9 on the Xbox 360. The shaders are HLSL, compiled when the device starts. The CPU is big endian and the
 // GPU reads what it is given as such, except where a format says otherwise: pictures and vertex colours are bytes in
 // r, g, b, a order, so they use formats that leave them as they are.
@@ -18,6 +20,8 @@ namespace nx::gpu
     {
         // Bytes r, g, b, a, read as they lie.
         const D3DFORMAT kRgba = static_cast<D3DFORMAT>(MAKELINFMT(MAKED3DFMT(GPUTEXTUREFORMAT_8_8_8_8, GPUENDIAN_NONE, TRUE, GPUSIGN_ALL_UNSIGNED, GPUNUMFORMAT_FRACTION, GPUSWIZZLE_ABGR)));
+        // The same, laid out in the GPU's own order, as volumes must be.
+        const D3DFORMAT kRgbaTiled = static_cast<D3DFORMAT>(MAKED3DFMT(GPUTEXTUREFORMAT_8_8_8_8, GPUENDIAN_NONE, TRUE, GPUSIGN_ALL_UNSIGNED, GPUNUMFORMAT_FRACTION, GPUSWIZZLE_ABGR));
         // Compressed blocks as a PC writes them.
         const D3DFORMAT kBc1 = static_cast<D3DFORMAT>(MAKELINFMT(MAKED3DFMT(GPUTEXTUREFORMAT_DXT1, GPUENDIAN_NONE, TRUE, GPUSIGN_ALL_UNSIGNED, GPUNUMFORMAT_FRACTION, GPUSWIZZLE_ABGR)));
         const D3DFORMAT kBc3 = static_cast<D3DFORMAT>(MAKELINFMT(MAKED3DFMT(GPUTEXTUREFORMAT_DXT4_5, GPUENDIAN_NONE, TRUE, GPUSIGN_ALL_UNSIGNED, GPUNUMFORMAT_FRACTION, GPUSWIZZLE_ABGR)));
@@ -25,6 +29,14 @@ namespace nx::gpu
         const D3DDECLTYPE kColorBytes = D3DDECLTYPE_UBYTE4N;
 
         constexpr u32 kWidth = 1280, kHeight = 720;
+        // The GPU draws into its own memory (EDRAM, 2048 tiles of 80x16 pixels) and copies the result out. The screen
+        // has its colour and depth in the first 1440 tiles; what is drawn elsewhere in a frame goes after them, so the
+        // screen is never written over.
+        constexpr DWORD kScreenTiles = (kWidth / 80) * (kHeight / 16) * 2;
+        constexpr u32 kShadowSide = 512;
+        // Bloom is spread at a quarter of the size across.
+        constexpr u32 kBloomWidth = 320, kBloomHeight = 180;
+        constexpr DWORD tilesOf(u32 width, u32 height) { return ((width + 79) / 80) * ((height + 15) / 16); }
         // One more than there can be frames on their way, so a dynamic mesh is never written while it is read.
         constexpr u32 kCopies = 3;
 
@@ -57,6 +69,8 @@ namespace nx::gpu
         struct EffectSlot
         {
             EffectKind kind;
+            IDirect3DVertexShader9* vertex;
+            IDirect3DPixelShader9* pixel;
         };
 
         template <typename T>
@@ -98,6 +112,19 @@ namespace nx::gpu
                 release(m_shadowPs);
                 release(m_screenVs);
                 release(m_skyPs);
+                release(m_shadowColor);
+                release(m_shadowDepth);
+                release(m_shadowTexture);
+                m_effects.forEach([](EffectSlot& e) { release(e.vertex); release(e.pixel); });
+                for (IDirect3DPixelShader9*& shader : m_postPs)
+                {
+                    release(shader);
+                }
+                release(m_postVs);
+                release(m_screenCopy);
+                release(m_small);
+                release(m_bloom[0]);
+                release(m_bloom[1]);
                 release(m_device);
                 release(m_d3d);
             }
@@ -105,7 +132,7 @@ namespace nx::gpu
             bool init()
             {
                 if (!m_buffers.init(4096, MemTag::Buffer) || !m_pipelines.init(256, MemTag::Buffer) || !m_textures.init(4096, MemTag::Texture) || !m_meshes.init(4096, MemTag::Buffer) ||
-                    !m_effects.init(16, MemTag::Buffer))
+                    !m_effects.init(128, MemTag::Buffer))
                 {
                     return false;
                 }
@@ -131,7 +158,7 @@ namespace nx::gpu
                     NX_ERROR("d3d9: no device");
                     return false;
                 }
-                if (!createShaders() || !createDeclarations())
+                if (!createShaders() || !createDeclarations() || !createShadowMap())
                 {
                     return false;
                 }
@@ -269,6 +296,7 @@ namespace nx::gpu
                 m_current = {};
                 m_streamed = 0;
                 m_mode = Mode::None;
+                m_shadowReady = false;
                 wholeViewport();
                 m_device->SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
                 m_device->Clear(0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER | D3DCLEAR_STENCIL, D3DCOLOR_COLORVALUE(clear.r, clear.g, clear.b, clear.a), 1.0f, 0);
@@ -435,8 +463,19 @@ namespace nx::gpu
                     m_current.rejected++;
                     return;
                 }
+                if (m_shadowing)
+                {
+                    m_device->SetVertexShaderConstantF(52, draw.world.m, 4);
+                    m_device->SetStreamSource(0, m->vertices[m->current], 0, sizeof(MeshVertex));
+                    m_device->SetIndices(m->indices);
+                    m_device->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, m->vertexCount, draw.first, count / 3);
+                    m_current.draws++;
+                    return;
+                }
                 use(Mode::Mesh);
                 ObjectConstants o = {};
+                o.shadowInfo[0] = m_shadowReady ? 1.0f : 0.0f;
+                o.shadowInfo[1] = 1.0f / static_cast<float>(kShadowSide);
                 o.world = draw.world;
                 put(o.tint, draw.color, draw.color.a);
                 o.surface[0] = draw.glow;
@@ -468,15 +507,31 @@ namespace nx::gpu
                 m_device->SetRenderState(D3DRS_ZFUNC, D3DCMP_LESSEQUAL);
                 m_device->SetTexture(0, texture->texture);
                 setSampler(0, D3DTEXF_LINEAR, draw.repeat ? D3DTADDRESS_WRAP : D3DTADDRESS_CLAMP, draw.repeat);
+                m_device->SetTexture(1, m_shadowReady ? m_shadowTexture : nullptr);
+                setSampler(1, D3DTEXF_POINT, D3DTADDRESS_CLAMP, false);
                 if (volume && volume->volume)
                 {
                     m_device->SetTexture(2, volume->volume);
                     setSampler(2, D3DTEXF_LINEAR, D3DTADDRESS_WRAP, false);
                 }
+                const EffectSlot* effect = draw.effect ? m_effects.get(draw.effect) : nullptr;
+                effect = effect && effect->kind == EffectKind::Surface ? effect : nullptr;
+                if (effect)
+                {
+                    static const float none[16] = {};
+                    setEffectValues(draw.values ? reinterpret_cast<const float(&)[16]>(*draw.values) : none, m_view.time, {}, true);
+                    m_device->SetVertexShader(effect->vertex);
+                    m_device->SetPixelShader(effect->pixel);
+                }
                 m_device->SetStreamSource(0, m->vertices[m->current], 0, sizeof(MeshVertex));
                 m_device->SetIndices(m->indices);
                 m_device->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, m->vertexCount, draw.first, count / 3);
                 m_device->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
+                if (effect)
+                {
+                    m_device->SetVertexShader(m_meshVs);
+                    m_device->SetPixelShader(m_meshPs);
+                }
                 m_current.draws++;
                 m_current.triangles += count / 3;
             }
@@ -497,8 +552,226 @@ namespace nx::gpu
             }
 
             bool drawField(const Field&) override { return false; }
-            bool beginShadows(const Mat4&) override { return false; }
-            void endShadows() override {}
+
+            // A cube of pixels in the GPU's own order. They repeat.
+            Texture createVolume(const u8* pixels, u32 size) override
+            {
+                if (pixels == nullptr || size < 2 || size > 128 || (size & (size - 1)) != 0)
+                {
+                    return {};
+                }
+                IDirect3DVolumeTexture9* volume = nullptr;
+                D3DLOCKED_BOX box;
+                if (FAILED(m_device->CreateVolumeTexture(size, size, size, 1, 0, kRgbaTiled, D3DPOOL_DEFAULT, &volume, nullptr)))
+                {
+                    return {};
+                }
+                if (FAILED(volume->LockBox(0, &box, nullptr, 0)))
+                {
+                    release(volume);
+                    return {};
+                }
+                XGTileVolume(box.pBits, size, size, size, nullptr, pixels, size * 4, size * size * 4, nullptr, 4);
+                volume->UnlockBox(0);
+                TextureSlot t = {};
+                t.volume = volume;
+                t.info.width = t.info.height = size;
+                t.info.bytes = static_cast<size_t>(size) * size * size * 4;
+                const Texture handle = m_textures.add(t);
+                if (!handle)
+                {
+                    release(volume);
+                    return {};
+                }
+                m_textureBytes += t.info.bytes;
+                return handle;
+            }
+
+            // --- Over the picture: what has been drawn is copied out, and drawn back through a shader ---
+
+            bool grade(Texture table, float strength, const Scissor& area) override
+            {
+                const TextureSlot* t = m_textures.get(table);
+                if (!m_inFrame || t == nullptr || t->volume == nullptr || !makePost())
+                {
+                    return false;
+                }
+                copyScreen();
+                postState(area);
+                m_device->SetTexture(0, m_screenCopy);
+                setSampler(0, D3DTEXF_LINEAR, D3DTADDRESS_CLAMP, false);
+                m_device->SetTexture(2, t->volume);
+                setSampler(2, D3DTEXF_LINEAR, D3DTADDRESS_CLAMP, false);
+                const float values[4] = { strength, static_cast<float>(t->info.width), 0, 0 };
+                m_device->SetPixelShaderConstantF(0, values, 1);
+                m_device->SetPixelShader(m_postPs[Post::Grade]);
+                cover();
+                endPost();
+                return true;
+            }
+
+            bool bloom(const Bloom& b, const Scissor& area) override
+            {
+                if (!m_inFrame || b.strength <= 0 || !makePost())
+                {
+                    return false;
+                }
+                copyScreen();
+                IDirect3DSurface9* screen = nullptr;
+                IDirect3DSurface9* depth = nullptr;
+                m_device->GetRenderTarget(0, &screen);
+                m_device->GetDepthStencilSurface(&depth);
+                m_device->SetRenderTarget(0, m_small);
+                m_device->SetDepthStencilSurface(nullptr);
+                postState({});
+                const D3DVIEWPORT9 small = { 0, 0, kBloomWidth, kBloomHeight, 0, 1 };
+                m_device->SetViewport(&small);
+                // What is bright, smaller.
+                const float bright[4] = { 1.0f / kWidth, 1.0f / kHeight, b.threshold, 0 };
+                pass(Post::Bright, m_screenCopy, bright, m_bloom[0]);
+                // Spread along, then down; twice, wider the second time.
+                for (u32 round = 0; round < 2; round++)
+                {
+                    const float wide = b.spread * (round == 0 ? 1.0f : 2.5f);
+                    const float along[4] = { wide / kBloomWidth, 0, 0, 0 };
+                    const float down[4] = { 0, wide / kBloomHeight, 0, 0 };
+                    pass(Post::Blur, m_bloom[0], along, m_bloom[1]);
+                    pass(Post::Blur, m_bloom[1], down, m_bloom[0]);
+                }
+                m_device->SetRenderTarget(0, screen);
+                m_device->SetDepthStencilSurface(depth);
+                release(screen);
+                release(depth);
+                postState(area);
+                m_device->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
+                m_device->SetRenderState(D3DRS_SEPARATEALPHABLENDENABLE, FALSE);
+                m_device->SetRenderState(D3DRS_BLENDOP, D3DBLENDOP_ADD);
+                m_device->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_ONE);
+                m_device->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE);
+                m_device->SetTexture(0, m_bloom[0]);
+                setSampler(0, D3DTEXF_LINEAR, D3DTADDRESS_CLAMP, false);
+                const float much[4] = { b.strength, 0, 0, 0 };
+                m_device->SetPixelShaderConstantF(0, much, 1);
+                m_device->SetPixelShader(m_postPs[Post::Add]);
+                cover();
+                endPost();
+                return true;
+            }
+
+            Effect createEffect(EffectKind kind, const char* source, char* error, size_t errorSize) override
+            {
+                using namespace shaders360;
+                if (errorSize)
+                {
+                    error[0] = 0;
+                }
+                EffectSlot slot = {};
+                slot.kind = kind;
+                bool fine;
+                if (kind == EffectKind::Picture)
+                {
+                    const std::string text = std::string(kEffectWords) + kPictureStart + "#line 1\n" + source + kPictureMain;
+                    fine = vertexFrom(text, "effectVs", slot.vertex, error, errorSize) && pixelFrom(text, "effectPs", slot.pixel, error, errorSize);
+                }
+                else
+                {
+                    const std::string start = std::string(kMeshCommon) + kEffectWords;
+                    const std::string pixel = start + kSurfacePixelStart + "#line 1\n" + source + kSurfacePixelMain;
+                    const std::string vertex = start + kSurfaceVertexStart + "#line 1\n" + source + kSurfaceVertexMain;
+                    fine = vertexFrom(vertex, "effectVs", slot.vertex, error, errorSize) && pixelFrom(pixel, "effectPs", slot.pixel, error, errorSize);
+                }
+                const Effect effect = fine ? m_effects.add(slot) : Effect();
+                if (!effect)
+                {
+                    release(slot.vertex);
+                    release(slot.pixel);
+                }
+                return effect;
+            }
+
+            void destroyEffect(Effect handle) override
+            {
+                if (EffectSlot* e = m_effects.get(handle))
+                {
+                    release(e->vertex);
+                    release(e->pixel);
+                    m_effects.remove(handle);
+                }
+            }
+
+            bool applyEffect(Effect handle, const float (&values)[16], float time, const Scissor& area) override
+            {
+                const EffectSlot* e = m_effects.get(handle);
+                if (!m_inFrame || e == nullptr || e->kind != EffectKind::Picture || !makePost())
+                {
+                    return false;
+                }
+                copyScreen();
+                postState({});
+                if (area.enabled)
+                {
+                    const D3DVIEWPORT9 viewport = { static_cast<DWORD>(area.x), static_cast<DWORD>(area.y), static_cast<DWORD>(area.width), static_cast<DWORD>(area.height), 0, 1 };
+                    m_device->SetViewport(&viewport);
+                }
+                setEffectValues(values, time, area, false);
+                m_device->SetTexture(0, m_screenCopy);
+                setSampler(0, D3DTEXF_LINEAR, D3DTADDRESS_CLAMP, false);
+                m_device->SetVertexShader(e->vertex);
+                m_device->SetPixelShader(e->pixel);
+                cover();
+                endPost();
+                return true;
+            }
+
+            // What the sun sees, as how far it is: into the GPU's memory after the screen, then copied out.
+            bool beginShadows(const Mat4& sunViewProjection) override
+            {
+                NX_ASSERT(m_inFrame && !m_shadowing);
+                if (m_shadowColor == nullptr)
+                {
+                    return false;
+                }
+                m_shadowing = true;
+                m_mode = Mode::None;
+                m_device->SetTexture(1, nullptr);
+                m_device->GetRenderTarget(0, &m_savedColor);
+                m_device->GetDepthStencilSurface(&m_savedDepth);
+                m_device->SetRenderTarget(0, m_shadowColor);
+                m_device->SetDepthStencilSurface(m_shadowDepth);
+                const D3DVIEWPORT9 viewport = { 0, 0, kShadowSide, kShadowSide, 0, 1 };
+                m_device->SetViewport(&viewport);
+                m_device->SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
+                m_device->Clear(0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xFFFFFFFF, 1.0f, 0);
+                ViewUniforms u;
+                memset(static_cast<void*>(&u), 0, sizeof(u));
+                u.viewProjection = sunViewProjection;
+                m_device->SetVertexShaderConstantF(0, reinterpret_cast<const float*>(&u), 4);
+                m_device->SetVertexDeclaration(m_meshDecl);
+                m_device->SetVertexShader(m_shadowVs);
+                m_device->SetPixelShader(m_shadowPs);
+                setBlend(Blend::None);
+                m_device->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
+                m_device->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
+                m_device->SetRenderState(D3DRS_ZENABLE, D3DZB_TRUE);
+                m_device->SetRenderState(D3DRS_ZWRITEENABLE, TRUE);
+                m_device->SetRenderState(D3DRS_ZFUNC, D3DCMP_LESSEQUAL);
+                return true;
+            }
+
+            void endShadows() override
+            {
+                NX_ASSERT(m_shadowing);
+                m_shadowing = false;
+                m_device->Resolve(D3DRESOLVE_RENDERTARGET0, nullptr, m_shadowTexture, nullptr, 0, 0, nullptr, 1.0f, 0, nullptr);
+                m_device->SetRenderTarget(0, m_savedColor);
+                m_device->SetDepthStencilSurface(m_savedDepth);
+                release(m_savedColor);
+                release(m_savedDepth);
+                m_shadowReady = true;
+                m_mode = Mode::None;
+            }
+
+            u32 shadowSize() const override { return kShadowSide; }
 
             bool capture(u8*, size_t) override { return false; }
 
@@ -653,15 +926,138 @@ namespace nx::gpu
                 release(m.indices);
             }
 
+            // --- Over the picture ---
+
+            enum Post { Bright, Blur, Add, Grade, PostCount };
+
+            // A copy of what is on the screen to read, a smaller place to draw in the GPU's memory after the screen and
+            // the shadows, and two pictures that size. Made when they are first wanted.
+            bool makePost()
+            {
+                if (m_postTried)
+                {
+                    return m_screenCopy != nullptr;
+                }
+                m_postTried = true;
+                D3DSURFACE_PARAMETERS at = {};
+                at.Base = kScreenTiles;
+                const bool fine = SUCCEEDED(m_device->CreateTexture(kWidth, kHeight, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &m_screenCopy, nullptr)) &&
+                                  SUCCEEDED(m_device->CreateRenderTarget(kBloomWidth, kBloomHeight, D3DFMT_A8R8G8B8, D3DMULTISAMPLE_NONE, 0, FALSE, &m_small, &at)) &&
+                                  SUCCEEDED(m_device->CreateTexture(kBloomWidth, kBloomHeight, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &m_bloom[0], nullptr)) &&
+                                  SUCCEEDED(m_device->CreateTexture(kBloomWidth, kBloomHeight, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &m_bloom[1], nullptr));
+                if (!fine)
+                {
+                    NX_WARN("d3d9: nothing can be drawn over the picture");
+                    release(m_screenCopy);
+                }
+                return m_screenCopy != nullptr;
+            }
+
+            void copyScreen() { m_device->Resolve(D3DRESOLVE_RENDERTARGET0, nullptr, m_screenCopy, nullptr, 0, 0, nullptr, 1.0f, 0, nullptr); }
+
+            void postState(const Scissor& area)
+            {
+                m_mode = Mode::None;
+                wholeViewport();
+                setScissor(area);
+                m_device->SetVertexDeclaration(m_screenDecl);
+                m_device->SetVertexShader(m_postVs);
+                setBlend(Blend::None);
+                m_device->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
+                m_device->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
+                m_device->SetRenderState(D3DRS_ZENABLE, D3DZB_FALSE);
+                m_device->SetRenderState(D3DRS_ZWRITEENABLE, FALSE);
+            }
+
+            // A triangle over all of the target.
+            void cover()
+            {
+                static const float corners[6] = { -1, -1, 3, -1, -1, 3 };
+                m_device->DrawPrimitiveUP(D3DPT_TRIANGLELIST, 1, corners, sizeof(float) * 2);
+                m_current.draws++;
+            }
+
+            // One step of bloom, in the small place, kept in a picture.
+            void pass(Post which, IDirect3DTexture9* from, const float (&values)[4], IDirect3DTexture9* to)
+            {
+                m_device->SetTexture(0, from);
+                setSampler(0, D3DTEXF_LINEAR, D3DTADDRESS_CLAMP, false);
+                m_device->SetPixelShaderConstantF(0, values, 1);
+                m_device->SetPixelShader(m_postPs[which]);
+                cover();
+                m_device->SetTexture(0, nullptr);
+                m_device->Resolve(D3DRESOLVE_RENDERTARGET0, nullptr, to, nullptr, 0, 0, nullptr, 1.0f, 0, nullptr);
+            }
+
+            void endPost()
+            {
+                for (DWORD i = 0; i < 3; i++)
+                {
+                    m_device->SetTexture(i, nullptr);
+                }
+                m_device->SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
+                m_mode = Mode::None;
+            }
+
+            // values[0] to [3], the area of the picture it covers, and its size and the time.
+            void setEffectValues(const float (&values)[16], float time, const Scissor& area, bool vertex)
+            {
+                float u[24] = {};
+                memcpy(u, values, sizeof(values));
+                u[18] = u[19] = 1;
+                u[20] = static_cast<float>(kWidth);
+                u[21] = static_cast<float>(kHeight);
+                u[22] = time;
+                if (area.enabled)
+                {
+                    u[16] = static_cast<float>(area.x) / kWidth;
+                    u[17] = static_cast<float>(area.y) / kHeight;
+                    u[18] = static_cast<float>(area.width) / kWidth;
+                    u[19] = static_cast<float>(area.height) / kHeight;
+                    u[20] = static_cast<float>(area.width);
+                    u[21] = static_cast<float>(area.height);
+                }
+                m_device->SetPixelShaderConstantF(80, u, 6);
+                if (vertex)
+                {
+                    m_device->SetVertexShaderConstantF(80, u, 6);
+                }
+            }
+
             // --- Shaders ---
 
-            bool compile(const char* source, size_t length, const char* entry, const char* profile, ID3DXBuffer*& code)
+            // Either kind, with what went wrong given back, for effects that others write.
+            bool vertexFrom(const std::string& text, const char* entry, IDirect3DVertexShader9*& vertex, char* error, size_t errorSize)
+            {
+                ID3DXBuffer* code = nullptr;
+                const bool fine = compile(text.c_str(), text.size(), entry, "vs_3_0", code, error, errorSize) && SUCCEEDED(m_device->CreateVertexShader(static_cast<const DWORD*>(code->GetBufferPointer()), &vertex));
+                release(code);
+                return fine;
+            }
+
+            bool pixelFrom(const std::string& text, const char* entry, IDirect3DPixelShader9*& pixel, char* error, size_t errorSize)
+            {
+                ID3DXBuffer* code = nullptr;
+                const bool fine = compile(text.c_str(), text.size(), entry, "ps_3_0", code, error, errorSize) && SUCCEEDED(m_device->CreatePixelShader(static_cast<const DWORD*>(code->GetBufferPointer()), &pixel));
+                release(code);
+                return fine;
+            }
+
+            bool compile(const char* source, size_t length, const char* entry, const char* profile, ID3DXBuffer*& code, char* error = nullptr, size_t errorSize = 0)
             {
                 ID3DXBuffer* errors = nullptr;
                 const HRESULT hr = D3DXCompileShader(source, static_cast<UINT>(length), nullptr, nullptr, entry, profile, 0, &code, &errors, nullptr);
                 if (FAILED(hr))
                 {
-                    NX_ERROR("d3d9: %s: %s", entry, errors ? static_cast<const char*>(errors->GetBufferPointer()) : "can't be compiled");
+                    const char* why = errors ? static_cast<const char*>(errors->GetBufferPointer()) : "can't be compiled";
+                    if (errorSize)
+                    {
+                        snprintf(error, errorSize, "%s", why);
+                    }
+                    else
+                    {
+                        NX_ERROR("d3d9: %s: %s", entry, why);
+                    }
                     release(errors);
                     return false;
                 }
@@ -702,7 +1098,28 @@ namespace nx::gpu
                                   vertexShader(mesh, length, "shadowVs", m_shadowVs) && pixelShader(mesh, length, "shadowPs", m_shadowPs) &&
                                   vertexShader(mesh, length, "screenVs", m_screenVs) && pixelShader(mesh, length, "skyPs", m_skyPs);
                 memFree(mesh);
-                return fine;
+                return fine && vertexShader(kPost, sizeof(kPost) - 1, "postVs", m_postVs) && pixelShader(kPost, sizeof(kPost) - 1, "brightPs", m_postPs[Post::Bright]) &&
+                       pixelShader(kPost, sizeof(kPost) - 1, "blurPs", m_postPs[Post::Blur]) && pixelShader(kPost, sizeof(kPost) - 1, "addPs", m_postPs[Post::Add]) &&
+                       pixelShader(kPost, sizeof(kPost) - 1, "gradePs", m_postPs[Post::Grade]);
+            }
+
+            bool createShadowMap()
+            {
+                D3DSURFACE_PARAMETERS color = {};
+                color.Base = kScreenTiles;
+                D3DSURFACE_PARAMETERS depth = {};
+                depth.Base = kScreenTiles + tilesOf(kShadowSide, kShadowSide);
+                depth.HierarchicalZBase = 0xFFFFFFFF;
+                if (FAILED(m_device->CreateRenderTarget(kShadowSide, kShadowSide, D3DFMT_R32F, D3DMULTISAMPLE_NONE, 0, FALSE, &m_shadowColor, &color)) ||
+                    FAILED(m_device->CreateDepthStencilSurface(kShadowSide, kShadowSide, D3DFMT_D24S8, D3DMULTISAMPLE_NONE, 0, FALSE, &m_shadowDepth, &depth)) ||
+                    FAILED(m_device->CreateTexture(kShadowSide, kShadowSide, 1, 0, D3DFMT_R32F, D3DPOOL_DEFAULT, &m_shadowTexture, nullptr)))
+                {
+                    NX_WARN("d3d9: no shadows");
+                    release(m_shadowColor);
+                    release(m_shadowDepth);
+                    release(m_shadowTexture);
+                }
+                return true;
             }
 
             bool createDeclarations()
@@ -748,6 +1165,18 @@ namespace nx::gpu
             HandlePool<MeshSlot, MeshTag> m_meshes;
             HandlePool<EffectSlot, EffectTag> m_effects;
             Texture m_white;
+            IDirect3DSurface9* m_shadowColor = nullptr;
+            IDirect3DSurface9* m_shadowDepth = nullptr;
+            IDirect3DTexture9* m_shadowTexture = nullptr;
+            IDirect3DSurface9* m_savedColor = nullptr;
+            IDirect3DSurface9* m_savedDepth = nullptr;
+            bool m_shadowing = false, m_shadowReady = false;
+            IDirect3DVertexShader9* m_postVs = nullptr;
+            IDirect3DPixelShader9* m_postPs[PostCount] = {};
+            IDirect3DTexture9* m_screenCopy = nullptr;
+            IDirect3DSurface9* m_small = nullptr;
+            IDirect3DTexture9* m_bloom[2] = {};
+            bool m_postTried = false;
 
             Vertex m_stream[kStreamVertices];
             u32 m_streamed = 0;

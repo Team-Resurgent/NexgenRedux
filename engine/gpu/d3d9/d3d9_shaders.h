@@ -130,7 +130,7 @@ float shadowAt(float3 place, float facing)
         return 1.0;
     }
     float sum = 0.0;
-    float bias = 0.0006 + 0.0016 * (1.0 - facing);
+    float bias = 0.0012 + 0.003 * (1.0 - facing);  // a coarser map than elsewhere
     for (int y = -1; y <= 1; y++)
     {
         for (int x = -1; x <= 1; x++)
@@ -255,6 +255,134 @@ float3 rayOf(float2 at)
 float4 skyPs(float2 at : TEXCOORD0) : COLOR0
 {
     return float4(sky(rayOf(at)), 1.0);
+}
+)";
+    // Over the picture: what was drawn, made brighter, blurred, added, graded. The corners say where, -1 to 1.
+    inline const char kPost[] = R"(
+float4 post[4] : register(c0);
+sampler2D source : register(s0);
+sampler3D table : register(s2);
+
+struct PostOut
+{
+    float4 position : POSITION;
+    float2 at : TEXCOORD0;
+};
+
+PostOut postVs(float2 corner : POSITION)
+{
+    PostOut output;
+    output.position = float4(corner, 0.0, 1.0);
+    output.at = corner;
+    return output;
+}
+
+float2 uvOf(float2 at)
+{
+    return float2(at.x * 0.5 + 0.5, 0.5 - at.y * 0.5);
+}
+
+// Smaller, and only what is brighter than post[0].z. post[0].xy: a pixel of what is read.
+float4 brightPs(float2 at : TEXCOORD0) : COLOR0
+{
+    float2 uv = uvOf(at);
+    float2 t = post[0].xy;
+    float3 c = (tex2D(source, uv + t * float2(-1.0, -1.0)).rgb + tex2D(source, uv + t * float2(1.0, -1.0)).rgb +
+                tex2D(source, uv + t * float2(-1.0, 1.0)).rgb + tex2D(source, uv + t * float2(1.0, 1.0)).rgb) * 0.25;
+    float bright = max(c.r, max(c.g, c.b));
+    return float4(c * smoothstep(post[0].z, post[0].z + 0.3, bright), 1.0);
+}
+
+// Spread along post[0].xy.
+float4 blurPs(float2 at : TEXCOORD0) : COLOR0
+{
+    float2 uv = uvOf(at);
+    float2 d = post[0].xy;
+    float3 sum = tex2D(source, uv).rgb * 0.2270270270;
+    sum += (tex2D(source, uv + d).rgb + tex2D(source, uv - d).rgb) * 0.1945945946;
+    sum += (tex2D(source, uv + d * 2.0).rgb + tex2D(source, uv - d * 2.0).rgb) * 0.1216216216;
+    sum += (tex2D(source, uv + d * 3.0).rgb + tex2D(source, uv - d * 3.0).rgb) * 0.0540540541;
+    sum += (tex2D(source, uv + d * 4.0).rgb + tex2D(source, uv - d * 4.0).rgb) * 0.0162162162;
+    return float4(sum, 1.0);
+}
+
+// Added to what is there, post[0].x of it.
+float4 addPs(float2 at : TEXCOORD0) : COLOR0
+{
+    return float4(tex2D(source, uvOf(at)).rgb * post[0].x, 1.0);
+}
+
+// Each colour looked up in a table post[0].y a side, and mixed with what it was by post[0].x.
+float4 gradePs(float2 at : TEXCOORD0) : COLOR0
+{
+    float3 color = saturate(tex2D(source, uvOf(at)).rgb);
+    float n = post[0].y;
+    float3 graded = tex3D(table, color * ((n - 1.0) / n) + 0.5 / n).rgb;
+    return float4(lerp(color, graded, post[0].x), 1.0);
+}
+)";
+
+    // The words of an effect (see gpu/effect_source.h), here.
+    inline const char kEffectWords[] = R"(
+float4 values[4] : register(c80);
+float4 effectArea : register(c84);
+float4 effectInfo : register(c85);
+#define size effectInfo.xy
+#define time effectInfo.z
+)";
+
+    inline const char kPictureStart[] = R"(
+sampler2D image : register(s0);
+float4 picture(float2 uv) { return tex2Dlod(image, float4(effectArea.xy + saturate(uv) * effectArea.zw, 0.0, 0.0)); }
+)";
+
+    inline const char kPictureMain[] = R"(
+struct EffectOut
+{
+    float4 position : POSITION;
+    float2 at : TEXCOORD0;
+};
+
+EffectOut effectVs(float2 corner : POSITION)
+{
+    EffectOut output;
+    output.position = float4(corner, 0.0, 1.0);
+    output.at = corner;
+    return output;
+}
+
+float4 effectPs(float2 at : TEXCOORD0) : COLOR0
+{
+    float2 uv = float2(at.x * 0.5 + 0.5, 0.5 - at.y * 0.5);
+    return float4(effect(uv, picture(uv)).rgb, 1.0);
+}
+)";
+
+    inline const char kSurfacePixelStart[] = R"(
+float4 picture(float2 uv) { return tex2D(image, uv); }
+)";
+
+    inline const char kSurfaceVertexStart[] = R"(
+float4 picture(float2 uv) { return float4(1.0, 1.0, 1.0, 1.0); }
+)";
+
+    inline const char kSurfacePixelMain[] = R"(
+float4 effectPs(MeshPixel input) : COLOR0
+{
+    float glow = surface.x;
+    float4 base = paint(tex2D(image, input.uv) * input.color, input.uv, input.place, normalize(input.normal), glow);
+    clip(base.a - 0.004);
+    return finish(input, base, glow);
+}
+)";
+
+    inline const char kSurfaceVertexMain[] = R"(
+MeshOut effectVs(MeshIn input)
+{
+#ifdef MOVES
+    input.position = move(input.position, input.normal, input.uv);
+#endif
+    return meshVsWith(input);
 }
 )";
 }

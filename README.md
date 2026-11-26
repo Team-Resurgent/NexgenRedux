@@ -85,7 +85,12 @@ a compiler and the platform's SDK, downloads nothing, and uses no SDL or GLFW.
   <img src="docs/screenshots/xbox-cases.png" alt="Cover flow on the original Xbox" width="32%">
   <img src="docs/screenshots/xbox-skim.png" alt="Skimmer on the original Xbox" width="32%">
 </p>
-<p align="center"><sub>The last row is a real original Xbox</sub></p>
+<p align="center">
+  <img src="docs/screenshots/xbox360-solids.png" alt="Solids on the Xbox 360" width="32%">
+  <img src="docs/screenshots/xbox360-explore.png" alt="Island on the Xbox 360" width="32%">
+  <img src="docs/screenshots/xbox360-shaders.png" alt="Shaders on the Xbox 360" width="32%">
+</p>
+<p align="center"><sub>The last two rows are a real original Xbox, and the Xbox 360 in Xenia</sub></p>
 
 ## Features
 

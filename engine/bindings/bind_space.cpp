@@ -112,6 +112,8 @@ namespace nx
         }
         u32 modelAnimations(const ModelRef* m) { return m->asset->model ? m->asset->model->animations.count() : 0; }
         std::string modelAnimation(u32 index, const ModelRef* m) { return index < modelAnimations(m) ? m->asset->model->animations[index].name : ""; }
+        u32 modelBones(const ModelRef* m) { return m->asset->model ? m->asset->model->bones.count() : 0; }
+        std::string modelBone(u32 index, const ModelRef* m) { return index < modelBones(m) ? m->asset->model->bones[index].name : ""; }
 
         // --- Entities ---
 
@@ -296,6 +298,12 @@ namespace nx
             }
         }
         bool entityAnimate(const std::string& name, bool loop, float change, EntityRef* e) { return e->world && e->world->space().play(e->id, name.c_str(), loop, change); }
+        bool entityAttachBone(EntityRef* parent, const std::string& bone, EntityRef* e)
+        {
+            return e->world && (parent == nullptr || parent->world == e->world) && e->world->space().attachToBone(e->id, parent ? parent->id : 0, bone.c_str());
+        }
+        u32 entityBones(EntityRef* e) { return e->world ? e->world->space().boneCount(e->id) : 0; }
+        std::string entityBone(u32 index, EntityRef* e) { return e->world ? e->world->space().boneName(e->id, index) : ""; }
         bool getAnimated(const EntityRef* e) { return e->world == nullptr || e->world->space().played(e->id); }
         void setAnimationSpeed(float v, EntityRef* e) { if (Appearance* a = lookOf(e)) a->speed = v; }
 
@@ -521,6 +529,17 @@ namespace nx
             f.steps = steps < 8 ? 8 : steps > 160 ? 160 : steps;
         }
 
+        u32 jointId(const EntityRef* e) { return e && e->world ? e->id : 0; }
+        bool spaceJoin(const EntityRef* a, const EntityRef* b, const Vec3& at) { return jointId(a) && space().pin(a->id, jointId(b), at); }
+        bool spaceHinge(const EntityRef* a, const EntityRef* b, const Vec3& at, const Vec3& axis) { return jointId(a) && space().hinge(a->id, jointId(b), at, axis); }
+        bool spaceRope(const EntityRef* a, const EntityRef* b, const Vec3& atA, const Vec3& atB, float length) { return jointId(a) && space().rope(a->id, jointId(b), atA, atB, length); }
+        bool spaceSpring(const EntityRef* a, const EntityRef* b, const Vec3& atA, const Vec3& atB, float stiffness, float damping, float length)
+        {
+            return jointId(a) && space().spring(a->id, jointId(b), atA, atB, stiffness, damping, length);
+        }
+        void spaceUnjoin(const EntityRef* e) { if (jointId(e)) space().unjoin(e->id); }
+        u32 spaceJoints() { return space().joints(); }
+
         bool spaceRaycast(const Vec3& from, const Vec3& to, Vec3& hit, Vec3& normal, u32 groups, const EntityRef* except)
         {
             u32 id = 0;
@@ -569,6 +588,8 @@ namespace nx
         b.method("uint get_triangles() const property", NX_OBJ_LAST(modelTriangles), "How many it has, close up.");
         b.method("uint get_animations() const property", NX_OBJ_LAST(modelAnimations), "How many it has.");
         b.method("string animation(uint index) const", NX_OBJ_LAST(modelAnimation), "The name of one.");
+        b.method("uint get_bones() const property", NX_OBJ_LAST(modelBones), "How many bones it bends by, which things can be attached to.");
+        b.method("string bone(uint index) const", NX_OBJ_LAST(modelBone), "The name of one, such as \"hand.r\".");
 
         b.enumType("Solid", "Shapes that are always there, 1 metre across.");
         b.enumValue("SolidNone", static_cast<int>(Solid::None), "Nothing.");
@@ -644,6 +665,9 @@ namespace nx
         b.method("void set_shadow(bool) property", NX_OBJ_LAST(setShadow), "Whether it casts one.");
         b.method("uint get_detail() const property", NX_OBJ_LAST(getDetail), "The level it was last drawn at: 0 is all of it, 2 the least.");
         b.method("void light(const Color &in color, float range)", NX_OBJ_LAST(entityLight), "Lights what is within so many metres.");
+        b.method("bool attach(Entity@+ parent, const string &in bone)", NX_OBJ_LAST(entityAttachBone), "Moves with one of the parent's model's bones, by name, as a hand holds a sword or a head wears a hat: its place, turn and size are then from that bone, and it follows every animation. False if either isn't in space.");
+        b.method("uint get_bones() const property", NX_OBJ_LAST(entityBones), "How many bones its model has, once it has come.");
+        b.method("string bone(uint index) const", NX_OBJ_LAST(entityBone), "The name of one.");
         b.method("bool animate(const string &in name, bool loop = true, float change = 0.25)", NX_OBJ_LAST(entityAnimate), "Plays one of its model's animations, changing to it over some seconds. Asking again for what is playing does nothing. False if it isn't there, or hasn't arrived.");
         b.method("bool get_animated() const property", NX_OBJ_LAST(getAnimated), "Whether an animation that doesn't loop has finished.");
         b.method("float get_animationSpeed() const property", NX_OBJ_LAST(getAnimationSpeed), "How fast its animation plays.");
@@ -758,6 +782,12 @@ namespace nx
         b.function("void clearField()", NX_FN(spaceClearShapes), "Takes them all away. To move them, clear and add them again each update.");
         b.function("void fieldLook(float shine, float reflection = 0, float repeat = 0, float farthest = 60, uint steps = 80)", NX_FN(spaceShapeLook), "How they look; repeat makes the whole thing again every so many metres.");
         b.function("void burst(const string &in particles, const Vec3 &in place, uint count, const Vec3 &in aim = Vec3(0, 1, 0))", NX_FN(spaceBurst), "Throws out some particles. A spread of 360 goes every way, 90 is a cone.");
+        b.function("bool join(Entity@+ a, Entity@+ b, const Vec3 &in at)", NX_FN(spaceJoin), "Pins two bodies together at a place, free to turn about it; null for b pins a to the world there. Both need colliders, and a mass to move.");
+        b.function("bool hinge(Entity@+ a, Entity@+ b, const Vec3 &in at, const Vec3 &in axis)", NX_FN(spaceHinge), "The same, turning only about an axis through that place, as a door, a lid or a wheel does.");
+        b.function("bool rope(Entity@+ a, Entity@+ b, const Vec3 &in atA, const Vec3 &in atB, float length = -1)", NX_FN(spaceRope), "A place on each kept no further apart than a length, as a rope or a chain does: it pulls but never pushes. A length below 0 is as far apart as they are now.");
+        b.function("bool spring(Entity@+ a, Entity@+ b, const Vec3 &in atA, const Vec3 &in atB, float stiffness = 60, float damping = 3, float length = -1)", NX_FN(spaceSpring), "A place on each pulled towards a length and pushed away from it: stiffness in newtons a metre, damping slows the bouncing. A length below 0 is as far apart as they are now.");
+        b.function("void unjoin(Entity@+ e)", NX_FN(spaceUnjoin), "Lets go of every joint it is in. They also go when it does.");
+        b.function("uint get_joints() property", NX_FN(spaceJoints), "How many there are.");
         b.function("bool raycast(const Vec3 &in from, const Vec3 &in to, Vec3 &out hit, Vec3 &out normal, uint groups = 0xFFFF, Entity@+ except = null)", NX_FN(spaceRaycast), "Whether there is anything on a line, where, and which way it faces. The land counts as group 0.");
         b.function("Entity@ pick(const Vec3 &in from, const Vec3 &in to, Vec3 &out hit, uint groups = 0xFFFF, Entity@+ except = null)", NX_FN(spacePick), "The first collider on a line, or null if there is none or the land comes first.");
         b.function("array<Entity@>@ within(const Vec3 &in place, float radius, uint groups = 0xFFFF)", NX_FN(spaceWithin), "Everything whose collider touches a ball.");

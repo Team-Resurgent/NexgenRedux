@@ -1230,8 +1230,10 @@ namespace nx
                 }
             }
         }
+        prepareJoints(dt);
         for (u32 iteration = 0; iteration < kIterations; iteration++)
         {
+            solveJoints();
             for (Touch& t : m_touches)
             {
                 Rigid &a = m_rigid[t.a], &b = t.b == kLand ? ground : m_rigid[t.b];
@@ -1450,6 +1452,327 @@ namespace nx
             makeRigid(*c, r);
             const float reach = r.shape == Shape3::Box ? (r.half.x + r.half.y + r.half.z) / 3 : r.half.x;
             b->spin = b->spin + (*at - r.place).cross(impulse) * (1 / (0.5f * b->mass * reach * reach));
+        }
+    }
+    // --- Joints ---
+
+    bool Space::addJoint(Joint3& j, const Vec3& atA, const Vec3& atB)
+    {
+        const World::Entity* ea = m_world.find(j.a);
+        const World::Entity* eb = j.b ? m_world.find(j.b) : nullptr;
+        if (ea == nullptr || ea->parts3[0] == kNone || (j.b && (eb == nullptr || eb->parts3[0] == kNone)) || j.a == j.b)
+        {
+            return false;
+        }
+        // Kept in each one's own space, so that they turn and move with it.
+        const Spatial& sa = m_spatials[ea->parts3[0]];
+        j.localA = sa.world.inverse().transformPoint(atA);
+        j.axisA = sa.turn.conjugate().rotate(j.axisA);
+        if (eb)
+        {
+            const Spatial& sb = m_spatials[eb->parts3[0]];
+            j.localB = sb.world.inverse().transformPoint(atB);
+            j.axisB = sb.turn.conjugate().rotate(j.axisB);
+        }
+        else
+        {
+            j.localB = atB;
+        }
+        if (j.length < 0)
+        {
+            j.length = (atB - atA).length();
+        }
+        return m_joints3.push(j);
+    }
+
+    bool Space::pin(u32 a, u32 b, const Vec3& at)
+    {
+        Joint3 j = {};
+        j.kind = JointKind::Pin;
+        j.a = a;
+        j.b = b;
+        return addJoint(j, at, at);
+    }
+
+    bool Space::hinge(u32 a, u32 b, const Vec3& at, const Vec3& axis)
+    {
+        if (axis.dot(axis) < 1e-8f)
+        {
+            return false;
+        }
+        Joint3 j = {};
+        j.kind = JointKind::Hinge;
+        j.a = a;
+        j.b = b;
+        j.axisA = j.axisB = axis.normalized();
+        return addJoint(j, at, at);
+    }
+
+    bool Space::rope(u32 a, u32 b, const Vec3& atA, const Vec3& atB, float length)
+    {
+        Joint3 j = {};
+        j.kind = JointKind::Rope;
+        j.a = a;
+        j.b = b;
+        j.length = length;
+        return addJoint(j, atA, atB);
+    }
+
+    bool Space::spring(u32 a, u32 b, const Vec3& atA, const Vec3& atB, float stiffness, float damping, float length)
+    {
+        Joint3 j = {};
+        j.kind = JointKind::Spring;
+        j.a = a;
+        j.b = b;
+        j.length = length;
+        j.stiffness = stiffness > 0 ? stiffness : 0;
+        j.damping = damping > 0 ? damping : 0;
+        return addJoint(j, atA, atB);
+    }
+
+    void Space::unjoin(u32 id)
+    {
+        for (u32 i = 0; i < m_joints3.count();)
+        {
+            if (id == 0 || m_joints3[i].a == id || m_joints3[i].b == id)
+            {
+                m_joints3.swapRemove(i);
+                continue;
+            }
+            i++;
+        }
+    }
+
+    // Where each end is, how hard it is to move, and how far out it is, for this step. Sequential impulses, as for
+    // contacts; a spring is a soft constraint (Erin Catto's), the others are pushed back by a fifth of their error.
+    void Space::prepareJoints(float dt)
+    {
+        if (m_joints3.count() == 0)
+        {
+            return;
+        }
+        if (!m_rigidOf.reserve(m_world.m_entities.count()))
+        {
+            return;
+        }
+        m_rigidOf.resize(m_world.m_entities.count());
+        for (u32& r : m_rigidOf)
+        {
+            r = kNone;
+        }
+        for (u32 i = 0; i < m_rigid.count(); i++)
+        {
+            if (m_rigid[i].entity != kNone && m_rigid[i].entity < m_rigidOf.count())
+            {
+                m_rigidOf[m_rigid[i].entity] = i;
+            }
+        }
+        for (u32 i = 0; i < m_joints3.count();)
+        {
+            Joint3& j = m_joints3[i];
+            const World::Entity* ea = m_world.find(j.a);
+            const World::Entity* eb = j.b ? m_world.find(j.b) : nullptr;
+            // Gone with what it held.
+            if (ea == nullptr || ea->parts3[0] == kNone || (j.b && (eb == nullptr || eb->parts3[0] == kNone)))
+            {
+                m_joints3.swapRemove(i);
+                continue;
+            }
+            i++;
+            const u32 indexA = j.a & ((1u << World::kIndexBits) - 1), indexB = j.b & ((1u << World::kIndexBits) - 1);
+            j.rigidA = m_rigidOf[indexA];
+            j.rigidB = j.b ? m_rigidOf[indexB] : kNone;
+            j.active = j.rigidA != kNone && (j.b == 0 || j.rigidB != kNone);
+            if (!j.active)
+            {
+                continue;
+            }
+            Rigid& a = m_rigid[j.rigidA];
+            Rigid none = {};
+            Rigid& b = eb ? m_rigid[j.rigidB] : none;
+            if (!j.known)
+            {
+                const Spatial& sa = m_spatials[ea->parts3[0]];
+                j.bodyA = a.turn.conjugate().rotate(sa.world.transformPoint(j.localA) - a.place);
+                j.bodyAxisA = a.turn.conjugate().rotate(sa.turn.rotate(j.axisA));
+                if (eb)
+                {
+                    const Spatial& sb = m_spatials[eb->parts3[0]];
+                    j.bodyB = b.turn.conjugate().rotate(sb.world.transformPoint(j.localB) - b.place);
+                    j.bodyAxisB = b.turn.conjugate().rotate(sb.turn.rotate(j.axisB));
+                }
+                else
+                {
+                    j.bodyB = j.localB;
+                    j.bodyAxisB = j.axisB;
+                }
+                j.known = true;
+            }
+            const Vec3 worldA = a.place + a.turn.rotate(j.bodyA);
+            const Vec3 worldB = eb ? b.place + b.turn.rotate(j.bodyB) : j.bodyB;
+            j.fromA = worldA - a.place;
+            j.fromB = eb ? worldB - b.place : Vec3();
+            // Nothing that is jointed sleeps: what it hangs from may move.
+            const auto wake = [&](Rigid& r)
+            {
+                if (r.body != kNone)
+                {
+                    r.still = false;
+                    m_bodies[r.body].still = 0;
+                }
+            };
+            wake(a);
+            if (eb)
+            {
+                wake(m_rigid[j.rigidB]);
+            }
+            const float beta = 0.2f / dt;
+            const Vec3 gap = worldB - worldA;
+            j.softness = 0;
+            if (j.kind == JointKind::Pin || j.kind == JointKind::Hinge)
+            {
+                for (u32 k = 0; k < 3; k++)
+                {
+                    j.bias[k] = (k == 0 ? gap.x : k == 1 ? gap.y : gap.z) * beta;
+                }
+            }
+            else
+            {
+                const float far = gap.length();
+                j.axis = far > 1e-5f ? gap * (1 / far) : Vec3(0, 1, 0);
+                const float error = far - j.length;
+                if (j.kind == JointKind::Spring && j.stiffness > 0)
+                {
+                    // gamma and beta of a soft constraint: as if a spring and a damper were between them.
+                    const float softer = dt * (j.damping + dt * j.stiffness);
+                    j.softness = softer > 0 ? 1 / softer : 0;
+                    j.bias[0] = softer > 0 ? error * dt * j.stiffness / softer : 0;
+                }
+                else
+                {
+                    j.bias[0] = error > 0 ? error * beta : error / dt;   // a slack rope lets them come closer
+                }
+            }
+            if (j.kind == JointKind::Hinge)
+            {
+                // The axis as each sees it: what turns B's onto A's is put right, about the two ways across it.
+                const Vec3 axisA = a.turn.rotate(j.bodyAxisA).normalized();
+                const Vec3 axisB = eb ? b.turn.rotate(j.bodyAxisB).normalized() : j.bodyAxisB;
+                j.axis = axisA;
+                Vec3 across0, across1;
+                const Vec3 n = axisA;
+                across0 = (fabsf(n.x) > 0.7f ? Vec3(0, 1, 0) : Vec3(1, 0, 0)).cross(n).normalized();
+                across1 = n.cross(across0);
+                j.across[0] = across0;
+                j.across[1] = across1;
+                const Vec3 wrong = axisA.cross(axisB);
+                j.turnBias[0] = -wrong.dot(across0) * beta;
+                j.turnBias[1] = -wrong.dot(across1) * beta;
+            }
+
+            // How hard each way is to move, and last step's pushes again to begin with.
+            const auto moving = [](const Rigid& r) { return r.still ? 0.0f : r.inverseMass; };
+            const auto resist = [&](const Vec3& n)
+            {
+                const float k = moving(a) + moving(b) + inertia(a, j.fromA.cross(n)).cross(j.fromA).dot(n) + inertia(b, j.fromB.cross(n)).cross(j.fromB).dot(n);
+                return k + j.softness > 0 ? 1 / (k + j.softness) : 0.0f;
+            };
+            if (j.kind == JointKind::Pin || j.kind == JointKind::Hinge)
+            {
+                j.mass[0] = resist(Vec3(1, 0, 0));
+                j.mass[1] = resist(Vec3(0, 1, 0));
+                j.mass[2] = resist(Vec3(0, 0, 1));
+                pushJoint(a, b, j, Vec3(j.impulse[0], j.impulse[1], j.impulse[2]));
+            }
+            else
+            {
+                j.mass[0] = resist(j.axis);
+                pushJoint(a, b, j, j.axis * j.impulse[0]);
+            }
+            if (j.kind == JointKind::Hinge)
+            {
+                for (u32 k = 0; k < 2; k++)
+                {
+                    const Vec3& t = j.across[k];
+                    const float turn = inertia(a, t).dot(t) + inertia(b, t).dot(t);
+                    j.turnMass[k] = turn > 0 ? 1 / turn : 0;
+                    turnJoint(a, b, t * j.turnImpulse[k]);
+                }
+            }
+        }
+    }
+
+    void Space::pushJoint(Rigid& a, Rigid& b, const Joint3& j, const Vec3& impulse)
+    {
+        if (!a.still)
+        {
+            a.velocity = a.velocity - impulse * a.inverseMass;
+            a.spin = a.spin - inertia(a, j.fromA.cross(impulse));
+        }
+        if (!b.still)
+        {
+            b.velocity = b.velocity + impulse * b.inverseMass;
+            b.spin = b.spin + inertia(b, j.fromB.cross(impulse));
+        }
+    }
+
+    void Space::turnJoint(Rigid& a, Rigid& b, const Vec3& angular)
+    {
+        if (!a.still)
+        {
+            a.spin = a.spin - inertia(a, angular);
+        }
+        if (!b.still)
+        {
+            b.spin = b.spin + inertia(b, angular);
+        }
+    }
+
+    void Space::solveJoints()
+    {
+        Rigid none = {};
+        for (Joint3& j : m_joints3)
+        {
+            if (!j.active)
+            {
+                continue;
+            }
+            Rigid& a = m_rigid[j.rigidA];
+            Rigid& b = j.rigidB != kNone ? m_rigid[j.rigidB] : none;
+            const Vec3 apart = (b.velocity + b.spin.cross(j.fromB)) - (a.velocity + a.spin.cross(j.fromA));
+            if (j.kind == JointKind::Pin || j.kind == JointKind::Hinge)
+            {
+                const Vec3 ways[3] = { Vec3(1, 0, 0), Vec3(0, 1, 0), Vec3(0, 0, 1) };
+                for (u32 k = 0; k < 3; k++)
+                {
+                    const Vec3 now = (b.velocity + b.spin.cross(j.fromB)) - (a.velocity + a.spin.cross(j.fromA));
+                    const float more = (-j.bias[k] - now.dot(ways[k])) * j.mass[k];
+                    j.impulse[k] += more;
+                    pushJoint(a, b, j, ways[k] * more);
+                }
+            }
+            else if (j.kind == JointKind::Rope)
+            {
+                const float before = j.impulse[0];
+                j.impulse[0] = fminf(0.0f, before + (-j.bias[0] - apart.dot(j.axis)) * j.mass[0]);
+                pushJoint(a, b, j, j.axis * (j.impulse[0] - before));
+            }
+            else
+            {
+                const float more = -(apart.dot(j.axis) + j.bias[0] + j.softness * j.impulse[0]) * j.mass[0];
+                j.impulse[0] += more;
+                pushJoint(a, b, j, j.axis * more);
+            }
+            if (j.kind == JointKind::Hinge)
+            {
+                for (u32 k = 0; k < 2; k++)
+                {
+                    const Vec3& t = j.across[k];
+                    const float more = (j.turnBias[k] - (b.spin - a.spin).dot(t)) * j.turnMass[k];
+                    j.turnImpulse[k] += more;
+                    turnJoint(a, b, t * more);
+                }
+            }
         }
     }
 }

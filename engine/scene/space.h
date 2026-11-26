@@ -104,6 +104,8 @@ namespace nx
         float made[10];        // the place, turn and size that it was made from
         u32 version;           // goes up when it moves
         u32 parentVersion;
+        char boneName[24];     // one of its parent's model's bones that it follows, as a hand holds something
+        int bone;              // which that is, once the model has come; -1 until then
     };
 
     // What it looks like.
@@ -237,8 +239,14 @@ namespace nx
         bool played(u32 id) const;
         void pendingAnimation(u32 id, const char* name);
         Vec3 worldPlace(u32 id) const;
+        // Makes it move with one of the parent's model's bones, by name: a sword in a hand, a hat on a head. Its place,
+        // turn and size are then from that bone. An empty name follows the parent as attach does.
+        bool attachToBone(u32 id, u32 parent, const char* bone);
+        u32 boneCount(u32 id);
+        const char* boneName(u32 id, u32 index);
         void removed(u32 index);
         void transform(u32 index);
+        bool bonePose(u32 owner, Spatial& s, Mat4& out);
 
         // --- Particles: the world's styles, in metres ---
 
@@ -418,6 +426,20 @@ namespace nx
 
         // The land counts as group 0, and has no id.
         bool raycast(const Vec3& from, const Vec3& to, u32 groups, u32 except, u32& id, Vec3& hit, Vec3& normal) const;
+
+        // --- Joints between bodies: b may be 0, for the world itself. Each needs colliders. ---
+        enum class JointKind : u8 { Pin, Hinge, Rope, Spring };
+        // Held together at a place, free to turn about it.
+        bool pin(u32 a, u32 b, const Vec3& at);
+        // The same, turning only about an axis, as a door or a wheel does.
+        bool hinge(u32 a, u32 b, const Vec3& at, const Vec3& axis);
+        // No further apart than a length, between a place on each; a length below 0 is as far apart as they are now.
+        bool rope(u32 a, u32 b, const Vec3& atA, const Vec3& atB, float length);
+        // Pulled towards a length and pushed away from it, by stiffness (newtons a metre) and slowed by damping.
+        bool spring(u32 a, u32 b, const Vec3& atA, const Vec3& atB, float stiffness, float damping, float length);
+        // Every joint that one is in.
+        void unjoin(u32 id);
+        u32 joints() const { return m_joints3.count(); }
         u32 countGroup(u32 group) const;
         void push(u32 id, const Vec3& impulse, const Vec3* at);
         template <typename Fn>
@@ -708,6 +730,28 @@ namespace nx
         u32 touchHeights(const Rigid& a, Contact (&contacts)[4]) const;
         static Vec3 inertia(const Rigid& r, const Vec3& v);
         void solve(float dt);
+        struct Joint3
+        {
+            JointKind kind;
+            u32 a, b;                 // ids; b may be 0
+            Vec3 localA, localB;      // in each one's own space; b's is in the world if there is no b
+            Vec3 axisA, axisB;        // a hinge's, in each one's own space
+            // The same, from each one's middle as the physics has it, once they are first known: steps within a frame
+            // move that and not the entity.
+            bool known;
+            Vec3 bodyA, bodyB, bodyAxisA, bodyAxisB;
+            float length, stiffness, damping;
+            // This step's:
+            u32 rigidA, rigidB;
+            Vec3 fromA, fromB, axis, across[2];
+            float bias[3], mass[3], softness, impulse[3], turnBias[2], turnMass[2], turnImpulse[2];
+            bool active;
+        };
+        bool addJoint(Joint3& joint, const Vec3& atA, const Vec3& atB);
+        void prepareJoints(float dt);
+        void solveJoints();
+        static void pushJoint(Rigid& a, Rigid& b, const Joint3& j, const Vec3& impulse);
+        static void turnJoint(Rigid& a, Rigid& b, const Vec3& angular);
         bool overlap(const Collider3& a, const Collider3& b) const;
         void place(const Collider3& c, Vec3& middle, Quat& turn, Vec3& half) const;
 
@@ -720,6 +764,8 @@ namespace nx
         GrowArray<Light3> m_lights;
         GrowArray<Collider3> m_colliders;
         GrowArray<Body3> m_bodies;
+        GrowArray<Joint3> m_joints3;
+        GrowArray<u32> m_rigidOf;     // each entity's place in m_rigid this step, for joints
         GrowArray<Emitter3> m_emitters;
         GrowArray<Particle3> m_particles[16];
         u32 m_particleCount = 0;

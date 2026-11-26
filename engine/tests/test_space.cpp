@@ -158,6 +158,75 @@ NX_TEST(boxesStackInSpace)
     }
 }
 
+NX_TEST(jointsHoldInSpace)
+{
+    Place p;
+    // A pendulum: swings down and through, and is always as long as it was.
+    const Vec3 pivot(0, 6, 0);
+    const u32 bob = p.thing({ 2, 6, 0 }, Shape3::Sphere, { 0.2f, 0.2f, 0.2f }, 1);
+    NX_EXPECT(p.space.pin(bob, 0, pivot));
+    float lowest = 10, longest = 0, shortest = 10;
+    for (int i = 0; i < 180; i++)
+    {
+        p.step();
+        const float length = (p.at(bob) - pivot).length();
+        longest = fmaxf(longest, length);
+        shortest = fminf(shortest, length);
+        lowest = fminf(lowest, p.at(bob).y);
+    }
+    NX_EXPECT(lowest < 4.2f && longest < 2.1f && shortest > 1.9f);
+
+    // A chain of five, hanging from the world: as long as it was, and straight down once it settles.
+    u32 links[5];
+    for (u32 i = 0; i < 5; i++)
+    {
+        links[i] = p.thing({ 10 + 0.5f + static_cast<float>(i), 8, 0 }, Shape3::Box, { 0.4f, 0.1f, 0.1f }, 1);
+        p.space.getBody(links[i])->drag = 0.6f;
+        NX_EXPECT(p.space.pin(links[i], i ? links[i - 1] : 0, { 10 + static_cast<float>(i), 8, 0 }));
+    }
+    p.step(600);
+    const Vec3 end = p.at(links[4]);
+    NX_EXPECT(fabsf(end.x - 10) < 0.4f && end.y < 8 - 4 && end.y > 8 - 5.3f);
+
+    // A rope lets a weight fall until it is taut, and no further.
+    const u32 weight = p.thing({ 20, 7, 0 }, Shape3::Sphere, { 0.2f, 0.2f, 0.2f }, 1);
+    NX_EXPECT(p.space.rope(weight, 0, { 20, 7, 0 }, { 20, 8, 0 }, 3));
+    float deepest = 0;
+    for (int i = 0; i < 240; i++)
+    {
+        p.step();
+        deepest = fmaxf(deepest, 8 - p.at(weight).y);
+    }
+    NX_EXPECT(deepest < 3.15f && fabsf(8 - p.at(weight).y - 3) < 0.1f);
+
+    // A spring stretches as far as its weight pulls it, and settles there.
+    const u32 hanging = p.thing({ 30, 7, 0 }, Shape3::Sphere, { 0.2f, 0.2f, 0.2f }, 1);
+    NX_EXPECT(p.space.spring(hanging, 0, { 30, 7, 0 }, { 30, 8, 0 }, 60, 4, 1));
+    p.step(600);
+    const float stretched = 8 - p.at(hanging).y - 1;
+    NX_EXPECT(fabsf(stretched - 9.81f / 60) < 0.05f);
+
+    // A door on a hinge turns about it, and only about it.
+    const u32 door = p.thing({ 40.5f, 3, 0 }, Shape3::Box, { 0.5f, 1, 0.05f }, 1);
+    p.space.getBody(door)->gravity = 0;
+    NX_EXPECT(p.space.hinge(door, 0, { 40, 3, 0 }, { 0, 1, 0 }));
+    p.step();
+    p.space.getBody(door)->velocity = { 0, 0.5f, 2 };   // pushed, and a little upwards as well
+    p.space.forget();
+    p.step(30);
+    const Spatial& d = *p.space.getSpatial(door);
+    const Vec3 up = d.turn.rotate({ 0, 1, 0 });
+    const Vec3 edge = d.place + d.turn.rotate({ -0.5f, 0, 0 });
+    NX_EXPECT(up.y > 0.98f && close(edge, { 40, 3, 0 }, 0.08f) && fabsf(d.place.z) > 0.2f);
+
+    // They go with what they hold.
+    const u32 before = p.space.joints();
+    p.world.destroyEntity(bob);
+    p.step(2);
+    NX_EXPECT(p.space.joints() == before - 1);
+    NX_EXPECT(!p.space.pin(door, door, {}) && !p.space.pin(0, door, {}));
+}
+
 NX_TEST(ballsBounceAndRoll)
 {
     Place p;
@@ -717,6 +786,70 @@ NX_TEST(grassImpostorsAndSprites)
     // Squares of grass round the camera, the six far trees and the sprite as pictures.
     NX_EXPECT(space.grassCells() > 4);
     NX_EXPECT(space.cardsDrawn() == 7);
+    r.screens.home();
+    r.step(3);
+}
+
+NX_TEST(thingsAreHeldByBones)
+{
+    Rig r;
+    NX_EXPECT(r.ok);
+    r.platform.extraPath = "showcase/shapes/main.as";
+    r.platform.extraText = R"(
+        class A : Screen
+        {
+            Entity@ robot;
+            Entity@ held;
+            int frames = 0;
+            array<Vec3> seen;
+            // A mistake stops the screen, which the test sees.
+            void check(bool good) { if (!good) { array<int> nope; nope[1] = 0; } }
+            void onEnter()
+            {
+                @robot = Space::spawn(Vec3(3, 0, -2));
+                robot.model(Assets::model("global:model/robot.glb"));
+                @held = Space::spawn(Vec3());
+                check(held.attach(robot, "hand.r"));
+                held.sphere(0.1f, 2);
+            }
+            void update(float dt)
+            {
+                frames++;
+                if (frames == 5)
+                {
+                    check(robot.bones > 4);
+                    bool hand = false;
+                    for (uint i = 0; i < robot.bones; i++)
+                        hand = hand || robot.bone(i) == "hand.r";
+                    check(hand);
+                    check(robot.animate("wave"));
+                }
+                if (frames > 10 && frames % 6 == 0)
+                    seen.insertLast(held.worldPlace);
+                if (frames == 70)
+                {
+                    // In the hand: about as high as a hand is, beside the robot, and moving as it waves.
+                    Vec3 at = seen[0];
+                    check(at.y > 0.5f && at.y < 2.5f && (Vec3(at.x, 0, at.z) - Vec3(3, 0, -2)).length() < 1.2f);
+                    float moved = 0;
+                    for (uint i = 1; i < seen.length(); i++)
+                        moved = max(moved, (seen[i] - seen[0]).length());
+                    check(moved > 0.05f);
+                    // Attached as a whole again, it is where it is put, from the robot's middle.
+                    held.attach(robot);
+                    held.place = Vec3(0, 3, 0);
+                }
+                if (frames == 72)
+                    check(abs(held.worldPlace.y - 3) < 0.01f && abs(held.worldPlace.x - 3) < 0.01f);
+            }
+            void draw(Canvas@ c) { Space::draw(c); }
+        }
+    )";
+    NX_EXPECT(r.screens.init(r.services, "showcase", "main"));
+    r.step(2);
+    r.screens.push("shapes");
+    r.step(80);
+    NX_EXPECT(!r.screens.failed());
     r.screens.home();
     r.step(3);
 }

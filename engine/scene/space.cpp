@@ -204,6 +204,7 @@ namespace nx
         Spatial fresh = {};
         fresh.turn = Quat();
         fresh.size = { 1, 1, 1 };
+        fresh.bone = -1;
         Spatial* s = getOrAdd(m_spatials, 0, id, fresh);
         if (s)
         {
@@ -348,6 +349,7 @@ namespace nx
         setSkyPicture(nullptr);
         clearEdits();
         forget();
+        m_joints3.clear();
         gpu::Device* device = m_solids ? m_solids->device() : nullptr;
         if (device)
         {
@@ -494,7 +496,10 @@ namespace nx
         const Spatial* parent = e.parent != kNone && m_world.m_entities[e.parent].parts3[0] != kNone ? &m_spatials[m_world.m_entities[e.parent].parts3[0]] : nullptr;
         const u32 above = parent ? parent->version : 0;
         const float now[10] = { s.place.x, s.place.y, s.place.z, s.turn.x, s.turn.y, s.turn.z, s.turn.w, s.size.x, s.size.y, s.size.z };
-        if (s.version && s.parentVersion == above && memcmp(now, s.made, sizeof(now)) == 0)
+        // One that follows a bone moves whenever the bone does, which may be every frame.
+        Mat4 bone;
+        const bool onBone = parent && s.boneName[0] && bonePose(m_world.idOf(e.parent), s, bone);
+        if (!onBone && s.version && s.parentVersion == above && memcmp(now, s.made, sizeof(now)) == 0)
         {
             return;
         }
@@ -504,8 +509,70 @@ namespace nx
         s.world = compose(s.place, s.turn, s.size);
         if (parent)
         {
-            s.world = parent->world * s.world;
+            s.world = onBone ? parent->world * bone * s.world : parent->world * s.world;
         }
+    }
+
+    // Where a bone of the model that `owner` shows is now, in that model's own space.
+    bool Space::bonePose(u32 owner, Spatial& s, Mat4& out)
+    {
+        Appearance* a = getAppearance(owner);
+        const ModelData* model = a && a->model && a->model->ready ? a->model->model : nullptr;
+        if (model == nullptr || model->bones.count() == 0)
+        {
+            return false;
+        }
+        if (s.bone < 0 || static_cast<u32>(s.bone) >= model->bones.count() || strcmp(model->bones[static_cast<u32>(s.bone)].name, s.boneName) != 0)
+        {
+            s.bone = -1;
+            for (u32 i = 0; i < model->bones.count(); i++)
+            {
+                s.bone = strcmp(model->bones[i].name, s.boneName) == 0 ? static_cast<int>(i) : s.bone;
+            }
+            if (s.bone < 0)
+            {
+                return false;
+            }
+        }
+        Mat4 bones[kModelBones];
+        if (a->change > 0)
+        {
+            model->pose(a->before, a->beforeTime, a->animation, a->time, 1 - a->change / a->changeFor, bones);
+        }
+        else
+        {
+            model->pose(a->animation, a->time, bones);
+        }
+        // What the vertices are given is the bone's pose undoing where it was at rest: put back, that is the bone.
+        out = bones[s.bone] * model->bones[static_cast<u32>(s.bone)].inverseBind.inverse();
+        return true;
+    }
+
+    bool Space::attachToBone(u32 id, u32 parent, const char* bone)
+    {
+        Spatial* s = spatial(id);
+        if (s == nullptr || m_world.find(id) == nullptr || (parent && m_world.find(parent) == nullptr))
+        {
+            return false;
+        }
+        m_world.setParent(id, parent);
+        s = getSpatial(id);
+        snprintf(s->boneName, sizeof(s->boneName), "%s", bone ? bone : "");
+        s->bone = -1;
+        s->version = 0;
+        transform(id & ((1u << World::kIndexBits) - 1));
+        return true;
+    }
+
+    u32 Space::boneCount(u32 id)
+    {
+        const Appearance* a = getAppearance(id);
+        return a && a->model && a->model->ready && a->model->model ? a->model->model->bones.count() : 0;
+    }
+
+    const char* Space::boneName(u32 id, u32 index)
+    {
+        return index < boneCount(id) ? getAppearance(id)->model->model->bones[index].name : "";
     }
 
     Vec3 Space::worldPlace(u32 id) const
@@ -515,7 +582,13 @@ namespace nx
         {
             return {};
         }
-        Vec3 p = m_spatials[e->parts3[0]].place;
+        const Spatial& own = m_spatials[e->parts3[0]];
+        if (own.boneName[0] && e->parent != kNone)
+        {
+            // Where the bone last put it.
+            return { own.world.m[12], own.world.m[13], own.world.m[14] };
+        }
+        Vec3 p = own.place;
         for (u32 at = e->parent; at != kNone; at = m_world.m_entities[at].parent)
         {
             const u32 part = m_world.m_entities[at].parts3[0];

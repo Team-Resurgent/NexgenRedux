@@ -284,6 +284,7 @@ namespace nx
         m_touchesBefore.clear();
         m_joints.clear();
         m_space.forget();
+        m_space.unjoin(0);
         m_order.clear();
         m_orderDirty = m_drawDirty = true;
         m_dying = 0;
@@ -394,6 +395,12 @@ namespace nx
         if (e == nullptr)
         {
             return;
+        }
+        // Attached afresh: to the whole of the parent, unless attachToBone says which bone after this.
+        if (Spatial* s = m_space.getSpatial(id))
+        {
+            s->boneName[0] = 0;
+            s->bone = -1;
         }
         const u32 index = id & ((1u << kIndexBits) - 1);
         const u32 parentIndex = parent ? parentId & ((1u << kIndexBits) - 1) : kNone;

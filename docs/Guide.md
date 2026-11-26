@@ -357,6 +357,22 @@ and grey over a fire it is smoke; small, orange and swift it is the fire's glow.
 platform has, the original Xbox included; there, where there is less to fill the screen with, with fewer slices. The
 **Mist** showcase is a valley at dawn.
 
+### Blocks
+
+`Space::voxels(corner, across, high, deep, size)` makes a world of blocks, up to 1024 across, 256 high and 1024 deep, each
+`size` metres. It is empty until it is filled: `setVoxel(x, y, z, kind)` one at a time, `fillVoxels` a box, `voxelBall` a
+ball (0 digs a hole), or `voxelHills(seed, height, roughness, sea, caves)` hills from a number, with grass and earth over
+stone, sand at the sea, snow on the tops and hollows under them. Kind 0 is nothing; 1 to 255 are kinds, coloured on top and
+on their sides by `voxelColor` (twelve to begin with: grass, earth, stone, sand, wood, leaves, brick, snow, planks, dark
+stone, gold, ice). `voxelRay(from, to, cell, face, hit)` finds the block a line meets and the face it goes into, so cell
+plus face is where a new block goes; `voxelCell` and `voxelPlace` turn places into blocks and back.
+
+The blocks are kept in chunks of 16 each way, and only where there is something. Each is made into the faces that can be
+seen, side by side faces of the same kind joined into one, and corners darker where blocks crowd them: a new world is made
+a few chunks a frame, nearest first, and a block that is dug or built is seen at once. They are part of the land: walkers
+stand on them and bump into them, things fall onto them, and `raycast` meets them as group 0. The **Blocks** showcase is
+hills to dig and build in, in the first person; at 60 frames a second on the original Xbox too.
+
 ### Wind
 
 Plants lean with the wind: give a thing a `sway`, how far its top moves for each metre of height (about 0.02 for a tree, 0.15 for

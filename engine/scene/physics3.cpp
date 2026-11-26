@@ -564,7 +564,7 @@ namespace nx
         return taken;
     }
 
-    u32 Space::touchLand(const Rigid& a, Contact (&contacts)[4]) const
+    u32 Space::touchHeights(const Rigid& a, Contact (&contacts)[4]) const
     {
         u32 count = 0;
         const auto add = [&](const Vec3& at, float radius)
@@ -1415,6 +1415,19 @@ namespace nx
                     }
                     break;
                 }
+            }
+        }
+        // The blocks.
+        if (hasVoxels() && (groups & 1))
+        {
+            int cell[3];
+            Vec3 n;
+            const float t = rayVoxels(from, way, cell, n);
+            if (t < best)
+            {
+                best = t;
+                id = 0;
+                normal = n;
             }
         }
         hit = from + way * fminf(best, 1);

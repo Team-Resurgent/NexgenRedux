@@ -338,6 +338,7 @@ namespace nx
     {
         freeCards();
         clearMists();
+        clearVoxels();
         clearNav();
         for (const Waiting& w : m_waiting)
         {
@@ -978,6 +979,7 @@ namespace nx
                 if (!dear)
                 {
                     drawLand(view, frustum, true);
+                    drawVoxels(view, frustum, true);
                 }
                 for (Appearance& a : m_appearances)
                 {
@@ -1053,6 +1055,7 @@ namespace nx
             device.drawMesh(d);
         }
         drawLand(view, frustum, false);
+        drawVoxels(view, frustum, false);
         drawGrass(view, frustum);
         for (const Item& item : m_items)
         {

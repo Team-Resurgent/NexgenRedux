@@ -940,6 +940,57 @@ NX_TEST(mistsComeAndGo)
     NX_EXPECT(p.space.mists() == 0);
 }
 
+NX_TEST(blocksAreDugAndBuiltAndStoodOn)
+{
+    Place p;
+    NX_EXPECT(!p.space.makeVoxels({}, 4096, 16, 16, 1) && !p.space.hasVoxels());
+    NX_EXPECT(p.space.makeVoxels({ -16, 0, -16 }, 32, 16, 32, 1));
+    // A floor four high, with a wall on it.
+    NX_EXPECT(p.space.fillVoxels(0, 0, 0, 31, 3, 31, 3) == 32 * 4 * 32);
+    NX_EXPECT(p.space.fillVoxels(24, 4, 0, 24, 8, 31, 7) == 5 * 32);
+    NX_EXPECT(p.space.voxel(5, 3, 5) == 3 && p.space.voxel(5, 4, 5) == 0 && p.space.voxel(-1, 0, 0) == 0 && p.space.voxelTop(5, 5) == 3);
+    NX_EXPECT(close(p.space.voxelCell({ 0.5f, 3.5f, -15.5f }), { 16, 3, 0 }) && close(p.space.voxelPlace(16, 3, 0), { 0.5f, 3.5f, -15.5f }));
+    // Seen from above, and the face it meets looks up.
+    Vec3 cell, face, hit;
+    NX_EXPECT(p.space.voxelRay({ 0.5f, 10, 0.5f }, { 0.5f, -10, 0.5f }, cell, face, hit) && close(cell, { 16, 3, 16 }) && close(face, { 0, 1, 0 }) && fabsf(hit.y - 4) < 0.01f);
+    // Sideways into the wall, whose near face looks back.
+    NX_EXPECT(p.space.voxelRay({ 0, 5.5f, 0 }, { 20, 5.5f, 0 }, cell, face, hit) && cell.x == 24 && close(face, { -1, 0, 0 }) && fabsf(hit.x - 8) < 0.01f);
+    u32 id = 1;
+    Vec3 normal;
+    NX_EXPECT(p.space.raycast({ 0.5f, 10, 0.5f }, { 0.5f, -10, 0.5f }, 1, 0, id, hit, normal) && id == 0 && fabsf(hit.y - 4) < 0.01f);
+    // Walked on, and stopped by the wall.
+    const u32 w = p.walker({ 0, 4.5f, 0 });
+    p.step(60);
+    NX_EXPECT(p.space.getBody(w)->onGround && fabsf(p.at(w).y - 4) < 0.05f);
+    for (u32 i = 0; i < 150; i++)
+    {
+        p.space.body(w)->velocity = { 4, p.space.body(w)->velocity.y, 0 };
+        p.step();
+    }
+    NX_EXPECT(fabsf(p.at(w).x - 7.6f) < 0.06f && fabsf(p.at(w).y - 4) < 0.05f);
+    // Dug out from under it, it falls into the hole.
+    NX_EXPECT(p.space.voxelBall(p.at(w) + Vec3(-0.5f, -1, 0), 2.2f, 0) > 10);
+    p.step(60);
+    NX_EXPECT(p.at(w).y < 3.1f);
+    // Something dropped rests on top.
+    const u32 box = p.thing({ -8, 8, -8 }, Shape3::Box, { 0.4f, 0.4f, 0.4f }, 1);
+    p.step(120);
+    NX_EXPECT(fabsf(p.at(box).y - 4.4f) < 0.06f);
+    // Made into triangles as they are drawn, and changed when they change.
+    p.draw(30);
+    NX_EXPECT(p.space.voxelChunks() == 4 && p.space.voxelsWaiting() == 0);
+    NX_EXPECT(p.space.setVoxel(2, 4, 2, 9) && !p.space.setVoxel(2, 4, 2, 9) && p.space.voxelsWaiting() > 0);
+    p.draw();
+    NX_EXPECT(p.space.voxelsWaiting() == 0);
+    // Hills, and they go away.
+    p.space.clearVoxels();
+    NX_EXPECT(p.space.makeVoxels({}, 64, 32, 64, 0.5f));
+    p.space.voxelHills(3, 12, 0.5f, 6, 0.6f);
+    NX_EXPECT(p.space.voxelTop(10, 10) > 2 && p.space.voxelTop(10, 10) < 32 && p.space.voxel(10, 0, 10) == 10);
+    p.space.clearVoxels();
+    NX_EXPECT(!p.space.hasVoxels() && p.space.voxel(10, 0, 10) == 0);
+}
+
 NX_TEST(everyModelCanBeUsed)
 {
     Place p;

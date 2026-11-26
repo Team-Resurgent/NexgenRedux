@@ -213,6 +213,9 @@ namespace nx
             {
                 a->solid = solid;
                 a->color = color;
+                // See-through, if its colour is.
+                a->blend = color.a < 1 ? gpu::Blend::Alpha : gpu::Blend::None;
+                a->casts = color.a >= 1;
             }
         }
         void entityGlow(float size, const Color& color, EntityRef* e)
@@ -383,6 +386,20 @@ namespace nx
         bool spaceMoveMist(u32 id, const Vec3& middle) { return space().moveMist(id, middle); }
         void spaceRemoveMist(u32 id) { space().removeMist(id); }
         void spaceClearMists() { space().clearMists(); }
+        bool spaceVoxels(const Vec3& corner, u32 across, u32 high, u32 deep, float size) { return space().makeVoxels(corner, across, high, deep, size); }
+        void spaceClearVoxels() { space().clearVoxels(); }
+        u32 spaceVoxel(int x, int y, int z) { return space().voxel(x, y, z); }
+        bool spaceSetVoxel(int x, int y, int z, u32 kind) { return space().setVoxel(x, y, z, kind); }
+        u32 spaceFillVoxels(int x0, int y0, int z0, int x1, int y1, int z1, u32 kind) { return space().fillVoxels(x0, y0, z0, x1, y1, z1, kind); }
+        u32 spaceVoxelBall(const Vec3& middle, float radius, u32 kind) { return space().voxelBall(middle, radius, kind); }
+        void spaceVoxelHills(u32 seed, float height, float roughness, int sea, float caves) { space().voxelHills(seed, height, roughness, sea, caves); }
+        void spaceVoxelColor(u32 kind, const Color& top, const Color& side) { space().setVoxelColor(kind, top, side); }
+        int spaceVoxelTop(int x, int z) { return space().voxelTop(x, z); }
+        Vec3 spaceVoxelCell(const Vec3& at) { return space().voxelCell(at); }
+        Vec3 spaceVoxelPlace(int x, int y, int z) { return space().voxelPlace(x, y, z); }
+        bool spaceVoxelRay(const Vec3& from, const Vec3& to, Vec3& cell, Vec3& face, Vec3& hit) { return space().voxelRay(from, to, cell, face, hit); }
+        u32 spaceVoxelChunks() { return space().voxelChunks(); }
+        u32 spaceVoxelsWaiting() { return space().voxelsWaiting(); }
         void spaceWaterStyle(const std::string& name)
         {
             Space& s = space();
@@ -695,6 +712,20 @@ namespace nx
         b.function("bool moveMist(uint id, const Vec3 &in middle)", NX_FN(spaceMoveMist), "Moves a mist to a new middle.");
         b.function("void removeMist(uint id)", NX_FN(spaceRemoveMist), "Takes a mist away.");
         b.function("void clearMists()", NX_FN(spaceClearMists), "Takes all the mists away.");
+        b.function("bool voxels(const Vec3 &in corner, uint across, uint high, uint deep, float size = 1)", NX_FN(spaceVoxels), "A world of blocks from a corner: so many across, high and deep (up to 1024, 256 and 1024), each so many metres. Empty until filled. Things stand on the blocks and bump into them, and lines meet them, as they do the land: group 0.");
+        b.function("void clearVoxels()", NX_FN(spaceClearVoxels), "Takes all the blocks away.");
+        b.function("uint voxel(int x, int y, int z)", NX_FN(spaceVoxel), "The kind of block there: 0 is none. Outside the world, 0.");
+        b.function("bool setVoxel(int x, int y, int z, uint kind)", NX_FN(spaceSetVoxel), "Puts a block there, or takes it away with 0. Whether anything changed. It is seen at once.");
+        b.function("uint fillVoxels(int x0, int y0, int z0, int x1, int y1, int z1, uint kind)", NX_FN(spaceFillVoxels), "Fills a box of blocks, corners included, or empties it with 0. How many changed.");
+        b.function("uint voxelBall(const Vec3 &in middle, float radius, uint kind = 0)", NX_FN(spaceVoxelBall), "Digs a round hole, in metres, or with a kind builds a ball. How many blocks changed.");
+        b.function("void voxelHills(uint seed = 1, float height = 20, float roughness = 0.5f, int sea = 8, float caves = 0.5f)", NX_FN(spaceVoxelHills), "Fills the world with hills from a number: grass and earth over stone, sand at the sea's height and below, snow on the tops, and as many hollows under them as caves asks, from 0 to 1.");
+        b.function("void voxelColor(uint kind, const Color &in top, const Color &in side)", NX_FN(spaceVoxelColor), "The colours of a kind of block, on top and on its sides. 1 grass, 2 earth, 3 stone, 4 sand, 5 wood, 6 leaves, 7 brick, 8 snow, 9 planks, 10 dark stone, 11 gold and 12 ice to begin with.");
+        b.function("int voxelTop(int x, int z)", NX_FN(spaceVoxelTop), "The highest block there, or -1.");
+        b.function("Vec3 voxelCell(const Vec3 &in place)", NX_FN(spaceVoxelCell), "Which block a place is in, in whole numbers.");
+        b.function("Vec3 voxelPlace(int x, int y, int z)", NX_FN(spaceVoxelPlace), "The middle of a block, in metres.");
+        b.function("bool voxelRay(const Vec3 &in from, const Vec3 &in to, Vec3 &out cell, Vec3 &out face, Vec3 &out hit)", NX_FN(spaceVoxelRay), "The first block on a line, which way the face it meets looks, and where: cell plus face is where a new block would go.");
+        b.function("uint voxelChunks()", NX_FN(spaceVoxelChunks), "How many chunks of 16 blocks each way have anything in them.");
+        b.function("uint voxelsWaiting()", NX_FN(spaceVoxelsWaiting), "How many chunks are still to be made into triangles: a few are, each frame.");
         b.function("void waterStyle(const string &in style)", NX_FN(spaceWaterStyle), "How the water moves and looks: calm, sea, choppy, storm or cartoon.");
         b.function("void waterWaves(float height = 0.18f, float length = 9, float speed = 1, float choppy = 0.2f)", NX_FN(spaceWaterWaves), "How high the waves are, how long from one to the next, how fast as waves that long go, and how sharp their crests: 0 round, 1 pointed.");
         b.function("void waterColors(const Color &in shallow, const Color &in deep)", NX_FN(spaceWaterColors), "Its colour where it is shallow and where it is deep; alpha is how much it hides.");

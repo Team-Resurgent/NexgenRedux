@@ -65,7 +65,7 @@ namespace nx
 
     private:
         static constexpr u32 kMaxDepth = 8;
-        static constexpr u32 kMaxScreens = 64;
+        static constexpr u32 kMaxScreens = 128;
 
         enum class Change : u8 { None, Push, Pop, Replace, Home, Restart };
 

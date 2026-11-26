@@ -373,6 +373,33 @@ namespace nx
         Vec3 normalAt(float x, float z) const;
         float landSize() const { return static_cast<float>(m_landSquares) * m_landSpacing; }
 
+        // --- Blocks ---
+
+        // A world of blocks, from a corner, so many each way (up to 1024 across and 256 high), each so many
+        // metres. Empty until filled. Things stand on them, and lines meet them, as they do the land.
+        bool makeVoxels(const Vec3& origin, u32 sizeX, u32 sizeY, u32 sizeZ, float cell);
+        void clearVoxels();
+        bool hasVoxels() const { return m_voxelSize[0] != 0; }
+        // 0 is nothing; 1 to 255 are kinds, coloured by voxelColor.
+        u8 voxel(int x, int y, int z) const;
+        bool setVoxel(int x, int y, int z, u32 type);
+        // Corners included. How many changed.
+        u32 fillVoxels(int x0, int y0, int z0, int x1, int y1, int z1, u32 type);
+        // Those whose middles are within, in metres: 0 digs a hole, anything else builds.
+        u32 voxelBall(const Vec3& middle, float radius, u32 type);
+        // Hills of grass and earth on stone, sand by the sea and snow on the tops, and hollows under them.
+        void voxelHills(u32 seed, float height, float roughness, int sea, float caves);
+        void setVoxelColor(u32 type, const gpu::Color& top, const gpu::Color& side);
+        // The highest block there, or -1.
+        int voxelTop(int x, int z) const;
+        Vec3 voxelCell(const Vec3& at) const;
+        Vec3 voxelPlace(int x, int y, int z) const;
+        float voxelSize() const { return m_voxelCell; }
+        // The first block on a line, which way the face it meets looks, and where.
+        bool voxelRay(const Vec3& from, const Vec3& to, Vec3& cell, Vec3& face, Vec3& hit) const;
+        u32 voxelChunks() const;
+        u32 voxelsWaiting() const;
+
         // --- Shapes by their distance ---
 
         gpu::Field& field() { return m_field; }
@@ -613,6 +640,15 @@ namespace nx
         };
         gpu::Texture noiseVolume();
         void drawMists(const gpu::View& view, const Frustum& frustum);
+        // voxels.cpp
+        struct VoxelChunk;
+        void defaultVoxelColors();
+        bool putVoxel(int x, int y, int z, u8 type);
+        void voxelsChanged(int fromX, int fromY, int fromZ, int toX, int toY, int toZ);
+        void buildVoxelChunk(u32 index);
+        void drawVoxels(const gpu::View& view, const Frustum& frustum, bool shadow);
+        u32 touchVoxels(const Rigid& a, Contact (&contacts)[4]) const;
+        float rayVoxels(const Vec3& from, const Vec3& way, int (&cell)[3], Vec3& normal) const;
         // nav.cpp
         bool navStep(u32 a, u32 b) const;
         bool navCellOf(const Vec3& at, u32& cell) const;
@@ -668,7 +704,8 @@ namespace nx
         bool visibleCollider(const Collider3& c) const;
         u32 idOf(u32 index) const;
         static u32 touchBoxes(const Rigid& a, const Rigid& b, Contact (&contacts)[4]);
-        u32 touchLand(const Rigid& a, Contact (&contacts)[4]) const;
+        u32 touchLand(const Rigid& a, Contact (&contacts)[4]) const;   // and the blocks
+        u32 touchHeights(const Rigid& a, Contact (&contacts)[4]) const;
         static Vec3 inertia(const Rigid& r, const Vec3& v);
         void solve(float dt);
         bool overlap(const Collider3& a, const Collider3& b) const;
@@ -727,6 +764,13 @@ namespace nx
         GrowArray<Mist> m_mists;
         u32 m_nextMist = 0;
         gpu::Texture m_noiseVolume;
+        GrowArray<VoxelChunk*> m_voxelChunks;
+        Vec3 m_voxelOrigin;
+        int m_voxelSize[3] = {};
+        u32 m_voxelChunkSide[3] = {};
+        float m_voxelCell = 1;
+        bool m_voxelColorsSet = false;
+        gpu::Color m_voxelTop[256], m_voxelSide[256];
         u32 m_navSide = 0, m_navVisit = 0;
         float m_navCell = 1, m_navClimb = 0.6f;
         Vec3 m_navLow;

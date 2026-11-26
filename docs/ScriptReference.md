@@ -629,6 +629,20 @@ The scene in three dimensions: x right, y up, z towards you, in metres. Entities
 | `bool Space::moveMist(uint id, const Vec3 &in middle)` | Moves a mist to a new middle. |
 | `void Space::removeMist(uint id)` | Takes a mist away. |
 | `void Space::clearMists()` | Takes all the mists away. |
+| `bool Space::voxels(const Vec3 &in corner, uint across, uint high, uint deep, float size = 1)` | A world of blocks from a corner: so many across, high and deep (up to 1024, 256 and 1024), each so many metres. Empty until filled. Things stand on the blocks and bump into them, and lines meet them, as they do the land: group 0. |
+| `void Space::clearVoxels()` | Takes all the blocks away. |
+| `uint Space::voxel(int x, int y, int z)` | The kind of block there: 0 is none. Outside the world, 0. |
+| `bool Space::setVoxel(int x, int y, int z, uint kind)` | Puts a block there, or takes it away with 0. Whether anything changed. It is seen at once. |
+| `uint Space::fillVoxels(int x0, int y0, int z0, int x1, int y1, int z1, uint kind)` | Fills a box of blocks, corners included, or empties it with 0. How many changed. |
+| `uint Space::voxelBall(const Vec3 &in middle, float radius, uint kind = 0)` | Digs a round hole, in metres, or with a kind builds a ball. How many blocks changed. |
+| `void Space::voxelHills(uint seed = 1, float height = 20, float roughness = 0.5f, int sea = 8, float caves = 0.5f)` | Fills the world with hills from a number: grass and earth over stone, sand at the sea's height and below, snow on the tops, and as many hollows under them as caves asks, from 0 to 1. |
+| `void Space::voxelColor(uint kind, const Color &in top, const Color &in side)` | The colours of a kind of block, on top and on its sides. 1 grass, 2 earth, 3 stone, 4 sand, 5 wood, 6 leaves, 7 brick, 8 snow, 9 planks, 10 dark stone, 11 gold and 12 ice to begin with. |
+| `int Space::voxelTop(int x, int z)` | The highest block there, or -1. |
+| `Vec3 Space::voxelCell(const Vec3 &in place)` | Which block a place is in, in whole numbers. |
+| `Vec3 Space::voxelPlace(int x, int y, int z)` | The middle of a block, in metres. |
+| `bool Space::voxelRay(const Vec3 &in from, const Vec3 &in to, Vec3 &out cell, Vec3 &out face, Vec3 &out hit)` | The first block on a line, which way the face it meets looks, and where: cell plus face is where a new block would go. |
+| `uint Space::voxelChunks()` | How many chunks of 16 blocks each way have anything in them. |
+| `uint Space::voxelsWaiting()` | How many chunks are still to be made into triangles: a few are, each frame. |
 | `void Space::waterStyle(const string &in style)` | How the water moves and looks: calm, sea, choppy, storm or cartoon. |
 | `void Space::waterWaves(float height = 0.18f, float length = 9, float speed = 1, float choppy = 0.2f)` | How high the waves are, how long from one to the next, how fast as waves that long go, and how sharp their crests: 0 round, 1 pointed. |
 | `void Space::waterColors(const Color &in shallow, const Color &in deep)` | Its colour where it is shallow and where it is deep; alpha is how much it hides. |

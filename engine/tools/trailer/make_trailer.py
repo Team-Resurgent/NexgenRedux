@@ -400,18 +400,28 @@ class Trailer:
         for i, s in enumerate(shots):
             files.append(self.render(i, s))
             print('shot %2d  %6.2f s  %5.2f s  %s' % (i, s['_start'], s['_length'], s.get('title') or s.get('caption') or s.get('clip') or s.get('image') or ''), flush=True)
-        inputs = []
-        for f in files:
-            inputs += ['-i', os.path.basename(f)]
-        inputs += ['-i', self.find(self.cfg['music']['file'])]
-        n = len(files)
-        chain = ["[%d:v]settb=AVTB,fps=%d,format=yuv420p[s%d]" % (i, self.fps, i) for i in range(n)]
-        last = 's0'
-        for i in range(1, n):
-            s = shots[i]
-            way = TRANSITIONS.get(s['_way'], 'fade') if s['_way'] not in ('cut',) else 'fade'
-            chain.append("[%s][s%d]xfade=transition=%s:duration=%.4f:offset=%.4f[x%d]" % (last, i, way, max(s['_half'] * 2, 1.0 / self.fps), s['_start'] - s['_half'], i))
-            last = 'x%d' % i
+        # The shots, one after another, in groups: each group goes on from what the one before made, so that only so
+        # many pictures are being read at once.
+        group = 20
+        so_far = None
+        for first in range(1, len(files), group):
+            last_shot = min(first + group, len(files))
+            inputs = ['-i', so_far if so_far else os.path.basename(files[0])]
+            for f in files[first:last_shot]:
+                inputs += ['-i', os.path.basename(f)]
+            chain = ["[%d:v]settb=AVTB,fps=%d,format=yuv420p[s%d]" % (k, self.fps, k) for k in range(last_shot - first + 1)]
+            last = 's0'
+            for k, i in enumerate(range(first, last_shot), start=1):
+                s = shots[i]
+                way = TRANSITIONS.get(s['_way'], 'fade') if s['_way'] not in ('cut',) else 'fade'
+                chain.append("[%s][s%d]xfade=transition=%s:duration=%.4f:offset=%.4f[x%d]" % (last, k, way, max(s['_half'] * 2, 1.0 / self.fps), s['_start'] - s['_half'], k))
+                last = 'x%d' % k
+            chain.append("[%s]null[vout]" % last)
+            part = 'joined-%d.mp4' % first
+            open(os.path.join(self.work, 'join.txt'), 'w', encoding='utf-8').write(';'.join(chain))
+            ffmpeg(inputs + ['-filter_complex_script', 'join.txt', '-map', '[vout]', '-an', '-r', str(self.fps), '-pix_fmt', 'yuv420p',
+                             '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '10', part], self.work)
+            so_far = part
         look = self.cfg.get('look', {})
         bar = int(self.H * look.get('letterbox', 0.11))
         post = ["trim=0:%.3f" % self.total]
@@ -422,14 +432,13 @@ class Trailer:
         if look.get('grain', 7):
             post.append("noise=alls=%d:allf=t" % look.get('grain', 7))
         post.append("fade=t=in:st=0:d=0.6,fade=t=out:st=%.3f:d=%.3f" % (self.total - look.get('fadeOut', 1.2), look.get('fadeOut', 1.2)))
-        chain.append("[%s]%s[vout]" % (last, ','.join(post)))
-        # The music is the input after the shots.
-        music = [c.replace('[1:a]', '[%d:a]' % n) for c in self.music()]
-        chain += music
+        chain = ["[0:v]settb=AVTB,fps=%d,format=yuv420p,%s[vout]" % (self.fps, ','.join(post))]
+        # The music is the input after the pictures.
+        chain += self.music()
         script = os.path.join(self.work, 'final.txt')
         open(script, 'w', encoding='utf-8').write(';'.join(chain))
-        ffmpeg(inputs + ['-filter_complex_script', 'final.txt', '-map', '[vout]', '-map', '[aout]', '-r', str(self.fps), '-pix_fmt', 'yuv420p',
-                         '-c:v', 'libx264', '-preset', 'slow', '-crf', '18', '-maxrate', '18M', '-bufsize', '36M', '-c:a', 'aac', '-b:a', '256k', '-movflags', '+faststart', self.output], self.work)
+        ffmpeg(['-i', so_far, '-i', self.find(self.cfg['music']['file']), '-filter_complex_script', 'final.txt', '-map', '[vout]', '-map', '[aout]', '-r', str(self.fps), '-pix_fmt', 'yuv420p',
+                '-c:v', 'libx264', '-preset', 'slow', '-crf', '18', '-maxrate', '18M', '-bufsize', '36M', '-c:a', 'aac', '-b:a', '256k', '-movflags', '+faststart', self.output], self.work)
         print('made %s, %.1f seconds' % (self.output, self.total))
 
 

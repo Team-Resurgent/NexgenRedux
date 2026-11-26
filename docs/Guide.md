@@ -41,6 +41,16 @@ class Hello : Screen
 Start the showcase with `--dev` and it reloads the screen each time you save. If there is a mistake, the screen shows the file
 and the line; mend it, save, and it carries on.
 
+### Debugging
+
+The VS Code extension in `engine/tools/vscode` (`Nexgen-vscode.vsix` in each release) stops a script where you ask it to: set a
+breakpoint, press F5, and step over, into and out of functions, with the call stack, each frame's locals, the screen's members
+and the module's globals. Objects open up to what they hold, the engine's own types through their properties; hovering over a
+name, or typing `player.position.x` in the Debug Console, shows its value; a script error stops where it happened; and the log is
+in the Debug Console. *Run and debug* starts the showcase with `--debug 4711 --debug-wait`; *Attach* connects to one already
+started with `--debug`, which listens on that machine only unless `--debug-remote` is given. On a console, a folder called `debug`
+beside the title lets a computer on the network attach to it.
+
 ## Screens
 
 A screen is a class that implements `Screen`. The engine calls the methods it has:
@@ -209,6 +219,22 @@ and draws those when it is small on the screen. What can't be seen isn't drawn.
 
 `Space::sun`, `ambient`, `sky`, `fog` and `shadows` set the scene. Shadows are the shape of what casts them, on the original Xbox too,
 where the land casts none.
+
+### Holding things, and joints
+
+`attach(parent)` makes one thing move with another. `attach(parent, "hand.r")` makes it move with one of the parent's bones instead,
+through every animation: a sword in a hand, a hat on a head, a light held up. `bones` and `bone(i)` list a model's.
+
+Bodies with mass can be joined, to each other or, with `null`, to the world, at places in the world:
+
+```cpp
+Space::join(link, above, top);                                   // pinned, free to turn: chains
+Space::hinge(door, null, Vec3(0, 1, 0), Vec3(0, 1, 0));          // turning about an axis: doors, lids, wheels
+Space::rope(seat, null, Vec3(5, 1.3f, 0), Vec3(5, 6, 0));        // no further apart than now: it pulls, never pushes
+Space::spring(weight, null, Vec3(3, 3, 0), Vec3(3, 6, 0), 40, 1, 2);  // stiffness, damping and length
+```
+
+A joint goes when either thing does, or with `Space::unjoin`. The Tumble demo's *Swings* has one of each.
 
 ### A world to walk in
 
@@ -618,6 +644,19 @@ music.stop(1.5f);                // fading out
 
 A `Voice` is safe to use after the sound has ended. A screen's sounds pause while it is covered and stop when it closes.
 
+Everything on a bus can be heard through effects, each gliding to its new setting over the seconds given:
+
+```cpp
+Audio::lowPass(BusEffects, 600, 0.4f);     // muffled, as under water or through a wall; 20000 is clear again
+Audio::highPass(BusEffects, 1000);         // thin, as a small radio
+Audio::reverb(BusEffects, 0.7f, 0.9f);     // how much of the room, and how big it is
+Audio::echo(BusEffects, 0.5f, 0.4f, 0.3f); // how loud, how late, and how much echoes again
+Audio::clearEffects();
+```
+
+A screen starts with none, and they go when it closes. The Sounds demo puts its pads in a room, a hall, a canyon, under water and
+on the radio.
+
 ## Input
 
 Scripts ask for actions, not keys: `up`, `down`, `left`, `right`, `accept`, `cancel`, `fire`, `alternate` and `menu`. Players
@@ -629,6 +668,10 @@ Where there is only a controller, the stick can move a pointer instead, and A cl
 Settings (`Input::stickPointer`, kept with the other settings), and a screen says it has a use for one with
 `Input::wantsPointer = true`, as the scene editor does while editing. The stick and A then do nothing else, and a mouse
 that moves takes over.
+
+Pads rumble: `Input::rumble(0.6f, 0.2f)` shakes every pad for a fifth of a second, and `Input::rumbleMotors(heavy, light, seconds,
+pad)` sets the slow, heavy motor and the quick, light one each. It stops when the engine's menu opens and when the screen changes,
+and players can turn it off in Settings (`Input::rumbleOn`, kept with the other settings).
 
 ## Coroutines and tweens
 
@@ -773,4 +816,5 @@ back to the one that came with the screen.
   under the same names.
 - Three dimensions use the fixed pipeline: lights are worked out at corners, so give a floor plenty of squares. Ray-marched shapes
   become triangles. Effects are stand-ins.
-- There is no live reload: edit on a PC and then build the disc.
+- There is no live reload: edit on a PC and then build the disc. The debugger works, over the network: put a `debug` folder beside
+  the title and attach to the console's address.

@@ -52,6 +52,8 @@ A 3D model. Loaded once and shared by everyone who asks for it.
 | `uint get_triangles() const property` | How many it has, close up. |
 | `uint get_animations() const property` | How many it has. |
 | `string animation(uint index) const` | The name of one. |
+| `uint get_bones() const property` | How many bones it bends by, which things can be attached to. |
+| `string bone(uint index) const` | The name of one, such as "hand.r". |
 
 ## Solid
 
@@ -247,6 +249,11 @@ Actions are `up`, `down`, `left`, `right`, `accept`, `cancel`, `fire`, `alternat
 | `Vec2 Input::get_move() property` | Direction from keys, d-pad and left stick: x right, y down, never longer than 1. |
 | `bool Input::get_usingPad() property` | Whether a gamepad was used last. |
 | `bool Input::get_hasMouse() property` | Whether a mouse has moved, or the stick moves a pointer. |
+| `void Input::rumble(float strength, float seconds = 0.2f, int pad = -1)` | Shakes a gamepad: strength 0 to 1, for so long. Pad -1 is every pad. Another rumble for the same pad replaces this one; the engine's menu, and leaving the screen, stop it. |
+| `void Input::rumbleMotors(float heavy, float light, float seconds, int pad = -1)` | The same, with each motor its own strength: the heavy one is a slow thud, the light one a quick buzz. |
+| `void Input::stopRumble()` | Stops every pad. |
+| `bool Input::get_rumbleOn() property` | The player's choice: whether pads rumble at all. Kept with the settings. |
+| `void Input::set_rumbleOn(bool) property` | The player's choice: whether pads rumble at all. Kept with the settings. |
 | `bool Input::get_stickPointer() property` | The player's choice: whether, on screens that want a pointer, the left stick moves one and A clicks with it, as a mouse would. Kept with the settings. |
 | `void Input::set_stickPointer(bool) property` | The player's choice: whether, on screens that want a pointer, the left stick moves one and A clicks with it, as a mouse would. The stick and A then do nothing else, and a mouse that moves takes over. Kept with the settings. |
 | `bool Input::get_wantsPointer() property` | Whether this screen has a use for a pointer. |
@@ -314,6 +321,11 @@ Volumes, and what is being heard. A screen's sounds pause while it is covered an
 | `float Audio::volume(Bus bus)` | 0 to 1. |
 | `void Audio::set_masterVolume(float) property` | Everything, 0 to 1. |
 | `float Audio::get_masterVolume() property` | 0 to 1. |
+| `void Audio::lowPass(Bus bus, float hertz, float seconds = 0)` | Takes away what is higher than so many hertz, as if heard under water or through a wall: 600 is muffled, 20000 is everything again. Glides there over so many seconds. |
+| `void Audio::highPass(Bus bus, float hertz, float seconds = 0)` | Takes away what is lower, as a small radio or a telephone does: 1000 is thin, 0 is everything again. |
+| `void Audio::reverb(Bus bus, float amount, float room = 0.6f, float seconds = 0)` | A room's echoes: amount 0 to 1, how much is heard; room 0 to 1, from a small, dead one to a hall or a cave. 0 for none. |
+| `void Audio::echo(Bus bus, float amount, float delay = 0.3f, float feedback = 0.4f, float seconds = 0)` | Each sound again, after so many seconds (up to 0.75), and again, quieter each time by feedback (0 to 0.9). 0 for none. |
+| `void Audio::clearEffects(float seconds = 0)` | Every bus back to none. A screen starts with none, and they go when it closes. |
 | `float Audio::get_level() property` | How loud it has been lately, 0 to 1. |
 | `float Audio::spectrum(uint band)` | How strong one of 32 bands is, low to high, 0 to 1. |
 | `float Audio::wave(uint index)` | One of the last 512 samples heard, -1 to 1. |
@@ -570,6 +582,9 @@ Entities that move, collide and are drawn by the engine. Each screen has its own
 | `void set_shadow(bool) property` | Whether it casts one. |
 | `uint get_detail() const property` | The level it was last drawn at: 0 is all of it, 2 the least. |
 | `void light(const Color &in color, float range)` | Lights what is within so many metres. |
+| `bool attach(Entity@+ parent, const string &in bone)` | Moves with one of the parent's model's bones, by name, as a hand holds a sword or a head wears a hat: its place, turn and size are then from that bone, and it follows every animation. False if either isn't in space. |
+| `uint get_bones() const property` | How many bones its model has, once it has come. |
+| `string bone(uint index) const` | The name of one. |
 | `bool animate(const string &in name, bool loop = true, float change = 0.25)` | Plays one of its model's animations, changing to it over some seconds. Asking again for what is playing does nothing. False if it isn't there, or hasn't arrived. |
 | `bool get_animated() const property` | Whether an animation that doesn't loop has finished. |
 | `float get_animationSpeed() const property` | How fast its animation plays. |
@@ -697,6 +712,12 @@ The scene in three dimensions: x right, y up, z towards you, in metres. Entities
 | `void Space::clearField()` | Takes them all away. To move them, clear and add them again each update. |
 | `void Space::fieldLook(float shine, float reflection = 0, float repeat = 0, float farthest = 60, uint steps = 80)` | How they look; repeat makes the whole thing again every so many metres. |
 | `void Space::burst(const string &in particles, const Vec3 &in place, uint count, const Vec3 &in aim = Vec3(0, 1, 0))` | Throws out some particles. A spread of 360 goes every way, 90 is a cone. |
+| `bool Space::join(Entity@+ a, Entity@+ b, const Vec3 &in at)` | Pins two bodies together at a place, free to turn about it; null for b pins a to the world there. Both need colliders, and a mass to move. |
+| `bool Space::hinge(Entity@+ a, Entity@+ b, const Vec3 &in at, const Vec3 &in axis)` | The same, turning only about an axis through that place, as a door, a lid or a wheel does. |
+| `bool Space::rope(Entity@+ a, Entity@+ b, const Vec3 &in atA, const Vec3 &in atB, float length = -1)` | A place on each kept no further apart than a length, as a rope or a chain does: it pulls but never pushes. A length below 0 is as far apart as they are now. |
+| `bool Space::spring(Entity@+ a, Entity@+ b, const Vec3 &in atA, const Vec3 &in atB, float stiffness = 60, float damping = 3, float length = -1)` | A place on each pulled towards a length and pushed away from it: stiffness in newtons a metre, damping slows the bouncing. A length below 0 is as far apart as they are now. |
+| `void Space::unjoin(Entity@+ e)` | Lets go of every joint it is in. They also go when it does. |
+| `uint Space::get_joints() property` | How many there are. |
 | `bool Space::raycast(const Vec3 &in from, const Vec3 &in to, Vec3 &out hit, Vec3 &out normal, uint groups = 0xFFFF, Entity@+ except = null)` | Whether there is anything on a line, where, and which way it faces. The land counts as group 0. |
 | `Entity@ Space::pick(const Vec3 &in from, const Vec3 &in to, Vec3 &out hit, uint groups = 0xFFFF, Entity@+ except = null)` | The first collider on a line, or null if there is none or the land comes first. |
 | `array<Entity@>@ Space::within(const Vec3 &in place, float radius, uint groups = 0xFFFF)` | Everything whose collider touches a ball. |

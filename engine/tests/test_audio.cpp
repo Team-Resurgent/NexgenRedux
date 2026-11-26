@@ -287,6 +287,93 @@ NX_TEST(spectrumFindsTheTone)
     freeSound(high);
 }
 
+NX_TEST(busEffectsChangeWhatIsHeard)
+{
+    Mixer m;
+    SoundData* low = load(makeWav(48000, 1, 48000, 150, 0.5f));
+    SoundData* high = load(makeWav(48000, 1, 48000, 6000, 0.5f));
+    SoundData* click = load(makeWav(2400, 1, 48000, 1000, 0.5f));   // a twentieth of a second
+    int l = 0, r = 0;
+    int owner = 0;
+    // How loud a tone is once it has settled, with whatever is on the bus.
+    const auto loudness = [&](const SoundData& tone)
+    {
+        const Voice v = m.audio.play(tone, &owner, {});
+        m.mix(4800, l, r);
+        m.mix(2400, l, r);
+        const int heard = l;
+        m.audio.stop(v, 0);
+        for (int i = 0; i < 10; i++)
+        {
+            m.mix(4800, l, r);
+        }
+        return heard;
+    };
+    const int plainHigh = loudness(*high), plainLow = loudness(*low);
+    NX_EXPECT(plainHigh > 8000 && plainLow > 8000);
+
+    BusEffectSettings muffled;
+    muffled.lowPass = 500;
+    m.audio.setEffects(Bus::Effects, muffled, 0);
+    NX_EXPECT(loudness(*high) < plainHigh / 20);           // gone
+    NX_EXPECT(loudness(*low) > plainLow * 8 / 10);         // still there
+
+    BusEffectSettings thin;
+    thin.highPass = 2000;
+    m.audio.setEffects(Bus::Effects, thin, 0);
+    NX_EXPECT(loudness(*low) < plainLow / 20);
+    NX_EXPECT(loudness(*high) > plainHigh * 8 / 10);
+
+    // Only the bus that has them: music goes through as it was.
+    PlayOptions music;
+    music.bus = Bus::Music;
+    const Voice tune = m.audio.play(*low, &owner, music);
+    m.mix(4800, l, r);
+    m.mix(2400, l, r);
+    NX_EXPECT(l > plainLow * 8 / 10);
+    m.audio.stop(tune, 0);
+    m.mix(4800, l, r);
+
+    // An echo: a short sound, heard again a quarter of a second later, when it has stopped.
+    BusEffectSettings echo;
+    echo.echo = 0.6f;
+    echo.echoDelay = 0.25f;
+    echo.echoFeedback = 0;
+    m.audio.setEffects(Bus::Effects, echo, 0);
+    m.audio.play(*click, &owner, {});
+    m.mix(4800, l, r);                     // the click, and silence after it
+    int quiet = 0;
+    m.mix(4800, quiet, r);
+    m.mix(4800, l, r);                     // 0.2 to 0.3 seconds: the echo
+    NX_EXPECT(quiet < 100 && l > 3000);
+
+    // A room: what is heard goes on after the sound has stopped, and with none, it doesn't.
+    const auto tail = [&]()
+    {
+        m.audio.play(*click, &owner, {});
+        m.mix(4800, l, r);
+        m.mix(4800, l, r);
+        const int after = l;
+        for (int i = 0; i < 40; i++)
+        {
+            m.mix(4800, l, r);
+        }
+        return after;
+    };
+    BusEffectSettings hall;
+    hall.reverb = 1;
+    hall.room = 0.9f;
+    m.audio.setEffects(Bus::Effects, hall, 0);
+    NX_EXPECT(tail() > 300);
+    m.audio.clearEffects(0);
+    NX_EXPECT(tail() == 0);
+
+    m.audio.shutdown();
+    freeSound(low);
+    freeSound(high);
+    freeSound(click);
+}
+
 NX_TEST(damagedSoundsDontCrash)
 {
     i16 samples[1200] = {};

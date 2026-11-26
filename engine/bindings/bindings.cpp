@@ -349,6 +349,24 @@ namespace nx
         bool soundKnown(Bus bus) { return bus < Bus::Count; }
         void setBus(Bus bus, float volume) { if (soundKnown(bus)) services().audio->setBusVolume(bus, volume); }
         float getBus(Bus bus) { return soundKnown(bus) ? services().audio->busVolume(bus) : 0; }
+        // Each changes one part of what a bus goes through, and leaves the rest.
+        template <typename Change> void changeEffects(Bus bus, float seconds, Change change)
+        {
+            if (soundKnown(bus))
+            {
+                BusEffectSettings s = services().audio->effects(bus);
+                change(s);
+                services().audio->setEffects(bus, s, seconds);
+            }
+        }
+        void audioLowPass(Bus bus, float hertz, float seconds) { changeEffects(bus, seconds, [&](BusEffectSettings& s) { s.lowPass = hertz; }); }
+        void audioHighPass(Bus bus, float hertz, float seconds) { changeEffects(bus, seconds, [&](BusEffectSettings& s) { s.highPass = hertz; }); }
+        void audioReverb(Bus bus, float amount, float room, float seconds) { changeEffects(bus, seconds, [&](BusEffectSettings& s) { s.reverb = amount; s.room = room; }); }
+        void audioEcho(Bus bus, float amount, float delay, float feedback, float seconds)
+        {
+            changeEffects(bus, seconds, [&](BusEffectSettings& s) { s.echo = amount; s.echoDelay = delay; s.echoFeedback = feedback; });
+        }
+        void audioClearEffects(float seconds) { services().audio->clearEffects(seconds); }
         void setMaster(float volume) { services().audio->setMasterVolume(volume); }
         float getMaster() { return services().audio->masterVolume(); }
         float audioLevel() { return services().audio->level(); }
@@ -835,6 +853,11 @@ namespace nx
             b.function("float volume(Bus bus)", NX_FN(getBus), "0 to 1.");
             b.function("void set_masterVolume(float) property", NX_FN(setMaster), "Everything, 0 to 1.");
             b.function("float get_masterVolume() property", NX_FN(getMaster), "0 to 1.");
+            b.function("void lowPass(Bus bus, float hertz, float seconds = 0)", NX_FN(audioLowPass), "Takes away what is higher than so many hertz, as if heard under water or through a wall: 600 is muffled, 20000 is everything again. Glides there over so many seconds.");
+            b.function("void highPass(Bus bus, float hertz, float seconds = 0)", NX_FN(audioHighPass), "Takes away what is lower, as a small radio or a telephone does: 1000 is thin, 0 is everything again.");
+            b.function("void reverb(Bus bus, float amount, float room = 0.6f, float seconds = 0)", NX_FN(audioReverb), "A room's echoes: amount 0 to 1, how much is heard; room 0 to 1, from a small, dead one to a hall or a cave. 0 for none.");
+            b.function("void echo(Bus bus, float amount, float delay = 0.3f, float feedback = 0.4f, float seconds = 0)", NX_FN(audioEcho), "Each sound again, after so many seconds (up to 0.75), and again, quieter each time by feedback (0 to 0.9). 0 for none.");
+            b.function("void clearEffects(float seconds = 0)", NX_FN(audioClearEffects), "Every bus back to none. A screen starts with none, and they go when it closes.");
             b.function("float get_level() property", NX_FN(audioLevel), "How loud it has been lately, 0 to 1.");
             b.function("float spectrum(uint band)", NX_FN(audioSpectrum), "How strong one of 32 bands is, low to high, 0 to 1.");
             b.function("float wave(uint index)", NX_FN(audioWave), "One of the last 512 samples heard, -1 to 1.");

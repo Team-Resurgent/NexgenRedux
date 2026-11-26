@@ -22,7 +22,7 @@ namespace nx
         }
     }
 
-    enum class Verb : u8 { Play, Stop, Volume, Pan, Pitch, Pause, BusVolume, Master };
+    enum class Verb : u8 { Play, Stop, Volume, Pan, Pitch, Pause, BusVolume, Master, Effects, GiveReverb, GiveEcho };
 
     struct Audio::Command
     {
@@ -34,6 +34,8 @@ namespace nx
         PlayOptions options;
         float value;
         float seconds;
+        BusEffectSettings effects;
+        void* memory;
     };
 
     struct Audio::Channel
@@ -60,7 +62,8 @@ namespace nx
         m_channels = static_cast<Channel*>(memAlloc(sizeof(Channel) * kVoices, MemTag::Audio));
         m_commands = static_cast<Command*>(memAlloc(sizeof(Command) * kCommands, MemTag::Audio));
         m_history = static_cast<std::atomic<i16>*>(memAlloc(sizeof(std::atomic<i16>) * kHistory, MemTag::Audio));
-        if (m_channels == nullptr || m_commands == nullptr || m_history == nullptr)
+        m_busMix = static_cast<float*>(memAlloc(sizeof(float) * kChunk * 2 * static_cast<size_t>(Bus::Count), MemTag::Audio));
+        if (m_channels == nullptr || m_commands == nullptr || m_history == nullptr || m_busMix == nullptr)
         {
             return false;
         }
@@ -111,9 +114,20 @@ namespace nx
         memFree(m_channels);
         memFree(m_commands);
         memFree(m_history);
+        memFree(m_busMix);
         m_channels = nullptr;
         m_commands = nullptr;
         m_history = nullptr;
+        m_busMix = nullptr;
+        for (u32 b = 0; b < static_cast<u32>(Bus::Count); b++)
+        {
+            m_busEffects[b] = BusEffects();
+            m_effectSettings[b] = BusEffectSettings();
+            destroyReverbMemory(m_reverbMemory[b]);
+            destroyEchoMemory(m_echoMemory[b]);
+            m_reverbMemory[b] = nullptr;
+            m_echoMemory[b] = nullptr;
+        }
     }
 
     void Audio::onFinished(Finished callback, void* user)
@@ -327,6 +341,47 @@ namespace nx
         return slot ? static_cast<float>(slot->positionMs.load(std::memory_order_relaxed)) / 1000.0f : 0;
     }
 
+    void Audio::setEffects(Bus bus, const BusEffectSettings& settings, float seconds)
+    {
+        const size_t b = static_cast<size_t>(bus);
+        if (b >= static_cast<size_t>(Bus::Count) || m_channels == nullptr)
+        {
+            return;
+        }
+        // Memory for a room or an echo, the first time a bus wants one: made here, so that mixing never makes any.
+        if (settings.reverb > 0 && m_reverbMemory[b] == nullptr && (m_reverbMemory[b] = createReverbMemory()) != nullptr)
+        {
+            Command give = {};
+            give.verb = Verb::GiveReverb;
+            give.voice = static_cast<u8>(b);
+            give.memory = m_reverbMemory[b];
+            send(give);
+        }
+        if (settings.echo > 0 && m_echoMemory[b] == nullptr && (m_echoMemory[b] = createEchoMemory()) != nullptr)
+        {
+            Command give = {};
+            give.verb = Verb::GiveEcho;
+            give.voice = static_cast<u8>(b);
+            give.memory = m_echoMemory[b];
+            send(give);
+        }
+        m_effectSettings[b] = settings;
+        Command command = {};
+        command.verb = Verb::Effects;
+        command.voice = static_cast<u8>(b);
+        command.effects = settings;
+        command.seconds = seconds;
+        send(command);
+    }
+
+    void Audio::clearEffects(float seconds)
+    {
+        for (u32 b = 0; b < static_cast<u32>(Bus::Count); b++)
+        {
+            setEffects(static_cast<Bus>(b), BusEffectSettings(), seconds);
+        }
+    }
+
     void Audio::setBusVolume(Bus bus, float volume)
     {
         m_busVolume[static_cast<size_t>(bus)] = clampFloat(volume, 0, 1);
@@ -461,6 +516,21 @@ namespace nx
         if (c.verb == Verb::Master)
         {
             m_masterGoal = c.value;
+            return;
+        }
+        if (c.verb == Verb::Effects)
+        {
+            m_busEffects[c.voice].set(c.effects, c.seconds);
+            return;
+        }
+        if (c.verb == Verb::GiveReverb)
+        {
+            m_busEffects[c.voice].giveReverb(static_cast<ReverbMemory*>(c.memory));
+            return;
+        }
+        if (c.verb == Verb::GiveEcho)
+        {
+            m_busEffects[c.voice].giveEcho(static_cast<EchoMemory*>(c.memory));
             return;
         }
         Channel& channel = m_channels[c.voice];
@@ -636,12 +706,13 @@ namespace nx
             }
             m_masterNow += (m_masterGoal - m_masterNow) * 0.3f;
 
+            memset(m_busMix, 0, sizeof(float) * kChunk * 2 * static_cast<size_t>(Bus::Count));
             for (u32 i = 0; i < kVoices; i++)
             {
                 Channel& ch = m_channels[i];
                 if (ch.active && !ch.paused)
                 {
-                    mixChannel(i, buffer, count);
+                    mixChannel(i, m_busMix + static_cast<size_t>(ch.options.bus) * kChunk * 2, count);
                 }
                 if (!ch.active && ch.sound)
                 {
@@ -649,6 +720,20 @@ namespace nx
                     ch.decoder = nullptr;
                     ch.sound = nullptr;
                     m_slots[i].finished.store(ch.generation, std::memory_order_release);
+                }
+            }
+
+            // Each bus through its own effects, then all together.
+            for (u32 b = 0; b < static_cast<u32>(Bus::Count); b++)
+            {
+                float* mixed = m_busMix + static_cast<size_t>(b) * kChunk * 2;
+                if (m_busEffects[b].busy())
+                {
+                    m_busEffects[b].process(mixed, count);
+                }
+                for (u32 i = 0; i < count * 2; i++)
+                {
+                    buffer[i] += mixed[i];
                 }
             }
 

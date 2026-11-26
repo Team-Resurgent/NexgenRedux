@@ -1,5 +1,6 @@
 #pragma once
 
+#include "audio/effects.h"
 #include "base/types.h"
 
 #include <atomic>
@@ -102,6 +103,12 @@ namespace nx
         // Seconds into the sound.
         float position(Voice voice) const;
 
+        // Filters, reverb and echo for everything on a bus, gliding there over so many seconds.
+        void setEffects(Bus bus, const BusEffectSettings& settings, float seconds);
+        const BusEffectSettings& effects(Bus bus) const { return m_effectSettings[static_cast<size_t>(bus)]; }
+        // Every bus back to none.
+        void clearEffects(float seconds);
+
         void setBusVolume(Bus bus, float volume);
         float busVolume(Bus bus) const { return m_busVolume[static_cast<size_t>(bus)]; }
         void setMasterVolume(float volume);
@@ -168,6 +175,14 @@ namespace nx
         float m_busNow[static_cast<size_t>(Bus::Count)] = { 1, 1, 1 };
         float m_busGoal[static_cast<size_t>(Bus::Count)] = { 1, 1, 1 };
         float m_masterNow = 1, m_masterGoal = 1;
+
+        // Each bus is mixed by itself, through its effects, and then with the others.
+        BusEffects m_busEffects[static_cast<size_t>(Bus::Count)];
+        float* m_busMix = nullptr;
+        // The game thread's: what was asked for, and the memory it made for reverb and echo, which mixing borrows.
+        BusEffectSettings m_effectSettings[static_cast<size_t>(Bus::Count)];
+        ReverbMemory* m_reverbMemory[static_cast<size_t>(Bus::Count)] = {};
+        EchoMemory* m_echoMemory[static_cast<size_t>(Bus::Count)] = {};
 
         std::atomic<i16>* m_history = nullptr;  // mono, for analysis only
         std::atomic<u32> m_historyAt{ 0 };

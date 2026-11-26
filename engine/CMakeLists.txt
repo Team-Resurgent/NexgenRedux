@@ -95,7 +95,7 @@ target_link_libraries(nx_input PUBLIC nx_base)
 nx_options(nx_input)
 
 # Sound: output is the desktop's through miniaudio, the original Xbox's own, or none yet.
-add_library(nx_audio STATIC audio/audio.cpp audio/decoder.cpp audio/third_party.c assets/adpcm.cpp)
+add_library(nx_audio STATIC audio/audio.cpp audio/effects.cpp audio/decoder.cpp audio/third_party.c assets/adpcm.cpp)
 target_link_libraries(nx_audio PUBLIC nx_base)
 nx_options(nx_audio)
 nx_no_warnings(audio/third_party.c)

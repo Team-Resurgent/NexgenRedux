@@ -198,6 +198,7 @@ namespace nx
     bool Screens::open(const ScreenInfo& info)
     {
         m_services->input->stopRumble();
+        m_services->audio->clearEffects(0);
         Entry& entry = m_stack[m_depth++];
         entry = Entry();
         entry.info = info;
@@ -207,6 +208,7 @@ namespace nx
     void Screens::close(bool callExit)
     {
         m_services->input->stopRumble();
+        m_services->audio->clearEffects(0);
         unload(m_stack[m_depth - 1], callExit);
         m_depth--;
     }

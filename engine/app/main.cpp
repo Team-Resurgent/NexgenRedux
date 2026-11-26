@@ -755,6 +755,13 @@ namespace
         {
             options.clean = true;
         }
+        else if (strncmp(name, "screen-", 7) == 0 && name[7] && options.screen == nullptr)
+        {
+            // Opens that screen first, as --screen does.
+            static char screen[64];
+            snprintf(screen, sizeof(screen), "%s", name + 7);
+            options.screen = screen;
+        }
         else if (strcmp(name, "debug") == 0 && options.debug == 0)
         {
             options.debug = 4711;  // a script debugger may connect from a computer
@@ -811,7 +818,8 @@ int main(int argc, char** argv)
     if (platform)
     {
         // Consoles have no command line: a folder called tour, or demo, on the disc asks for one, and clean for the demos
-        // without their captions. One called trial has the saves.
+        // without their captions. One called trial has the saves, debug lets a script debugger connect, and screen-ID
+        // opens that screen first.
         platform->listFolders("", findTour, &options);
         if (options.saves && !platform->setSaveFolder(options.saves))
         {

@@ -776,8 +776,7 @@ void main()
                 {
                     char error[256];
                     const char* vertex[2] = { shaders::kMeshCommon, shaders::kScreenVertex };
-                    const char* fragment[2] = { "#version 330 core
-", shaders::kGradeFragment };
+                    const char* fragment[2] = { "#version 330 core\n", shaders::kGradeFragment };
                     m_gradeProgram = effectProgram(vertex, 2, fragment, 2, error, sizeof(error));
                     if (m_gradeProgram == 0)
                     {

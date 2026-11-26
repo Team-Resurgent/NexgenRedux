@@ -925,6 +925,16 @@ cgltf_size cgltf_animation_channel_index(const cgltf_animation* animation, const
 
 #include <assert.h> /* For assert */
 #include <string.h> /* For strncpy */
+
+/* Nexgen: glTF's binary data is little endian. These read it the same way on a big-endian machine (the Xbox 360). */
+#if defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+#define CGLTF_BIG_ENDIAN 1
+#else
+#define CGLTF_BIG_ENDIAN 0
+#endif
+static uint16_t cgltf_le16(const void* p) { const uint8_t* b = (const uint8_t*)p; return (uint16_t)(b[0] | (b[1] << 8)); }
+static uint32_t cgltf_le32(const void* p) { const uint8_t* b = (const uint8_t*)p; return (uint32_t)b[0] | ((uint32_t)b[1] << 8) | ((uint32_t)b[2] << 16) | ((uint32_t)b[3] << 24); }
+static float cgltf_lef(const void* p) { uint32_t u = cgltf_le32(p); float f; memcpy(&f, &u, 4); return f; }
 #include <stdio.h>  /* For fopen */
 #include <limits.h> /* For UINT_MAX etc */
 #include <float.h>  /* For FLT_MAX */
@@ -1132,7 +1142,7 @@ cgltf_result cgltf_parse(const cgltf_options* options, const void* data, cgltf_s
 
 	uint32_t tmp;
 	// Magic
-	memcpy(&tmp, data, 4);
+	tmp = cgltf_le32(data);
 	if (tmp != GlbMagic)
 	{
 		if (fixed_options.type == cgltf_file_type_invalid)
@@ -1160,7 +1170,7 @@ cgltf_result cgltf_parse(const cgltf_options* options, const void* data, cgltf_s
 
 	const uint8_t* ptr = (const uint8_t*)data;
 	// Version
-	memcpy(&tmp, ptr + 4, 4);
+	tmp = cgltf_le32(ptr + 4);
 	uint32_t version = tmp;
 	if (version != GlbVersion)
 	{
@@ -1168,7 +1178,7 @@ cgltf_result cgltf_parse(const cgltf_options* options, const void* data, cgltf_s
 	}
 
 	// Total length
-	memcpy(&tmp, ptr + 8, 4);
+	tmp = cgltf_le32(ptr + 8);
 	if (tmp > size)
 	{
 		return cgltf_result_data_too_short;
@@ -1183,14 +1193,14 @@ cgltf_result cgltf_parse(const cgltf_options* options, const void* data, cgltf_s
 
 	// JSON chunk: length
 	uint32_t json_length;
-	memcpy(&json_length, json_chunk, 4);
+	json_length = cgltf_le32(json_chunk);
 	if (json_length > size - GlbHeaderSize - GlbChunkHeaderSize)
 	{
 		return cgltf_result_data_too_short;
 	}
 
 	// JSON chunk: magic
-	memcpy(&tmp, json_chunk + 4, 4);
+	tmp = cgltf_le32(json_chunk + 4);
 	if (tmp != GlbMagicJsonChunk)
 	{
 		return cgltf_result_unknown_format;
@@ -1208,14 +1218,14 @@ cgltf_result cgltf_parse(const cgltf_options* options, const void* data, cgltf_s
 
 		// Bin chunk: length
 		uint32_t bin_length;
-		memcpy(&bin_length, bin_chunk, 4);
+		bin_length = cgltf_le32(bin_chunk);
 		if (bin_length > size - GlbHeaderSize - GlbChunkHeaderSize - json_length - GlbChunkHeaderSize)
 		{
 			return cgltf_result_data_too_short;
 		}
 
 		// Bin chunk: magic
-		memcpy(&tmp, bin_chunk + 4, 4);
+		tmp = cgltf_le32(bin_chunk + 4);
 		if (tmp != GlbMagicBinChunk)
 		{
 			return cgltf_result_unknown_format;
@@ -1563,7 +1573,7 @@ static cgltf_size cgltf_calc_index_bound(cgltf_buffer_view* buffer_view, cgltf_s
 	case cgltf_component_type_r_16u:
 		for (size_t i = 0; i < count; ++i)
 		{
-			cgltf_size v = ((unsigned short*)data)[i];
+			cgltf_size v = cgltf_le16(data + i * 2);
 			bound = bound > v ? bound : v;
 		}
 		break;
@@ -1571,7 +1581,7 @@ static cgltf_size cgltf_calc_index_bound(cgltf_buffer_view* buffer_view, cgltf_s
 	case cgltf_component_type_r_32u:
 		for (size_t i = 0; i < count; ++i)
 		{
-			cgltf_size v = ((unsigned int*)data)[i];
+			cgltf_size v = cgltf_le32(data + i * 4);
 			bound = bound > v ? bound : v;
 		}
 		break;
@@ -2214,11 +2224,11 @@ static cgltf_ssize cgltf_component_read_integer(const void* in, cgltf_component_
 	switch (component_type)
 	{
 		case cgltf_component_type_r_16:
-			return *((const int16_t*) in);
+			return ((int16_t)cgltf_le16(in));
 		case cgltf_component_type_r_16u:
-			return *((const uint16_t*) in);
+			return cgltf_le16(in);
 		case cgltf_component_type_r_32u:
-			return *((const uint32_t*) in);
+			return cgltf_le32(in);
 		case cgltf_component_type_r_8:
 			return *((const int8_t*) in);
 		case cgltf_component_type_r_8u:
@@ -2233,9 +2243,9 @@ static cgltf_size cgltf_component_read_index(const void* in, cgltf_component_typ
 	switch (component_type)
 	{
 		case cgltf_component_type_r_16u:
-			return *((const uint16_t*) in);
+			return cgltf_le16(in);
 		case cgltf_component_type_r_32u:
-			return *((const uint32_t*) in);
+			return cgltf_le32(in);
 		case cgltf_component_type_r_8u:
 			return *((const uint8_t*) in);
 		default:
@@ -2247,7 +2257,7 @@ static cgltf_float cgltf_component_read_float(const void* in, cgltf_component_ty
 {
 	if (component_type == cgltf_component_type_r_32f)
 	{
-		return *((const float*) in);
+		return cgltf_lef(in);
 	}
 
 	if (normalized)
@@ -2256,9 +2266,9 @@ static cgltf_float cgltf_component_read_float(const void* in, cgltf_component_ty
 		{
 			// note: glTF spec doesn't currently define normalized conversions for 32-bit integers
 			case cgltf_component_type_r_16:
-				return *((const int16_t*) in) / (cgltf_float)32767;
+				return ((int16_t)cgltf_le16(in)) / (cgltf_float)32767;
 			case cgltf_component_type_r_16u:
-				return *((const uint16_t*) in) / (cgltf_float)65535;
+				return cgltf_le16(in) / (cgltf_float)65535;
 			case cgltf_component_type_r_8:
 				return *((const int8_t*) in) / (cgltf_float)127;
 			case cgltf_component_type_r_8u:
@@ -2398,7 +2408,7 @@ cgltf_size cgltf_accessor_unpack_floats(const cgltf_accessor* accessor, cgltf_fl
 		}
 		element += accessor->offset;
 
-		if (accessor->component_type == cgltf_component_type_r_32f && accessor->stride == floats_per_element * sizeof(cgltf_float))
+		if (!CGLTF_BIG_ENDIAN && accessor->component_type == cgltf_component_type_r_32f && accessor->stride == floats_per_element * sizeof(cgltf_float))
 		{
 			memcpy(out, element, element_count * floats_per_element * sizeof(cgltf_float));
 		}
@@ -2459,13 +2469,13 @@ static cgltf_uint cgltf_component_read_uint(const void* in, cgltf_component_type
 			return *((const uint8_t*) in);
 
 		case cgltf_component_type_r_16:
-			return *((const int16_t*) in);
+			return ((int16_t)cgltf_le16(in));
 
 		case cgltf_component_type_r_16u:
-			return *((const uint16_t*) in);
+			return cgltf_le16(in);
 
 		case cgltf_component_type_r_32u:
-			return *((const uint32_t*) in);
+			return cgltf_le32(in);
 
 		default:
 			return 0;
@@ -2660,7 +2670,7 @@ cgltf_size cgltf_accessor_unpack_indices(const cgltf_accessor* accessor, void* o
 	}
 	element += accessor->offset;
 
-	if (index_component_size == out_component_size && accessor->stride == out_component_size)
+	if ((!CGLTF_BIG_ENDIAN || index_component_size == 1) && index_component_size == out_component_size && accessor->stride == out_component_size)
 	{
 		memcpy(out, element, index_count * index_component_size);
 		return index_count;

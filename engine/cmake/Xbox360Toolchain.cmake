@@ -1,5 +1,5 @@
 # CMake toolchain for the Xbox 360, using RXDK-360's clang. Flags follow its Visual Studio toolset
-# (ClangCompile.cs). It builds static libraries; linking a title still needs RXDK-360's own steps.
+# (ClangCompile.cs). The libraries are linked into a title by RXDK-360's own MSBuild steps; see platform/xbox360.
 #
 #   cmake -G Ninja -DCMAKE_TOOLCHAIN_FILE=engine/cmake/Xbox360Toolchain.cmake -S engine -B out
 
@@ -41,8 +41,24 @@ endforeach()
 
 # In the flags because CMake does not pass CMAKE_<LANG>_COMPILER_TARGET on for this compiler.
 set(_common "--target=${RXDK360_TARGET} -nostdlibinc -fshort-wchar -ffunction-sections -fdata-sections -D__Picolibc__ -D_GNU_SOURCE")
-set(_c_dirs "\"-I${_clang}/include/config\" -include picolibc.h \"-I${_clang}/include/picolibc\"")
-set(_cxx_dirs "\"-I${_clang}/include/libcxx\" \"-I${_clang}/include/libcxxabi\"")
+# A clang built in an RXDK-360 source tree (its build/llvm/bin) comes with that tree's headers and runtime, which
+# the title is linked with, so those are used; otherwise the installed ones.
+get_filename_component(_dev "${RXDK360_CC}/../../../.." ABSOLUTE)
+if(EXISTS "${_dev}/runtime/config" AND EXISTS "${_dev}/build/llvm/libcxx/include")
+  set(RXDK360_DEV "${_dev}" CACHE PATH "RXDK-360 source tree the compiler is from")
+  set(_config "${_dev}/runtime/config")
+  set(_picolibc "${_dev}/vendor/picolibc/libc/include")
+  set(_libcxx "${_dev}/build/llvm/libcxx/include")
+  set(_libcxxabi "${_dev}/build/llvm/libcxxabi/include")
+else()
+  set(_config "${_clang}/include/config")
+  set(_picolibc "${_clang}/include/picolibc")
+  set(_libcxx "${_clang}/include/libcxx")
+  set(_libcxxabi "${_clang}/include/libcxxabi")
+endif()
+set(RXDK360_CONFIG_DIR "${_config}" CACHE INTERNAL "")
+set(_c_dirs "\"-I${_config}\" -include picolibc.h \"-I${_picolibc}\"")
+set(_cxx_dirs "\"-I${_libcxx}\" \"-I${_libcxxabi}\"")
 set(CMAKE_C_FLAGS_INIT "${_common} ${_c_dirs}")
 set(CMAKE_CXX_FLAGS_INIT "${_common} ${_cxx_dirs} -include __config_site -include rxdk_libcpp_prereq.h ${_c_dirs}")
 

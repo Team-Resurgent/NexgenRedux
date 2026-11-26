@@ -730,6 +730,10 @@ namespace
         {
             options.demo = 8;
         }
+        else if (strcmp(name, "null") == 0)
+        {
+            options.null = true;
+        }
 #if defined(NX_GPU_D3D8)
         else if (strcmp(name, "trial") == 0)
         {
@@ -739,7 +743,7 @@ namespace
     }
 }
 
-#if defined(NX_GPU_D3D8)
+#if defined(NX_GPU_D3D8) || defined(NX_GPU_D3D9)
 int main()
 {
     const int argc = 0;  // a title has no command line

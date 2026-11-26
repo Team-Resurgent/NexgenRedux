@@ -13,15 +13,17 @@ add_library(nx_angelscript STATIC ${_as_core} ${_as_addons})
 target_include_directories(nx_angelscript SYSTEM PUBLIC ${_as}/angelscript/include ${_as}/add_on)
 target_compile_definitions(nx_angelscript PUBLIC AS_NO_THREADS AS_NO_EXCEPTIONS)
 
+# Windows on Arm: AngelScript's calls straight into native code aren't finished for MSVC there (as_config.h says so, and
+# they crash), so scripts call the engine the portable way, as every platform can.
+if(MSVC AND CMAKE_CXX_COMPILER_ARCHITECTURE_ID STREQUAL "ARM64")
+  set(NX_SCRIPT_GENERIC ON)
+endif()
+
 if(NX_SCRIPT_GENERIC)
   target_compile_definitions(nx_angelscript PUBLIC NX_SCRIPT_GENERIC AS_MAX_PORTABILITY)
 elseif(MSVC AND CMAKE_SIZEOF_VOID_P EQUAL 8 AND CMAKE_CXX_COMPILER_ARCHITECTURE_ID STREQUAL "x64")
   enable_language(ASM_MASM)
   target_sources(nx_angelscript PRIVATE ${_as}/angelscript/source/as_callfunc_x64_msvc_asm.asm)
-elseif(MSVC AND CMAKE_SIZEOF_VOID_P EQUAL 8 AND CMAKE_CXX_COMPILER_ARCHITECTURE_ID STREQUAL "ARM64")
-  # Windows on Arm: MSVC's own assembler for Arm.
-  enable_language(ASM_MARMASM)
-  target_sources(nx_angelscript PRIVATE ${_as}/angelscript/source/as_callfunc_arm64_msvc.asm)
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64|aarch64")
   enable_language(ASM)
   if(APPLE)

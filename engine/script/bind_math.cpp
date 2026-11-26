@@ -2,6 +2,7 @@
 #include "script/bind.h"
 #include "script/script_host.h"
 
+#include <math.h>
 #include <stddef.h>
 
 namespace nx
@@ -19,6 +20,12 @@ namespace nx
         }
 
         Vec2& addVec2(const Vec2& o, Vec2& v) { return v = v + o; }
+        float lengthVec2(const Vec2& v) { return sqrtf(v.x * v.x + v.y * v.y); }
+        Vec2 normalizedVec2(const Vec2& v)
+        {
+            const float far = sqrtf(v.x * v.x + v.y * v.y);
+            return far > 1e-8f ? Vec2(v.x / far, v.y / far) : Vec2();
+        }
         Vec2& subtractVec2(const Vec2& o, Vec2& v) { return v = v - o; }
         Vec2& multiplyVec2(float s, Vec2& v) { return v = v * s; }
         Vec3& addVec3(const Vec3& o, Vec3& v) { return v = v + o; }
@@ -60,6 +67,8 @@ namespace nx
         method("Vec2", "Vec2 opNeg() const", NX_METHOD_PR(Vec2, operator-, () const, Vec2));
         method("Vec2", "bool opEquals(const Vec2 &in) const", NX_METHOD_PR(Vec2, operator==, (const Vec2&) const, bool));
         method("Vec2", "float dot(const Vec2 &in) const", NX_METHOD(Vec2, dot));
+        method("Vec2", "float length() const", NX_OBJ_LAST(lengthVec2));
+        method("Vec2", "Vec2 normalized() const", NX_OBJ_LAST(normalizedVec2));
 
         ok = host.check(e->RegisterObjectType("Vec3", sizeof(Vec3), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_ALLFLOATS | asGetTypeTraits<Vec3>()), "Vec3") && ok;
         property("Vec3", "float x", offsetof(Vec3, x));

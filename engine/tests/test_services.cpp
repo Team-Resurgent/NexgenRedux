@@ -428,3 +428,20 @@ NX_TEST(looksAreLeftOutWhereColoursCantBeGraded)
     NX_EXPECT(!w.screens.failed());
     NX_EXPECT(saved(w, "grey", "yes") && saved(w, "known", "yes") && saved(w, "loaded", "no") && saved(w, "graded", "no"));
 }
+
+NX_TEST(eachMachineSaysWhatItHas)
+{
+    Rig w;
+    openCode(w, "class S : Screen { void onEnter() {"
+                "  int here = (Xbox::available ? 1 : 0) + (Xbox360::available ? 1 : 0) + (XboxOne::available ? 1 : 0) + (Windows::available ? 1 : 0) + (Mac::available ? 1 : 0) + (Linux::available ? 1 : 0);"
+                "  Save::set(\"here\", formatInt(here));"
+                "  Save::set(\"named\", (Windows::available ? Windows::version + Windows::computer : Mac::available ? Mac::version : Linux::available ? Linux::distribution + Linux::kernel : \"x\") != \"\" ? \"yes\" : \"no\");"
+                "  Save::set(\"elsewhere\", Xbox360::cpuTemperature == -1 && Xbox360::kernel == \"\" && XboxOne::model == \"\" && !Xbox360::launch(\"nowhere\") ? \"yes\" : \"no\");"
+                "  int battery = Windows::battery + Mac::battery + Linux::battery;"
+                "  Save::set(\"battery\", battery >= -3 && battery <= 100 ? \"yes\" : \"no\"); }"
+                "void draw(Canvas@ c) {} }");
+    w.step(2);
+    NX_EXPECT(!w.screens.failed());
+    // Exactly one desktop, here.
+    NX_EXPECT(saved(w, "here", "1") && saved(w, "named", "yes") && saved(w, "elsewhere", "yes") && saved(w, "battery", "yes"));
+}

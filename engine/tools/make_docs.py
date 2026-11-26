@@ -219,9 +219,9 @@ TOPICS = [
     ('Movement', ['Tween', 'Ease', 'Coroutines', 'Vec2', 'Maths']),
     ('Saving', ['Save']),
     ('Networking', ['Net', 'Room', 'RoomState', 'Message', 'Request', 'Connection', 'Datagrams']),
-    ('Original Xbox', ['Xbox', 'XboxText', 'Tray']),
+    ('Platforms', ['Xbox', 'XboxText', 'Tray', 'Xbox360', 'XboxOne', 'Windows', 'Mac', 'Linux']),
 ]
-NAMESPACES = ['Screens', 'App', 'Scene', 'Space', 'Assets', 'Audio', 'Input', 'Save', 'Net', 'Xbox', 'Ui']
+NAMESPACES = ['Screens', 'App', 'Scene', 'Space', 'Assets', 'Audio', 'Input', 'Save', 'Net', 'Xbox', 'Xbox360', 'XboxOne', 'Windows', 'Mac', 'Linux', 'Ui']
 FUNCTIONS = ['Coroutines', 'Maths']  # sections that aren't a type or a namespace
 
 

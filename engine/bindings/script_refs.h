@@ -72,4 +72,5 @@ namespace nx
     bool readOwn(const Services& services, const char* name, FileData& out);
     // bind_xbox.cpp
     void bindXbox(Binder& binder);
+    void bindMachines(Binder& binder);
 }

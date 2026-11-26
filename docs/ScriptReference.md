@@ -1081,6 +1081,98 @@ What only the original Xbox has. Elsewhere `available` is false, readings are -1
 | `int Xbox::busRead(uint address, uint command, bool word = false)` | Reads from something on the SMBus, or -1. 0x20 is the system controller. The console's settings at 0xA8 are refused, as there are calls for what is in them. |
 | `bool Xbox::busWrite(uint address, uint command, uint value, bool word = false)` | Writes to something on the SMBus. The console's settings are refused: a mistake there can't be undone. |
 
+## Xbox360
+
+What only the Xbox 360 has. Elsewhere `available` is false, readings are -1 or empty, and the rest do nothing.
+
+| | |
+|---|---|
+| `bool Xbox360::get_available() property` | Whether this is one. |
+| `int Xbox360::get_cpuTemperature() property` | Degrees Celsius, from the system controller, or -1. |
+| `int Xbox360::get_gpuTemperature() property` | The same, of the graphics. |
+| `int Xbox360::get_memoryTemperature() property` | The same, of the memory. |
+| `int Xbox360::get_boardTemperature() property` | The same, of the board. |
+| `Tray Xbox360::get_tray() property` | What the disc tray is doing. |
+| `bool Xbox360::openTray()` | Opens it. |
+| `bool Xbox360::closeTray()` | Closes it. |
+| `void Xbox360::set_lights(uint) property` | The ring of light round the power button: a bit for each quarter, green in the low four and red in the high, so 0x0F is all green, 0xF0 all red and 0xFF orange. 0 lets the console decide again. |
+| `string Xbox360::get_kernel() property` | The kernel's version, such as "2.0.17559.0". |
+| `string Xbox360::get_region() property` | Where it is from: North America, Asia, Europe, the rest of the world, or a development kit. |
+| `string Xbox360::get_language() property` | The language it is set to. |
+| `string Xbox360::get_video() property` | What it sends to the screen, such as "1280x720p, 60 Hz, widescreen". |
+| `string Xbox360::get_player() property` | The first player's gamertag, or empty if no one is signed in. |
+| `bool Xbox360::launch(const string &in path)` | Runs another title, such as "game:\\Other\\default.xex". False if it isn't there; otherwise this one ends. |
+| `void Xbox360::toDashboard()` | Leaves for the dashboard. |
+| `void Xbox360::restart()` | Restarts the console. |
+| `void Xbox360::powerOff()` | Turns it off. |
+
+## XboxOne
+
+What only an Xbox One or Series has, running the engine as an app. Elsewhere `available` is false and readings are empty.
+
+| | |
+|---|---|
+| `bool XboxOne::get_available() property` | Whether this is one. |
+| `string XboxOne::get_model() property` | Which: Xbox One, One S, One X, Series S or Series X. |
+| `string XboxOne::get_system() property` | Its system's version. |
+| `uint XboxOne::get_memoryLimit() property` | Megabytes the app may use, which a game is given more of than an app. |
+| `bool XboxOne::open(const string &in address)` | Opens a web page, a page of the Store (`ms-windows-store://pdp/?productid=...`) or a setting (`ms-settings:`). |
+
+## Windows
+
+What only Windows on a desktop has. Elsewhere `available` is false, readings are -1 or empty, and the rest do nothing.
+
+| | |
+|---|---|
+| `bool Windows::get_available() property` | Whether this is it. |
+| `string Windows::get_version() property` | Such as "Windows 11 (build 26100)". |
+| `string Windows::get_computer() property` | The computer's name. |
+| `string Windows::get_user() property` | Who is signed in. |
+| `bool Windows::open(const string &in what)` | A file, folder or web address, in what Windows opens it with. |
+| `bool Windows::reveal(const string &in path)` | A file, selected in Explorer. |
+| `bool Windows::run(const string &in program, const string &in arguments = "")` | Starts another program. |
+| `int Windows::get_battery() property` | How full the battery is, 0 to 100, or -1 without one. |
+| `bool Windows::get_charging() property` | Whether it is plugged in. |
+| `bool Windows::get_darkMode() property` | Whether apps are set to look dark. |
+| `string Windows::get_clipboard() property` | The text that was copied. |
+| `void Windows::set_clipboard(const string &in) property` | Copies text, to paste elsewhere. |
+
+## Mac
+
+What only macOS has. Elsewhere `available` is false, readings are -1 or empty, and the rest do nothing.
+
+| | |
+|---|---|
+| `bool Mac::get_available() property` | Whether this is one. |
+| `string Mac::get_version() property` | Such as "macOS Version 15.1 (Build 24B83)". |
+| `string Mac::get_computer() property` | The computer's name. |
+| `string Mac::get_user() property` | Who is signed in. |
+| `bool Mac::open(const string &in what)` | A file, folder or web address, in what the Mac opens it with. |
+| `bool Mac::reveal(const string &in path)` | A file, selected in the Finder. |
+| `bool Mac::run(const string &in application, const string &in arguments = "")` | Starts an application, by its name ("Safari") or its path. |
+| `int Mac::get_battery() property` | How full the battery is, 0 to 100, or -1 without one. |
+| `bool Mac::get_charging() property` | Whether it is plugged in. |
+| `bool Mac::get_darkMode() property` | Whether it is set to look dark. |
+| `string Mac::get_clipboard() property` | The text that was copied. |
+| `void Mac::set_clipboard(const string &in) property` | Copies text, to paste elsewhere. |
+
+## Linux
+
+What only Linux has. Elsewhere `available` is false, readings are -1 or empty, and the rest do nothing.
+
+| | |
+|---|---|
+| `bool Linux::get_available() property` | Whether this is it. |
+| `string Linux::get_distribution() property` | Such as "Ubuntu 24.04.1 LTS". |
+| `string Linux::get_kernel() property` | Such as "Linux 6.8.0". |
+| `string Linux::get_desktop() property` | Such as "GNOME" or "KDE", or empty. |
+| `string Linux::get_computer() property` | The computer's name. |
+| `string Linux::get_user() property` | Who is signed in. |
+| `bool Linux::open(const string &in what)` | A file, folder or web address, with xdg-open. |
+| `bool Linux::run(const string &in program, const string &in arguments = "")` | Starts another program; arguments are separated by spaces. |
+| `int Linux::get_battery() property` | How full the battery is, 0 to 100, or -1 without one. |
+| `bool Linux::get_charging() property` | Whether it is plugged in. |
+
 ### Entity
 
 | | |

@@ -998,6 +998,7 @@ namespace nx
         bindUi(binder);
         bindNet(binder);
         bindXbox(binder);
+        bindMachines(binder);
         binder.reopen("Entity");
         binder.method("Voice sound(Sound@+ sound, float volume = 1, float range = 30, bool loop = true)", NX_OBJ_LAST(entitySound), "Plays a sound from it, wherever it goes, until it is destroyed.");
         s.host->setPrelude(behaviourPrelude());

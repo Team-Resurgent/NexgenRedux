@@ -30,6 +30,7 @@
 //   --saves FOLDER  keep saves there, and keep them with --demo too
 //   --size W H      window size
 //   --hidden (and silent), --null, --menu (open the engine's menu for a capture)
+//   --clean         with --demo: no captions over the demos, for footage
 namespace
 {
     using namespace nx;
@@ -51,6 +52,7 @@ namespace
         size_t budget = 0;
         u32 width = 1280, height = 720;
         bool hidden = false;
+        bool clean = false;        // demos without their captions, for footage
         bool null = false;
         bool menu = false;
         bool dev = false;
@@ -623,7 +625,7 @@ namespace
                             canvas.triangle({ x - 1.5f * k, y - 2.5f * k }, { x - 1.5f * k, y + 20 * k }, { x + 15 * k, y + 15 * k }, dark, dark, dark);
                             canvas.triangle({ x, y }, { x, y + 16 * k }, { x + 11.5f * k, y + 12.5f * k }, light, light, light);
                         }
-                        if (options.demo > 0)
+                        if (options.demo > 0 && !options.clean)
                         {
                             demo.caption(services);
                         }
@@ -736,6 +738,7 @@ int main(int argc, char** argv)
         else if (strcmp(a, "--budget") == 0) options.budget = static_cast<size_t>(atof(value(i)) * 1024 * 1024);
         else if (strcmp(a, "--size") == 0) { options.width = static_cast<u32>(atoi(value(i))); options.height = static_cast<u32>(atoi(value(i))); }
         else if (strcmp(a, "--hidden") == 0) options.hidden = true;
+        else if (strcmp(a, "--clean") == 0) options.clean = true;
         else if (strcmp(a, "--null") == 0) options.null = true;
         else if (strcmp(a, "--menu") == 0) options.menu = true;
         else if (strcmp(a, "--bench") == 0) options.bench = true;

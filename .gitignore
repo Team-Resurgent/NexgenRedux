@@ -11,3 +11,11 @@ packages/
 *.suo
 *.ncb
 *.sdf
+
+# Videos, and what making them leaves behind: footage, shots and sound, wherever they are made
+*.mp4
+*.mov
+*.mkv
+*.webm
+*.pcm
+trailer-shots*/

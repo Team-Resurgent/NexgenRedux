@@ -297,7 +297,28 @@ namespace nx
         void setGround(float height) { m_hasGround = true; m_ground = height; }
         // A picture all round, instead of the sky's colours. nullptr for none.
         void setSkyPicture(Asset* texture);
-        void setWater(float height, const gpu::Color& color) { m_hasWater = true; m_water = height; m_waterColor = color; }
+        // The shallow colour is the one given, and the deep one a darker, clearer-less copy of it, until waterColors.
+        void setWater(float height, const gpu::Color& color)
+        {
+            m_hasWater = true;
+            m_water = height;
+            m_waterColor = color;
+            m_waterShallow = { color.r * 1.25f + 0.05f, color.g * 1.25f + 0.08f, color.b * 1.15f + 0.05f, color.a * 0.75f };
+            m_waterDeep = { color.r * 0.55f, color.g * 0.6f, color.b * 0.75f, color.a < 1 ? 0.92f : 1.0f };
+        }
+        // How it moves: how high the waves are, how long, how fast, and how sharp their crests (0 round, 1 pointed).
+        void setWaterWaves(float height, float length, float speed, float choppy)
+        {
+            m_waveHeight = height < 0 ? 0 : height;
+            m_waveLength = length < 0.5f ? 0.5f : length;
+            m_waveSpeed = speed;
+            m_waveChop = choppy < 0 ? 0 : choppy > 1 ? 1 : choppy;
+        }
+        void setWaterColors(const gpu::Color& shallow, const gpu::Color& deep) { m_waterShallow = shallow; m_waterDeep = deep; }
+        // White where it meets the land, and on the tops of waves.
+        void setWaterFoam(float shore, float crests) { m_foamShore = shore; m_foamCrests = crests; }
+        // Flat colours in bands, and a hard line of foam, for a drawn look.
+        void setWaterCartoon(bool on) { m_waterCartoon = on; }
 
         // --- Land ---
 
@@ -667,6 +688,12 @@ namespace nx
         float m_ground = 0, m_water = 0;
         Asset* m_skyPicture = nullptr;
         gpu::Color m_waterColor = { 0.15f, 0.35f, 0.5f, 0.75f };
+        gpu::Color m_waterShallow = { 0.25f, 0.52f, 0.62f, 0.55f }, m_waterDeep = { 0.08f, 0.21f, 0.37f, 0.92f };
+        float m_waveHeight = 0.18f, m_waveLength = 9, m_waveSpeed = 1, m_waveChop = 0.2f, m_foamShore = 1, m_foamCrests = 0;
+        bool m_waterCartoon = false;
+        GrowArray<float> m_waterDepth;
+        float m_waterDepthX = 0, m_waterDepthZ = 0, m_waterDepthReach = 0, m_waterDepthLevel = 0;
+        u32 m_waterDepthChanges = 0, m_landChanges = 0;
         Vec3 m_gravity = { 0, -9.8f, 0 };
         float m_time = 0;
         Vec3 m_wind = { 0.94f, 0, 0.34f };

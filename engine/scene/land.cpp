@@ -543,7 +543,7 @@ namespace nx
         {
             return;
         }
-        constexpr u32 squares = 40;
+        constexpr u32 squares = 64;
         MeshData& d = m_waterData;
         if (d.vertices.count() == 0)
         {
@@ -551,39 +551,156 @@ namespace nx
         }
         // Closer together near the camera, and reaching as far as can be seen.
         const float reach = m_far * 0.9f;
-        struct Wave
+        // Four trains of waves, each its own way, length and speed: together they don't look like a pattern.
+        struct Train
         {
-            float at, far, sin, cos, slowSin, slowCos;
+            float dx, dz, k, speed, height, length;
         };
-        Wave across[squares + 1], along[squares + 1];
-        for (u32 i = 0; i <= squares; i++)
+        static const float ways[4][3] = { { 1.0f, 0.2f, 1.0f }, { -0.45f, 1.0f, 0.62f }, { 0.75f, -0.8f, 0.41f }, { -0.9f, -0.35f, 0.27f } };
+        Train trains[4];
+        for (u32 n = 0; n < 4; n++)
         {
-            const float t = static_cast<float>(i) / static_cast<float>(squares) * 2 - 1;
-            Wave &a = across[i], &b = along[i];
-            a.far = b.far = t * fabsf(t) * reach;
-            a.at = floorf(view.eye.x) + a.far;
-            b.at = floorf(view.eye.z) + b.far;
-            a.sin = sinf(a.at * 0.7f + m_time * 1.3f);
-            a.cos = cosf(a.at * 0.7f + m_time * 1.3f);
-            b.sin = sinf(b.at * 0.9f - m_time * 1.1f);
-            b.cos = cosf(b.at * 0.9f - m_time * 1.1f);
-            a.slowSin = sinf(a.at * 0.35f + m_time * 0.8f);
-            a.slowCos = cosf(a.at * 0.35f + m_time * 0.8f);
-            b.slowSin = sinf(b.at * 0.35f);
-            b.slowCos = cosf(b.at * 0.35f);
+            const float len = sqrtf(ways[n][0] * ways[n][0] + ways[n][1] * ways[n][1]);
+            const float length = m_waveLength * (1.6f - ways[n][2]);
+            trains[n].dx = ways[n][0] / len;
+            trains[n].dz = ways[n][1] / len;
+            trains[n].k = 6.2832f / length;
+            trains[n].speed = sqrtf(9.8f / trains[n].k) * m_waveSpeed;   // as fast as waves that long go
+            trains[n].height = m_waveHeight * ways[n][2] * 0.5f;
+            trains[n].length = length;
         }
-        for (u32 i = 0; i < d.vertices.count(); i++)
+        float most = 0;
+        for (const Train& t : trains)
+        {
+            most += t.height;
+        }
+        const gpu::Color sky = m_skyHorizon;
+        // Where each column and row is, and how far apart: evenly near the camera, where waves are seen; then further
+        // and further apart, out to the horizon.
+        constexpr u32 side = squares + 1;
+        const float near = fminf(40.0f, reach * 0.3f), inner = 0.6f, step = 2.0f / static_cast<float>(squares);
+        float at[side], apartAt[side];
+        for (u32 n = 0; n < side; n++)
+        {
+            const float u = static_cast<float>(n) / static_cast<float>(squares) * 2 - 1, a = fabsf(u);
+            const float f = a <= inner ? a / inner * near : near + ((a - inner) / (1 - inner)) * ((a - inner) / (1 - inner)) * (reach - near);
+            at[n] = u < 0 ? -f : f;
+            apartAt[n] = a <= inner ? near / inner * step : 2 * (a - inner) / ((1 - inner) * (1 - inner)) * (reach - near) * step + near / inner * step;
+        }
+        const float ox = floorf(view.eye.x), oz = floorf(view.eye.z);
+        // A wave's phase is part across and part along: their sines and cosines are worked out once a column and once a
+        // row, and only put together for each point.
+        static float acrossSin[4][side], acrossCos[4][side], alongSin[4][side], alongCos[4][side];
+        for (u32 n = 0; n < 4; n++)
+        {
+            const Train& t = trains[n];
+            for (u32 c = 0; c < side; c++)
+            {
+                const float p = t.k * t.dx * (ox + at[c]), q = t.k * t.dz * (oz + at[c]) - t.speed * t.k * m_time;
+                acrossSin[n][c] = sinf(p);
+                acrossCos[n][c] = cosf(p);
+                alongSin[n][c] = sinf(q);
+                alongCos[n][c] = cosf(q);
+            }
+        }
+        // How deep it is at each point, kept until the squares move to another whole metre or the land changes.
+        const u32 count = d.vertices.count();
+        if (m_waterDepth.count() != count || ox != m_waterDepthX || oz != m_waterDepthZ || reach != m_waterDepthReach || m_landChanges != m_waterDepthChanges || m_water != m_waterDepthLevel)
+        {
+            m_waterDepth.reserve(count);
+            m_waterDepth.resize(count);
+            for (u32 i = 0; i < count; i++)
+            {
+                const float ground = heightAt(ox + at[i % side], oz + at[i / side]);
+                m_waterDepth[i] = ground < -9e5f ? 100.0f : m_water - ground;
+            }
+            m_waterDepthX = ox;
+            m_waterDepthZ = oz;
+            m_waterDepthReach = reach;
+            m_waterDepthChanges = m_landChanges;
+            m_waterDepthLevel = m_water;
+        }
+        for (u32 i = 0; i < count; i++)
         {
             gpu::MeshVertex& v = d.vertices[i];
-            const Wave &p = across[i % (squares + 1)], &q = along[i / (squares + 1)];
-            const float wx = p.at, wz = q.at;
-            const float calm = clampFloat(1 - (fabsf(p.far) + fabsf(q.far)) / (reach * 0.35f), 0, 1);
-            // The sine and cosine of the sum of two angles.
-            const float sinC = p.slowSin * q.slowCos + p.slowCos * q.slowSin, cosC = p.slowCos * q.slowCos - p.slowSin * q.slowSin;
-            v.x = wx;
-            v.z = wz;
-            v.y = m_water + (p.sin + q.sin + sinC * 1.5f) * 0.05f * calm;
-            const Vec3 n = Vec3(-(p.cos * 0.7f + cosC * 0.52f) * 0.09f * calm, 1, -(q.cos * 0.9f + cosC * 0.52f) * 0.09f * calm).normalized();
+            const u32 cx = i % side, cz = i / side;
+            const float fx = at[cx], fz = at[cz];
+            // How far apart the squares are here: a wave shorter than two of them can't be drawn, and goes.
+            const float apart = fmaxf(apartAt[cx], apartAt[cz]);
+            const float wx = ox + fx, wz = oz + fz;
+            // Smaller far off, where they would only shimmer.
+            const float calm = clampFloat(1 - (fabsf(fx) + fabsf(fz)) / (reach * 0.4f), 0, 1);
+            // Shallow water has smaller waves; on land, none.
+            const float depth = m_waterDepth[i];
+            const float shoal = clampFloat(depth / (m_waveLength * 0.25f), 0, 1);
+            float px = 0, pz = 0, py = 0, nx = 0, nz = 0, crest = 0;
+            for (u32 n = 0; n < 4; n++)
+            {
+                const Train& t = trains[n];
+                const float drawn = clampFloat(2 - apart * 2 / t.length, 0, 1);
+                const float a = t.height * calm * drawn * (0.35f + 0.65f * shoal);
+                if (a <= 0)
+                {
+                    continue;
+                }
+                // sin(p + q) and cos(p + q).
+                const float sn = acrossSin[n][cx] * alongCos[n][cz] + acrossCos[n][cx] * alongSin[n][cz];
+                const float c = acrossCos[n][cx] * alongCos[n][cz] - acrossSin[n][cx] * alongSin[n][cz];
+                // Gerstner: the surface also moves along, which sharpens the crests as choppy grows.
+                const float q = m_waveChop / (t.k * fmaxf(t.height, 0.0001f) * 4);
+                px += q * a * t.dx * c;
+                pz += q * a * t.dz * c;
+                py += a * sn;
+                nx -= t.dx * t.k * a * c;
+                nz -= t.dz * t.k * a * c;
+            }
+            // Near the highest the waves together can be.
+            crest = most > 0 ? py / most : 0;
+            v.x = wx + px;
+            v.z = wz + pz;
+            v.y = m_water + py;
+            Vec3 n = Vec3(nx, 1, nz).normalized();
+            // From the camera: steeply, the water's own colour; along it, the sky's.
+            Vec3 toEye = view.eye - Vec3(v.x, v.y, v.z);
+            const float far = sqrtf(toEye.dot(toEye));
+            toEye = far > 0 ? toEye * (1 / far) : Vec3(0, 1, 0);
+            const float facing = clampFloat(toEye.dot(n), 0, 1);
+            float sheen = powf(1 - facing, 4) * 0.85f;
+            float deep = clampFloat(depth / 6, 0, 1);
+            float foam = 0;
+            if (m_foamShore > 0 && depth < 1.4f && depth > -0.5f)
+            {
+                // A line along the shore, coming and going.
+                const float wash = 0.5f + 0.5f * sinf(m_time * 1.7f - depth * 5 + (wx + wz) * 0.15f);
+                foam = clampFloat((1.4f - depth) / 1.4f, 0, 1) * (0.55f + 0.45f * wash) * m_foamShore;
+            }
+            if (m_foamCrests > 0 && m_waveHeight > 0)
+            {
+                foam = fmaxf(foam, clampFloat((crest - 0.5f) / 0.3f, 0, 1) * m_foamCrests);
+            }
+            if (m_waterCartoon)
+            {
+                // One hard line of foam, and flat light.
+                foam = foam > 0.45f ? 1.0f : 0.0f;
+                sheen = sheen > 0.35f ? 0.4f : 0.0f;
+                n = Vec3(0, 1, 0);
+            }
+            const gpu::Color& a = m_waterShallow;
+            const gpu::Color& b = m_waterDeep;
+            float r = a.r + (b.r - a.r) * deep, g = a.g + (b.g - a.g) * deep, bl = a.b + (b.b - a.b) * deep, al = a.a + (b.a - a.a) * deep;
+            r += (sky.r - r) * sheen;
+            g += (sky.g - g) * sheen;
+            bl += (sky.b - bl) * sheen;
+            al = al + (1 - al) * sheen * 0.6f;
+            r += (0.95f - r) * foam;
+            g += (0.97f - g) * foam;
+            bl += (1.0f - bl) * foam;
+            al += (1 - al) * foam;
+            const auto byte = [](float x) { return static_cast<u8>(clampFloat(x, 0, 1) * 255 + 0.5f); };
+            v.r = byte(r);
+            v.g = byte(g);
+            v.b = byte(bl);
+            v.a = byte(al);
             v.nx = n.x;
             v.ny = n.y;
             v.nz = n.z;
@@ -599,9 +716,15 @@ namespace nx
         }
         gpu::MeshDraw draw;
         draw.mesh = m_waterMesh;
-        draw.color = m_waterColor;
-        draw.blend = m_waterColor.a < 1 ? gpu::Blend::Alpha : gpu::Blend::None;
-        draw.shine = 0.8f;
+        draw.color = { 1, 1, 1, 1 };
+        bool clear = false;
+        for (u32 i = 0; i < d.vertices.count() && !clear; i++)
+        {
+            clear = d.vertices[i].a < 255;
+        }
+        draw.blend = clear ? gpu::Blend::Alpha : gpu::Blend::None;
+        draw.depthWrite = !clear;
+        draw.shine = m_waterCartoon ? 0.2f : 0.8f;
         draw.cull = gpu::Cull::None;
         pickLights(view, { view.eye.x, m_water, view.eye.z }, 30, draw);
         device.drawMesh(draw);

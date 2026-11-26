@@ -71,6 +71,8 @@ namespace nx
 
     void Space::grassChanged(float fromX, float fromZ, float toX, float toZ)
     {
+        // The water's depths are measured again too.
+        m_landChanges++;
         for (GrassCell& c : m_grass)
         {
             const float x = static_cast<float>(c.x) * kCell, z = static_cast<float>(c.z) * kCell;

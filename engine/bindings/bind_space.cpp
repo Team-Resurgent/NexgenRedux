@@ -376,6 +376,20 @@ namespace nx
         void spaceGravity(const Vec3& g) { space().setGravity(g); }
         void spaceGround(float height) { space().setGround(height); }
         void spaceWater(float height, const Color& color) { space().setWater(height, color); }
+        void spaceWaterWaves(float height, float length, float speed, float choppy) { space().setWaterWaves(height, length, speed, choppy); }
+        void spaceWaterColors(const Color& shallow, const Color& deep) { space().setWaterColors(shallow, deep); }
+        void spaceWaterFoam(float shore, float crests) { space().setWaterFoam(shore, crests); }
+        void spaceWaterStyle(const std::string& name)
+        {
+            Space& s = space();
+            s.setWaterCartoon(name == "cartoon");
+            if (name == "calm") { s.setWaterWaves(0.05f, 6, 0.6f, 0); s.setWaterFoam(0.5f, 0); }
+            else if (name == "sea") { s.setWaterWaves(0.18f, 9, 1, 0.2f); s.setWaterFoam(1, 0); }
+            else if (name == "choppy") { s.setWaterWaves(0.45f, 10, 1.2f, 0.75f); s.setWaterFoam(1, 0.6f); }
+            else if (name == "storm") { s.setWaterWaves(1.3f, 18, 1.3f, 0.9f); s.setWaterFoam(1, 1); }
+            else if (name == "cartoon") { s.setWaterWaves(0.12f, 8, 0.8f, 0.3f); s.setWaterFoam(1.2f, 0); }
+            else scriptError("water styles are calm, sea, choppy, storm and cartoon");
+        }
         void spaceLand(u32 seed, u32 squares, float spacing, float height, float roughness, bool island)
         {
             if (!space().makeLand(seed, squares, spacing, height, roughness, island))
@@ -672,7 +686,11 @@ namespace nx
         b.function("Vec3 get_gravity() property", NX_FN(spaceGetGravity), "What pulls on those that feel it.");
         b.function("void set_gravity(const Vec3 &in) property", NX_FN(spaceGravity), "Metres a second, each second. It starts as that of the Earth.");
         b.function("void ground(float height)", NX_FN(spaceGround), "Something flat to stand on, everywhere. It isn't drawn.");
-        b.function("void water(float height, const Color &in color)", NX_FN(spaceWater), "Draws water, with waves, up to a height.");
+        b.function("void water(float height, const Color &in color)", NX_FN(spaceWater), "Draws water, with waves, up to a height: clearer in the shallows, darker where it is deep, the sky in it at a low angle, and foam where it meets the land.");
+        b.function("void waterStyle(const string &in style)", NX_FN(spaceWaterStyle), "How the water moves and looks: calm, sea, choppy, storm or cartoon.");
+        b.function("void waterWaves(float height = 0.18f, float length = 9, float speed = 1, float choppy = 0.2f)", NX_FN(spaceWaterWaves), "How high the waves are, how long from one to the next, how fast as waves that long go, and how sharp their crests: 0 round, 1 pointed.");
+        b.function("void waterColors(const Color &in shallow, const Color &in deep)", NX_FN(spaceWaterColors), "Its colour where it is shallow and where it is deep; alpha is how much it hides.");
+        b.function("void waterFoam(float shore = 1, float crests = 0)", NX_FN(spaceWaterFoam), "How much foam where it meets the land, and on the tops of waves.");
         b.function("void land(uint seed, uint squares, float spacing, float height, float roughness = 0.5, bool island = false)", NX_FN(spaceLand), "Makes hills: so many squares each way (a multiple of 32, up to 256), metres to a square, and about how high. An island goes down all round, to below 0.");
         b.function("void endlessLand(uint seed, float spacing, float height, float roughness = 0.5, uint reach = 5)", NX_FN(spaceEndless), "The same without end: regions of 32 squares are made in the background as the camera comes near, up to so many away, and go when it leaves.");
         b.function("bool nextRegion(int &out x, int &out z, bool &out arrived)", NX_FN(spaceNextRegion), "A region that has come or gone, or false when there is no more to tell. Ask each update, to put things in those that arrive; make them streamed and they go by themselves.");

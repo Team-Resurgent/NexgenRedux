@@ -624,7 +624,11 @@ The scene in three dimensions: x right, y up, z towards you, in metres. Entities
 | `Vec3 Space::get_gravity() property` | What pulls on those that feel it. |
 | `void Space::set_gravity(const Vec3 &in) property` | Metres a second, each second. It starts as that of the Earth. |
 | `void Space::ground(float height)` | Something flat to stand on, everywhere. It isn't drawn. |
-| `void Space::water(float height, const Color &in color)` | Draws water, with waves, up to a height. |
+| `void Space::water(float height, const Color &in color)` | Draws water, with waves, up to a height: clearer in the shallows, darker where it is deep, the sky in it at a low angle, and foam where it meets the land. |
+| `void Space::waterStyle(const string &in style)` | How the water moves and looks: calm, sea, choppy, storm or cartoon. |
+| `void Space::waterWaves(float height = 0.18f, float length = 9, float speed = 1, float choppy = 0.2f)` | How high the waves are, how long from one to the next, how fast as waves that long go, and how sharp their crests: 0 round, 1 pointed. |
+| `void Space::waterColors(const Color &in shallow, const Color &in deep)` | Its colour where it is shallow and where it is deep; alpha is how much it hides. |
+| `void Space::waterFoam(float shore = 1, float crests = 0)` | How much foam where it meets the land, and on the tops of waves. |
 | `void Space::land(uint seed, uint squares, float spacing, float height, float roughness = 0.5, bool island = false)` | Makes hills: so many squares each way (a multiple of 32, up to 256), metres to a square, and about how high. An island goes down all round, to below 0. |
 | `void Space::endlessLand(uint seed, float spacing, float height, float roughness = 0.5, uint reach = 5)` | The same without end: regions of 32 squares are made in the background as the camera comes near, up to so many away, and go when it leaves. |
 | `bool Space::nextRegion(int &out x, int &out z, bool &out arrived)` | A region that has come or gone, or false when there is no more to tell. Ask each update, to put things in those that arrive; make them streamed and they go by themselves. |

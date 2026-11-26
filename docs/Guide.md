@@ -338,6 +338,15 @@ squares over a part of the world, and `Space::path(from, to, way)` gives the sho
 straight as it can be. In a scene file, a thing with a `"role"` moves by itself as the level's crowd, and a patrol's
 `"route"` is the waypoints of that name; the editor has both. The **Guards** showcase is a game of getting past them.
 
+### Water
+
+`Space::water(height, color)` fills everything below a height: clear in the shallows and dark where it is deep, the sky in
+it at a low angle, and foam where it meets the land. `Space::waterStyle` sets how it moves: `calm`, `sea`, `choppy` (crests
+that lean and break white), `storm`, or `cartoon` (flat light and a hard line of foam). Or set it yourself with
+`waterWaves(height, length, speed, choppy)`, `waterColors(shallow, deep)` and `waterFoam(shore, crests)`. The waves are moved
+on the CPU, so they look and cost the same everywhere; a scene file says `"seaStyle"` in its sky, and the editor has it on
+the Sky tab. The **Water** showcase goes round an island in each style.
+
 ### Wind
 
 Plants lean with the wind: give a thing a `sway`, how far its top moves for each metre of height (about 0.02 for a tree, 0.15 for

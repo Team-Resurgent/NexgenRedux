@@ -28,7 +28,7 @@ Add a launch configuration from **Run > Add Configuration... > Nexgen Redux**.
   set. Point `program` at the `nexgen.exe` you built. Add `--dev` in `args` to reload scripts as they are saved too.
 - **Attach** connects to an engine already started with `--debug [PORT]`, which listens on this machine only; add
   `--debug-remote` to debug it from another. On a console, which has no command line, put a folder called `debug`
-  beside the title, then attach to the console's address. (Not yet on the Xbox 360, which has no network layer.)
+  beside the title (or have a script call `App::debugger()`), then attach to the console's address. (Not yet on the Xbox 360, which has no network layer.)
 
 Files are named by the engine as they are in its media folder, such as `showcase/blocks/main.as`. The extension
 looks for that folder in the workspace (`media`, or `NexgenRedux-Media/media`); set `media` if it is elsewhere.

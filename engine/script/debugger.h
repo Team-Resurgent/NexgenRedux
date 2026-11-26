@@ -42,6 +42,7 @@ namespace nx
         // Until a debugger has connected and said it is ready, so that the first lines can be stopped at too.
         void waitForReady();
         bool connected() const { return m_client.state() == TcpState::Open; }
+        bool listening() const { return m_host != nullptr; }
 
         void line(asIScriptContext* context) override;
         void exception(asIScriptContext* context) override;

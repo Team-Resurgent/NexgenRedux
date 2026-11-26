@@ -443,6 +443,21 @@ namespace nx
             }
         }
         bool sceneJoin(const EntityRef* a, const EntityRef* b, const Vec2& at, float softness) { return a && world().join(a->id, b ? b->id : 0, at, softness); }
+        bool scenePath(const Vec2& from, const Vec2& to, CScriptArray* out, bool diagonal)
+        {
+            GrowArray<Vec2> way;
+            const bool reached = world().findPath(from, to, diagonal, way);
+            if (out)
+            {
+                out->Resize(way.count());
+                for (u32 i = 0; i < way.count(); i++)
+                {
+                    *static_cast<Vec2*>(out->At(i)) = way[i];
+                }
+            }
+            return reached;
+        }
+        bool sceneBlocked(const Vec2& at) { return world().blockedAt(at); }
         u32 sceneTile(const Vec2& at) { return world().tileAt(at); }
         void sceneSetTile(const Vec2& at, u32 tile) { world().setTileAt(at, tile); }
         Vec2 sceneMapSize() { return world().mapSize(); }
@@ -560,6 +575,8 @@ namespace nx
         b.function("void set_gravity(const Vec2 &in) property", NX_FN(sceneGravity), "Units a second, each second.");
         b.function("void burst(const string &in particles, const Vec2 &in position, uint count)", NX_FN(sceneBurst), "Throws out some particles.");
         b.function("bool join(Entity@+ a, Entity@+ b, const Vec2 &in at, float softness = 0)", NX_FN(sceneJoin), "Pins two rigid bodies together at a place; null for b pins to the scene.");
+        b.function("bool path(const Vec2 &in from, const Vec2 &in to, array<Vec2>@+ way, bool diagonal = true)", NX_FN(scenePath), "The way from one place to another round the solid tiles of the maps, on the grid of the last: its corners, made as straight as it can be, ending at `to`. Diagonally too unless told not to, but never across a corner. False if there is none.");
+        b.function("bool blocked(const Vec2 &in place)", NX_FN(sceneBlocked), "Whether a solid tile is there, in any map.");
         b.function("uint tile(const Vec2 &in position)", NX_FN(sceneTile), "What the map has there: 0 is nothing.");
         b.function("void setTile(const Vec2 &in position, uint tile)", NX_FN(sceneSetTile), "Changes the map.");
         b.function("Vec2 get_mapSize() property", NX_FN(sceneMapSize), "How large the map is.");

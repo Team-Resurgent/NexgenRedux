@@ -39,7 +39,9 @@ class Hello : Screen
 ```
 
 Start the showcase with `--dev` and it reloads the screen each time you save. If there is a mistake, the screen shows the file
-and the line; mend it, save, and it carries on.
+and the line; mend it, save, and it carries on. A console has no command line: there, put a folder called `dev` beside the title
+(in its `media`), and copy changed scripts and pictures to it over the network, as with an FTP client or the debug monitor. A script
+can also turn it on, or off, itself with `App::development`.
 
 ### Debugging
 
@@ -167,6 +169,10 @@ A map is rows of letters, and a legend says what each is: a tile's number, or a 
 ```
 
 With `"image"` and `"sheet"` it is drawn from a picture instead of colours.
+
+`Scene::path(from, to, way)` finds a way round the solid tiles: the corners of it, as straight as it can be, ending where it was
+asked to go. It goes diagonally too, but never across a corner, unless it is told to keep to straight steps. `Scene::blocked`
+says whether a solid tile is at a place.
 
 ### Physics
 
@@ -673,6 +679,28 @@ Pads rumble: `Input::rumble(0.6f, 0.2f)` shakes every pad for a fifth of a secon
 pad)` sets the slow, heavy motor and the quick, light one each. It stops when the engine's menu opens and when the screen changes,
 and players can turn it off in Settings (`Input::rumbleOn`, kept with the other settings).
 
+## Paths and noise
+
+A `Path` is a smooth way through points, passing through every one, for things to follow at a steady speed:
+
+```cpp
+Path@ track = Path({ Vec3(0, 0, 0), Vec3(10, 0, 4), Vec3(20, 2, 0), Vec3(10, 0, -6) }, true);   // a loop
+float along = 0;
+
+void update(float dt)
+{
+    along += 6 * dt;                                    // metres a second, however far apart the points are
+    car.place = track.at(along);
+    car.angles = Vec3(0, atan2(-track.direction(along).z, track.direction(along).x) * 57.3f, 0);
+}
+```
+
+On the plane, give it `Vec2`s with `add` and ask `at2` and `direction2`. `nearest` says how far along it a place is closest.
+
+`noise(x, y, z)` is smooth randomness, -1 to 1, with hills and dips about a unit apart and the same at the same place every time:
+scale the place for bigger or smaller ones, and move through `z` for noise that changes over time. `fractalNoise` adds finer
+layers, for land, clouds and fire; `noiseSeed` picks another pattern.
+
 ## Coroutines and tweens
 
 A coroutine is a function that can wait:
@@ -816,5 +844,6 @@ back to the one that came with the screen.
   under the same names.
 - Three dimensions use the fixed pipeline: lights are worked out at corners, so give a floor plenty of squares. Ray-marched shapes
   become triangles. Effects are stand-ins.
-- There is no live reload: edit on a PC and then build the disc. The debugger works, over the network: put a `debug` folder beside
-  the title and attach to the console's address.
+- Live reload works with a `dev` folder beside the title: copy changed scripts to the console over the network and the screen
+  reloads. The debugger works over the network too: put a `debug` folder there, or call `App::debugger()`, and attach to the
+  console's address.

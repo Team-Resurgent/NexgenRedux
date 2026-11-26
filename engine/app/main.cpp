@@ -547,6 +547,9 @@ namespace
             }
             loadSettings(services);
             services.development = options.dev;
+            services.debugger = &debugger;
+            // While scripts are stopped the window still answers, though nothing in it moves.
+            debugger.setIdle([](void* user) { static_cast<Platform*>(user)->pumpEvents(); }, &platform);
             host.setStatementLimit(5000000);
             if (ok)
             {
@@ -559,14 +562,9 @@ namespace
                     screens.setCanQuit(false);
                 }
             }
-            if (ok && options.debug && debugger.start(host, static_cast<u16>(options.debug), !options.debugRemote))
+            if (ok && options.debug && debugger.start(host, static_cast<u16>(options.debug), !options.debugRemote) && options.debugWait)
             {
-                // While scripts are stopped the window still answers, though nothing in it moves.
-                debugger.setIdle([](void* user) { static_cast<Platform*>(user)->pumpEvents(); }, &platform);
-                if (options.debugWait)
-                {
-                    debugger.waitForReady();
-                }
+                debugger.waitForReady();
             }
             ok = ok && (options.docs || screens.init(services, "showcase", "main"));
 
@@ -618,7 +616,7 @@ namespace
                     audio.update();
                     net.update(now);
                     debugger.update();
-                    if (options.dev && now >= nextLook)
+                    if (services.development && now >= nextLook)
                     {
                         nextLook = now + 0.5;
                         assets.reloadChanged();
@@ -775,6 +773,10 @@ namespace
             snprintf(screen, sizeof(screen), "%s", name + 7);
             options.screen = screen;
         }
+        else if (strcmp(name, "dev") == 0)
+        {
+            options.dev = true;   // as --dev: scripts copied over the network are reloaded
+        }
         else if (strcmp(name, "debug") == 0 && options.debug == 0)
         {
             options.debug = 4711;  // a script debugger may connect from a computer
@@ -831,8 +833,8 @@ int main(int argc, char** argv)
     if (platform)
     {
         // Consoles have no command line: a folder called tour, or demo, on the disc asks for one, and clean for the demos
-        // without their captions. One called trial has the saves, debug lets a script debugger connect, and screen-ID
-        // opens that screen first.
+        // without their captions. One called trial has the saves, debug lets a script debugger connect, dev reloads what
+        // changes, and screen-ID opens that screen first.
         platform->listFolders("", findTour, &options);
         if (options.saves && !platform->setSaveFolder(options.saves))
         {

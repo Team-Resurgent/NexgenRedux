@@ -160,7 +160,17 @@ namespace nx
                 return readWhole(full, out, tag, true);
             }
 
-            u64 fileTime(const char*) override { return 0; }
+            // When it was last written, so that live reload sees a script copied over the network.
+            u64 fileTime(const char* path) override
+            {
+                char full[260];
+                WIN32_FILE_ATTRIBUTE_DATA data;
+                if (!mediaPath(path, "", full) || !GetFileAttributesExA(full, GetFileExInfoStandard, &data))
+                {
+                    return 0;
+                }
+                return (static_cast<u64>(data.ftLastWriteTime.dwHighDateTime) << 32) | data.ftLastWriteTime.dwLowDateTime;
+            }
 
             bool loadSave(const char* name, FileData& out) override
             {

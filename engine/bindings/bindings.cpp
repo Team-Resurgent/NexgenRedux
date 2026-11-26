@@ -1,4 +1,5 @@
 #include "bindings/bindings.h"
+#include "script/debugger.h"
 #include "bindings/script_refs.h"
 #include "screens/screens.h"
 #include "net/net.h"
@@ -498,6 +499,13 @@ namespace nx
         double appNow() { return services().platform->seconds(); }
         float appFps() { return services().fps; }
         bool appDevelopment() { return services().development; }
+        void appSetDevelopment(bool on) { services().development = on; }
+        bool appDebugger(u32 port, bool otherMachines)
+        {
+            ScriptDebugger* d = services().debugger;
+            return d && (d->listening() || (port > 0 && port < 65536 && d->start(*services().host, static_cast<u16>(port), !otherMachines)));
+        }
+        bool appDebugging() { return services().debugger && services().debugger->connected(); }
         u32 appReloads() { return services().reloads; }
         u32 appDraws() { return services().draws; }
         std::string appPlatform() { return services().platform->name(); }
@@ -925,7 +933,10 @@ namespace nx
             b.function("uint get_scriptKilobytes() property", NX_FN(appScriptKilobytes), "How much of that is scripts.");
             b.function("uint get_freeKilobytes() property", NX_FN(appFreeKilobytes), "Memory the machine has left.");
 
-            b.function("bool get_development() property", NX_FN(appDevelopment), "Whether it was started with --dev, so that changed files are reloaded.");
+            b.function("bool get_development() property", NX_FN(appDevelopment), "Whether changed scripts and pictures are reloaded as they are saved, and Assets::write writes to the media: started with --dev, or with a folder called dev beside the title on a console, or turned on here.");
+            b.function("void set_development(bool) property", NX_FN(appSetDevelopment), "Turns it on or off, as a title may for its own reasons, such as a hidden menu.");
+            b.function("bool debugger(uint port = 4711, bool otherMachines = true)", NX_FN(appDebugger), "Lets a script debugger connect, as --debug does: from other machines too unless told not to, as a console needs. True if it is listening, already or now.");
+            b.function("bool get_debugging() property", NX_FN(appDebugging), "Whether a debugger is connected.");
             b.function("uint get_reloads() property", NX_FN(appReloads), "How many times a script or image has been reloaded because its file changed.");
 
             b.names("");
@@ -1028,6 +1039,7 @@ namespace nx
         bindCoroutines(binder);
         bindSave(binder);
         bindJson(binder);
+        bindPath(binder);
         bindScene(binder);
         bindSpace(binder);
         bindUi(binder);

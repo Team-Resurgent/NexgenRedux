@@ -253,6 +253,47 @@ NX_TEST(collidersOfEveryShapeMeet)
     NX_EXPECT(found == 1);
 }
 
+NX_TEST(waysRoundTiles)
+{
+    Scene s;
+    NX_EXPECT(s.load(R"({
+        "map": { "tile": 10, "solid": [1], "legend": { "#": 1 }, "rows": [
+            "##########",
+            "#    #   #",
+            "#    #   #",
+            "#    #   #",
+            "#        #",
+            "##########" ] }
+    })"));
+    GrowArray<Vec2> way;
+    // Round the end of the wall in the middle, and straight wherever it can be: a corner or two, not a step a cell.
+    NX_EXPECT(s.world.findPath({ 15, 15 }, { 75, 15 }, true, way));
+    NX_EXPECT(way.count() >= 2 && way.count() <= 4);
+    NX_EXPECT(way[way.count() - 1].x == 75 && way[way.count() - 1].y == 15);
+    bool under = false;
+    for (const Vec2& p : way)
+    {
+        under = under || p.y > 40;     // it goes below the wall's end
+        NX_EXPECT(!s.world.blockedAt(p));
+    }
+    NX_EXPECT(under);
+    // Never through the wall between one corner and the next.
+    Vec2 at(15, 15);
+    for (const Vec2& p : way)
+    {
+        for (int i = 0; i <= 20; i++)
+        {
+            NX_EXPECT(!s.world.blockedAt(at + (p - at) * (static_cast<float>(i) / 20)));
+        }
+        at = p;
+    }
+    // Only straight steps, if asked, still finds it; into a wall, or from outside, there is none.
+    NX_EXPECT(s.world.findPath({ 15, 15 }, { 75, 15 }, false, way));
+    NX_EXPECT(!s.world.findPath({ 15, 15 }, { 55, 15 }, true, way) && way.count() == 0);
+    NX_EXPECT(!s.world.findPath({ -50, 15 }, { 75, 15 }, true, way));
+    NX_EXPECT(s.world.blockedAt({ 55, 25 }) && !s.world.blockedAt({ 55, 45 }));
+}
+
 NX_TEST(solidBodiesStopAtTilesAndWalls)
 {
     Scene s;

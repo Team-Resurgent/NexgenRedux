@@ -292,6 +292,12 @@ namespace nx
         bool touching(u32 a, u32 b) const;
         // What the map that was loaded last has at a place: 0 outside.
         u32 tileAt(Vec2 position) const;
+        // A way between two places around the solid tiles of the maps, on the grid of the last: the corners of it, ending
+        // at `to`. Diagonally too, if allowed, but never across a corner. False if there is none, or no map.
+        bool findPath(Vec2 from, Vec2 to, bool diagonal, GrowArray<Vec2>& way);
+        // Whether a cell of the last map's grid is blocked by a solid tile in any map.
+        bool blocked(int x, int y) const;
+        bool blockedAt(Vec2 place) const;
         void setTileAt(Vec2 position, u32 tile);
         Vec2 mapSize() const;
 
@@ -545,6 +551,7 @@ namespace nx
         u32 m_particleCount = 0;
         TileMap m_maps[kMaxMaps] = {};
         u32 m_mapCount = 0;
+        GrowArray<u32> m_pathCost, m_pathFrom, m_pathOpen, m_pathCells;   // reused by findPath
         char m_groups[kGroups][20] = {};
         char m_folder[96] = {};
         struct

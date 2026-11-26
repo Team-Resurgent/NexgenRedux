@@ -406,6 +406,40 @@ Numbers, text and flags, in lists and by name: for files, and for what comes fro
 | `void Assets::forget(const string &in name)` | Goes back to the file that came with the screen, and loses what was written over it. While developing it is the only one, and nothing is done. |
 | `bool Assets::write(const string &in name, const string &in text)` | Writes one of the screen's own files: `asset:` something `.json`. While developing it is the file itself; otherwise it is kept with the saves, and read from there from then on. False if it couldn't be. |
 
+## Paths and noise
+
+Ways for things to follow, and smooth randomness to make worlds with.
+
+| | |
+|---|---|
+
+## Path
+
+A smooth way through points, passing through each one. Places on it are asked for by how far along it they are, in the same units as the points, so that going along at a steady speed is steady. In 2D its points are Vec2s, in space Vec3s.
+
+| | |
+|---|---|
+| `void add(const Vec3 &in point)` | Another point at the end. |
+| `void add(const Vec2 &in point)` | The same, on the plane. |
+| `void clear()` | No points. |
+| `uint get_count() const property` | How many points. |
+| `Vec3 point(uint index) const` | One of them. |
+| `void setPoint(uint index, const Vec3 &in point)` | Moves one. |
+| `bool get_loop() const property` | Whether it goes back from the last point to the first. |
+| `void set_loop(bool) property` | Whether it goes back from the last point to the first. |
+| `float get_length() property` | All the way along. |
+| `Vec3 at(float distance)` | The place so far along: round and round on a loop, and kept to the ends otherwise. |
+| `Vec3 direction(float distance)` | Which way it goes there, a unit long: for turning what follows it. |
+| `float nearest(const Vec3 &in place)` | How far along it the nearest place to this one is. |
+| `Vec2 at2(float distance)` | at(), on the plane. |
+| `Vec2 direction2(float distance)` | direction(), on the plane. |
+| `float nearest(const Vec2 &in place)` | nearest(), on the plane. |
+| `float noise(float x, float y = 0, float z = 0)` | Smooth noise, -1 to 1, with hills and dips about 1 apart: the same for the same place every time. Scale the place for bigger or smaller ones; move through z for noise that changes with time. |
+| `float noise(const Vec2 &in place)` | The same, on the plane. |
+| `float noise(const Vec3 &in place)` | The same, in space. |
+| `float fractalNoise(float x, float y, float z = 0, uint octaves = 4, float roughness = 0.5f)` | Layers of it, each twice as fine and roughness as strong as the last, still -1 to 1: land, clouds, fire. |
+| `void noiseSeed(uint seed)` | Another pattern, the same every time for the same seed. |
+
 ## Entity
 
 Something in the scene. A handle is always safe: once the entity has been destroyed, alive is false and nothing done to it has any effect.
@@ -535,6 +569,8 @@ Entities that move, collide and are drawn by the engine. Each screen has its own
 | `void Scene::set_gravity(const Vec2 &in) property` | Units a second, each second. |
 | `void Scene::burst(const string &in particles, const Vec2 &in position, uint count)` | Throws out some particles. |
 | `bool Scene::join(Entity@+ a, Entity@+ b, const Vec2 &in at, float softness = 0)` | Pins two rigid bodies together at a place; null for b pins to the scene. |
+| `bool Scene::path(const Vec2 &in from, const Vec2 &in to, array<Vec2>@+ way, bool diagonal = true)` | The way from one place to another round the solid tiles of the maps, on the grid of the last: its corners, made as straight as it can be, ending at `to`. Diagonally too unless told not to, but never across a corner. False if there is none. |
+| `bool Scene::blocked(const Vec2 &in place)` | Whether a solid tile is there, in any map. |
 | `uint Scene::tile(const Vec2 &in position)` | What the map has there: 0 is nothing. |
 | `void Scene::setTile(const Vec2 &in position, uint tile)` | Changes the map. |
 | `Vec2 Scene::get_mapSize() property` | How large the map is. |
@@ -1244,7 +1280,10 @@ The machine and how it is doing.
 | `uint App::get_memoryKilobytes() property` | Memory the engine has allocated, not counting video memory. |
 | `uint App::get_scriptKilobytes() property` | How much of that is scripts. |
 | `uint App::get_freeKilobytes() property` | Memory the machine has left. |
-| `bool App::get_development() property` | Whether it was started with --dev, so that changed files are reloaded. |
+| `bool App::get_development() property` | Whether changed scripts and pictures are reloaded as they are saved, and Assets::write writes to the media: started with --dev, or with a folder called dev beside the title on a console, or turned on here. |
+| `void App::set_development(bool) property` | Turns it on or off, as a title may for its own reasons, such as a hidden menu. |
+| `bool App::debugger(uint port = 4711, bool otherMachines = true)` | Lets a script debugger connect, as --debug does: from other machines too unless told not to, as a console needs. True if it is listening, already or now. |
+| `bool App::get_debugging() property` | Whether a debugger is connected. |
 | `uint App::get_reloads() property` | How many times a script or image has been reloaded because its file changed. |
 
 ## Vec2

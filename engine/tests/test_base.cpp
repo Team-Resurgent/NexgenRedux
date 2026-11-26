@@ -1,4 +1,6 @@
 #include "test.h"
+#include "base/noise.h"
+#include "base/path.h"
 
 #include "base/endian.h"
 #include "base/handle.h"
@@ -144,4 +146,60 @@ NX_TEST(matrices)
     const Vec3 br = o.transformPoint({ 640, 480, 1 });
     NX_EXPECT(near(tl.x, -1) && near(tl.y, 1) && near(tl.z, 0));
     NX_EXPECT(near(br.x, 1) && near(br.y, -1) && near(br.z, 1));
+}
+
+NX_TEST(noiseIsSmoothAndRepeats)
+{
+    float least = 1, most = -1, jump = 0;
+    float before = noise(0.013f, 0.37f, 0.71f);
+    for (int i = 1; i < 4000; i++)
+    {
+        const float x = 0.013f + static_cast<float>(i) * 0.01f;
+        const float n = noise(x, 0.37f, 0.71f);
+        least = fminf(least, n);
+        most = fmaxf(most, n);
+        jump = fmaxf(jump, fabsf(n - before));
+        before = n;
+    }
+    // Hills and dips, within -1 and 1, and no step between neighbours.
+    NX_EXPECT(least >= -1 && most <= 1 && least < -0.3f && most > 0.3f && jump < 0.05f);
+    NX_EXPECT(noise(3.3f, 1.1f, 7.7f) == noise(3.3f, 1.1f, 7.7f));
+    const float f = fractalNoise(1.7f, 2.9f, 0.4f, 5, 0.5f);
+    NX_EXPECT(f >= -1 && f <= 1);
+    const float plain = noise(5.5f, 2.25f, 0.5f);
+    setNoiseSeed(42);
+    NX_EXPECT(noise(5.5f, 2.25f, 0.5f) != plain);
+    setNoiseSeed(0);
+    NX_EXPECT(noise(5.5f, 2.25f, 0.5f) == plain);
+}
+
+NX_TEST(pathsGoThroughTheirPoints)
+{
+    Path* p = create<Path>(MemTag::General);
+    p->add({ 0, 0, 0 });
+    p->add({ 10, 0, 0 });
+    NX_EXPECT(fabsf(p->length() - 10) < 0.01f);                       // straight
+    NX_EXPECT((p->at(4) - Vec3(4, 0, 0)).length() < 0.05f);
+    NX_EXPECT((p->at(-5) - Vec3(0, 0, 0)).length() < 0.001f && (p->at(50) - Vec3(10, 0, 0)).length() < 0.001f);
+    p->add({ 10, 10, 0 });
+    p->add({ 0, 10, 0 });
+    // Through every point, and at an even pace between them.
+    for (u32 i = 0; i < p->count(); i++)
+    {
+        NX_EXPECT((p->at(p->nearest(p->point(i))) - p->point(i)).length() < 0.02f);
+    }
+    float shortest = 1e9f, longest = 0;
+    for (int i = 0; i < 40; i++)
+    {
+        const float step = (p->at(static_cast<float>(i + 1) * 0.5f) - p->at(static_cast<float>(i) * 0.5f)).length();
+        shortest = fminf(shortest, step);
+        longest = fmaxf(longest, step);
+    }
+    NX_EXPECT(longest - shortest < 0.03f);
+    NX_EXPECT(fabsf(p->direction(1).x - 1) < 0.1f);
+    // A loop comes round again.
+    p->setLoop(true);
+    const float round = p->length();
+    NX_EXPECT(round > 30 && (p->at(round + 2) - p->at(2)).length() < 0.01f);
+    p->release();
 }

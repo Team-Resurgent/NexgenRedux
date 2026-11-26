@@ -13,6 +13,7 @@
 namespace nx
 {
     class Screens;
+    class ScriptDebugger;
     class Net;
     class Ui;
 
@@ -39,7 +40,8 @@ namespace nx
         float fps = 0;
         u32 draws = 0;
         u32 reloads = 0;
-        bool development = false;
+        bool development = false;      // reloading what changes, and writing to the media: --dev, a dev folder, or a script
+        ScriptDebugger* debugger = nullptr;
         u32 random = 2463534242u;
     };
 

@@ -20,7 +20,8 @@ Shots (in order; times are within the music as it is cut, beats are the music's)
     "grade": "dark", "mono", "night", "warm", "cold" or "vivid" (default, slightly richer than as recorded)
     "in": how it comes in: "cut", "flash", "fade", "glitch", "zoom", "slide", "circle", "dissolve", "blur", "wipe"
     "inBeats": how long that takes, in beats
-    "title" / "sub": large words in the middle, with a glow; "titleSize", "titleY" (0 top, 1 bottom)
+    "title" / "sub": large words in the middle, with a glow; "titleSize", "titleY" (0 top, 1 bottom), "titleColor",
+        "titleDrift" (how far it rises each second; 0 keeps it still)
     "caption" / "captionSub": a label at the bottom left
     "counter": counts up to this number, with "counterSuffix" after it
     "textIn" / "textOut": when the words come and go, in beats from the start of the shot
@@ -50,7 +51,13 @@ GRADES = {
 
 
 def ffmpeg(args, cwd):
-    subprocess.run(['ffmpeg', '-v', 'error', '-y'] + args, cwd=cwd, check=True)
+    # ffmpeg on Windows now and then falls over (0xC0000005) on a graph that works the next time: a few more tries.
+    for attempt in range(6):
+        done = subprocess.run(['ffmpeg', '-v', 'error', '-y'] + args, cwd=cwd)
+        if done.returncode == 0:
+            return
+        if done.returncode != 3221225477 or attempt == 5:
+            raise subprocess.CalledProcessError(done.returncode, 'ffmpeg')
 
 
 class Trailer:
@@ -225,7 +232,8 @@ class Trailer:
             size = int(s.get('titleSize', 120) * k)
             y = s.get('titleY', 0.42)
             f = self.text('t%s.txt' % key, s['title'])
-            drift = "'%.1f-%.2f*t'" % (H * y - size / 2, 6 * k)
+            # Rising a little as it is seen, unless it is told not to.
+            drift = "'%.1f-%.2f*t'" % (H * y - size / 2, s.get('titleDrift', 6) * k)
             draw = "drawtext=fontfile=bold.ttf:textfile=%s:fontsize=%d:fontcolor=%s:x=(w-text_w)/2:y=%s:alpha=%s" % (
                 f, size, s.get('titleColor', 'white'), drift, self.fade(s, a, b))
             layers.append(draw)
@@ -267,13 +275,20 @@ class Trailer:
         parts.append("[%s]null[out]" % last)
         return parts
 
+    def markGrows(self, s):
+        """The logo's words coming in: from a little larger, and from nothing."""
+        t0 = s['_half'] + s.get('markIn', 0.5) * self.beat
+        grow = "scale=w='trunc(iw*(1.25-0.25*min(1,max(0,(t-%.3f)/0.35)))/2)*2':h=-2:eval=frame" % t0
+        return "format=rgba,%s,fade=in:st=%.3f:d=0.3:alpha=1" % (grow, t0)
+
     def zoomCrop(self, s):
         W, H = self.W, self.H
         z0, z1 = s.get('zoom', [1.0, 1.06])
         L = max(s['_render'], 0.1)
         shake = s.get('shake', 0)
-        # Bigger, then cut to the frame: the push-in, and room to shake.
-        zoom = "scale=w='trunc(%d*(%f+%f*t/%f)/2)*2':h=-2:eval=frame" % (W, z0, z1 - z0, L)
+        # Bigger, then cut to the frame: the push-in, and room to shake. Never smaller than the frame, even in the
+        # frames past the shot's end, or the cut reaches outside the picture and ffmpeg falls over.
+        zoom = "scale=w='trunc(%d*max(1,%f+%f*min(1,t/%f))/2)*2':h=-2:eval=frame" % (W, z0, z1 - z0, L)
         jx = "+%.1f*sin(t*83)*max(0,1-t/%.2f)" % (14 * self.k, shake) if shake else ''
         jy = "+%.1f*sin(t*61+1)*max(0,1-t/%.2f)" % (10 * self.k, shake) if shake else ''
         fx, fy = s.get('focus', [0.5, 0.5])
@@ -288,6 +303,8 @@ class Trailer:
         if os.path.exists(out):
             return out
         inputs = []
+        marked = False
+        later = None
         L = s['_render']
         speed = s.get('speed', 1.0)
         cover = "scale=%d:%d:force_original_aspect_ratio=increase,crop=%d:%d,setsar=1" % (W, H, W, H)
@@ -314,14 +331,24 @@ class Trailer:
                 soft, colour = self.feathered(s['image'], fh)
                 inputs[:] = ['-loop', '1', '-t', '%.3f' % (L + 0.2), '-framerate', str(fps), '-i', soft]
                 chain.append("color=c=%s:s=%dx%d:r=%d:d=%.3f,format=rgba[bg]" % (colour, W, H, fps, L + 0.2))
-                chain.append("[bg][0:v]overlay=(W-w)/2:(H-h)*%.3f,format=yuv420p,%s,%s[pic]" % (s.get('fitY', 0.5), self.zoomCrop(s), look))
+                if 'mark' in s:
+                    # The words made to look like the logo are part of the picture, and move with it.
+                    inputs += ['-loop', '1', '-t', '%.3f' % (L + 0.2), '-framerate', str(fps), '-i', self.wordmark(s['mark'], int(s.get('markSize', 150) * self.k))]
+                    chain.append("[%d:v]%s[mk]" % (sum(1 for x in inputs if x == '-i') - 1, self.markGrows(s)))
+                    chain.append("[bg][0:v]overlay=(W-w)/2:(H-h)*%.3f[base]" % s.get('fitY', 0.5))
+                    chain.append("[base][mk]overlay=x=(W-w)/2:y=%d-h/2:format=auto,format=yuv420p[pic]" % int(H * s.get('markY', 0.77)))
+                    marked = True
+                else:
+                    chain.append("[bg][0:v]overlay=(W-w)/2:(H-h)*%.3f,format=yuv420p[pic]" % s.get('fitY', 0.5))
+                # The words under it are part of the picture too: the push-in comes after them.
+                later = "%s,%s" % (self.zoomCrop(s), look)
             else:
                 chain.append("[0:v]fps=%d,%s,%s,%s[pic]" % (fps, cover, self.zoomCrop(s), look))
             if s.get('sweep'):
                 inputs += ['-loop', '1', '-t', '%.3f' % (L + 0.2), '-framerate', str(fps), '-i', 'sweep.png']
                 t0 = s['_half'] + s.get('sweepAt', 0.5) * self.beat
                 d = s.get('sweepBeats', 4) * self.beat
-                chain.append("[pic][1:v]overlay=x='-w+(W+w)*(t-%.3f)/%.3f':y=0:enable='between(t,%.3f,%.3f)'[src]" % (t0, d, t0, t0 + d))
+                chain.append("[pic][%d:v]overlay=x='-w+(W+w)*(t-%.3f)/%.3f':y=0:enable='between(t,%.3f,%.3f)'[src]" % (sum(1 for x in inputs if x == '-i') - 1, t0, d, t0, t0 + d))
             else:
                 chain.append("[pic]null[src]")
         elif 'logo' in s:
@@ -357,18 +384,18 @@ class Trailer:
             chain.append("[src]rgbashift=rh=%d:bh=-%d:enable='lt(t,%.3f)',noise=alls=45:allf=t:enable='lt(t,%.3f)'[v]" % (int(20 * self.k), int(20 * self.k), g, g))
         else:
             chain.append("[src]null[v]")
-        if 'mark' in s:
+        if 'mark' in s and not marked:
             mark = self.wordmark(s['mark'], int(s.get('markSize', 150) * self.k))
             inputs += ['-loop', '1', '-t', '%.3f' % (L + 0.2), '-framerate', str(fps), '-i', mark]
             n = sum(1 for x in inputs if x == '-i') - 1
-            t0 = s['_half'] + s.get('markIn', 0.5) * self.beat
-            grow = "scale=w='trunc(iw*(1.25-0.25*min(1,max(0,(t-%.3f)/0.35)))/2)*2':h=-2:eval=frame" % t0
-            fadein = "fade=in:st=%.3f:d=0.3:alpha=1" % t0
-            chain.append("[%d:v]format=rgba,%s,%s[mk]" % (n, grow, fadein))
+            chain.append("[%d:v]%s[mk]" % (n, self.markGrows(s)))
             chain.append("[v][mk]overlay=x=(W-w)/2:y=%d-h/2:format=auto[vm]" % int(H * s.get('markY', 0.77)))
             chain += self.words(s, key, i, 'vm')
         else:
             chain += self.words(s, key, i, 'v')
+        if later:
+            assert chain[-1].endswith('null[out]')
+            chain[-1] = chain[-1][:-len('null[out]')] + later + '[out]'
         graph = ';'.join(chain)
         script = os.path.join(self.work, 'graph-%s.txt' % key)
         open(script, 'w', encoding='utf-8').write(graph)

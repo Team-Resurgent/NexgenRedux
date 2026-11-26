@@ -322,6 +322,17 @@ class Session {
             this.reply(r);
             break;
 
+        case 'nexgenProfile': {
+            const answer = await this.ask('profile', { on: !!a.on });
+            if (!a.on) {
+                for (const f of (answer.functions || []).concat(answer.lines || [])) {
+                    f.local = this.toLocal(f.file);
+                }
+            }
+            this.reply(r, answer);
+            break;
+        }
+
         case 'terminate':
         case 'disconnect':
             this.ended = true;
@@ -352,7 +363,53 @@ class Session {
     }
 }
 
+// A profile as a page to read: the functions that took the most, by themselves and with what they call, and the busiest lines.
+function report(p) {
+    const samples = p.samples || 0;
+    const percent = n => samples ? (100 * n / samples).toFixed(1) + '%' : '-';
+    const where = f => f.local ? `[${path.basename(f.local)}:${f.line}](${vscode.Uri.file(f.local).toString()}#L${f.line})` : `${f.file}:${f.line}`;
+    const out = [];
+    out.push('# Nexgen Redux script profile', '');
+    out.push(`${(p.seconds || 0).toFixed(1)} seconds, ${samples} samples taken about a millisecond apart while scripts ran. A function's *total* is`);
+    out.push('the time spent in it and in what it called; *itself* is the time in its own lines.', '');
+    out.push('| Function | Total | Itself | Where |', '|---|---:|---:|---|');
+    for (const f of p.functions || []) {
+        out.push(`| \`${f.name.replace(/\|/g, '\\|')}\` | ${percent(f.total)} | ${percent(f.self)} | ${where(f)} |`);
+    }
+    out.push('', '## The busiest lines', '', '| Line | Time |', '|---|---:|');
+    for (const l of p.lines || []) {
+        out.push(`| ${where(l)} | ${percent(l.self)} |`);
+    }
+    if (!samples) {
+        out.push('', 'No script ran while it was profiling.');
+    }
+    return out.join('\n');
+}
+
 function activate(context) {
+    const session = () => {
+        const s = vscode.debug.activeDebugSession;
+        if (!s || s.type !== 'nexgen') {
+            vscode.window.showWarningMessage('Start debugging Nexgen Redux first.');
+            return null;
+        }
+        return s;
+    };
+    context.subscriptions.push(vscode.commands.registerCommand('nexgen.profileStart', async () => {
+        const s = session();
+        if (s) {
+            await s.customRequest('nexgenProfile', { on: true });
+            vscode.window.setStatusBarMessage('$(pulse) Profiling Nexgen Redux scripts...', 4000);
+        }
+    }));
+    context.subscriptions.push(vscode.commands.registerCommand('nexgen.profileStop', async () => {
+        const s = session();
+        if (s) {
+            const p = await s.customRequest('nexgenProfile', { on: false });
+            const document = await vscode.workspace.openTextDocument({ content: report(p), language: 'markdown' });
+            await vscode.commands.executeCommand('markdown.showPreview', document.uri).then(undefined, () => vscode.window.showTextDocument(document));
+        }
+    }));
     context.subscriptions.push(vscode.debug.registerDebugAdapterDescriptorFactory('nexgen', {
         createDebugAdapterDescriptor: session => new vscode.DebugAdapterInlineImplementation(new Session(session)),
     }));
@@ -369,4 +426,4 @@ function activate(context) {
 
 function deactivate() {}
 
-module.exports = { activate, deactivate, Session };
+module.exports = { activate, deactivate, Session, report };

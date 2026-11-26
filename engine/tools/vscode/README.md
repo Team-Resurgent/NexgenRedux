@@ -8,6 +8,8 @@ Debugs Nexgen Redux scripts as they run, on a PC or on a console over the networ
 - hovering over a name, or typing `player.position.x` or `tiles[3]` in the Debug Console, shows its value
 - a script error stops where it happened, before anything is unwound
 - the engine's log in the Debug Console
+- a profiler: *Start profiling scripts* and *Stop profiling* (on the debug toolbar, or in the Command Palette) show which
+  functions and lines the scripts spent their time in, by themselves and with what they call
 
 It also colours AngelScript.
 

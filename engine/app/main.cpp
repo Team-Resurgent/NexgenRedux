@@ -550,6 +550,7 @@ namespace
             services.debugger = &debugger;
             // While scripts are stopped the window still answers, though nothing in it moves.
             debugger.setIdle([](void* user) { static_cast<Platform*>(user)->pumpEvents(); }, &platform);
+            debugger.setClock([](void* user) { return static_cast<Platform*>(user)->seconds(); }, &platform);
             host.setStatementLimit(5000000);
             if (ok)
             {

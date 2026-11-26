@@ -20,9 +20,10 @@ class Emitter {
 }
 const realLoad = Module._load;
 Module._load = function (name, ...rest) {
-    return name === 'vscode' ? { EventEmitter: Emitter, workspace: { workspaceFolders: [] } } : realLoad.call(this, name, ...rest);
+    const Uri = { file: p => ({ toString: () => 'file:///' + p.split(path.sep).join('/') }) };
+    return name === 'vscode' ? { EventEmitter: Emitter, Uri, workspace: { workspaceFolders: [] } } : realLoad.call(this, name, ...rest);
 };
-const { Session } = require('./extension.js');
+const { Session, report } = require('./extension.js');
 
 const session = new Session({ configuration: { program, media } });
 let seq = 1;
@@ -125,6 +126,17 @@ function check(what, good) {
     await ok('stepOut', { threadId: 1 });
     check('stepped out', (await waitFor('stopped')).reason === 'step');
     await ok('continue', { threadId: 1 });
+
+    // Where the time goes: samples of what runs, while it runs.
+    await ok('nexgenProfile', { on: true });
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    const profile = await ok('nexgenProfile', { on: false });
+    const names = (profile.functions || []).map(f => f.name);
+    check(`profiled: ${profile.samples} samples in ${(profile.seconds || 0).toFixed(1)} s`, profile.samples > 20 && profile.seconds > 1);
+    check(`the screen's own functions among them (${names.slice(0, 3).join(', ')})`, names.some(n => /MainScreen::(update|draw)/.test(n)));
+    check('lines too, found in the media', (profile.lines || []).length > 0 && profile.lines.some(l => l.local));
+    check('a report of it', /Nexgen Redux script profile/.test(report(profile)) && /MainScreen/.test(report(profile)));
+
     await ok('disconnect', { terminateDebuggee: true });
     console.log('all of it works');
     process.exit(0);

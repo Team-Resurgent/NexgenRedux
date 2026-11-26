@@ -19,6 +19,7 @@ namespace nx
     //           {"cmd":"ready"}  {"cmd":"pause"}  {"cmd":"continue"}  {"cmd":"next"}  {"cmd":"stepIn"}  {"cmd":"stepOut"}
     //           {"cmd":"stack","id":1}  {"cmd":"variables","id":2,"frame":0,"scope":"locals"|"globals"}
     //           {"cmd":"variables","id":3,"ref":7}  {"cmd":"evaluate","id":4,"frame":0,"expr":"player.position.x"}
+//           {"cmd":"profile","id":5,"on":true}  then  {"cmd":"profile","id":6,"on":false}, which answers with what was seen
     // Told:     {"event":"hello",...}  {"event":"stopped","reason":"breakpoint"|"step"|"pause"|"exception","text":...}
     //           {"event":"continued"}  {"event":"output","level":"info","text":...}  and {"id":n,...} for each question.
     //
@@ -36,6 +37,12 @@ namespace nx
         {
             m_idle = idle;
             m_idleUser = user;
+        }
+        // Seconds, from the platform, for the profiler's samples.
+        void setClock(double (*clock)(void* user), void* user)
+        {
+            m_clock = clock;
+            m_clockUser = user;
         }
         // Each frame: takes questions and passes the log on.
         void update();
@@ -87,6 +94,8 @@ namespace nx
         bool child(const Ref& of, const std::string& name, Ref& out);
         bool lookUp(u32 frame, const std::string& name, Ref& out);
         void children(JsonValue& out, const Ref& of);
+        void sample(asIScriptContext* context);
+        void profile(int id, bool on);
         bool callGetter(void* object, asIScriptFunction* getter, Ref& out);
         void forget();
 
@@ -114,6 +123,20 @@ namespace nx
         std::vector<asIScriptContext*> m_temporaries;
         u32 m_tick = 0;
         int m_stringType = 0;
+
+        // The profiler: now and then, which function and line is running.
+        struct Hit
+        {
+            const void* key;     // a function, or a line of a section
+            int line;
+            u32 self, total;
+        };
+        double (*m_clock)(void*) = nullptr;
+        void* m_clockUser = nullptr;
+        bool m_profiling = false;
+        double m_nextSample = 0, m_profileStart = 0;
+        u32 m_profileTick = 0, m_samples = 0;
+        std::vector<Hit> m_functionHits, m_lineHits;
         u32 m_summaries = 0;
     };
 }

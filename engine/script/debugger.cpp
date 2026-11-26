@@ -4,6 +4,7 @@
 
 #include "scriptarray/scriptarray.h"
 
+#include <algorithm>
 #include <angelscript.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -298,6 +299,11 @@ namespace nx
         {
             evaluate(id, ask);
         }
+        else if (name == "profile")
+        {
+            const JsonValue* on = ask.find("on");
+            profile(id, on && on->flag());
+        }
     }
 
     int ScriptDebugger::fileOf(const char* section)
@@ -329,6 +335,11 @@ namespace nx
         if ((++m_tick & 4095) == 0)
         {
             pump();
+        }
+        // A few statements at a time, so reading the clock costs little.
+        if (m_profiling && (++m_profileTick & 15) == 0)
+        {
+            sample(context);
         }
         if (m_mode == Mode::Run && m_breakpoints.empty())
         {
@@ -867,6 +878,107 @@ namespace nx
         else
         {
             putText(reply, "error", "not known here");
+        }
+        send(reply.write(true));
+    }
+    // --- The profiler ---
+
+    void ScriptDebugger::sample(asIScriptContext* context)
+    {
+        if (m_clock == nullptr)
+        {
+            return;
+        }
+        const double now = m_clock(m_clockUser);
+        if (now < m_nextSample)
+        {
+            return;
+        }
+        // About a thousand a second while scripts run; what they wait for between frames isn't theirs.
+        m_nextSample = now + 0.001;
+        m_samples++;
+        const auto count = [](std::vector<Hit>& hits, const void* key, int line, bool self)
+        {
+            for (Hit& h : hits)
+            {
+                if (h.key == key && h.line == line)
+                {
+                    h.total++;
+                    h.self += self ? 1 : 0;
+                    return;
+                }
+            }
+            hits.push_back({ key, line, self ? 1u : 0u, 1u });
+        };
+        const u32 depth = context->GetCallstackSize();
+        for (u32 i = 0; i < depth; i++)
+        {
+            asIScriptFunction* f = context->GetFunction(i);
+            if (f == nullptr)
+            {
+                continue;
+            }
+            // A function that calls itself is counted once in each sample.
+            bool seen = false;
+            for (u32 k = 0; k < i && !seen; k++)
+            {
+                seen = context->GetFunction(k) == f;
+            }
+            if (!seen)
+            {
+                count(m_functionHits, f, 0, i == 0);
+            }
+        }
+        const char* section = nullptr;
+        const int line = context->GetLineNumber(0, nullptr, &section);
+        count(m_lineHits, section, line, true);
+    }
+
+    void ScriptDebugger::profile(int id, bool on)
+    {
+        JsonValue reply;
+        putNumber(reply, "id", id);
+        const double now = m_clock ? m_clock(m_clockUser) : 0;
+        if (on)
+        {
+            m_functionHits.clear();
+            m_lineHits.clear();
+            m_samples = 0;
+            m_profileStart = now;
+            m_nextSample = 0;
+            m_profiling = true;
+            send(reply.write(true));
+            return;
+        }
+        m_profiling = false;
+        putNumber(reply, "seconds", now - m_profileStart);
+        putNumber(reply, "samples", m_samples);
+        // The most first, and no more than are worth reading.
+        std::sort(m_functionHits.begin(), m_functionHits.end(), [](const Hit& a, const Hit& b) { return a.total > b.total; });
+        std::sort(m_lineHits.begin(), m_lineHits.end(), [](const Hit& a, const Hit& b) { return a.self > b.self; });
+        JsonValue* functions = reply.put("functions");
+        functions->setArray();
+        for (size_t i = 0; i < m_functionHits.size() && i < 60; i++)
+        {
+            const asIScriptFunction* f = static_cast<const asIScriptFunction*>(m_functionHits[i].key);
+            JsonValue* out = functions->add();
+            const char* section = nullptr;
+            int line = 0;
+            f->GetDeclaredAt(&section, &line, nullptr);
+            putText(*out, "name", f->GetDeclaration(true, true, false));
+            putText(*out, "file", m_host->sourceOf(section));
+            putNumber(*out, "line", line);
+            putNumber(*out, "self", m_functionHits[i].self);
+            putNumber(*out, "total", m_functionHits[i].total);
+        }
+        JsonValue* lines = reply.put("lines");
+        lines->setArray();
+        for (size_t i = 0; i < m_lineHits.size() && i < 40; i++)
+        {
+            JsonValue* out = lines->add();
+            putText(*out, "file", m_host->sourceOf(static_cast<const char*>(m_lineHits[i].key)));
+            putNumber(*out, "line", m_lineHits[i].line);
+            putNumber(*out, "self", m_lineHits[i].self);
         }
         send(reply.write(true));
     }

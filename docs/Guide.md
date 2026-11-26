@@ -49,7 +49,7 @@ The VS Code extension in `engine/tools/vscode` (`Nexgen-vscode.vsix` in each rel
 breakpoint, press F5, and step over, into and out of functions, with the call stack, each frame's locals, the screen's members
 and the module's globals. Objects open up to what they hold, the engine's own types through their properties; hovering over a
 name, or typing `player.position.x` in the Debug Console, shows its value; a script error stops where it happened; and the log is
-in the Debug Console. *Run and debug* starts the showcase with `--debug 4711 --debug-wait`; *Attach* connects to one already
+in the Debug Console. Its profiler, on the debug toolbar, shows which functions and lines took the scripts' time. *Run and debug* starts the showcase with `--debug 4711 --debug-wait`; *Attach* connects to one already
 started with `--debug`, which listens on that machine only unless `--debug-remote` is given. On a console, a folder called `debug`
 beside the title lets a computer on the network attach to it.
 

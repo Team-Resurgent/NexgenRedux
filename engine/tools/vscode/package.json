@@ -2,7 +2,7 @@
   "name": "nexgen-redux",
   "displayName": "Nexgen Redux",
   "description": "Debug Nexgen Redux scripts: breakpoints, stepping, the call stack and what each script holds, on a PC or on a console over the network. With AngelScript colouring.",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "publisher": "TeamResurgent",
   "icon": "icon.png",
   "repository": {
@@ -13,9 +13,19 @@
     "vscode": "^1.80.0"
   },
   "categories": ["Debuggers", "Programming Languages"],
-  "activationEvents": ["onDebug", "onLanguage:angelscript"],
+  "activationEvents": ["onDebug", "onLanguage:angelscript", "onCommand:nexgen.profileStart", "onCommand:nexgen.profileStop"],
   "main": "./extension.js",
   "contributes": {
+    "commands": [
+      { "command": "nexgen.profileStart", "title": "Start profiling scripts", "category": "Nexgen Redux", "icon": "$(pulse)" },
+      { "command": "nexgen.profileStop", "title": "Stop profiling and show where the time went", "category": "Nexgen Redux", "icon": "$(graph)" }
+    ],
+    "menus": {
+      "debug/toolbar": [
+        { "command": "nexgen.profileStart", "when": "debugType == nexgen" },
+        { "command": "nexgen.profileStop", "when": "debugType == nexgen" }
+      ]
+    },
     "languages": [
       {
         "id": "angelscript",

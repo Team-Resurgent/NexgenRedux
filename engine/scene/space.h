@@ -283,6 +283,13 @@ namespace nx
         bool findPath(const Vec3& from, const Vec3& to, GrowArray<Vec3>& out);
         bool walkable(const Vec3& at) const;
         bool nearestWalkable(const Vec3& at, Vec3& out) const;
+        // Mist that can be walked into, in a box: its colour's alpha is how thick, swirl how fast it drifts, and grain how
+        // many metres its billows are. An id for moving or taking it away; 0 if there is no room.
+        u32 addMist(const Vec3& middle, const Vec3& size, const gpu::Color& color, float thickness, float swirl, float grain);
+        bool moveMist(u32 id, const Vec3& middle);
+        void removeMist(u32 id);
+        void clearMists();
+        u32 mists() const { return m_mists.count(); }
         // Pictures drawn instead of things, last frame.
         u32 cardsDrawn() const { return m_cardsDrawn; }
         // Which way the wind blows, and how hard: 1 is a breeze.
@@ -595,6 +602,17 @@ namespace nx
         bool buildGrass(GrassCell& cell);
         // The land there changed: its grass is made again, a few squares a frame.
         void grassChanged(float fromX, float fromZ, float toX, float toZ);
+        // mist.cpp
+        struct Mist
+        {
+            u32 id;
+            Vec3 middle, size;
+            gpu::Color color;
+            float thickness, swirl, grain;
+            gpu::Mesh mesh;
+        };
+        gpu::Texture noiseVolume();
+        void drawMists(const gpu::View& view, const Frustum& frustum);
         // nav.cpp
         bool navStep(u32 a, u32 b) const;
         bool navCellOf(const Vec3& at, u32& cell) const;
@@ -706,6 +724,9 @@ namespace nx
         GrowArray<Card> m_cards;
         u32 m_cardsDrawn = 0;
         u32 m_animFrame = 0;
+        GrowArray<Mist> m_mists;
+        u32 m_nextMist = 0;
+        gpu::Texture m_noiseVolume;
         u32 m_navSide = 0, m_navVisit = 0;
         float m_navCell = 1, m_navClimb = 0.6f;
         Vec3 m_navLow;

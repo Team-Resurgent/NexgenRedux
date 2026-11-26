@@ -927,6 +927,19 @@ NX_TEST(waysRoundWhatIsInTheWay)
     NX_EXPECT(!p.space.findPath({ 0, 0, -6 }, { 0, 0, -18 }, way) && way.count() >= 2 && way[way.count() - 1].z > -15);
 }
 
+NX_TEST(mistsComeAndGo)
+{
+    Place p;
+    const u32 a = p.space.addMist({ 0, 2, 0 }, { 20, 4, 20 }, { 1, 1, 1, 0.6f }, 1, 1, 6);
+    const u32 b = p.space.addMist({ 5, 1, 5 }, { 2, 2, 2 }, { 1, 0.5f, 0.1f, 0.9f }, 1, 5, 1);
+    NX_EXPECT(a && b && a != b && p.space.mists() == 2);
+    NX_EXPECT(p.space.moveMist(b, { 6, 1, 6 }) && !p.space.moveMist(999, {}));
+    p.space.removeMist(a);
+    NX_EXPECT(p.space.mists() == 1);
+    p.space.clearMists();
+    NX_EXPECT(p.space.mists() == 0);
+}
+
 NX_TEST(everyModelCanBeUsed)
 {
     Place p;

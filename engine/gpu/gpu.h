@@ -162,6 +162,11 @@ namespace nx::gpu
         // vertices can't be moved, it stays as it is.
         float bendX = 0, bendZ = 0;
         float cutout = 0;        // where the picture's alpha is less, nothing is drawn
+        // Coloured, instead of by its picture, by a volume at where each part of it is in the world, times scale, plus
+        // offset: for fog, smoke and the like.
+        Texture volume;
+        float volumeScale = 0;
+        Vec3 volumeOffset;
         bool lines = false;      // only the edges of its triangles
         bool lit = true;
         bool fogged = true;
@@ -231,6 +236,9 @@ namespace nx::gpu
 
         // Compressed sizes must be multiples of four and, on the original Xbox, powers of two.
         virtual Texture createTexture(const TextureData& data) = 0;
+        // A cube of pixels, r, g, b, a, size on each side (a power of two), that repeats. Destroyed as a texture. None
+        // where there are none.
+        virtual Texture createVolume(const u8* pixels, u32 size) { (void)pixels; (void)size; return {}; }
         virtual void destroyTexture(Texture texture) = 0;
         virtual TextureInfo textureInfo(Texture texture) = 0;
 

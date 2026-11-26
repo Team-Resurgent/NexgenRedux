@@ -84,6 +84,7 @@ namespace nx::gpu
         struct TextureSlot
         {
             ID3D11Texture2D* texture;
+            ID3D11Texture3D* volume;
             ID3D11ShaderResourceView* view;
             TextureInfo info;
         };
@@ -105,6 +106,7 @@ namespace nx::gpu
         {
             release(t.view);
             release(t.texture);
+            release(t.volume);
         }
 
         class D3D11Device final : public Device
@@ -284,6 +286,37 @@ namespace nx::gpu
                     releasePipeline(*p);
                     m_pipelines.remove(handle);
                 }
+            }
+
+            Texture createVolume(const u8* pixels, u32 size) override
+            {
+                if (pixels == nullptr || size == 0 || size > 256 || (size & (size - 1)) != 0)
+                {
+                    return {};
+                }
+                D3D11_TEXTURE3D_DESC desc = {};
+                desc.Width = desc.Height = desc.Depth = size;
+                desc.MipLevels = 1;
+                desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+                desc.Usage = D3D11_USAGE_IMMUTABLE;
+                desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+                const D3D11_SUBRESOURCE_DATA data = { pixels, size * 4, size * size * 4 };
+                TextureSlot t = {};
+                t.info.width = t.info.height = size;
+                t.info.bytes = size * size * size * 4;
+                if (!ok(m_device->CreateTexture3D(&desc, &data, &t.volume), "volume") || !ok(m_device->CreateShaderResourceView(t.volume, nullptr, &t.view), "volume view"))
+                {
+                    releaseTexture(t);
+                    return {};
+                }
+                const Texture handle = m_textures.add(t);
+                if (!handle)
+                {
+                    releaseTexture(t);
+                    return {};
+                }
+                m_textureBytes += t.info.bytes;
+                return handle;
             }
 
             Texture createTexture(const TextureData& source) override
@@ -550,6 +583,11 @@ namespace nx::gpu
                     {
                         m_context->PSSetShaderResources(0, 1, &texture->view);
                         m_boundTexture = handle;
+                    }
+                    if (const TextureSlot* volume = draw.volume ? m_textures.get(draw.volume) : nullptr)
+                    {
+                        m_context->PSSetShaderResources(2, 1, &volume->view);
+                        m_context->PSSetSamplers(2, 1, &m_wrap);
                     }
                 }
                 const UINT stride = sizeof(MeshVertex);

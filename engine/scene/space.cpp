@@ -337,6 +337,7 @@ namespace nx
     void Space::clear()
     {
         freeCards();
+        clearMists();
         clearNav();
         for (const Waiting& w : m_waiting)
         {
@@ -1140,6 +1141,7 @@ namespace nx
             }
         }
         drawWater(view);
+        drawMists(view, frustum);
         if (view.shadowStrength <= 0 && m_shadowStrength > 0)
         {
             drawBlobs(view, frustum);

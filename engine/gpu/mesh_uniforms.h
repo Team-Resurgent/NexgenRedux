@@ -23,6 +23,7 @@ namespace nx::gpu
         float tint[4], surface[4];
         i32 lights[4];
         float wind[4];   // bend along x and z, cutout
+        float volume[4]; // offset, and scale; 0 for none
     };
 
     struct FieldUniforms
@@ -90,6 +91,10 @@ namespace nx::gpu
         u.wind[1] = d.bendZ;
         u.wind[2] = d.cutout;
         u.wind[3] = 0;
+        u.volume[0] = d.volumeOffset.x;
+        u.volume[1] = d.volumeOffset.y;
+        u.volume[2] = d.volumeOffset.z;
+        u.volume[3] = d.volume ? d.volumeScale : 0.0f;
         for (u32 i = 0; i < 4; i++)
         {
             u.lights[i] = i < d.lightCount ? d.lights[i] : -1;

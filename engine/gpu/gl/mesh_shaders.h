@@ -30,6 +30,7 @@ layout(std140) uniform Object
     vec4 surface;
     ivec4 lights;
     vec4 wind;
+    vec4 volume;
 };
 )";
 
@@ -86,6 +87,7 @@ void main()
     inline const char kShade[] = R"(
 uniform sampler2D image;
 uniform sampler2DShadow shadowMap;
+uniform sampler3D volumeImage;
 layout(location = 0) out vec4 result;
 
 float shadowAt(vec3 place, float facing)
@@ -182,7 +184,7 @@ vec4 finish(vec4 base, float glow)
     inline const char kMeshFragment[] = R"(
 void main()
 {
-    vec4 base = texture(image, vertexUv) * vertexColor;
+    vec4 base = volume.w > 0.0 ? texture(volumeImage, vertexPlace * volume.w + volume.xyz) * vertexColor : texture(image, vertexUv) * vertexColor;
     if (base.a < wind.z)
     {
         discard;

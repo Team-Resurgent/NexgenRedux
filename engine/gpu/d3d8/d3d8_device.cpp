@@ -46,6 +46,7 @@ namespace nx::gpu
         struct TextureSlot
         {
             IDirect3DTexture8* texture;
+            IDirect3DVolumeTexture8* volume;
             TextureInfo info;
         };
 
@@ -374,7 +375,7 @@ namespace nx::gpu
                     info.uMax = static_cast<float>(data.width) / static_cast<float>(fullWidth);
                     info.vMax = static_cast<float>(data.height) / static_cast<float>(fullHeight);
                     info.bytes = levels > 1 ? bytes + bytes / 3 : bytes;
-                    handle = m_textures.add({ texture, info });
+                    handle = m_textures.add({ texture, nullptr, info });
                 }
                 if (!handle && texture)
                 {
@@ -384,13 +385,73 @@ namespace nx::gpu
                 return handle;
             }
 
+            Texture createVolume(const u8* pixels, u32 size) override
+            {
+                if (pixels == nullptr || size == 0 || size > 128 || (size & (size - 1)) != 0)
+                {
+                    return {};
+                }
+                const u32 bytes = size * size * size * 4;
+                u8* linear = static_cast<u8*>(memAlloc(bytes, MemTag::Texture));
+                if (linear == nullptr)
+                {
+                    return {};
+                }
+                for (u32 i = 0; i < size * size * size; i++)
+                {
+                    linear[i * 4 + 0] = pixels[i * 4 + 2];
+                    linear[i * 4 + 1] = pixels[i * 4 + 1];
+                    linear[i * 4 + 2] = pixels[i * 4 + 0];
+                    linear[i * 4 + 3] = pixels[i * 4 + 3];
+                }
+                IDirect3DVolumeTexture8* volume = nullptr;
+                D3DLOCKED_BOX box;
+                bool ok = SUCCEEDED(m_device->CreateVolumeTexture(size, size, size, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &volume));
+                if (ok && SUCCEEDED(volume->LockBox(0, &box, nullptr, 0)))
+                {
+                    // The whole of it, to the start: given, not left out.
+                    D3DBOX all = {};
+                    all.Right = all.Bottom = all.Back = size;
+                    XGPOINT3D start = {};
+                    XGSwizzleBox(linear, size * 4, size * size * 4, &all, box.pBits, size, size, size, &start, 4);
+                    volume->UnlockBox(0);
+                }
+                else
+                {
+                    ok = false;
+                }
+                memFree(linear);
+                TextureSlot t = {};
+                t.volume = volume;
+                t.info.width = t.info.height = size;
+                t.info.bytes = bytes;
+                const Texture handle = ok ? m_textures.add(t) : Texture();
+                if (!handle)
+                {
+                    if (volume)
+                    {
+                        volume->Release();
+                    }
+                    return {};
+                }
+                m_textureBytes += bytes;
+                return handle;
+            }
+
             void destroyTexture(Texture handle) override
             {
                 if (TextureSlot* t = m_textures.get(handle))
                 {
                     m_device->SetTexture(0, nullptr);
                     m_textureBytes -= t->info.bytes;
-                    t->texture->Release();
+                    if (t->texture)
+                    {
+                        t->texture->Release();
+                    }
+                    if (t->volume)
+                    {
+                        t->volume->Release();
+                    }
                     m_textures.remove(handle);
                     m_boundTexture = {};
                 }
@@ -914,7 +975,35 @@ namespace nx::gpu
                     drawStandIn(draw, *m, count, effect->kind);
                     return;
                 }
+                const TextureSlot* volume = draw.volume ? m_textures.get(draw.volume) : nullptr;
+                if (volume && volume->volume)
+                {
+                    // Where each part is in the camera's space, back into the world, scaled and moved: the volume's
+                    // coordinates. The view here has its z turned round, so that is undone first.
+                    Mat4 flip;
+                    flip.m[10] = -1;
+                    Mat4 into;
+                    into.m[0] = into.m[5] = into.m[10] = draw.volumeScale;
+                    into.m[12] = draw.volumeOffset.x;
+                    into.m[13] = draw.volumeOffset.y;
+                    into.m[14] = draw.volumeOffset.z;
+                    const Mat4 uvw = into * m_view.view.inverse() * flip;
+                    m_device->SetTexture(0, volume->volume);
+                    m_boundTexture = {};
+                    m_device->SetTextureStageState(0, D3DTSS_ADDRESSW, D3DTADDRESS_WRAP);
+                    m_device->SetTextureStageState(0, D3DTSS_ADDRESSU, D3DTADDRESS_WRAP);
+                    m_device->SetTextureStageState(0, D3DTSS_ADDRESSV, D3DTADDRESS_WRAP);
+                    m_device->SetTextureStageState(0, D3DTSS_TEXCOORDINDEX, D3DTSS_TCI_CAMERASPACEPOSITION);
+                    m_device->SetTextureStageState(0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT3);
+                    m_device->SetTransform(D3DTS_TEXTURE0, reinterpret_cast<const D3DMATRIX*>(uvw.m));
+                }
                 m_device->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, m->vertexCount, draw.first, count / 3);
+                if (volume && volume->volume)
+                {
+                    m_device->SetTextureStageState(0, D3DTSS_TEXCOORDINDEX, 0);
+                    m_device->SetTextureStageState(0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_DISABLE);
+                    m_device->SetTexture(0, nullptr);
+                }
                 m_current.draws++;
                 m_current.triangles += count / 3;
             }

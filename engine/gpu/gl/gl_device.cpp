@@ -36,7 +36,7 @@ namespace nx::gpu
             GL_LINK_STATUS = 0x8B82, GL_READ_FRAMEBUFFER = 0x8CA8, GL_DRAW_FRAMEBUFFER = 0x8CA9, GL_FRAMEBUFFER_COMPLETE = 0x8CD5,
             GL_COLOR_ATTACHMENT0 = 0x8CE0, GL_FRAMEBUFFER = 0x8D40, GL_RENDERBUFFER = 0x8D41, GL_DEPTH_STENCIL_ATTACHMENT = 0x821A,
             GL_CULL_NONE = 0, GL_UNSIGNED_SHORT = 0x1403, GL_REPEAT = 0x2901, GL_LINEAR_MIPMAP_LINEAR = 0x2703, GL_POLYGON_OFFSET_FILL = 0x8037,
-            GL_DEPTH_CLAMP = 0x864F, GL_TEXTURE1 = 0x84C1, GL_DEPTH_COMPONENT = 0x1902, GL_DEPTH_COMPONENT32F = 0x8CAC, GL_DEPTH_ATTACHMENT = 0x8D00,
+            GL_DEPTH_CLAMP = 0x864F, GL_TEXTURE1 = 0x84C1, GL_TEXTURE2 = 0x84C2, GL_TEXTURE_3D = 0x806F, GL_TEXTURE_WRAP_R = 0x8072, GL_DEPTH_COMPONENT = 0x1902, GL_DEPTH_COMPONENT32F = 0x8CAC, GL_DEPTH_ATTACHMENT = 0x8D00,
             GL_TEXTURE_COMPARE_MODE = 0x884C, GL_TEXTURE_COMPARE_FUNC = 0x884D, GL_COMPARE_REF_TO_TEXTURE = 0x884E, GL_ELEMENT_ARRAY_BUFFER = 0x8893,
             GL_UNIFORM_BUFFER = 0x8A11, GL_DYNAMIC_DRAW = 0x88E8,
             GL_BC1 = 0x83F0, GL_BC3 = 0x83F3  // EXT_texture_compression_s3tc, which every desktop driver has
@@ -115,6 +115,7 @@ namespace nx::gpu
         F(void, Scissor, (GLint, GLint, GLsizei, GLsizei)) \
         F(void, ShaderSource, (GLuint, GLsizei, const char* const*, const GLint*)) \
         F(void, TexImage2D, (GLenum, GLint, GLint, GLsizei, GLsizei, GLint, GLenum, GLenum, const void*)) \
+        F(void, TexImage3D, (GLenum, GLint, GLint, GLsizei, GLsizei, GLsizei, GLint, GLenum, GLenum, const void*)) \
         F(void, TexParameteri, (GLenum, GLenum, GLint)) \
         F(void, Uniform1i, (GLint, GLint)) \
         F(void, UniformBlockBinding, (GLuint, GLuint, GLuint)) \
@@ -223,6 +224,7 @@ void main()
                 releaseTargets();
                 releaseBuffer(m_stream);
                 gl.DeleteSamplers(3, m_samplers);
+                gl.DeleteSamplers(1, &m_volumeSampler);
                 gl.DeleteProgram(m_program);
                 m_meshes.forEach([&](MeshSlot& m) { releaseMesh(m); });
                 m_effects.forEach([&](EffectSlot& e) { gl.DeleteProgram(e.program); });
@@ -264,6 +266,13 @@ void main()
                     gl.SamplerParameteri(m_samplers[i], GL_TEXTURE_WRAP_S, wrap);
                     gl.SamplerParameteri(m_samplers[i], GL_TEXTURE_WRAP_T, wrap);
                 }
+                // For volumes: repeated every way.
+                gl.GenSamplers(1, &m_volumeSampler);
+                gl.SamplerParameteri(m_volumeSampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+                gl.SamplerParameteri(m_volumeSampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                gl.SamplerParameteri(m_volumeSampler, GL_TEXTURE_WRAP_S, GL_REPEAT);
+                gl.SamplerParameteri(m_volumeSampler, GL_TEXTURE_WRAP_T, GL_REPEAT);
+                gl.SamplerParameteri(m_volumeSampler, GL_TEXTURE_WRAP_R, GL_REPEAT);
                 m_stream = makeBuffer(nullptr, kStreamVertices, GL_STREAM_DRAW);
                 const u8 white[4] = { 255, 255, 255, 255 };
                 m_white = createTexture(rgbaTexture(white, 1, 1));
@@ -315,6 +324,33 @@ void main()
                     m_pipelines.remove(handle);
                     m_bound = {};
                 }
+            }
+
+            Texture createVolume(const u8* pixels, u32 size) override
+            {
+                if (pixels == nullptr || size == 0 || size > 256 || (size & (size - 1)) != 0)
+                {
+                    return {};
+                }
+                TextureSlot t = {};
+                t.info.width = t.info.height = size;
+                t.info.bytes = size * size * size * 4;
+                gl.GenTextures(1, &t.texture);
+                gl.ActiveTexture(GL_TEXTURE2);
+                gl.BindTexture(GL_TEXTURE_3D, t.texture);
+                gl.TexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAX_LEVEL, 0);
+                gl.PixelStorei(GL_UNPACK_ALIGNMENT, 4);
+                const GLsizei n = static_cast<GLsizei>(size);
+                gl.TexImage3D(GL_TEXTURE_3D, 0, GL_RGBA8, n, n, n, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+                gl.ActiveTexture(GL_TEXTURE0);
+                const Texture handle = ok("volume") ? m_textures.add(t) : Texture();
+                if (!handle)
+                {
+                    gl.DeleteTextures(1, &t.texture);
+                    return {};
+                }
+                m_textureBytes += t.info.bytes;
+                return handle;
             }
 
             Texture createTexture(const TextureData& source) override
@@ -583,6 +619,13 @@ void main()
                     {
                         gl.BindTexture(GL_TEXTURE_2D, texture->texture);
                         m_boundTexture = handle;
+                    }
+                    if (const TextureSlot* volume = draw.volume ? m_textures.get(draw.volume) : nullptr)
+                    {
+                        gl.ActiveTexture(GL_TEXTURE2);
+                        gl.BindTexture(GL_TEXTURE_3D, volume->texture);
+                        gl.BindSampler(2, m_volumeSampler);
+                        gl.ActiveTexture(GL_TEXTURE0);
                     }
                 }
                 if (m_boundArray != m->array)
@@ -894,6 +937,7 @@ void main()
                 gl.UseProgram(program);
                 const GLint image = gl.GetUniformLocation(program, "image");
                 const GLint shadow = gl.GetUniformLocation(program, "shadowMap");
+                const GLint volume = gl.GetUniformLocation(program, "volumeImage");
                 if (image >= 0)
                 {
                     gl.Uniform1i(image, 0);
@@ -901,6 +945,10 @@ void main()
                 if (shadow >= 0)
                 {
                     gl.Uniform1i(shadow, 1);
+                }
+                if (volume >= 0)
+                {
+                    gl.Uniform1i(volume, 2);
                 }
                 return program;
             }
@@ -1075,6 +1123,7 @@ void main()
                 gl.UseProgram(program);
                 const GLint image = gl.GetUniformLocation(program, "image");
                 const GLint shadow = gl.GetUniformLocation(program, "shadowMap");
+                const GLint volume = gl.GetUniformLocation(program, "volumeImage");
                 if (image >= 0)
                 {
                     gl.Uniform1i(image, 0);
@@ -1082,6 +1131,10 @@ void main()
                 if (shadow >= 0)
                 {
                     gl.Uniform1i(shadow, 1);
+                }
+                if (volume >= 0)
+                {
+                    gl.Uniform1i(volume, 2);
                 }
                 return program;
             }
@@ -1292,6 +1345,7 @@ void main()
             GLuint m_program = 0;
             GLint m_transform = -1;
             GLuint m_samplers[3] = {};
+            GLuint m_volumeSampler = 0;
             BufferSlot m_stream = {};
             GLuint m_target = 0, m_color = 0, m_depth = 0;
             GLuint m_boundArray = 0;

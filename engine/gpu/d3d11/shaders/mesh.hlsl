@@ -31,6 +31,7 @@ cbuffer Object : register(b1)
     float4 surface;              // glow, shine, lit, fogged
     int4 lights;                 // indices, -1 for none
     float4 wind;                 // bend along x and z for each metre of v; cutout
+    float4 volume;               // offset of the volume, and its scale; 0 for none
 };
 
 cbuffer Field : register(b2)
@@ -45,6 +46,8 @@ cbuffer Field : register(b2)
 
 Texture2D image : register(t0);
 Texture2D shadowMap : register(t1);
+Texture3D volumeImage : register(t2);
+SamplerState volumeSampler : register(s2);
 SamplerState imageSampler : register(s0);
 SamplerComparisonState shadowSampler : register(s1);
 
@@ -171,7 +174,7 @@ float4 finish(MeshOut input, float4 base, float glow)
 
 float4 meshPs(MeshOut input) : SV_Target
 {
-    float4 base = image.Sample(imageSampler, input.uv) * input.color;
+    float4 base = volume.w > 0 ? volumeImage.Sample(volumeSampler, input.place * volume.w + volume.xyz) * input.color : image.Sample(imageSampler, input.uv) * input.color;
     if (base.a < wind.z)
     {
         discard;

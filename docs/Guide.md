@@ -347,6 +347,16 @@ that lean and break white), `storm`, or `cartoon` (flat light and a hard line of
 on the CPU, so they look and cost the same everywhere; a scene file says `"seaStyle"` in its sky, and the editor has it on
 the Sky tab. The **Water** showcase goes round an island in each style.
 
+### Mist, smoke and fire
+
+`Space::mist(middle, size, color, thickness, swirl, grain)` puts a box of mist in the world that can be walked into: billows
+of noise in three dimensions, drifting with the wind and soft at the box's edges. The colour's alpha is how much it hides;
+swirl is how fast it moves and grain how many metres its billows are. Low and wide it is a bank of fog over a valley; tall
+and grey over a fire it is smoke; small, orange and swift it is the fire's glow. It gives an id, for `moveMist` and
+`removeMist`. It is drawn as slices that face the camera, coloured from a texture with three dimensions, which every
+platform has, the original Xbox included; there, where there is less to fill the screen with, with fewer slices. The
+**Mist** showcase is a valley at dawn.
+
 ### Wind
 
 Plants lean with the wind: give a thing a `sway`, how far its top moves for each metre of height (about 0.02 for a tree, 0.15 for

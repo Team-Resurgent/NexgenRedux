@@ -625,6 +625,10 @@ The scene in three dimensions: x right, y up, z towards you, in metres. Entities
 | `void Space::set_gravity(const Vec3 &in) property` | Metres a second, each second. It starts as that of the Earth. |
 | `void Space::ground(float height)` | Something flat to stand on, everywhere. It isn't drawn. |
 | `void Space::water(float height, const Color &in color)` | Draws water, with waves, up to a height: clearer in the shallows, darker where it is deep, the sky in it at a low angle, and foam where it meets the land. |
+| `uint Space::mist(const Vec3 &in middle, const Vec3 &in size, const Color &in color = Color(0.85f, 0.88f, 0.92f, 0.6f), float thickness = 1, float swirl = 1, float grain = 6)` | Mist that can be walked into, in a box: billows of noise in three dimensions, drifting with the wind, soft at the box's edges. The colour's alpha is how much it hides, thickness more of the same, swirl how fast it moves, grain how many metres its billows are. Orange and swift, it is smoke or fire. Gives an id. |
+| `bool Space::moveMist(uint id, const Vec3 &in middle)` | Moves a mist to a new middle. |
+| `void Space::removeMist(uint id)` | Takes a mist away. |
+| `void Space::clearMists()` | Takes all the mists away. |
 | `void Space::waterStyle(const string &in style)` | How the water moves and looks: calm, sea, choppy, storm or cartoon. |
 | `void Space::waterWaves(float height = 0.18f, float length = 9, float speed = 1, float choppy = 0.2f)` | How high the waves are, how long from one to the next, how fast as waves that long go, and how sharp their crests: 0 round, 1 pointed. |
 | `void Space::waterColors(const Color &in shallow, const Color &in deep)` | Its colour where it is shallow and where it is deep; alpha is how much it hides. |

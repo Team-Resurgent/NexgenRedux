@@ -379,6 +379,10 @@ namespace nx
         void spaceWaterWaves(float height, float length, float speed, float choppy) { space().setWaterWaves(height, length, speed, choppy); }
         void spaceWaterColors(const Color& shallow, const Color& deep) { space().setWaterColors(shallow, deep); }
         void spaceWaterFoam(float shore, float crests) { space().setWaterFoam(shore, crests); }
+        u32 spaceMist(const Vec3& middle, const Vec3& size, const Color& color, float thickness, float swirl, float grain) { return space().addMist(middle, size, color, thickness, swirl, grain); }
+        bool spaceMoveMist(u32 id, const Vec3& middle) { return space().moveMist(id, middle); }
+        void spaceRemoveMist(u32 id) { space().removeMist(id); }
+        void spaceClearMists() { space().clearMists(); }
         void spaceWaterStyle(const std::string& name)
         {
             Space& s = space();
@@ -687,6 +691,10 @@ namespace nx
         b.function("void set_gravity(const Vec3 &in) property", NX_FN(spaceGravity), "Metres a second, each second. It starts as that of the Earth.");
         b.function("void ground(float height)", NX_FN(spaceGround), "Something flat to stand on, everywhere. It isn't drawn.");
         b.function("void water(float height, const Color &in color)", NX_FN(spaceWater), "Draws water, with waves, up to a height: clearer in the shallows, darker where it is deep, the sky in it at a low angle, and foam where it meets the land.");
+        b.function("uint mist(const Vec3 &in middle, const Vec3 &in size, const Color &in color = Color(0.85f, 0.88f, 0.92f, 0.6f), float thickness = 1, float swirl = 1, float grain = 6)", NX_FN(spaceMist), "Mist that can be walked into, in a box: billows of noise in three dimensions, drifting with the wind, soft at the box's edges. The colour's alpha is how much it hides, thickness more of the same, swirl how fast it moves, grain how many metres its billows are. Orange and swift, it is smoke or fire. Gives an id.");
+        b.function("bool moveMist(uint id, const Vec3 &in middle)", NX_FN(spaceMoveMist), "Moves a mist to a new middle.");
+        b.function("void removeMist(uint id)", NX_FN(spaceRemoveMist), "Takes a mist away.");
+        b.function("void clearMists()", NX_FN(spaceClearMists), "Takes all the mists away.");
         b.function("void waterStyle(const string &in style)", NX_FN(spaceWaterStyle), "How the water moves and looks: calm, sea, choppy, storm or cartoon.");
         b.function("void waterWaves(float height = 0.18f, float length = 9, float speed = 1, float choppy = 0.2f)", NX_FN(spaceWaterWaves), "How high the waves are, how long from one to the next, how fast as waves that long go, and how sharp their crests: 0 round, 1 pointed.");
         b.function("void waterColors(const Color &in shallow, const Color &in deep)", NX_FN(spaceWaterColors), "Its colour where it is shallow and where it is deep; alpha is how much it hides.");

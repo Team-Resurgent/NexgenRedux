@@ -279,6 +279,11 @@ namespace nx
         {
             m_assets.release(a.texture);
         }
+        if (a.sprite)
+        {
+            m_assets.release(a.sprite);
+            a.sprite = nullptr;
+        }
         if (a.custom)
         {
             a.custom->release();
@@ -331,6 +336,7 @@ namespace nx
 
     void Space::clear()
     {
+        freeCards();
         for (const Waiting& w : m_waiting)
         {
             m_assets.release(w.sound);
@@ -893,9 +899,21 @@ namespace nx
             {
                 continue;
             }
+            const Mat4& placed = m_spatials[e.parts3[0]].world;
+            if (a.sprite)
+            {
+                // A picture: about as big as it is said to be.
+                const Vec3 up = { placed.m[4], placed.m[5], placed.m[6] }, across = { placed.m[0], placed.m[1], placed.m[2] };
+                const float high = sqrtf(up.dot(up)), wide = sqrtf(across.dot(across));
+                if (frustum.sees(Vec3(placed.m[12], placed.m[13], placed.m[14]) + up * 0.5f, high + wide) && card(a, placed, view))
+                {
+                    m_stats.drawn++;
+                }
+                continue;
+            }
             Vec3 middle;
             float radius;
-            boundsOf(a, m_spatials[e.parts3[0]].world, middle, radius);
+            boundsOf(a, placed, middle, radius);
             const Vec3 d = middle - m_from;
             const float far = sqrtf(d.dot(d));
             const float size = radius / (fmaxf(far - radius, 0.1f) * tall);  // of half the picture
@@ -913,6 +931,11 @@ namespace nx
             }
             a.detail = static_cast<u8>(detail);
             m_stats.hidden += !seen;
+            if (seen && a.impostor && m_impostorFar > 0 && far > m_impostorFar && card(a, placed, view))
+            {
+                m_stats.drawn++;
+                continue;
+            }
             if (seen)
             {
                 if (a.model && a.model->model && a.model->model->weights.count())
@@ -954,7 +977,7 @@ namespace nx
                 for (Appearance& a : m_appearances)
                 {
                     const World::Entity& e = m_world.m_entities[a.owner];
-                    if (!a.casts || a.glowBall || !e.shown || e.dying || e.parts3[0] == kNone || a.blend != gpu::Blend::None)
+                    if (!a.casts || a.glowBall || a.sprite || !e.shown || e.dying || e.parts3[0] == kNone || a.blend != gpu::Blend::None)
                     {
                         continue;
                     }
@@ -1025,6 +1048,7 @@ namespace nx
             device.drawMesh(d);
         }
         drawLand(view, frustum, false);
+        drawGrass(view, frustum);
         for (const Item& item : m_items)
         {
             const Appearance& a = m_appearances[item.index];
@@ -1033,6 +1057,7 @@ namespace nx
                 drawAppearance(a, a.detail, view, false, false);
             }
         }
+        drawCards(view);
         if (m_field.count && !device.drawField(m_field))
         {
             // As triangles, made afresh as it moves. Planes go on for ever, so they are drawn as they are.

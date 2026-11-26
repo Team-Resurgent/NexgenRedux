@@ -323,6 +323,29 @@ Plants lean with the wind: give a thing a `sway`, how far its top moves for each
 gusts roll across a wood as a wave. The base stays where it is, it is only how things are drawn, and it costs the same on every
 platform. The editor gives trees, bushes and grass their sway when they are added.
 
+### Grass, impostors and sprites
+
+`Space::grass(Assets::model("global:model/grass.glb"), 3, 30)` grows tufts over the land near the camera, so many to a
+square metre and out to a distance: only where the land is green, flat enough and dry, coloured as the land is there, and
+bending in the wind. It is made a few squares at a time as you move, and again where the land is changed. A scene file says
+`"grass": 2.5`, and the editor has it on the Land tab. On the original Xbox, where vertices can't be moved, it stands still.
+
+Things with `impostor = true` are drawn, further away than `Space::impostors` metres, as a picture of themselves: made from
+the model when it is first needed, from four sides, and drawn with all the others that share it at once. A wood of
+two thousand trees costs about half as many triangles, and looks the same.
+
+A sprite is a picture that stands upright and turns to face the camera, as the characters of old maze games did:
+
+```cpp
+Entity@ wisp = Space::spawn(place);
+wisp.sprite(Assets::texture("global:picture/sprite-wisp.png"), 4, 2);  // four sides across, two frames down
+wisp.size = Vec3(1.3f, 1.3f, 1.3f);
+wisp.spriteFrame = uint(App::time * 5) % 2;
+```
+
+Across the sheet is how it looks from each side, the first from in front and then going round to its left; which one is
+shown follows from where the camera is and which way it faces. The **Wisps** showcase is a maze of them.
+
 ### Files that players bring
 
 `Assets::list("own:")` has the names of the player's own files, and `Assets::dropped()` those that were just dropped on the window. They

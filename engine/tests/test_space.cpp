@@ -679,6 +679,48 @@ NX_TEST(childrenMoveWithTheirParentsInSpace)
     NX_EXPECT(p.space.getSpatial(child) == nullptr);
 }
 
+NX_TEST(grassImpostorsAndSprites)
+{
+    Rig r;
+    NX_EXPECT(r.ok);
+    r.platform.extraPath = "showcase/shapes/main.as";
+    r.platform.extraText = R"(
+        class A : Screen
+        {
+            Entity@ ghost;
+            void onEnter()
+            {
+                Space::land(3, 64, 2, 4, 0.3f);
+                Space::grass(Assets::model("global:model/grass.glb"), 2, 20);
+                Space::impostors = 30;
+                for (int i = 0; i < 6; i++)
+                {
+                    Entity@ tree = Space::spawn(Vec3(-20 + i * 8, Space::height(-20 + i * 8, -50), -50));
+                    tree.model(Assets::model("global:model/pine.glb"));
+                    tree.impostor = true;
+                }
+                @ghost = Space::spawn(Vec3(0, 1, -5));
+                ghost.sprite(Assets::texture("global:picture/sprite-wisp.png"), 4, 2);
+                ghost.spriteFrame = 3;
+                Space::camera(Vec3(0, Space::height(0, 0) + 2, 0), Vec3(0, Space::height(0, -50), -50));
+            }
+            void draw(Canvas@ c) { Space::draw(c); }
+        }
+    )";
+    NX_EXPECT(r.screens.init(r.services, "showcase", "main"));
+    r.step(2);
+    r.screens.push("shapes");
+    r.step(30);
+    NX_EXPECT(!r.screens.failed());
+    NX_EXPECT(r.device->stats().rejected == 0);
+    Space& space = r.services.world->space();
+    // Squares of grass round the camera, the six far trees and the sprite as pictures.
+    NX_EXPECT(space.grassCells() > 4);
+    NX_EXPECT(space.cardsDrawn() == 7);
+    r.screens.home();
+    r.step(3);
+}
+
 NX_TEST(scriptsUseSpace)
 {
     Rig r;

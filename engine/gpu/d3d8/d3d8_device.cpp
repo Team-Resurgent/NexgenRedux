@@ -855,7 +855,7 @@ namespace nx::gpu
                 // The tint multiplies everything, after the lights.
                 const bool lit = draw.lit && draw.glow < 1;
                 // What is solid has no use for its alpha, so that says how dark a shadow is.
-                const bool shaded = m_shadowed && lit && !draw.indoors && draw.blend == Blend::None && !draw.effect;
+                const bool shaded = m_shadowed && lit && !draw.indoors && draw.blend == Blend::None && !draw.effect && draw.cutout <= 0;
                 m_device->SetRenderState(D3DRS_TEXTUREFACTOR, packed(draw.color));
                 m_device->SetRenderState(D3DRS_LIGHTING, lit);
                 // The same as the stages do, and then some of the sun's light away.
@@ -899,6 +899,13 @@ namespace nx::gpu
                 m_device->SetRenderState(D3DRS_ALPHABLENDENABLE, draw.blend != Blend::None);
                 m_device->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
                 m_device->SetRenderState(D3DRS_DESTBLEND, draw.blend == Blend::Additive ? D3DBLEND_ONE : D3DBLEND_INVSRCALPHA);
+                // Cut out where the picture is clear. The wind's bending needs a vertex shader, so here it stays still.
+                m_device->SetRenderState(D3DRS_ALPHATESTENABLE, draw.cutout > 0);
+                if (draw.cutout > 0)
+                {
+                    m_device->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATEREQUAL);
+                    m_device->SetRenderState(D3DRS_ALPHAREF, static_cast<DWORD>(draw.cutout >= 1 ? 255 : draw.cutout * 255));
+                }
                 m_device->SetTransform(D3DTS_WORLD, reinterpret_cast<const D3DMATRIX*>(draw.world.m));
                 m_device->SetStreamSource(0, m->vertices[m->current], sizeof(MeshVertex));
                 m_device->SetIndices(m->indices, 0);

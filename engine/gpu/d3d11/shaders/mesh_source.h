@@ -36,6 +36,7 @@ cbuffer Object : register(b1)
     float4 tint;
     float4 surface;              // glow, shine, lit, fogged
     int4 lights;                 // indices, -1 for none
+    float4 wind;                 // bend along x and z for each metre of v; cutout
 };
 
 cbuffer Field : register(b2)
@@ -74,6 +75,13 @@ MeshOut meshVs(MeshIn input)
 {
     MeshOut output;
     float4 place = mul(world, float4(input.position, 1.0));
+    // Bent by the wind, more the higher the vertex is: v says how high, in metres. Gusts roll along the way it blows.
+    if (wind.x != 0.0 || wind.y != 0.0)
+    {
+        float along = dot(place.xz, normalize(wind.xy)) * 0.12;
+        float gust = sin(eye.w * 1.3 - along) * 0.55 + sin(eye.w * 2.9 - along * 1.7 + place.x * 0.3) * 0.2 + 0.35;
+        place.xz += wind.xy * (input.uv.y * gust);
+    }
     output.position = mul(viewProjection, place);
     output.place = place.xyz;
     output.normal = mul((float3x3)world, input.normal);
@@ -169,7 +177,12 @@ float4 finish(MeshOut input, float4 base, float glow)
 
 float4 meshPs(MeshOut input) : SV_Target
 {
-    return finish(input, image.Sample(imageSampler, input.uv) * input.color, surface.x);
+    float4 base = image.Sample(imageSampler, input.uv) * input.color;
+    if (base.a < wind.z)
+    {
+        discard;
+    }
+    return finish(input, base, surface.x);
 }
 )";
 }

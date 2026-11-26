@@ -247,6 +247,23 @@ namespace nx
         Vec3 getColliderAt(const EntityRef* e) { const Collider3* c = e->world ? e->world->space().getCollider(e->id) : nullptr; return c ? c->middle : Vec3(); }
         void setShine(float v, EntityRef* e) { if (Appearance* a = lookOf(e)) a->shine = v; }
         float getSway(const EntityRef* e) { const Appearance* a = someLook(e); return a ? a->sway : 0; }
+        bool getImpostor(const EntityRef* e) { const Appearance* a = someLook(e); return a && a->impostor; }
+        void setImpostor(bool v, EntityRef* e) { if (Appearance* a = lookOf(e)) a->impostor = v; }
+        void entitySprite(const TextureRef* sheet, u32 angles, u32 frames, EntityRef* e)
+        {
+            if (e->world)
+            {
+                e->world->space().setSprite(e->id, sheet ? sheet->asset : nullptr, angles, frames);
+            }
+        }
+        u32 getSpriteFrame(const EntityRef* e) { const Appearance* a = someLook(e); return a ? a->spriteFrame : 0; }
+        void setSpriteFrame(u32 v, EntityRef* e)
+        {
+            if (e->world)
+            {
+                e->world->space().setSpriteFrame(e->id, v);
+            }
+        }
         void setSway(float v, EntityRef* e) { if (Appearance* a = lookOf(e)) a->sway = v; }
         void setGlowing(float v, EntityRef* e) { if (Appearance* a = lookOf(e)) a->glow = v; }
         void setTwoSided(bool v, EntityRef* e) { if (Appearance* a = lookOf(e)) a->twoSided = v; }
@@ -325,6 +342,9 @@ namespace nx
         void spaceSky(const Color& top, const Color& horizon) { space().setSky(top, horizon); }
         void spaceFog(const Color& color, float start, float end) { space().setFog(color, start, end); }
         Vec3 spaceWind() { return space().wind(); }
+        void spaceGrass(const ModelRef* tuft, float perSquareMetre, float distance) { space().setGrass(tuft ? tuft->asset : nullptr, perSquareMetre, distance); }
+        float spaceImpostors() { return space().impostors(); }
+        void spaceSetImpostors(float v) { space().setImpostors(v); }
         void spaceSetWind(const Vec3& v) { space().setWind(v); }
         bool spaceLines() { return space().lines(); }
         void spaceSetLines(bool v) { space().setLines(v); }
@@ -550,6 +570,11 @@ namespace nx
         b.method("void glow(float size, const Color &in color)", NX_OBJ_LAST(entityGlow), "Looks like a soft ball of light. `light` is what lights other things.");
         b.method("void skin(Texture@+ texture, bool repeat = false)", NX_OBJ_LAST(entitySkin), "Puts an image on it, instead of any of the model's own.");
         b.method("void effect(Effect@+ effect)", NX_OBJ_LAST(entityEffect), "Colours it, and may move its corners, with a shader of your own; null for none. Where there are no shaders it stays as it is.");
+        b.method("bool get_impostor() const property", NX_OBJ_LAST(getImpostor), "Whether, further away than `Space::impostors`, it is drawn as a picture of itself.");
+        b.method("void set_impostor(bool) property", NX_OBJ_LAST(setImpostor), "Further away than `Space::impostors`, drawn as a picture of itself, made from its model: for trees and the like, of which there are many.");
+        b.method("void sprite(Texture@+ sheet, uint angles = 1, uint frames = 1)", NX_OBJ_LAST(entitySprite), "Looks like a picture that stands upright and turns to face the camera, as big as its size. Across the sheet, how it looks from each side: the first from in front, then going round to its left; down it, the frames. null for none.");
+        b.method("uint get_spriteFrame() const property", NX_OBJ_LAST(getSpriteFrame), "Which row of its sprite sheet it shows.");
+        b.method("void set_spriteFrame(uint) property", NX_OBJ_LAST(setSpriteFrame), "Which row of its sprite sheet it shows, from 0.");
         b.method("float get_sway() const property", NX_OBJ_LAST(getSway), "How far the wind leans it: for each metre of height, at the strongest gust. 0.03 suits a tree, 0.1 grass.");
         b.method("void set_sway(float) property", NX_OBJ_LAST(setSway), "How far the wind leans it: for each metre of height, at the strongest gust. 0.03 suits a tree, 0.1 grass.");
         b.method("float get_shine() const property", NX_OBJ_LAST(getShine), "How much it shows a highlight from the sun.");
@@ -609,6 +634,9 @@ namespace nx
         b.function("void ambient(const Color &in sky, const Color &in ground)", NX_FN(spaceAmbient), "Light from everywhere: on what faces up, and on what faces down.");
         b.function("void sky(const Color &in top, const Color &in horizon)", NX_FN(spaceSky), "Draws a sky, with the sun in it. Without one, what is on the canvas already is behind.");
         b.function("void fog(const Color &in color, float start, float end)", NX_FN(spaceFog), "Hides what is far away.");
+        b.function("void grass(Model@+ tuft, float perSquareMetre = 3, float distance = 30)", NX_FN(spaceGrass), "Grows tufts of a model over the land near the camera, where it is green, flat enough and dry, coloured as the land is there; they bend in the wind. null for none.");
+        b.function("float get_impostors() property", NX_FN(spaceImpostors), "How far away things with `impostor` become pictures of themselves; 0 for never.");
+        b.function("void set_impostors(float) property", NX_FN(spaceSetImpostors), "How far away things with `impostor` become pictures of themselves; 0 for never.");
         b.function("Vec3 get_wind() property", NX_FN(spaceWind), "Which way the wind blows, and how hard: 1 is a breeze. Things with `sway` lean with it.");
         b.function("void set_wind(const Vec3 &in) property", NX_FN(spaceSetWind), "Which way the wind blows, and how hard: 1 is a breeze; nothing still air. Things with `sway` lean with it.");
         b.function("bool get_lines() property", NX_FN(spaceLines), "Whether only the edges of triangles are drawn.");

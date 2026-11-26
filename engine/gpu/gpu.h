@@ -158,6 +158,10 @@ namespace nx::gpu
         Cull cull = Cull::Back;
         bool depthWrite = true;
         bool indoors = false;    // the sun doesn't reach it
+        // The wind: how far each vertex moves, along x and z, for each metre of its v, at the strongest gust. Where
+        // vertices can't be moved, it stays as it is.
+        float bendX = 0, bendZ = 0;
+        float cutout = 0;        // where the picture's alpha is less, nothing is drawn
         bool lines = false;      // only the edges of its triangles
         bool lit = true;
         bool fogged = true;

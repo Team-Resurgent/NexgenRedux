@@ -439,6 +439,55 @@ def tile(kind, rng):
     return m
 
 
+
+def png_alpha(folder, name, pixels):
+    # As png(), with alpha: colour type 6.
+    h, w, _ = pixels.shape
+    raw = (np.clip(pixels, 0, 1) * 255 + 0.5).astype(np.uint8).reshape(h, -1)
+    rows = np.concatenate([np.zeros((h, 1), np.uint8), raw], 1)
+    chunk = lambda kind, data: struct.pack('>I', len(data)) + kind + data + struct.pack('>I', zlib.crc32(kind + data))
+    folder = os.path.join(os.path.dirname(MEDIA), folder)
+    os.makedirs(folder, exist_ok=True)
+    data = chunk(b'IHDR', struct.pack('>IIBBBBB', w, h, 8, 6, 0, 0, 0)) + chunk(b'IDAT', zlib.compress(rows.tobytes(), 9)) + chunk(b'IEND', b'')
+    with open(os.path.join(folder, name + '.png'), 'wb') as f:
+        f.write(bytes([137]) + b'PNG' + bytes([13, 10, 26, 10]) + data)
+
+
+def wisp():
+    # A little glowing spirit, from four sides (in front, its left, behind, its right) across, and two frames down
+    # as it flickers: 64 pixels a picture, drawn four times larger and made smaller for soft edges.
+    big = 4
+    cell = 64 * big
+    sheet = np.zeros((2 * cell, 4 * cell, 4))
+    y, x = np.mgrid[0:cell, 0:cell].astype(float) / big
+    for frame in range(2):
+        for side in range(4):
+            a = side * math.pi / 2
+            sway = (1 if frame else -1) * 1.5
+            # A drop: round above, drawn out into a flickering tail below.
+            cx = 32 + sway * (y - 24) / 40 * (y > 24)
+            body_r = np.where(y < 30, 17, 17 - (y - 30) * 0.42)
+            wave = np.sin(y * 0.45 + frame * 2.2) * 2.2 * (y > 34)
+            inside = ((x - cx - wave) ** 2 + ((y - 30) * (y < 30)) ** 2 < body_r ** 2) & (y > 12) & (y < 62)
+            r = np.sqrt((x - 32) ** 2 + (y - 28) ** 2) / 20
+            glow = np.clip(1.1 - r * 0.55, 0.45, 1)
+            col = np.stack([0.55 * glow + 0.2, 0.85 * glow + 0.1, np.full_like(glow, 1.0)], -1)
+            # Eyes, round with it: two in front, one from the side, none behind.
+            for e in (-1, 1):
+                ex = 32 + math.sin(a) * 9 + math.cos(a) * e * 6.5
+                facing = math.cos(a) * 1 + 0.0
+                seen = math.cos(a) > -0.2 and abs(math.sin(a) * 9 + math.cos(a) * e * 6.5) < 13 and not (math.cos(a) < 0.1 and e * math.sin(a) > 0)
+                if seen:
+                    eye = ((x - ex) / (2.4 if abs(math.cos(a)) > 0.5 else 1.6)) ** 2 + ((y - 25) / (4.2 - frame * 0.8)) ** 2 < 1
+                    col[eye] = (0.08, 0.1, 0.25)
+            pix = np.concatenate([col, inside[..., None].astype(float)], -1)
+            sheet[frame * cell:(frame + 1) * cell, side * cell:(side + 1) * cell] = pix
+    small = sheet.reshape(2 * 64, big, 4 * 64, big, 4)
+    alpha = small[..., 3].mean(axis=(1, 3))
+    color = (small[..., :3] * small[..., 3:4]).sum(axis=(1, 3)) / np.maximum(small[..., 3:4].sum(axis=(1, 3)), 1e-6)
+    color[alpha == 0] = (0.6, 0.85, 1)
+    png_alpha('picture', 'sprite-wisp', np.concatenate([color, alpha[..., None]], -1))
+
 def main():
     rng = np.random.default_rng(11)
     two = matter(two_sided=True)

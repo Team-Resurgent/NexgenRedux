@@ -22,6 +22,7 @@ namespace nx::gpu
         Mat4 world;
         float tint[4], surface[4];
         i32 lights[4];
+        float wind[4];   // bend along x and z, cutout
     };
 
     struct FieldUniforms
@@ -85,6 +86,10 @@ namespace nx::gpu
         u.surface[1] = d.shine;
         u.surface[2] = d.lit ? d.indoors ? 2.0f : 1.0f : 0.0f;
         u.surface[3] = d.fogged ? 1.0f : 0.0f;
+        u.wind[0] = d.bendX;
+        u.wind[1] = d.bendZ;
+        u.wind[2] = d.cutout;
+        u.wind[3] = 0;
         for (u32 i = 0; i < 4; i++)
         {
             u.lights[i] = i < d.lightCount ? d.lights[i] : -1;

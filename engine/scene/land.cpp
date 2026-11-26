@@ -152,6 +152,7 @@ namespace nx
     void Space::fillChunk(Chunk& c)
     {
         c.changed = true;
+        grassChanged(static_cast<float>(c.x) * regionSize(), static_cast<float>(c.z) * regionSize(), static_cast<float>(c.x + 1) * regionSize(), static_cast<float>(c.z + 1) * regionSize());
         c.low = 1e9f;
         c.high = -1e9f;
         for (u32 z = 0; z < kRow; z++)
@@ -341,6 +342,7 @@ namespace nx
         {
             c.changed = true;
         }
+        grassChanged(-1e9f, -1e9f, 1e9f, 1e9f);
     }
 
     float Space::heightAt(float x, float z) const

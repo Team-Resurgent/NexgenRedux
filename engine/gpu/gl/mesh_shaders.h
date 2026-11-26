@@ -29,6 +29,7 @@ layout(std140) uniform Object
     vec4 tint;
     vec4 surface;
     ivec4 lights;
+    vec4 wind;
 };
 )";
 
@@ -44,6 +45,13 @@ out vec2 vertexUv;
 void main()
 {
     vec4 place = world * vec4(position, 1.0);
+    // Bent by the wind, more the higher the vertex is: v says how high, in metres. Gusts roll along the way it blows.
+    if (wind.x != 0.0 || wind.y != 0.0)
+    {
+        float along = dot(place.xz, normalize(wind.xy)) * 0.12;
+        float gust = sin(eye.w * 1.3 - along) * 0.55 + sin(eye.w * 2.9 - along * 1.7 + place.x * 0.3) * 0.2 + 0.35;
+        place.xz += wind.xy * (uv.y * gust);
+    }
     gl_Position = viewProjection * place;
     gl_Position.z = gl_Position.z * 2.0 - gl_Position.w;
     vertexPlace = place.xyz;
@@ -174,7 +182,12 @@ vec4 finish(vec4 base, float glow)
     inline const char kMeshFragment[] = R"(
 void main()
 {
-    result = finish(texture(image, vertexUv) * vertexColor, surface.x);
+    vec4 base = texture(image, vertexUv) * vertexColor;
+    if (base.a < wind.z)
+    {
+        discard;
+    }
+    result = finish(base, surface.x);
 }
 )";
 

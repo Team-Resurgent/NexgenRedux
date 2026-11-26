@@ -120,6 +120,10 @@ namespace nx
         gpu::Blend blend;
         gpu::Color color;
         float glow, shine;
+        bool impostor;         // far away, a picture of it instead
+        Asset* sprite;         // held; a picture of angles across and frames down, instead of a model
+        u8 spriteAngles, spriteFrames;
+        u16 spriteFrame;
         float sway;            // how far the wind leans its top, for each metre of height
         u8 detail;             // the level it was last drawn at
         // Movement of a model that bends.
@@ -259,6 +263,18 @@ namespace nx
         void setSky(const gpu::Color& top, const gpu::Color& horizon) { m_skyTop = top; m_skyHorizon = horizon; m_hasSky = true; }
         void setFog(const gpu::Color& color, float start, float end) { m_fog = color; m_fogStart = start; m_fogEnd = end; }
         // Only edges, to see how things are made.
+        // Tufts of a model over the land near the camera, where it is green: so many to a square metre, out to a
+        // distance. None without a model.
+        void setGrass(Asset* tuft, float perSquareMetre, float distance);
+        u32 grassCells() const { return m_grass.count(); }
+        // Further than this, things that ask for it are drawn as a picture of themselves; 0: never.
+        void setImpostors(float distance) { m_impostorFar = distance > 0 ? distance : 0; }
+        float impostors() const { return m_impostorFar; }
+        void setImpostor(u32 id, bool on);
+        void setSprite(u32 id, Asset* sheet, u32 angles, u32 frames);
+        void setSpriteFrame(u32 id, u32 frame);
+        // Pictures drawn instead of things, last frame.
+        u32 cardsDrawn() const { return m_cardsDrawn; }
         // Which way the wind blows, and how hard: 1 is a breeze.
         void setWind(const Vec3& wind) { m_wind = wind; }
         Vec3 wind() const { return m_wind; }
@@ -516,6 +532,43 @@ namespace nx
         bool readThing(JsonTree::Value json, const Vec3& at, bool streamed, const char* file, u32& id);
         void drawLand(const gpu::View& view, const Frustum& frustum, bool shadow);
         void drawWater(const gpu::View& view);
+        // cards.cpp: grass, and pictures that face the camera.
+        struct GrassCell
+        {
+            int x, z;
+            u8 tier;
+            bool keep;
+            gpu::Mesh mesh;
+            u32 indices;
+            float low, high;
+        };
+        struct Impostor
+        {
+            Asset* model;      // held
+            gpu::Texture texture;
+            float half, low, high;
+        };
+        struct CardBatch
+        {
+            gpu::Texture texture;
+            float glow;
+            gpu::Mesh mesh;
+            bool used;
+        };
+        struct Card
+        {
+            u32 batch;
+            gpu::MeshVertex v[4];
+        };
+        void drawGrass(const gpu::View& view, const Frustum& frustum);
+        bool buildGrass(GrassCell& cell);
+        // The land there changed: its grass is made again, a few squares a frame.
+        void grassChanged(float fromX, float fromZ, float toX, float toZ);
+        gpu::Color groundColor(float x, float z) const;
+        const Impostor* impostorOf(Asset* model);
+        bool card(const Appearance& a, const Mat4& world, const gpu::View& view);
+        void drawCards(const gpu::View& view);
+        void freeCards();
         gpu::Color landColor(float height, const Vec3& normal, float x, float z) const;
 
         // shell.cpp
@@ -601,6 +654,14 @@ namespace nx
         Vec3 m_gravity = { 0, -9.8f, 0 };
         float m_time = 0;
         Vec3 m_wind = { 0.94f, 0, 0.34f };
+        Asset* m_grassTuft = nullptr;
+        float m_grassDensity = 0, m_grassFar = 30;
+        GrowArray<GrassCell> m_grass;
+        GrowArray<Impostor> m_impostorList;
+        float m_impostorFar = 0;
+        GrowArray<CardBatch> m_batches;
+        GrowArray<Card> m_cards;
+        u32 m_cardsDrawn = 0;
 
         bool m_landOn = false, m_island = false, m_started = false;
         u32 m_landSquares = 0;       // 0: endless

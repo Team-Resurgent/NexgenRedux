@@ -527,6 +527,11 @@ Entities that move, collide and are drawn by the engine. Each screen has its own
 | `void glow(float size, const Color &in color)` | Looks like a soft ball of light. `light` is what lights other things. |
 | `void skin(Texture@+ texture, bool repeat = false)` | Puts an image on it, instead of any of the model's own. |
 | `void effect(Effect@+ effect)` | Colours it, and may move its corners, with a shader of your own; null for none. Where there are no shaders it stays as it is. |
+| `bool get_impostor() const property` | Whether, further away than `Space::impostors`, it is drawn as a picture of itself. |
+| `void set_impostor(bool) property` | Further away than `Space::impostors`, drawn as a picture of itself, made from its model: for trees and the like, of which there are many. |
+| `void sprite(Texture@+ sheet, uint angles = 1, uint frames = 1)` | Looks like a picture that stands upright and turns to face the camera, as big as its size. Across the sheet, how it looks from each side: the first from in front, then going round to its left; down it, the frames. null for none. |
+| `uint get_spriteFrame() const property` | Which row of its sprite sheet it shows. |
+| `void set_spriteFrame(uint) property` | Which row of its sprite sheet it shows, from 0. |
 | `float get_sway() const property` | How far the wind leans it: for each metre of height, at the strongest gust. 0.03 suits a tree, 0.1 grass. |
 | `void set_sway(float) property` | How far the wind leans it: for each metre of height, at the strongest gust. 0.03 suits a tree, 0.1 grass. |
 | `float get_shine() const property` | How much it shows a highlight from the sun. |
@@ -599,6 +604,9 @@ The scene in three dimensions: x right, y up, z towards you, in metres. Entities
 | `void Space::ambient(const Color &in sky, const Color &in ground)` | Light from everywhere: on what faces up, and on what faces down. |
 | `void Space::sky(const Color &in top, const Color &in horizon)` | Draws a sky, with the sun in it. Without one, what is on the canvas already is behind. |
 | `void Space::fog(const Color &in color, float start, float end)` | Hides what is far away. |
+| `void Space::grass(Model@+ tuft, float perSquareMetre = 3, float distance = 30)` | Grows tufts of a model over the land near the camera, where it is green, flat enough and dry, coloured as the land is there; they bend in the wind. null for none. |
+| `float Space::get_impostors() property` | How far away things with `impostor` become pictures of themselves; 0 for never. |
+| `void Space::set_impostors(float) property` | How far away things with `impostor` become pictures of themselves; 0 for never. |
 | `Vec3 Space::get_wind() property` | Which way the wind blows, and how hard: 1 is a breeze. Things with `sway` lean with it. |
 | `void Space::set_wind(const Vec3 &in) property` | Which way the wind blows, and how hard: 1 is a breeze; nothing still air. Things with `sway` lean with it. |
 | `bool Space::get_lines() property` | Whether only the edges of triangles are drawn. |

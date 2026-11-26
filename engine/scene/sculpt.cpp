@@ -202,6 +202,7 @@ namespace nx
 
     void Space::changeHoles(int fromX, int fromZ, int toX, int toZ)
     {
+        grassChanged(static_cast<float>(fromX - 1) * m_landSpacing, static_cast<float>(fromZ - 1) * m_landSpacing, static_cast<float>(toX + 1) * m_landSpacing, static_cast<float>(toZ + 1) * m_landSpacing);
         for (Chunk& c : m_chunks)
         {
             c.changed = c.changed || (c.x * 32 <= toX && c.x * 32 + 32 > fromX && c.z * 32 <= toZ && c.z * 32 + 32 > fromZ);
@@ -264,6 +265,7 @@ namespace nx
 
     bool Space::moveCorners(int fromX, int fromZ, int toX, int toZ, const float* moved)
     {
+        grassChanged(static_cast<float>(fromX - 1) * m_landSpacing, static_cast<float>(fromZ - 1) * m_landSpacing, static_cast<float>(toX + 1) * m_landSpacing, static_cast<float>(toZ + 1) * m_landSpacing);
         const u32 wide = static_cast<u32>(toX - fromX + 1);
         bool room = true;
         for (int z = fromZ; z <= toZ; z++)
@@ -390,6 +392,7 @@ namespace nx
             const float lx = static_cast<float>(c.x) * size, lz = static_cast<float>(c.z) * size;
             c.changed = c.changed || (x + reach > lx && x - reach < lx + size && z + reach > lz && z - reach < lz + size);
         }
+        grassChanged(x - reach, z - reach, x + reach, z + reach);
         return true;
     }
 

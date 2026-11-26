@@ -1,20 +1,20 @@
 #include "net/net.h"
+#include "net/wire.h"
 #include "base/log.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 namespace nx
 {
     namespace
     {
-        constexpr u32 kMagic = 0x3252584E;   // "NXR2"
-        constexpr size_t kPacket = 1200;
+        using namespace wire;
         constexpr double kTimeout = 6, kResend = 0.12, kBeat = 0.25;
+        constexpr double kFarTimeout = 14, kPunching = 3;   // joining through the meeting place
         constexpr u32 kQueue = 256;          // messages waiting to be told of, or for a player to catch up
         constexpr u8 kEveryone = 0xFF;
-
-        enum Kind : u8 { kFind = 1, kHere, kJoin, kWelcome, kFull, kData, kLeave };
 
         u32 hashOf(const char* text)
         {
@@ -212,11 +212,17 @@ namespace nx
     Room::Room(Net& net) : m_net(net)
     {
         net.m_rooms.push(this);
+        meet(net.meetingPlace().c_str());
     }
 
     Room::~Room()
     {
         leave();
+        meet("");
+        if (m_hostLookup)
+        {
+            Net::letGo(m_hostLookup);
+        }
         Net::remove(m_net.m_rooms, this);
     }
 
@@ -292,9 +298,15 @@ namespace nx
                     Writer out;
                     out.start(m_game, kLeave);
                     out.u32_(link.token);
-                    m_socket.send(link.where, out.data, out.size);
+                    post(link.where, link.relayed, out.data, out.size);
                 }
             }
+        }
+        if (m_hosting && m_met)
+        {
+            Writer out;
+            out.start(m_game, kUnlist);
+            toMeeting(out.data, out.size);
         }
         reset();
     }
@@ -316,6 +328,7 @@ namespace nx
         cleanName(m_name, name, strlen(name));
         m_hosting = true;
         m_me = 0;
+        m_listed = -10;
         m_state = RoomState::In;
         m_players[0].present = true;
         memcpy(m_players[0].name, m_name, sizeof(m_name));
@@ -332,7 +345,52 @@ namespace nx
             return false;
         }
         m_state = RoomState::Finding;
-        m_asked = -10;
+        m_asked = m_findAsked = -10;
+        return true;
+    }
+
+    bool Room::joinFound(const char* game, const Found& found, const char* name)
+    {
+        const Endpoint near = found.near;
+        const bool far = found.far;
+        if (!join(game, found.where, name))
+        {
+            return false;
+        }
+        m_serverNear = near;
+        m_far = far;
+        return true;
+    }
+
+    bool Room::join(const char* game, const char* address, const char* name)
+    {
+        char host[96];
+        const char* colon = strrchr(address, ':');
+        const size_t length = colon ? static_cast<size_t>(colon - address) : strlen(address);
+        if (length == 0 || length >= sizeof(host))
+        {
+            return false;
+        }
+        memcpy(host, address, length);
+        host[length] = 0;
+        Endpoint where;
+        where.port = colon ? static_cast<u16>(atoi(colon + 1)) : kRoomPort;
+        if (netParseAddress(host, where.ip))
+        {
+            return join(game, where, name);
+        }
+        // A name: looked up first, and joined once it has been.
+        where.ip = 0;
+        if (!join(game, where, name))
+        {
+            return false;
+        }
+        m_hostLookup = m_net.lookUp(host);
+        if (m_hostLookup == nullptr)
+        {
+            m_state = RoomState::Lost;
+            return false;
+        }
         return true;
     }
 
@@ -351,11 +409,222 @@ namespace nx
         cleanName(m_name, name, strlen(name));
         m_server = where;
         m_server.port = where.port ? where.port : kRoomPort;
+        m_serverNear = {};
+        m_far = m_relay = false;
         m_nonce = random();
         m_state = RoomState::Joining;
         m_asked = -10;
         m_began = -1;   // when it is next updated
         return true;
+    }
+
+    // --- The meeting place ---
+
+    bool Room::meet(const char* place)
+    {
+        if (m_lookup)
+        {
+            Net::letGo(m_lookup);
+            m_lookup = nullptr;
+        }
+        m_met = false;
+        m_meeting = {};
+        const size_t length = strlen(place);
+        if (length == 0 || length >= sizeof(m_place))
+        {
+            m_place[0] = 0;
+            return length == 0;
+        }
+        memcpy(m_place, place, length + 1);
+        char host[96];
+        const char* colon = strrchr(place, ':');
+        const size_t hostLength = colon ? static_cast<size_t>(colon - place) : length;
+        memcpy(host, place, hostLength);
+        host[hostLength] = 0;
+        m_meeting.port = colon ? static_cast<u16>(atoi(colon + 1)) : kMeetingPort;
+        if (m_meeting.port == 0)
+        {
+            return false;
+        }
+        if (netParseAddress(host, m_meeting.ip))
+        {
+            m_met = m_net.start();
+            return m_met;
+        }
+        m_lookup = m_net.lookUp(host);
+        return m_lookup != nullptr;
+    }
+
+    bool Room::relayed(int player) const
+    {
+        if (!present(player) || player == m_me)
+        {
+            return false;
+        }
+        return m_links[m_hosting ? player : 0].relayed;
+    }
+
+    void Room::toMeeting(const void* data, size_t size)
+    {
+        if (m_met && m_socket.isOpen())
+        {
+            m_socket.send(m_meeting, data, size);
+        }
+    }
+
+    // To another player: straight there, or to the meeting place to be passed on.
+    void Room::post(const Endpoint& to, bool relayed, const void* data, size_t size)
+    {
+        if (!relayed)
+        {
+            m_socket.send(to, data, size);
+            return;
+        }
+        if (!m_met || size > kPacket)
+        {
+            return;
+        }
+        u8 out[kPacket + kRelayHeader];
+        put32(out, kMagic);
+        put32(out + 4, m_game);
+        out[8] = kRelay;
+        put32(out + 9, to.ip);
+        put16(out + 13, to.port);
+        memcpy(out + kRelayHeader, data, size);
+        toMeeting(out, kRelayHeader + size);
+    }
+
+    bool Room::reachable() const
+    {
+        return m_server.ip != 0 && (!m_far || m_met);
+    }
+
+    void Room::fromMeeting(const u8* data, size_t size)
+    {
+        if (size < 9 || get32(data) != kMagic || get32(data + 4) != m_game)
+        {
+            return;
+        }
+        const u8 kind = data[8];
+        const u8* p = data + 9;
+        const size_t left = size - 9;
+        if (kind == kRelayed && left >= 6)
+        {
+            Endpoint from;
+            from.ip = get32(p);
+            from.port = get16(p + 4);
+            if (left - 6 <= kPacket)
+            {
+                handle(from, p + 6, left - 6, true);
+            }
+        }
+        else if (kind == kMeet && left >= 6 && m_hosting)
+        {
+            // Someone wants in: a few packets towards them open this end's router to them.
+            Endpoint who;
+            who.ip = get32(p);
+            who.port = get16(p + 4);
+            Writer out;
+            out.start(m_game, kPunch);
+            for (u32 i = 0; i < 2; i++)
+            {
+                m_socket.send(who, out.data, out.size);
+            }
+        }
+        else if (kind == kListed && left >= 1 && m_state == RoomState::Finding)
+        {
+            Reader in{ p + 1, left - 1 };
+            for (u32 i = 0; i < p[0] && in.ok; i++)
+            {
+                Found f = {};
+                f.where.ip = in.u32_();
+                f.where.port = in.u16_();
+                f.near.ip = in.u32_();
+                f.near.port = in.u16_();
+                in.name(f.name);
+                f.players = in.u8_();
+                f.most = in.u8_();
+                f.heard = m_now;
+                f.far = true;
+                if (!in.ok || f.players > kRoomPlayers || f.most > kRoomPlayers || f.where.ip == 0)
+                {
+                    return;
+                }
+                bool known = false;
+                for (Found& old : m_found)
+                {
+                    if (old.where == f.where || (f.near.ip && old.where == f.near) || (old.far && old.where == f.where))
+                    {
+                        // Heard on the network as well: that is nearer, and stays.
+                        old.heard = m_now;
+                        old.players = f.players;
+                        old.near = old.far ? old.near : old.where;
+                        known = true;
+                        break;
+                    }
+                }
+                if (!known && m_found.count() < 32)
+                {
+                    m_found.push(f);
+                }
+            }
+        }
+    }
+
+    void Room::keepMeeting(double now)
+    {
+        if (m_lookup && m_lookup->state.load(std::memory_order_acquire) != 0)
+        {
+            if (m_lookup->state.load() == 1)
+            {
+                m_meeting.ip = m_lookup->ip;
+                m_met = m_net.start();
+            }
+            else
+            {
+                NX_WARN("room: the meeting place %s can't be found", m_place);
+            }
+            Net::letGo(m_lookup);
+            m_lookup = nullptr;
+        }
+        if (m_hostLookup && m_hostLookup->state.load(std::memory_order_acquire) != 0)
+        {
+            if (m_hostLookup->state.load() == 1)
+            {
+                m_server.ip = m_hostLookup->ip;
+            }
+            else
+            {
+                m_state = RoomState::Lost;
+                m_socket.close();
+            }
+            Net::letGo(m_hostLookup);
+            m_hostLookup = nullptr;
+        }
+        if (!m_met)
+        {
+            return;
+        }
+        if (m_hosting && m_state == RoomState::In && now - m_listed > 2)
+        {
+            m_listed = now;
+            Writer out;
+            out.start(m_game, kList);
+            out.u32_(m_nonce);
+            out.name(m_name);
+            out.u8_(static_cast<u8>(players()));
+            out.u8_(static_cast<u8>(m_most));
+            out.u32_(netLocalAddress());
+            out.u16_(m_socket.port());
+            toMeeting(out.data, out.size);
+        }
+        if (m_state == RoomState::Finding && now - m_findAsked > 1)
+        {
+            m_findAsked = now;
+            Writer out;
+            out.start(m_game, kAsk);
+            toMeeting(out.data, out.size);
+        }
     }
 
     u32 Room::players() const
@@ -492,7 +761,7 @@ namespace nx
             }
             if (out.size + 7 + o.message->size > kPacket)
             {
-                m_socket.send(link.where, out.data, out.size);
+                post(link.where, link.relayed, out.data, out.size);
                 packets++;
                 out.size = 0;
                 begin(out);
@@ -503,7 +772,7 @@ namespace nx
         }
         if (any || m_now - link.sent > kBeat)
         {
-            m_socket.send(link.where, out.data, out.size);
+            post(link.where, link.relayed, out.data, out.size);
             link.sent = m_now;
         }
     }
@@ -706,7 +975,7 @@ namespace nx
         }
     }
 
-    void Room::handle(const Endpoint& from, const u8* data, size_t size)
+    void Room::handle(const Endpoint& from, const u8* data, size_t size, bool relayed)
     {
         Reader in{ data, size };
         if (in.u32_() != kMagic || in.u32_() != m_game || !in.ok)
@@ -721,7 +990,7 @@ namespace nx
             out.name(m_name);
             out.u8_(static_cast<u8>(players()));
             out.u8_(static_cast<u8>(m_most));
-            m_socket.send(from, out.data, out.size);
+            post(from, relayed, out.data, out.size);
         }
         else if (kind == kHere && m_state == RoomState::Finding)
         {
@@ -737,6 +1006,14 @@ namespace nx
             }
             for (Found& old : m_found)
             {
+                if (old.far && (old.near == f.where || old.where == f.where))
+                {
+                    // Met there, and heard here too: nearer.
+                    const Endpoint where = f.where;
+                    old = f;
+                    old.where = where;
+                    return;
+                }
                 // The same one may be heard from more than one address.
                 if (old.where == f.where || (old.where.port == f.where.port && strcmp(old.name, f.name) == 0 && (old.where.ip == kLoopback || f.where.ip == kLoopback)))
                 {
@@ -776,7 +1053,7 @@ namespace nx
             {
                 out.start(m_game, kFull);
                 out.u32_(nonce);
-                m_socket.send(from, out.data, out.size);
+                post(from, relayed, out.data, out.size);
                 return;
             }
             Link& link = m_links[slot];
@@ -785,6 +1062,7 @@ namespace nx
             {
                 link.used = true;
                 link.where = from;
+                link.relayed = relayed;
                 link.token = random();
                 link.heard = link.sent = m_now;
                 link.nextIn = link.nextOut = 1;
@@ -796,13 +1074,13 @@ namespace nx
             out.u32_(nonce);
             out.u32_(link.token);
             out.u8_(static_cast<u8>(slot));
-            m_socket.send(from, out.data, out.size);
+            post(from, link.relayed, out.data, out.size);
             if (fresh)
             {
                 sendPlayers();
             }
         }
-        else if ((kind == kWelcome || kind == kFull) && m_state == RoomState::Joining && from == m_server)
+        else if ((kind == kWelcome || kind == kFull) && m_state == RoomState::Joining && (from == m_server || (m_serverNear.ip && from == m_serverNear)))
         {
             if (in.u32_() != m_nonce)
             {
@@ -819,6 +1097,7 @@ namespace nx
             Link& link = m_links[0];
             link.used = true;
             link.where = from;
+            link.relayed = relayed;
             link.token = token;
             link.heard = link.sent = m_now;
             link.nextIn = link.nextOut = 1;
@@ -833,7 +1112,7 @@ namespace nx
             for (u32 i = 0; i < kRoomPlayers; i++)
             {
                 Link& link = m_links[i];
-                if (link.used && link.where == from && link.token == token && in.ok)
+                if (link.used && link.where == from && link.token == token && in.ok && link.relayed == relayed)
                 {
                     if (kind == kLeave)
                     {
@@ -865,14 +1144,23 @@ namespace nx
             {
                 break;
             }
-            if (size <= kPacket)
+            if (m_met && from == m_meeting)
             {
-                handle(from, data, size);
+                fromMeeting(data, size);
+            }
+            else if (size <= kPacket)
+            {
+                handle(from, data, size, false);
             }
             if (!m_socket.isOpen())
             {
                 return;
             }
+        }
+        keepMeeting(now);
+        if (m_state == RoomState::Idle || m_state == RoomState::Lost)
+        {
+            return;
         }
         if (m_state == RoomState::Finding && now - m_asked > 1)
         {
@@ -902,12 +1190,27 @@ namespace nx
         }
         else if (m_state == RoomState::Joining)
         {
+            if (!reachable())
+            {
+                return;
+            }
             m_began = m_began < 0 ? now : m_began;
-            if (now - m_began > kTimeout)
+            if (now - m_began > (m_far ? kFarTimeout : kTimeout))
             {
                 m_state = RoomState::Lost;
                 m_socket.close();
                 return;
+            }
+            // Through the routers, if it can be; through the meeting place if not.
+            m_relay = m_far && m_met && (m_onlyRelay || now - m_began > kPunching);
+            if (m_far && m_met && now - m_meetAsked > 1)
+            {
+                m_meetAsked = now;
+                Writer out;
+                out.start(m_game, kMeet);
+                out.u32_(m_server.ip);
+                out.u16_(m_server.port);
+                toMeeting(out.data, out.size);
             }
             if (now - m_asked > 0.4)
             {
@@ -916,7 +1219,18 @@ namespace nx
                 out.start(m_game, kJoin);
                 out.u32_(m_nonce);
                 out.name(m_name);
-                m_socket.send(m_server, out.data, out.size);
+                if (m_relay)
+                {
+                    post(m_server, true, out.data, out.size);
+                }
+                else if (!m_onlyRelay || !m_far)
+                {
+                    m_socket.send(m_server, out.data, out.size);
+                    if (m_serverNear.ip && !(m_serverNear == m_server))
+                    {
+                        m_socket.send(m_serverNear, out.data, out.size);
+                    }
+                }
             }
         }
         else if (m_state == RoomState::In)

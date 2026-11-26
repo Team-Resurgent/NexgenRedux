@@ -65,14 +65,12 @@ namespace nx
             {
                 return false;
             }
-            const Endpoint where = r->found()[index].where;
-            return r->join(game.c_str(), where, name.c_str());
+            const Room::Found found = r->found()[index];
+            return r->joinFound(game.c_str(), found, name.c_str());
         }
-        bool roomJoinAddress(const std::string& game, const std::string& address, const std::string& name, Room* r)
-        {
-            Endpoint where;
-            return parse(address, where, kRoomPort) && r->join(game.c_str(), where, name.c_str());
-        }
+        bool roomJoinAddress(const std::string& game, const std::string& address, const std::string& name, Room* r) { return r->join(game.c_str(), address.c_str(), name.c_str()); }
+        bool roomMeet(const std::string& place, Room* r) { return r->meet(place.c_str()); }
+        bool roomFoundFar(u32 i, const Room* r) { return i < r->found().count() && r->found()[i].far; }
         u32 roomFoundCount(const Room* r) { return r->found().count(); }
         std::string roomFoundName(u32 i, const Room* r) { return i < r->found().count() ? r->found()[i].name : ""; }
         std::string roomFoundAddress(u32 i, const Room* r) { return i < r->found().count() ? format(r->found()[i].where) : ""; }
@@ -138,6 +136,8 @@ namespace nx
         }
 
         bool netAvailable() { return net().start(); }
+        std::string netMeetingPlace() { return net().meetingPlace(); }
+        void netSetMeetingPlace(const std::string& place) { net().setMeetingPlace(place); }
         std::string netAddress()
         {
             char text[16] = "";
@@ -177,7 +177,7 @@ namespace nx
         b.enumValue("RoomIn", static_cast<int>(RoomState::In), "In it, or hosting it.");
         b.enumValue("RoomLost", static_cast<int>(RoomState::Lost), "It couldn't be joined, or the host has gone.");
 
-        b.refType("Room", 0, "A game for up to 8 players on the same network, one of whom is the host. Keep it in a field, and it lasts until the screen closes.");
+        b.refType("Room", 0, "A game for up to 8 players on the same network, or on the internet by way of a meeting place, one of whom is the host. Keep it in a field, and it lasts until the screen closes.");
         b.behaviour(asBEHAVE_FACTORY, "Room@ f()", NX_FN(makeRoom));
         b.behaviour(asBEHAVE_ADDREF, "void f()", NX_METHOD(Room, addRef));
         b.behaviour(asBEHAVE_RELEASE, "void f()", NX_METHOD(Room, release));
@@ -189,7 +189,11 @@ namespace nx
         b.method("uint foundPlayers(uint index) const", NX_OBJ_LAST(roomFoundPlayers), "How many are in it.");
         b.method("uint foundMost(uint index) const", NX_OBJ_LAST(roomFoundMost), "How many could be.");
         b.method("bool join(const string &in game, uint found, const string &in name)", NX_OBJ_LAST(roomJoinFound), "Joins one that was found.");
-        b.method("bool join(const string &in game, const string &in address, const string &in name)", NX_OBJ_LAST(roomJoinAddress), "Joins one whose address is known.");
+        b.method("bool join(const string &in game, const string &in address, const string &in name)", NX_OBJ_LAST(roomJoinAddress), "Joins one whose address is known: `a.b.c.d`, `a.b.c.d:port`, or a name to look up, such as `games.example.com:27310`. A room on the internet needs its port let through the host's router; a meeting place doesn't.");
+        b.method("bool meet(const string &in place)", NX_OBJ_LAST(roomMeet), "A meeting place on the internet that every player can reach, `name` or `name:port` (27300 if none is said), run with `--meeting`. Then a room that is hosted is listed there, `find` asks it as well as the network, and joining one found there gets through the routers on the way, or is passed on by the meeting place if that can't be done. Before host, find or join; empty for none.");
+        b.method("bool get_met() const property", NX_METHOD(Room, met), "Whether the meeting place has been looked up and can be used.");
+        b.method("bool foundFar(uint index) const", NX_OBJ_LAST(roomFoundFar), "Whether one was found at the meeting place, rather than on this network.");
+        b.method("bool relayed(int player) const", NX_METHOD(Room, relayed), "Whether what goes to and from a player is passed on by the meeting place, because the routers wouldn't let it through.");
         b.method("void leave()", NX_METHOD(Room, leave), "Leaves, or closes it.");
         b.method("RoomState get_state() const property", NX_METHOD(Room, state), "How it is getting on.");
         b.method("bool get_hosting() const property", NX_METHOD(Room, hosting), "Whether it is this player's.");
@@ -244,10 +248,12 @@ namespace nx
         b.method("bool broadcast(uint port, const string &in text)", NX_OBJ_LAST(datagramsBroadcast), "Sends to everyone on the network who is listening there.");
         b.method("bool receive(string &out address, string &out text)", NX_OBJ_LAST(datagramsReceive), "The next to have come, and from whom.");
 
-        b.section("Net", "The network: rooms for games on the same one, the web, and connections of your own.");
+        b.section("Net", "The network: rooms for games on the same one or met on the internet, the web, and connections of your own.");
         b.names("Net");
         b.function("bool get_available() property", NX_FN(netAvailable), "Whether there is one.");
         b.function("string get_address() property", NX_FN(netAddress), "This machine's own, or empty while it has none.");
+        b.function("string get_meetingPlace() property", NX_FN(netMeetingPlace), "The player's choice of meeting place on the internet, kept between runs: every room meets there, unless its own `meet` says otherwise. Empty for none.");
+        b.function("void set_meetingPlace(const string &in) property", NX_FN(netSetMeetingPlace), "The player's choice of meeting place on the internet, `name` or `name:port`, kept between runs. Rooms made after it is set meet there.");
         b.function("Request@ get(const string &in url)", NX_FN(webGet), "Asks for a web page, or anything else.");
         b.function("Request@ post(const string &in url, const string &in body, const string &in type = \"application/x-www-form-urlencoded\")", NX_FN(webPost), "Sends something, and waits for the answer.");
         b.names("");

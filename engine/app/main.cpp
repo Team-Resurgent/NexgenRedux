@@ -31,6 +31,7 @@
 //   --size W H      window size
 //   --hidden (and silent), --null, --menu (open the engine's menu for a capture)
 //   --clean         with --demo: no captions over the demos, for footage
+//   --meeting PORT  be a meeting place for rooms on the internet, with no window, until stopped
 namespace
 {
     using namespace nx;
@@ -45,6 +46,7 @@ namespace
         const char* saves = nullptr;
         const char* record = nullptr;
         const char* recordSound = "";
+        int meeting = 0;
         int frames = 0;
         int tour = 0;
         float demo = 0;
@@ -454,6 +456,31 @@ namespace
         size_t m_script = 0;
     };
 
+    // A meeting place: no window, no screens, only the network, until it is stopped (or for --frames 60ths).
+    bool meet(Platform& platform, const Options& options)
+    {
+        MeetingPlace place;
+        if (options.meeting <= 0 || options.meeting > 65535 || !place.open(static_cast<u16>(options.meeting), false))
+        {
+            NX_ERROR("meeting: can't listen on port %d", options.meeting);
+            return false;
+        }
+        NX_INFO("meeting: listening on port %u", place.port());
+        double said = platform.seconds();
+        for (int frame = 0; options.frames == 0 || frame < options.frames; frame++)
+        {
+            const double now = platform.seconds();
+            place.update(now);
+            if (now - said > 60)
+            {
+                said = now;
+                NX_INFO("meeting: %u rooms, %u pairs, %llu bytes passed on", place.rooms(), place.pairs(), static_cast<unsigned long long>(place.passedOn()));
+            }
+            platform.sleep(0.002);
+        }
+        return true;
+    }
+
     bool run(Platform& platform, const Options& options)
     {
         WindowDesc window;
@@ -743,6 +770,7 @@ int main(int argc, char** argv)
         else if (strcmp(a, "--menu") == 0) options.menu = true;
         else if (strcmp(a, "--bench") == 0) options.bench = true;
         else if (strcmp(a, "--dev") == 0) options.dev = true;
+        else if (strcmp(a, "--meeting") == 0) options.meeting = atoi(value(i));
     }
 
     nx::Platform* platform = nx::createPlatform();
@@ -757,7 +785,7 @@ int main(int argc, char** argv)
             NX_ERROR("cannot keep saves in %s", options.saves);
             ok = false;
         }
-        ok = ok && run(*platform, options);
+        ok = ok && (options.meeting ? meet(*platform, options) : run(*platform, options));
     }
     nx::destroy(platform);
 

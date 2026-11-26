@@ -627,7 +627,7 @@ Nothing here waits: ask, and look each update at what has come. Who sends what i
 
 ### Playing together
 
-A `Room` is a game on the local network. One player hosts; others find it by the game's name and join.
+A `Room` is a game on the local network, or on the internet with a meeting place. One player hosts; others find it by the game's name and join.
 
 ```cpp
 Room@ room = Room();
@@ -648,6 +648,25 @@ for (Message@ m = room.receive(); m !is null; @m = room.receive())
 
 `room.state` is `RoomIn` once you are in, and `RoomLost` if the host goes. `arrived()` and `departed()` say who has come and gone. Use
 quick messages for what is out of date in a moment, such as where things are, and sure ones for what happened.
+
+### Playing over the internet
+
+Players on different networks meet at a **meeting place**: a machine every one of them can reach, such as a small server
+somewhere, running the engine with `--meeting 27300` (no window, nothing else; it says now and then how many rooms and players
+it has). Give it to a room before hosting, finding or joining:
+
+```cpp
+room.meet("games.example.com");               // or "1.2.3.4:27300"
+room.host("my game", "Sam");                  // listed there, as well as on this network
+```
+
+A room that is hosted is listed there; `find` asks it as well as the local network, and `foundFar(i)` says which were found
+there. Joining one of those, the meeting place introduces the two players, so that each one's router lets the other's packets
+in, and they play directly; if a router won't have it, the meeting place passes their packets on, between those two only and
+only so much a second, and `relayed(player)` says so. The player can choose a meeting place once, in the settings, as
+`Net::meetingPlace`, kept between runs; every room meets there unless it is told otherwise. A room whose host has let its port
+(27310) through the router can also be joined by address, as `room.join("my game", "games.example.com:27310", "Alex")`, with
+no meeting place at all.
 
 ### The web
 

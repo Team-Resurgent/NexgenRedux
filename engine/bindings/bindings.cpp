@@ -1,6 +1,7 @@
 #include "bindings/bindings.h"
 #include "bindings/script_refs.h"
 #include "screens/screens.h"
+#include "net/net.h"
 
 #include <math.h>
 #include <stdio.h>
@@ -848,6 +849,10 @@ namespace nx
         s.input->loadBindings(s.save->get("bindings", ""));
         s.audio->setMasterVolume(static_cast<float>(atof(s.save->get("volume", "1"))));
         s.input->setStickPointer(strcmp(s.save->get("stickPointer", "0"), "1") == 0);
+        if (s.net)
+        {
+            s.net->setMeetingPlace(s.save->get("meeting", ""));
+        }
         for (u32 i = 0; i < static_cast<u32>(Bus::Count); i++)
         {
             char key[16];
@@ -866,6 +871,10 @@ namespace nx
         };
         s.save->set("bindings", s.input->saveBindings().c_str());
         s.save->set("stickPointer", s.input->stickPointer() ? "1" : "0");
+        if (s.net)
+        {
+            s.save->set("meeting", s.net->meetingPlace().c_str());
+        }
         volume("volume", s.audio->masterVolume());
         for (u32 i = 0; i < static_cast<u32>(Bus::Count); i++)
         {

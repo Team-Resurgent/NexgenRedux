@@ -908,7 +908,7 @@ How a room is getting on.
 
 ## Room
 
-A game for up to 8 players on the same network, one of whom is the host. Keep it in a field, and it lasts until the screen closes.
+A game for up to 8 players on the same network, or on the internet by way of a meeting place, one of whom is the host. Keep it in a field, and it lasts until the screen closes.
 
 | | |
 |---|---|
@@ -920,7 +920,11 @@ A game for up to 8 players on the same network, one of whom is the host. Keep it
 | `uint foundPlayers(uint index) const` | How many are in it. |
 | `uint foundMost(uint index) const` | How many could be. |
 | `bool join(const string &in game, uint found, const string &in name)` | Joins one that was found. |
-| `bool join(const string &in game, const string &in address, const string &in name)` | Joins one whose address is known. |
+| `bool join(const string &in game, const string &in address, const string &in name)` | Joins one whose address is known: `a.b.c.d`, `a.b.c.d:port`, or a name to look up, such as `games.example.com:27310`. A room on the internet needs its port let through the host's router; a meeting place doesn't. |
+| `bool meet(const string &in place)` | A meeting place on the internet that every player can reach, `name` or `name:port` (27300 if none is said), run with `--meeting`. Then a room that is hosted is listed there, `find` asks it as well as the network, and joining one found there gets through the routers on the way, or is passed on by the meeting place if that can't be done. Before host, find or join; empty for none. |
+| `bool get_met() const property` | Whether the meeting place has been looked up and can be used. |
+| `bool foundFar(uint index) const` | Whether one was found at the meeting place, rather than on this network. |
+| `bool relayed(int player) const` | Whether what goes to and from a player is passed on by the meeting place, because the routers wouldn't let it through. |
 | `void leave()` | Leaves, or closes it. |
 | `RoomState get_state() const property` | How it is getting on. |
 | `bool get_hosting() const property` | Whether it is this player's. |
@@ -984,12 +988,14 @@ Short texts to anyone, over UDP. They may not arrive, or not in order.
 
 ## Net
 
-The network: rooms for games on the same one, the web, and connections of your own.
+The network: rooms for games on the same one or met on the internet, the web, and connections of your own.
 
 | | |
 |---|---|
 | `bool Net::get_available() property` | Whether there is one. |
 | `string Net::get_address() property` | This machine's own, or empty while it has none. |
+| `string Net::get_meetingPlace() property` | The player's choice of meeting place on the internet, kept between runs: every room meets there, unless its own `meet` says otherwise. Empty for none. |
+| `void Net::set_meetingPlace(const string &in) property` | The player's choice of meeting place on the internet, `name` or `name:port`, kept between runs. Rooms made after it is set meet there. |
 | `Request@ Net::get(const string &in url)` | Asks for a web page, or anything else. |
 | `Request@ Net::post(const string &in url, const string &in body, const string &in type = "application/x-www-form-urlencoded")` | Sends something, and waits for the answer. |
 

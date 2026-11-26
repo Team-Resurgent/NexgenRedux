@@ -228,6 +228,73 @@ NX_TEST(sureMessagesArriveInOrder)
     NX_EXPECT(n.until([&]() { return one.state() == RoomState::Lost && two.state() == RoomState::Lost; }));
 }
 
+NX_TEST(roomsMeetOnTheInternet)
+{
+    Both n;
+    MeetingPlace place;
+    NX_EXPECT(place.open(0, true));
+    const std::string where = "127.0.0.1:" + std::to_string(place.port());
+    const auto until = [&](auto fn)
+    {
+        bool ok = fn();
+        for (int i = 0; i < 600 && !ok; i++)
+        {
+            place.update(n.now);
+            n.step();
+            ok = fn();
+        }
+        return ok;
+    };
+    Room host(n.a), guest(n.b), other(n.b);
+    NX_EXPECT(host.meet(where.c_str()) && host.met());
+    NX_EXPECT(host.host("far", "Faraway", 4));
+    NX_EXPECT(until([&]() { return place.rooms() == 1; }));
+    // Listed there, and found there as well as here.
+    NX_EXPECT(guest.meet(where.c_str()) && guest.find("far"));
+    NX_EXPECT(until([&]() { return guest.found().count() == 1; }));
+    NX_EXPECT(strcmp(guest.found()[0].name, "Faraway") == 0 && guest.found()[0].most == 4);
+    // As if neither router let anything through: introduced, and everything passed on.
+    Room::Found found = guest.found()[0];
+    found.where = { kLoopback, host.port() };
+    found.near = {};
+    found.far = true;
+    guest.setOnlyRelay(true);
+    NX_EXPECT(guest.joinFound("far", found, "Guest"));
+    NX_EXPECT(until([&]() { return guest.state() == RoomState::In && host.players() == 2; }));
+    NX_EXPECT(guest.relayed(0) && host.relayed(1) && place.pairs() == 1);
+    Message m;
+    m.writeText("over the sea");
+    NX_EXPECT(guest.send(m, true, 0));
+    Message* got = nullptr;
+    NX_EXPECT(until([&]() { return (got = host.receive()) != nullptr; }));
+    NX_EXPECT(got && got->readText() == "over the sea" && got->from == 1);
+    if (got)
+    {
+        got->release();
+    }
+    NX_EXPECT(host.send(m, false, 1));
+    NX_EXPECT(until([&]() { return (got = guest.receive()) != nullptr; }));
+    if (got)
+    {
+        got->release();
+    }
+    NX_EXPECT(place.passedOn() > 0);
+    // Another game's rooms aren't listed for it; and one that has gone isn't either.
+    NX_EXPECT(other.meet(where.c_str()) && other.find("something else"));
+    for (int i = 0; i < 100; i++)
+    {
+        place.update(n.now);
+        n.step();
+    }
+    NX_EXPECT(other.found().count() == 0);
+    guest.leave();
+    host.leave();
+    NX_EXPECT(until([&]() { return place.rooms() == 0; }));
+    // None, or one that can't be.
+    Room nowhere(n.b);
+    NX_EXPECT(nowhere.meet("") && !nowhere.met() && !nowhere.meet("127.0.0.1:0") && !nowhere.met());
+}
+
 NX_TEST(roomsFillUp)
 {
     Both n;

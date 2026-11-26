@@ -46,10 +46,20 @@ namespace nx
         bool more() const { return at < size; }
     };
 
-    // --- Rooms: a few players, one of whom is the host, on the same network ---
+    // --- Rooms: a few players, one of whom is the host, on the same network or met on the internet ---
 
     constexpr u32 kRoomPlayers = 8;
     constexpr u16 kRoomPort = 27310;   // and the few after it
+    constexpr u16 kMeetingPort = 27300;
+
+    // A name being looked up, on a worker thread.
+    struct Lookup
+    {
+        std::string name;
+        std::atomic<int> state{ 0 };   // 1 found, 2 not
+        std::atomic<int> users{ 2 };
+        u32 ip = 0;
+    };
 
     enum class RoomState : u8 { Idle, Finding, Joining, In, Lost };
 
@@ -72,7 +82,20 @@ namespace nx
         // Asks everyone on the network, once a second, until something else is done.
         bool find(const char* game);
         bool join(const char* game, const Endpoint& where, const char* name);
+        // "a.b.c.d:port", or a name to look up first.
+        bool join(const char* game, const char* address, const char* name);
         void leave();
+
+        // A meeting place that every player can reach, "name" or "name:port": a room that is hosted is listed
+        // there, finding asks it as well as the network, and joining a room found there is helped through the
+        // routers on the way, or passed on by it if that can't be done. Before host, find or join; "" for none.
+        bool meet(const char* place);
+        // Whether the meeting place has been looked up and can be used.
+        bool met() const { return m_met; }
+        // Whether what goes to and from a player is being passed on by the meeting place.
+        bool relayed(int player) const;
+        // For tests: as if no router let anything through, so everything is passed on.
+        void setOnlyRelay(bool only) { m_onlyRelay = only; }
 
         RoomState state() const { return m_state; }
         bool hosting() const { return m_hosting; }
@@ -87,11 +110,14 @@ namespace nx
         struct Found
         {
             Endpoint where;
+            Endpoint near;     // where it is on its own network, if it was found at the meeting place
             char name[24];
             u32 players, most;
             double heard;
+            bool far;          // found at the meeting place
         };
         const GrowArray<Found, MemTag::General>& found() const { return m_found; }
+        bool joinFound(const char* game, const Found& found, const char* name);
 
         // To one player, or to everyone else with -1. A sure one arrives, and in order; the other is sent
         // once. False if it can't be.
@@ -135,6 +161,7 @@ namespace nx
             u32 theirTime;        // of the last packet, to send back
             double theirTimeAt;
             u16 nextOut, nextIn;  // numbers of sure messages
+            bool relayed;         // through the meeting place
             GrowArray<Out, MemTag::General>* sure;
             Message* early[32];   // that came before their turn
             u8 earlyOrigin[32], earlyTo[32];
@@ -160,7 +187,12 @@ namespace nx
         bool open(u16 port);
         void reset();
         void closeLink(Link& link);
-        void handle(const Endpoint& from, const u8* data, size_t size);
+        void handle(const Endpoint& from, const u8* data, size_t size, bool relayed);
+        void fromMeeting(const u8* data, size_t size);
+        void post(const Endpoint& to, bool relayed, const void* data, size_t size);
+        void toMeeting(const void* data, size_t size);
+        void keepMeeting(double now);
+        bool reachable() const;
         void handleData(Link& link, u32 index, Reader& in);
         void accept(Link& link, u32 index, Message* message, u8 origin, u8 to, bool internal);
         void deliver(Message* message, int from);
@@ -179,8 +211,15 @@ namespace nx
         u32 m_game = 0, m_most = 4;
         int m_me = -1;
         char m_name[24] = {};
-        Endpoint m_server;
+        Endpoint m_server, m_serverNear;
         u32 m_nonce = 0;
+        // The meeting place.
+        char m_place[96] = {};
+        Endpoint m_meeting;
+        Lookup* m_lookup = nullptr;       // of the meeting place's name
+        Lookup* m_hostLookup = nullptr;   // of the name of one being joined
+        bool m_met = false, m_far = false, m_relay = false, m_onlyRelay = false;
+        double m_listed = -10, m_meetAsked = -10, m_findAsked = -10;
         double m_now = 0, m_asked = -10, m_began = 0;
         u32 m_random = 0;
         Player m_players[kRoomPlayers] = {};
@@ -188,6 +227,52 @@ namespace nx
         GrowArray<Message*, MemTag::General> m_inbox;
         GrowArray<Found, MemTag::General> m_found;
         u8 m_arrived = 0, m_departed = 0;
+    };
+
+    // The meeting place itself: run with `--meeting PORT` on a machine that every player can reach.
+    class MeetingPlace : NonCopyable
+    {
+    public:
+        ~MeetingPlace() { close(); }
+        bool open(u16 port, bool onlyHere);
+        void close();
+        u16 port() const { return m_socket.port(); }
+        void update(double now);
+        u32 rooms() const { return m_listings.count(); }
+        u32 pairs() const { return m_pairs.count(); }
+        u64 passedOn() const { return m_passed; }
+
+    private:
+        struct Listing
+        {
+            u32 game;
+            Endpoint where, near;
+            char name[24];
+            u8 players, most;
+            double heard;
+        };
+        struct Pair
+        {
+            Endpoint a, b;
+            double heard, window;
+            u32 bytes;
+        };
+        struct Sender
+        {
+            double window;
+            u32 packets;
+        };
+        void handle(const Endpoint& from, const u8* data, size_t size);
+        bool allowed(const Endpoint& from);
+        Pair* pairOf(const Endpoint& a, const Endpoint& b);
+
+        UdpSocket m_socket;
+        bool m_started = false;
+        double m_now = 0;
+        u64 m_passed = 0;
+        GrowArray<Listing, MemTag::General> m_listings;
+        GrowArray<Pair, MemTag::General> m_pairs;
+        Sender m_senders[256] = {};
     };
 
     // --- The web ---
@@ -333,6 +418,12 @@ namespace nx
 
         double now() const { return m_now; }
         FtpServer& ftp() { return m_ftp; }
+        // The player's choice of meeting place on the internet, which every room meets at unless told otherwise.
+        void setMeetingPlace(const std::string& place) { m_meetingPlace = place.size() < 95 ? place : std::string(); }
+        const std::string& meetingPlace() const { return m_meetingPlace; }
+        // Looks a name up on a worker thread. Let go of it with letGo, whether or not it is done.
+        Lookup* lookUp(const char* name);
+        static void letGo(Lookup* lookup);
         // Only this machine can be reached, and can reach it. For tests.
         void setOnlyHere(bool onlyHere) { m_onlyHere = onlyHere; }
         bool onlyHere() const { return m_onlyHere; }
@@ -363,6 +454,7 @@ namespace nx
         double m_now = 0;
         JobQueue m_jobs[kWorkers];
         FtpServer m_ftp;
+        std::string m_meetingPlace;
         GrowArray<Room*, MemTag::General> m_rooms;
         GrowArray<Connection*, MemTag::General> m_connections;
     };

@@ -55,6 +55,50 @@ namespace nx
         }
     }
 
+    // --- Names ---
+
+    namespace
+    {
+        void runLookup(void* user)
+        {
+            Lookup* lookup = static_cast<Lookup*>(user);
+            u32 ip = 0;
+            const bool ok = netResolve(lookup->name.c_str(), ip);
+            lookup->ip = ip;
+            lookup->state.store(ok ? 1 : 2, std::memory_order_release);
+            Net::letGo(lookup);
+        }
+    }
+
+    Lookup* Net::lookUp(const char* name)
+    {
+        if (!start())
+        {
+            return nullptr;
+        }
+        Lookup* lookup = create<Lookup>(MemTag::General);
+        if (lookup == nullptr)
+        {
+            return nullptr;
+        }
+        lookup->name = name;
+        const u32 worker = m_nextWorker++ % kWorkers;
+        m_working[worker] = m_working[worker] || m_jobs[worker].start();
+        if (!m_working[worker] || !m_jobs[worker].add(runLookup, lookup))
+        {
+            runLookup(lookup);
+        }
+        return lookup;
+    }
+
+    void Net::letGo(Lookup* lookup)
+    {
+        if (lookup->users.fetch_sub(1) == 1)
+        {
+            destroy(lookup);
+        }
+    }
+
     // --- Requests ---
 
     Request::Request(Net& net, const char* url, const char* method, const std::string& body, const char* type)

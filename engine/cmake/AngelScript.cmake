@@ -18,6 +18,10 @@ if(NX_SCRIPT_GENERIC)
 elseif(MSVC AND CMAKE_SIZEOF_VOID_P EQUAL 8 AND CMAKE_CXX_COMPILER_ARCHITECTURE_ID STREQUAL "x64")
   enable_language(ASM_MASM)
   target_sources(nx_angelscript PRIVATE ${_as}/angelscript/source/as_callfunc_x64_msvc_asm.asm)
+elseif(MSVC AND CMAKE_SIZEOF_VOID_P EQUAL 8 AND CMAKE_CXX_COMPILER_ARCHITECTURE_ID STREQUAL "ARM64")
+  # Windows on Arm: MSVC's own assembler for Arm.
+  enable_language(ASM_MARMASM)
+  target_sources(nx_angelscript PRIVATE ${_as}/angelscript/source/as_callfunc_arm64_msvc.asm)
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64|aarch64")
   enable_language(ASM)
   if(APPLE)
@@ -28,7 +32,8 @@ elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64|aarch64")
 endif()
 
 if(MSVC)
-  target_compile_options(nx_angelscript PRIVATE /W0 /utf-8)
+  # Not for the assembly, whose assemblers take other switches.
+  target_compile_options(nx_angelscript PRIVATE "$<$<COMPILE_LANGUAGE:C,CXX>:/W0;/utf-8>")
   target_compile_definitions(nx_angelscript PRIVATE _CRT_SECURE_NO_WARNINGS)
 else()
   # It casts between pointer types freely.

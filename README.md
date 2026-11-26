@@ -131,7 +131,7 @@ The [latest release](https://github.com/Team-Resurgent/NexgenRedux/releases/late
 
 | Package | What to do |
 |---|---|
-| `Nexgen-windows-x64` | Unzip and run `nexgen.exe` |
+| `Nexgen-windows-x64`, `-windows-arm64` | Unzip and run `nexgen.exe` |
 | `Nexgen-linux-x64` | Unpack and run `./nexgen` |
 | `Nexgen-macos-arm64`, `-macos-x64` | Unzip and open the app. It isn't notarised: the first time, right-click it and choose Open |
 | `Nexgen-uwp-x64` | Xbox One, Xbox Series or Windows, in Developer Mode: install the `.cer` and then the package, or upload the package in the Xbox Device Portal |

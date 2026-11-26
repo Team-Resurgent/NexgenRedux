@@ -28,6 +28,7 @@ jobs:
       matrix:
         include:
           - { name: windows-x64, os: windows-latest }
+          - { name: windows-arm64, os: windows-11-arm }
           - { name: linux-x64, os: ubuntu-22.04, options: "'-DCMAKE_EXE_LINKER_FLAGS=-static-libstdc++ -static-libgcc'" }
           - { name: macos-arm64, os: macos-latest }
           - { name: macos-x64, os: macos-15-intel }
@@ -351,7 +352,7 @@ jobs:
 
         | Package | What to do |
         |---|---|
-        | `windows-x64` | Unzip and run `nexgen.exe` |
+        | `windows-x64`, `windows-arm64` | Unzip and run `nexgen.exe` |
         | `linux-x64` | Unpack and run `./nexgen` |
         | `macos-arm64`, `macos-x64` | Unzip and open the app. It is not notarised: the first time, right-click it and choose Open |
         | `uwp-x64` | Xbox One, Xbox Series or Windows, in Developer Mode: install the `.cer` and then the package, or upload the package in the Xbox Device Portal |

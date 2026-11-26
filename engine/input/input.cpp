@@ -206,8 +206,42 @@ namespace nx
 
     // --- Actions ---
 
-    void Input::update(const InputState& state, float dt)
+    void Input::update(const InputState& given, float dt)
     {
+        // The stick moves a pointer, if it is to: faster the further it is pushed. A mouse that moves takes over.
+        InputState state = given;
+        m_stickPointing = false;
+        if (m_pointerX < 0)
+        {
+            m_pointerX = m_screenWidth * 0.5f;
+            m_pointerY = m_screenHeight * 0.5f;
+        }
+        const bool mouseMoved = given.hasMouse && (given.mouseX != m_mouseWasX || given.mouseY != m_mouseWasY);
+        m_mouseWasX = given.mouseX;
+        m_mouseWasY = given.mouseY;
+        if (mouseMoved)
+        {
+            m_pointerX = given.mouseX;
+            m_pointerY = given.mouseY;
+        }
+        for (Gamepad& pad : state.pads)
+        {
+            if (!m_stickPointer || !m_wantsPointer || !pad.connected)
+            {
+                continue;
+            }
+            const float push = sqrtf(pad.leftX * pad.leftX + pad.leftY * pad.leftY);
+            const float speed = m_screenHeight * (0.25f + 1.6f * push * push);
+            m_pointerX = fminf(fmaxf(m_pointerX + pad.leftX * speed * dt, 0), m_screenWidth - 1);
+            m_pointerY = fminf(fmaxf(m_pointerY - pad.leftY * speed * dt, 0), m_screenHeight - 1);
+            state.mouseX = m_pointerX;
+            state.mouseY = m_pointerY;
+            state.mouseButtons[0] = state.mouseButtons[0] || pad.down(Button::A);
+            state.hasMouse = true;
+            pad.buttons &= ~(1u << static_cast<u32>(Button::A));
+            pad.leftX = pad.leftY = 0;
+            m_stickPointing = true;
+        }
         m_typedCount = 0;
         const InputState& from = m_simulatedTyping ? m_raw : state;
         const u32 fresh = from.typedCount - m_typedSeen;

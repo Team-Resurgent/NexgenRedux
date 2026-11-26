@@ -594,6 +594,9 @@ namespace
                         {
                             done = demo.step(services, kStep) || done;
                         }
+                        u32 screenWidth = 0, screenHeight = 0;
+                        device->size(screenWidth, screenHeight);
+                        input.setScreen(static_cast<float>(screenWidth), static_cast<float>(screenHeight));
                         input.update(platform.input(), kStep);
                         services.time += kStep;
                         screens.update(kStep);
@@ -609,6 +612,17 @@ namespace
                     {
                         canvas.begin();
                         screens.draw();
+                        // Where nothing else shows the pointer, it is drawn here: an arrow, outlined.
+                        if ((platform.drawsPointer() && input.raw().hasMouse) || input.stickPointing())
+                        {
+                            u32 w = 0, h = 0;
+                            device->size(w, h);
+                            canvas.design(static_cast<float>(w), static_cast<float>(h));
+                            const float x = input.raw().mouseX, y = input.raw().mouseY, k = static_cast<float>(h) / 480;
+                            const gpu::Color dark = { 0, 0, 0, 0.85f }, light = { 1, 1, 1, 1 };
+                            canvas.triangle({ x - 1.5f * k, y - 2.5f * k }, { x - 1.5f * k, y + 20 * k }, { x + 15 * k, y + 15 * k }, dark, dark, dark);
+                            canvas.triangle({ x, y }, { x, y + 16 * k }, { x + 11.5f * k, y + 12.5f * k }, light, light, light);
+                        }
                         if (options.demo > 0)
                         {
                             demo.caption(services);

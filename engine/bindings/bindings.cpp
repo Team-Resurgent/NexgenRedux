@@ -331,6 +331,10 @@ namespace nx
         Vec2 inputMove() { return services().input->move(); }
         bool inputUsingPad() { return services().input->usingPad(); }
         bool inputHasMouse() { return services().input->raw().hasMouse; }
+        bool inputStickPointer() { return services().input->stickPointer(); }
+        void inputSetStickPointer(bool on) { services().input->setStickPointer(on); }
+        bool inputWantsPointer() { return services().input->wantsPointer(); }
+        void inputSetWantsPointer(bool on) { services().input->setWantsPointer(on); }
         Vec2 inputMouse() { const InputState& i = services().input->raw(); return services().canvas->toDesign(i.mouseX, i.mouseY); }
         bool inputMouseDown(u32 button) { return button < 3 && services().input->raw().mouseButtons[button]; }
         float inputWheel() { return services().input->wheel(); }
@@ -667,7 +671,11 @@ namespace nx
             b.function("bool repeated(const string &in action)", NX_FN(inputRepeated), "pressed(), then again at intervals while held.");
             b.function("Vec2 get_move() property", NX_FN(inputMove), "Direction from keys, d-pad and left stick: x right, y down, never longer than 1.");
             b.function("bool get_usingPad() property", NX_FN(inputUsingPad), "Whether a gamepad was used last.");
-            b.function("bool get_hasMouse() property", NX_FN(inputHasMouse), "Whether a mouse has moved.");
+            b.function("bool get_hasMouse() property", NX_FN(inputHasMouse), "Whether a mouse has moved, or the stick moves a pointer.");
+            b.function("bool get_stickPointer() property", NX_FN(inputStickPointer), "The player's choice: whether, on screens that want a pointer, the left stick moves one and A clicks with it, as a mouse would. Kept with the settings.");
+            b.function("void set_stickPointer(bool) property", NX_FN(inputSetStickPointer), "The player's choice: whether, on screens that want a pointer, the left stick moves one and A clicks with it, as a mouse would. The stick and A then do nothing else, and a mouse that moves takes over. Kept with the settings.");
+            b.function("bool get_wantsPointer() property", NX_FN(inputWantsPointer), "Whether this screen has a use for a pointer.");
+            b.function("void set_wantsPointer(bool) property", NX_FN(inputSetWantsPointer), "Says this screen has a use for a pointer, such as clicking in a 3D view: then, if the player chose it, the stick moves one. Where nothing else shows a pointer, it is drawn. Off again when the screen closes.");
             b.function("Vec2 get_mouse() property", NX_FN(inputMouse), "Where the mouse is, in design units.");
             b.function("bool mouseDown(uint button)", NX_FN(inputMouseDown), "Left is 0, right 1, middle 2.");
             b.function("Vec2 get_mouseMove() property", NX_FN(inputTurn), "How far the mouse has just moved, in design units, even while it is locked.");
@@ -839,6 +847,7 @@ namespace nx
     {
         s.input->loadBindings(s.save->get("bindings", ""));
         s.audio->setMasterVolume(static_cast<float>(atof(s.save->get("volume", "1"))));
+        s.input->setStickPointer(strcmp(s.save->get("stickPointer", "0"), "1") == 0);
         for (u32 i = 0; i < static_cast<u32>(Bus::Count); i++)
         {
             char key[16];
@@ -856,6 +865,7 @@ namespace nx
             s.save->set(key, text);
         };
         s.save->set("bindings", s.input->saveBindings().c_str());
+        s.save->set("stickPointer", s.input->stickPointer() ? "1" : "0");
         volume("volume", s.audio->masterVolume());
         for (u32 i = 0; i < static_cast<u32>(Bus::Count); i++)
         {

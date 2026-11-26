@@ -155,6 +155,8 @@ namespace nx
 
         // The pointer is hidden and kept in the window, for looking about with the mouse. Let go when the window is left.
         virtual void lockMouse(bool) {}
+        // Whether the engine draws the mouse pointer, where nothing else does, and it is to be seen now.
+        virtual bool drawsPointer() const { return false; }
 
         // Physical memory in bytes; 0 if unknown.
         virtual u64 totalMemory() = 0;

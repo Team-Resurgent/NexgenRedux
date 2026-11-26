@@ -219,6 +219,48 @@ NX_TEST(designFitsAnyScreen)
     NX_EXPECT(corner.x == 0 && corner.y == 0);
 }
 
+NX_TEST(stickMovesAPointer)
+{
+    Input input;
+    input.setScreen(640, 480);
+    InputState s;
+    s.pads[0].connected = true;
+    s.pads[0].leftX = 1;
+    // Not unless the player chose it and the screen wants one: until then the stick moves.
+    input.update(s, 1.0f / 60);
+    NX_EXPECT(!input.stickPointing() && input.move().x > 0.9f);
+    input.setStickPointer(true);
+    input.setWantsPointer(true);
+    for (int i = 0; i < 30; i++)
+    {
+        input.update(s, 1.0f / 60);
+    }
+    NX_EXPECT(input.stickPointing() && input.raw().hasMouse && input.raw().mouseX > 400 && input.raw().mouseX < 640 && input.move().x == 0);
+    // A clicks, and is not also Accept.
+    s.pads[0].leftX = 0;
+    s.pads[0].buttons = 1u << static_cast<u32>(Button::A);
+    input.update(s, 1.0f / 60);
+    NX_EXPECT(input.raw().mouseButtons[0] && !input.held(Action::Accept));
+    // Kept on the screen.
+    s.pads[0].leftX = 1;
+    for (int i = 0; i < 300; i++)
+    {
+        input.update(s, 1.0f / 60);
+    }
+    NX_EXPECT(input.raw().mouseX <= 639);
+    // A mouse that moves takes over.
+    s.pads[0].leftX = 0;
+    s.hasMouse = true;
+    s.mouseX = 100;
+    s.mouseY = 50;
+    input.update(s, 1.0f / 60);
+    NX_EXPECT(input.raw().mouseX == 100 && input.raw().mouseY == 50);
+    input.setWantsPointer(false);
+    s.pads[0].leftX = 1;
+    input.update(s, 1.0f / 60);
+    NX_EXPECT(!input.stickPointing() && input.move().x > 0.9f);
+}
+
 NX_TEST(inputActions)
 {
     Input input;

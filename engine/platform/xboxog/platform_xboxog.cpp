@@ -2,6 +2,7 @@
 #include "base/log.h"
 
 #include <xtl.h>
+#include <xkbd.h>
 
 #include <stdio.h>
 
@@ -28,6 +29,17 @@ namespace nx
                         XInputClose(pad);
                     }
                 }
+                for (u32 i = 0; i < kPorts; i++)
+                {
+                    if (m_keyboards[i])
+                    {
+                        XInputClose(m_keyboards[i]);
+                    }
+                    if (m_mice[i])
+                    {
+                        XInputClose(m_mice[i]);
+                    }
+                }
             }
 
             bool init()
@@ -36,8 +48,20 @@ namespace nx
                 QueryPerformanceFrequency(&m_frequency);
                 QueryPerformanceCounter(&m_start);
 
-                XDEVICE_PREALLOC_TYPE types[] = { { XDEVICE_TYPE_GAMEPAD, kMaxPads } };
-                XInitDevices(1, types);
+                // A USB keyboard and mouse too, through an adapter in a controller port or its bottom slot.
+                XDEVICE_PREALLOC_TYPE types[] = { { XDEVICE_TYPE_GAMEPAD, kMaxPads }, { XDEVICE_TYPE_DEBUG_KEYBOARD, 1 }, { XDEVICE_TYPE_DEBUG_MOUSE, 1 } };
+                XInitDevices(3, types);
+                XINPUT_DEBUG_KEYQUEUE_PARAMETERS queue = {};
+                queue.dwFlags = XINPUT_DEBUG_KEYQUEUE_FLAG_KEYDOWN | XINPUT_DEBUG_KEYQUEUE_FLAG_KEYREPEAT | XINPUT_DEBUG_KEYQUEUE_FLAG_KEYUP;
+                queue.dwQueueSize = 32;
+                queue.dwRepeatDelay = 500;
+                queue.dwRepeatInterval = 50;
+                m_keyQueue = XInputDebugInitKeyboardQueue(&queue) == ERROR_SUCCESS;
+                // The mouse stays on the screen, which is this size.
+                const bool pal50 = XGetVideoStandard() == XC_VIDEO_STANDARD_PAL_I && !(XGetVideoFlags() & XC_VIDEO_FLAGS_PAL_60Hz);
+                m_screenHeight = pal50 ? 576.0f : 480.0f;
+                m_input.mouseX = 320;
+                m_input.mouseY = m_screenHeight * 0.5f;
                 return true;
             }
 
@@ -62,7 +86,121 @@ namespace nx
                     }
                     m_input.pads[i] = m_pads[i] ? readPad(m_pads[i]) : Gamepad();
                 }
+                readKeyboard();
+                readMouse();
                 return true;
+            }
+
+            void lockMouse(bool on) override { m_locked = on; }
+            bool drawsPointer() const override { return !m_locked; }
+
+            // Ports, then the bottom slots of each: bits 0 to 3 and 16 to 19.
+            static constexpr u32 kPorts = 8;
+            static DWORD portBit(u32 i) { return 1u << (i < 4 ? i : i + 12); }
+
+            static void openClose(XPP_DEVICE_TYPE* type, HANDLE (&handles)[kPorts], XINPUT_POLLING_PARAMETERS* poll)
+            {
+                const DWORD present = XGetDevices(type);
+                for (u32 i = 0; i < kPorts; i++)
+                {
+                    const bool plugged = (present & portBit(i)) != 0;
+                    if (plugged && handles[i] == nullptr)
+                    {
+                        handles[i] = XInputOpen(type, i % 4, i < 4 ? XDEVICE_NO_SLOT : XDEVICE_BOTTOM_SLOT, poll);
+                    }
+                    else if (!plugged && handles[i])
+                    {
+                        XInputClose(handles[i]);
+                        handles[i] = nullptr;
+                    }
+                }
+            }
+
+            static Key keyOf(BYTE vk)
+            {
+                if (vk >= 'A' && vk <= 'Z')
+                {
+                    return static_cast<Key>(static_cast<u32>(Key::A) + (vk - 'A'));
+                }
+                if (vk >= '0' && vk <= '9')
+                {
+                    return static_cast<Key>(static_cast<u32>(Key::Num0) + (vk - '0'));
+                }
+                switch (vk)
+                {
+                case VK_UP: return Key::Up;
+                case VK_DOWN: return Key::Down;
+                case VK_LEFT: return Key::Left;
+                case VK_RIGHT: return Key::Right;
+                case VK_SPACE: return Key::Space;
+                case VK_RETURN: return Key::Enter;
+                case VK_ESCAPE: return Key::Escape;
+                case VK_TAB: return Key::Tab;
+                case VK_BACK: return Key::Backspace;
+                case VK_SHIFT: case VK_LSHIFT: case VK_RSHIFT: return Key::Shift;
+                case VK_CONTROL: case VK_LCONTROL: case VK_RCONTROL: return Key::Control;
+                default: return Key::None;
+                }
+            }
+
+            void readKeyboard()
+            {
+                if (!m_keyQueue)
+                {
+                    return;
+                }
+                XINPUT_POLLING_PARAMETERS poll = {};
+                poll.fAutoPoll = TRUE;
+                poll.fInterruptOut = TRUE;
+                poll.bInputInterval = 32;
+                poll.bOutputInterval = 32;
+                openClose(XDEVICE_TYPE_DEBUG_KEYBOARD, m_keyboards, &poll);
+                // One queue for every keyboard.
+                XINPUT_DEBUG_KEYSTROKE stroke;
+                for (u32 n = 0; n < 32 && XInputDebugGetKeystroke(&stroke) == ERROR_SUCCESS; n++)
+                {
+                    const bool up = (stroke.Flags & XINPUT_DEBUG_KEYSTROKE_FLAG_KEYUP) != 0;
+                    const Key key = keyOf(stroke.VirtualKey);
+                    if (key != Key::None)
+                    {
+                        m_input.keys[static_cast<size_t>(key)] = !up;
+                    }
+                    if (!up && stroke.Ascii)
+                    {
+                        m_input.type(static_cast<u8>(stroke.Ascii));
+                    }
+                }
+            }
+
+            void readMouse()
+            {
+                openClose(XDEVICE_TYPE_DEBUG_MOUSE, m_mice, nullptr);
+                for (u32 i = 0; i < kPorts; i++)
+                {
+                    XINPUT_STATE state;
+                    if (m_mice[i] == nullptr || XInputGetState(m_mice[i], &state) != ERROR_SUCCESS)
+                    {
+                        continue;
+                    }
+                    const XINPUT_MOUSE& m = state.DebugMouse;
+                    m_input.mouseButtons[0] = (m.bButtons & XINPUT_DEBUG_MOUSE_LEFT_BUTTON) != 0;
+                    m_input.mouseButtons[1] = (m.bButtons & XINPUT_DEBUG_MOUSE_RIGHT_BUTTON) != 0;
+                    m_input.mouseButtons[2] = (m.bButtons & XINPUT_DEBUG_MOUSE_MIDDLE_BUTTON) != 0;
+                    if (state.dwPacketNumber == m_mousePacket[i])
+                    {
+                        continue;
+                    }
+                    // What it moved by since the last report.
+                    m_mousePacket[i] = state.dwPacketNumber;
+                    const float dx = static_cast<float>(m.cMickeysX), dy = static_cast<float>(m.cMickeysY);
+                    m_input.turnX += dx;
+                    m_input.turnY += dy;
+                    m_input.wheel += static_cast<float>(m.cWheel);
+                    const float x = m_input.mouseX + dx, y = m_input.mouseY + dy;
+                    m_input.mouseX = x < 0 ? 0 : x > 639 ? 639 : x;
+                    m_input.mouseY = y < 0 ? 0 : y > m_screenHeight - 1 ? m_screenHeight - 1 : y;
+                    m_input.hasMouse = m_input.hasMouse || dx != 0 || dy != 0 || m.bButtons != 0;
+                }
             }
 
             const InputState& input() const override { return m_input; }
@@ -276,6 +414,11 @@ namespace nx
             LARGE_INTEGER m_start = {};
             InputState m_input;
             HANDLE m_pads[kMaxPads] = {};
+            HANDLE m_keyboards[kPorts] = {};
+            HANDLE m_mice[kPorts] = {};
+            DWORD m_mousePacket[kPorts] = {};
+            bool m_keyQueue = false, m_locked = false;
+            float m_screenHeight = 480;
         };
     }
 

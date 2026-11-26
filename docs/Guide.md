@@ -559,6 +559,13 @@ A `Voice` is safe to use after the sound has ended. A screen's sounds pause whil
 Scripts ask for actions, not keys: `up`, `down`, `left`, `right`, `accept`, `cancel`, `fire`, `alternate` and `menu`. Players
 can change every one except `menu`; the Settings demo shows how. `Input::move` gives a direction from keys, d-pad or stick.
 
+On the original Xbox, a USB keyboard and mouse work too, through an adapter in a controller port or its bottom slot: keys,
+typing and the mouse are read as they are on a computer, and the engine draws the pointer, since nothing else there does.
+Where there is only a controller, the stick can move a pointer instead, and A click with it: the player chooses that in
+Settings (`Input::stickPointer`, kept with the other settings), and a screen says it has a use for one with
+`Input::wantsPointer = true`, as the scene editor does while editing. The stick and A then do nothing else, and a mouse
+that moves takes over.
+
 ## Coroutines and tweens
 
 A coroutine is a function that can wait:

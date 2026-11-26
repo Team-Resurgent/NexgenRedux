@@ -29,6 +29,18 @@ namespace nx
         // Once per update step.
         void update(const InputState& state, float dt);
 
+        // A pointer the left stick moves, and A clicks with, as a mouse would: where the player chose it (it is
+        // kept with the settings), on screens that want a pointer. The stick and A then do nothing else. A mouse
+        // that moves takes it over.
+        void setStickPointer(bool on) { m_stickPointer = on; }
+        bool stickPointer() const { return m_stickPointer; }
+        void setWantsPointer(bool on) { m_wantsPointer = on; }
+        bool wantsPointer() const { return m_wantsPointer; }
+        // Whether the stick is moving a pointer now.
+        bool stickPointing() const { return m_stickPointing; }
+        // The size of the screen in pixels, which the pointer stays on.
+        void setScreen(float width, float height) { m_screenWidth = width; m_screenHeight = height; }
+
         bool held(Action a) const { return m_held[index(a)]; }
         bool pressed(Action a) const { return m_held[index(a)] && !m_before[index(a)]; }
         bool released(Action a) const { return !m_held[index(a)] && m_before[index(a)]; }
@@ -107,6 +119,8 @@ namespace nx
         float m_backHeldFor = 0;
         Vec2 m_move;
         InputState m_raw;
+        bool m_stickPointer = false, m_wantsPointer = false, m_stickPointing = false;
+        float m_pointerX = -1, m_pointerY = -1, m_screenWidth = 1280, m_screenHeight = 720, m_mouseWasX = -1, m_mouseWasY = -1;
         bool m_usingPad = false;
         bool m_usedKeys = false;
         bool m_typing = false;

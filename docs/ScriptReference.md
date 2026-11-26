@@ -224,7 +224,11 @@ Actions are `up`, `down`, `left`, `right`, `accept`, `cancel`, `fire`, `alternat
 | `bool Input::repeated(const string &in action)` | pressed(), then again at intervals while held. |
 | `Vec2 Input::get_move() property` | Direction from keys, d-pad and left stick: x right, y down, never longer than 1. |
 | `bool Input::get_usingPad() property` | Whether a gamepad was used last. |
-| `bool Input::get_hasMouse() property` | Whether a mouse has moved. |
+| `bool Input::get_hasMouse() property` | Whether a mouse has moved, or the stick moves a pointer. |
+| `bool Input::get_stickPointer() property` | The player's choice: whether, on screens that want a pointer, the left stick moves one and A clicks with it, as a mouse would. Kept with the settings. |
+| `void Input::set_stickPointer(bool) property` | The player's choice: whether, on screens that want a pointer, the left stick moves one and A clicks with it, as a mouse would. The stick and A then do nothing else, and a mouse that moves takes over. Kept with the settings. |
+| `bool Input::get_wantsPointer() property` | Whether this screen has a use for a pointer. |
+| `void Input::set_wantsPointer(bool) property` | Says this screen has a use for a pointer, such as clicking in a 3D view: then, if the player chose it, the stick moves one. Where nothing else shows a pointer, it is drawn. Off again when the screen closes. |
 | `Vec2 Input::get_mouse() property` | Where the mouse is, in design units. |
 | `bool Input::mouseDown(uint button)` | Left is 0, right 1, middle 2. |
 | `Vec2 Input::get_mouseMove() property` | How far the mouse has just moved, in design units, even while it is locked. |

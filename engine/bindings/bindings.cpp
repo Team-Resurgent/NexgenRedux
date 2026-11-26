@@ -256,6 +256,16 @@ namespace nx
             const Asset* a = assetOf(f);
             return a ? c->paragraph(*a, text.c_str(), x, y, width, color) : 0;
         }
+        float drawRich(const FontRef* f, const std::string& text, float x, float y, float width, const Color& color, Align align, Canvas* c)
+        {
+            const Asset* a = assetOf(f);
+            return a ? c->rich(*a, text.c_str(), x, y, width, color, align) : 0;
+        }
+        float richHeight(const FontRef* f, const std::string& text, float width, Canvas* c)
+        {
+            const Asset* a = assetOf(f);
+            return a ? c->richHeight(*a, text.c_str(), width) : 0;
+        }
         Vec2 fontMeasure(const std::string& text, const FontRef* f) { return services().canvas->measure(*f->asset, text.c_str()); }
 
         // --- Sound ---
@@ -789,6 +799,8 @@ namespace nx
             b.method("void tile(const Texture@+ texture, float x, float y, float w, float h, float tileW, float tileH, float offsetX, float offsetY, const Color &in tint = White)", NX_OBJ_LAST(drawTile), "An image repeated over an area.");
             b.method("float text(const Font@+ font, const string &in text, float x, float y, const Color &in color = White, Align align = AlignLeft)", NX_OBJ_LAST(drawText), "Text from its top. Returns its width.");
             b.method("float paragraph(const Font@+ font, const string &in text, float x, float y, float width, const Color &in color = White)", NX_OBJ_LAST(drawParagraph), "Text broken into lines to fit a width. Returns its height.");
+            b.method("float rich(const Font@+ font, const string &in text, float x, float y, float width, const Color &in color = White, Align align = AlignLeft)", NX_OBJ_LAST(drawRich), "A paragraph with parts of it marked: `[color=#ff8000]` or `[color=orange]` ... `[/color]`, `[b]` bold `[/b]`, `[u]` underlined `[/u]`, `[s]` struck through `[/s]`; `[[` is a [ itself. The colours are white, black, red, green, blue, yellow, orange, pink, purple, cyan and gray, or #rrggbb and #rrggbbaa. Returns its height.");
+            b.method("float richHeight(const Font@+ font, const string &in text, float width)", NX_OBJ_LAST(richHeight), "How tall that would be, with nothing drawn.");
         }
 
         void bindInput(Binder& b)

@@ -77,6 +77,10 @@ differs. `designHeight(720)` fills any shape instead, and you lay out by `width`
 `push()` saves position, rotation, scale, alpha, blend, filter and clip, and `pop()` goes back. Drawing that uses one image and
 one blend mode goes to the GPU together, so sort by image where you can.
 
+`rich` draws a paragraph with some of it marked: `[color=orange]`, `[b]`, `[u]` and `[s]`, each ended with `[/color]`, `[/b]`,
+`[/u]` or `[/s]`, and `[[` for a bracket itself. Colours are names (white, black, red, green, blue, yellow, orange, pink, purple,
+cyan, gray) or `#rrggbb`. It wraps as `paragraph` does, and `richHeight` says how tall it will be.
+
 ## Scenes
 
 `Canvas` draws whatever you tell it to each frame. For things that move, collide and come and go, let the engine keep them:

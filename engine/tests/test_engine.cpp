@@ -133,6 +133,32 @@ NX_TEST(fontsRender)
     w.assets.release(font);
 }
 
+NX_TEST(richTextWrapsAsItsWordsDo)
+{
+    Rig w;
+    Asset* font = w.assets.font("global/freesans.sfn", 24);
+    if (font->font)
+    {
+        const char* plain = "Some words, some of them bold and some of them coloured, wrapped to a narrow width.";
+        const char* marked = "Some words, [b]some of them bold[/b] and [color=#ff8000]some of [u]them[/u] coloured[/color], wrapped to a [s]narrow[/s] width.";
+        for (const float width : { 120.0f, 260.0f, 2000.0f })
+        {
+            NX_EXPECT(w.canvas.richHeight(*font, marked, width) == w.canvas.paragraphHeight(*font, plain, width));
+        }
+        // [[ is a bracket; tags it doesn't know, and a colour it can't read, stay as they were.
+        NX_EXPECT(w.canvas.richHeight(*font, "[[b]", 2000) == w.canvas.paragraphHeight(*font, "[b]", 2000));
+        NX_EXPECT(w.canvas.richHeight(*font, "[x] [color=nope]", 50) == w.canvas.paragraphHeight(*font, "[x] [color=nope]", 50));
+        w.device->beginFrame({});
+        w.canvas.begin();
+        // Drawn, the height is the end less the start, which may round a little differently.
+        NX_EXPECT(fabsf(w.canvas.rich(*font, marked, 10, 10, 200, { 1, 1, 1, 1 }) - w.canvas.paragraphHeight(*font, plain, 200)) < 0.01f);
+        w.canvas.rich(*font, "[b][u][color=red]unclosed", 10, 10, 200, { 1, 1, 1, 1 });
+        w.canvas.end();
+        w.device->endFrame();
+    }
+    w.assets.release(font);
+}
+
 NX_TEST(thinLettersAreNeverLost)
 {
     // Drawn smaller than it was made, anything narrower than a pixel could fall between two.

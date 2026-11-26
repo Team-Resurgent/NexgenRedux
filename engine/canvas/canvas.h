@@ -94,6 +94,10 @@ namespace nx
         float paragraph(const Asset& font, const char* text, float x, float y, float width, const Color& color, Align align = Align::Left);
         // How tall that would be, with nothing drawn.
         float paragraphHeight(const Asset& font, const char* text, float width) const;
+        // A paragraph with some of it marked: [color=#ff8000] or [color=orange] ... [/color], [b] bold [/b], [u] underlined
+        // [/u], [s] struck through [/s]; [[ is a [ itself. Returns the height. rich.cpp.
+        float rich(const Asset& font, const char* text, float x, float y, float width, const Color& color, Align align = Align::Left);
+        float richHeight(const Asset& font, const char* text, float width) const;
 
         // Before something else draws: everything so far goes first.
         void finish() { flush(); }

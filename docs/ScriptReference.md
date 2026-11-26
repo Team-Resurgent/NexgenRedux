@@ -235,6 +235,8 @@ What each colour of a picture becomes: warmer, colder, faded, harder. Settings, 
 | `void tile(const Texture@+ texture, float x, float y, float w, float h, float tileW, float tileH, float offsetX, float offsetY, const Color &in tint = White)` | An image repeated over an area. |
 | `float text(const Font@+ font, const string &in text, float x, float y, const Color &in color = White, Align align = AlignLeft)` | Text from its top. Returns its width. |
 | `float paragraph(const Font@+ font, const string &in text, float x, float y, float width, const Color &in color = White)` | Text broken into lines to fit a width. Returns its height. |
+| `float rich(const Font@+ font, const string &in text, float x, float y, float width, const Color &in color = White, Align align = AlignLeft)` | A paragraph with parts of it marked: `[color=#ff8000]` or `[color=orange]` ... `[/color]`, `[b]` bold `[/b]`, `[u]` underlined `[/u]`, `[s]` struck through `[/s]`; `[[` is a [ itself. The colours are white, black, red, green, blue, yellow, orange, pink, purple, cyan and gray, or #rrggbb and #rrggbbaa. Returns its height. |
+| `float richHeight(const Font@+ font, const string &in text, float width)` | How tall that would be, with nothing drawn. |
 
 ## Input
 

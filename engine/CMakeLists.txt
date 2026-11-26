@@ -124,7 +124,7 @@ if(NX_PLATFORM AND NOT XBOXOG)
   target_compile_definitions(nx_assets PRIVATE NX_FBX)
 endif()
 
-add_library(nx_canvas STATIC canvas/canvas.cpp canvas/look.cpp)
+add_library(nx_canvas STATIC canvas/canvas.cpp canvas/look.cpp canvas/rich.cpp)
 target_link_libraries(nx_canvas PUBLIC nx_assets)
 nx_options(nx_canvas)
 

@@ -254,8 +254,11 @@ namespace nx
             d.lit = false;
             d.volume = volume;
             d.volumeScale = 1.0f / m.grain;
-            // Drifting with the wind, and turning over slowly as it goes.
-            d.volumeOffset = Vec3(-m_wind.x * m_time * 0.04f * m.swirl, m_time * 0.015f * m.swirl, -m_wind.z * m_time * 0.04f * m.swirl);
+            // Drifting with the wind, and rising: a bank of it hardly at all, smoke steadily, fire in leaps. In metres a
+            // second, and the noise is moved the other way to move what is seen this way.
+            const float rise = 0.04f * m.swirl * m.swirl;
+            const Vec3 drift = Vec3(m_wind.x * 0.35f, rise, m_wind.z * 0.35f);
+            d.volumeOffset = drift * (-m_time * d.volumeScale);
             if (!volume)
             {
                 // Without volumes: plain, which is still soft at its edges.

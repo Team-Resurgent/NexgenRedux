@@ -235,7 +235,7 @@ class Trailer:
                     g, ssize, s.get('subColor', '0xd8e4ff'), int(H * y + size * 0.62), self.fade(s, a + 0.4 * beat, b)))
         if 'counter' in s:
             n = int(s['counter'])
-            g = self.text('c%s.txt' % key, '%%{eif:min(%d,floor(%d*pow(min(1,(t-%.3f)/%.3f),0.6))):d}%s' % (
+            g = self.text('c%s.txt' % key, '%%{eif:min(%d,floor(%d*pow(min(1,max(0,(t-%.3f)/%.3f)),0.6))):d}%s' % (
                 n, n, s['_half'] + a, max(0.1, s.get('counterBeats', 4) * beat), s.get('counterSuffix', '')))
             size = int(s.get('counterSize', 220) * k)
             layers.append("drawtext=fontfile=bold.ttf:textfile=%s:expansion=normal:fontsize=%d:fontcolor=white:x=(w-text_w)/2:y=%d:alpha=%s" % (
@@ -419,7 +419,7 @@ class Trailer:
         script = os.path.join(self.work, 'final.txt')
         open(script, 'w', encoding='utf-8').write(';'.join(chain))
         ffmpeg(inputs + ['-filter_complex_script', 'final.txt', '-map', '[vout]', '-map', '[aout]', '-r', str(self.fps), '-pix_fmt', 'yuv420p',
-                         '-c:v', 'libx264', '-preset', 'slow', '-crf', '17', '-c:a', 'aac', '-b:a', '256k', '-movflags', '+faststart', self.output], self.work)
+                         '-c:v', 'libx264', '-preset', 'slow', '-crf', '18', '-maxrate', '18M', '-bufsize', '36M', '-c:a', 'aac', '-b:a', '256k', '-movflags', '+faststart', self.output], self.work)
         print('made %s, %.1f seconds' % (self.output, self.total))
 
 

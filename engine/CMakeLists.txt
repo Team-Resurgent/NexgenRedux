@@ -219,7 +219,7 @@ if(NX_PLATFORM)
   elseif(NX_PLATFORM STREQUAL "linux")
     target_link_libraries(nx_platform PRIVATE X11 GL)
   elseif(NX_PLATFORM STREQUAL "macos")
-    target_link_libraries(nx_platform PRIVATE "-framework Cocoa" "-framework OpenGL" "-framework GameController")
+    target_link_libraries(nx_platform PRIVATE "-framework Cocoa" "-framework OpenGL" "-framework GameController" "-framework CoreHaptics")
   endif()
   if(NX_PLATFORM STREQUAL "uwp")
     # The system's C++ calls report errors as exceptions, so this library alone has them.

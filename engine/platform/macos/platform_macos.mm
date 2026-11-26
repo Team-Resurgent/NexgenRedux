@@ -1,6 +1,7 @@
 #define GL_SILENCE_DEPRECATION
 #define __ASSERT_MACROS_DEFINE_VERSIONS_WITHOUT_UNDERSCORES 0
 #import <Cocoa/Cocoa.h>
+#import <CoreHaptics/CoreHaptics.h>
 #import <GameController/GameController.h>
 
 #include "base/log.h"
@@ -118,6 +119,10 @@ namespace nx
             {
                 @autoreleasepool
                 {
+                    for (PadHaptics& h : m_haptics)
+                    {
+                        stopHaptics(h);
+                    }
                     if (m_context)
                     {
                         [NSOpenGLContext clearCurrentContext];
@@ -349,6 +354,76 @@ namespace nx
                 [NSApp sendEvent:event];
             }
 
+            // Through the pad's own haptics: one continuous buzz, as strong as the stronger motor, sharper the more of it
+            // is the light one.
+            void rumble(u32 pad, float heavy, float light) override
+            {
+                if (pad >= kMaxPads)
+                {
+                    return;
+                }
+                @autoreleasepool
+                {
+                    PadHaptics& h = m_haptics[pad];
+                    GCController* controller = controllerAt(pad);
+                    if (controller != h.controller)
+                    {
+                        stopHaptics(h);
+                        h.controller = controller;
+                    }
+                    const float level = heavy > light ? heavy : light;
+                    if (level <= 0)
+                    {
+                        if (h.player)
+                        {
+                            [h.player stopAtTime:0 error:nil];
+                            [h.player release];
+                            h.player = nil;
+                        }
+                        return;
+                    }
+                    if (controller == nil || [controller haptics] == nil)
+                    {
+                        return;
+                    }
+                    if (h.engine == nil)
+                    {
+                        CHHapticEngine* engine = [[controller haptics] createEngineWithLocality:GCHapticsLocalityDefault];
+                        if (engine == nil || ![engine startAndReturnError:nil])
+                        {
+                            return;
+                        }
+                        h.engine = [engine retain];
+                    }
+                    if (h.player == nil)
+                    {
+                        CHHapticEventParameter* strength = [[[CHHapticEventParameter alloc] initWithParameterID:CHHapticEventParameterIDHapticIntensity value:1] autorelease];
+                        CHHapticEventParameter* sharpness = [[[CHHapticEventParameter alloc] initWithParameterID:CHHapticEventParameterIDHapticSharpness value:0.5f] autorelease];
+                        CHHapticEvent* buzz = [[[CHHapticEvent alloc] initWithEventType:CHHapticEventTypeHapticContinuous parameters:@[ strength, sharpness ] relativeTime:0 duration:30] autorelease];
+                        CHHapticPattern* pattern = [[[CHHapticPattern alloc] initWithEvents:@[ buzz ] parameters:@[] error:nil] autorelease];
+                        id<CHHapticAdvancedPatternPlayer> player = pattern ? [h.engine createAdvancedPlayerWithPattern:pattern error:nil] : nil;
+                        if (player == nil)
+                        {
+                            return;
+                        }
+                        [player setLoopEnabled:YES];
+                        if (![player startAtTime:0 error:nil])
+                        {
+                            return;
+                        }
+                        h.player = [player retain];
+                    }
+                    const float total = heavy + light;
+                    CHHapticDynamicParameter* strength = [[[CHHapticDynamicParameter alloc] initWithParameterID:CHHapticDynamicParameterIDHapticIntensityControl value:level relativeTime:0] autorelease];
+                    CHHapticDynamicParameter* sharpness = [[[CHHapticDynamicParameter alloc] initWithParameterID:CHHapticDynamicParameterIDHapticSharpnessControl value:total > 0 ? (light - heavy) / total * 0.5f : 0 relativeTime:0] autorelease];
+                    if (![h.player sendParameters:@[ strength, sharpness ] atTime:0 error:nil])
+                    {
+                        // The engine stopped by itself, as it may: made again next time.
+                        stopHaptics(h);
+                    }
+                }
+            }
+
             void lockMouse(bool on) override
             {
                 if (on == m_locked || m_window == nil)
@@ -438,6 +513,42 @@ namespace nx
             }
 
             NexgenDelegate* m_delegate = nil;
+            struct PadHaptics
+            {
+                GCController* controller = nil;   // which it was made for: only compared, not kept
+                CHHapticEngine* engine = nil;
+                id<CHHapticAdvancedPatternPlayer> player = nil;
+            };
+            PadHaptics m_haptics[kMaxPads];
+
+            // The same order as readPads gives them.
+            static GCController* controllerAt(u32 pad)
+            {
+                u32 next = 0;
+                for (GCController* controller in [GCController controllers])
+                {
+                    if ([controller extendedGamepad] != nil && next++ == pad)
+                    {
+                        return controller;
+                    }
+                }
+                return nil;
+            }
+
+            static void stopHaptics(PadHaptics& h)
+            {
+                if (h.player)
+                {
+                    [h.player stopAtTime:0 error:nil];
+                    [h.player release];
+                }
+                if (h.engine)
+                {
+                    [h.engine stopWithCompletionHandler:nil];
+                    [h.engine release];
+                }
+                h = PadHaptics();
+            }
             NSWindow* m_window = nil;
             NSOpenGLContext* m_context = nil;
             void* m_library = nullptr;

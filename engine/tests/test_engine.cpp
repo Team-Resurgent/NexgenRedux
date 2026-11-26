@@ -261,6 +261,34 @@ NX_TEST(stickMovesAPointer)
     NX_EXPECT(!input.stickPointing() && input.move().x > 0.9f);
 }
 
+NX_TEST(inputRumble)
+{
+    Input input;
+    InputState s;
+    s.pads[0].connected = s.pads[1].connected = true;
+    input.update(s, 1.0f / 60);
+    float heavy = -1, light = -1;
+    NX_EXPECT(!input.rumbleChanged(0, heavy, light));   // still, and the platform already knows
+    input.rumble(-1, 0.8f, 0.3f, 0.5f);
+    NX_EXPECT(input.rumbleChanged(0, heavy, light) && heavy == 0.8f && light == 0.3f);
+    NX_EXPECT(!input.rumbleChanged(0, heavy, light));   // told once
+    NX_EXPECT(input.rumbleChanged(1, heavy, light) && heavy == 0.8f);
+    NX_EXPECT(!input.rumbleChanged(2, heavy, light));   // nothing there
+    input.rumble(1, 2, -1, 1);                          // kept within 0 to 1
+    NX_EXPECT(input.rumbleChanged(1, heavy, light) && heavy == 1 && light == 0);
+    for (int i = 0; i < 40; i++)
+    {
+        input.update(s, 1.0f / 60);
+    }
+    NX_EXPECT(input.rumbleChanged(0, heavy, light) && heavy == 0 && light == 0);   // its half second is over
+    NX_EXPECT(!input.rumbleChanged(1, heavy, light));                              // a second, not over yet
+    input.setRumbleOn(false);
+    NX_EXPECT(input.rumbleChanged(1, heavy, light) && heavy == 0);                 // the player said no
+    input.setRumbleOn(true);
+    input.stopRumble();
+    NX_EXPECT(!input.rumbleChanged(1, heavy, light));
+}
+
 NX_TEST(inputActions)
 {
     Input input;

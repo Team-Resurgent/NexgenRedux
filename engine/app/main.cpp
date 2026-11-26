@@ -652,6 +652,14 @@ namespace
                             done = tour.step(services, ok) || done;
                         }
                     }
+                    for (u32 i = 0; i < kMaxPads; i++)
+                    {
+                        float heavy, light;
+                        if (input.rumbleChanged(i, heavy, light))
+                        {
+                            platform.rumble(i, heavy, light);
+                        }
+                    }
                     const double updated = platform.seconds();
                     updating += updated - now;
                     if (device->beginFrame({ 0, 0, 0, 1 }))
@@ -714,6 +722,11 @@ namespace
                 }
             }
             screens.shutdown();
+            // No pad goes on shaking after the program has gone.
+            for (u32 i = 0; i < kMaxPads; i++)
+            {
+                platform.rumble(i, 0, 0);
+            }
             coroutines.shutdown();
             host.shutdown();
             audio.shutdown();

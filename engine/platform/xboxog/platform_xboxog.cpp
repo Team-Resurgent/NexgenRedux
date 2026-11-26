@@ -5,6 +5,7 @@
 #include <xkbd.h>
 
 #include <stdio.h>
+#include <string.h>
 
 namespace nx
 {
@@ -83,8 +84,11 @@ namespace nx
                     {
                         XInputClose(m_pads[i]);
                         m_pads[i] = nullptr;
+                        // What was being sent went with it; the next pad starts still.
+                        m_rumble[i] = PadRumble();
                     }
                     m_input.pads[i] = m_pads[i] ? readPad(m_pads[i]) : Gamepad();
+                    sendRumble(i);
                 }
                 readKeyboard();
                 readMouse();
@@ -92,6 +96,33 @@ namespace nx
             }
 
             void lockMouse(bool on) override { m_locked = on; }
+
+            void rumble(u32 pad, float heavy, float light) override
+            {
+                if (pad < kMaxPads)
+                {
+                    m_rumble[pad].heavy = static_cast<WORD>(heavy * 65535);
+                    m_rumble[pad].light = static_cast<WORD>(light * 65535);
+                    m_rumble[pad].due = true;
+                    sendRumble(pad);
+                }
+            }
+
+            // The pad is told while it isn't still busy with what it was told last: until then the request waits, and
+            // only the latest is sent.
+            void sendRumble(u32 pad)
+            {
+                PadRumble& r = m_rumble[pad];
+                if (!r.due || m_pads[pad] == nullptr || r.feedback.Header.dwStatus == ERROR_IO_PENDING)
+                {
+                    return;
+                }
+                memset(&r.feedback, 0, sizeof(r.feedback));
+                r.feedback.Rumble.wLeftMotorSpeed = r.heavy;
+                r.feedback.Rumble.wRightMotorSpeed = r.light;
+                XInputSetState(m_pads[pad], &r.feedback);
+                r.due = false;
+            }
             bool drawsPointer() const override { return !m_locked; }
 
             // Ports, then the bottom slots of each: bits 0 to 3 and 16 to 19.
@@ -414,6 +445,13 @@ namespace nx
             LARGE_INTEGER m_start = {};
             InputState m_input;
             HANDLE m_pads[kMaxPads] = {};
+            struct PadRumble
+            {
+                XINPUT_FEEDBACK feedback = {};  // the pad reads it until its status is no longer pending
+                WORD heavy = 0, light = 0;
+                bool due = false;
+            };
+            PadRumble m_rumble[kMaxPads];
             HANDLE m_keyboards[kPorts] = {};
             HANDLE m_mice[kPorts] = {};
             DWORD m_mousePacket[kPorts] = {};

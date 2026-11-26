@@ -64,14 +64,24 @@ namespace nx
             i32 high[ABS_CNT] = {};
             float axes[ABS_CNT] = {};
             u32 buttons = 0;
+            bool rumbles = false;   // it has motors, and may be written to
+            int effect = -1;        // the rumble given to it, which is changed rather than made again
 
             bool open(const char* device)
             {
-                file = ::open(device, O_RDONLY | O_NONBLOCK | O_CLOEXEC);
+                // Written to as well, for rumble, where that is allowed.
+                file = ::open(device, O_RDWR | O_NONBLOCK | O_CLOEXEC);
+                const bool writable = file >= 0;
+                if (file < 0)
+                {
+                    file = ::open(device, O_RDONLY | O_NONBLOCK | O_CLOEXEC);
+                }
                 if (file < 0)
                 {
                     return false;
                 }
+                u8 forces[FF_CNT / 8 + 1] = {};
+                rumbles = writable && ioctl(file, EVIOCGBIT(EV_FF, sizeof(forces)), forces) >= 0 && (forces[FF_RUMBLE / 8] & (1 << (FF_RUMBLE % 8)));
                 u8 keys[KEY_CNT / 8 + 1] = {};
                 ioctl(file, EVIOCGBIT(EV_KEY, sizeof(keys)), keys);
                 if (!(keys[BTN_GAMEPAD / 8] & (1 << (BTN_GAMEPAD % 8))))
@@ -100,6 +110,33 @@ namespace nx
                     ::close(file);
                 }
                 *this = EvdevPad();
+            }
+
+            void rumble(float heavy, float light)
+            {
+                if (file < 0 || !rumbles)
+                {
+                    return;
+                }
+                ff_effect e = {};
+                e.type = FF_RUMBLE;
+                e.id = static_cast<i16>(effect);
+                e.u.rumble.strong_magnitude = static_cast<u16>(heavy * 65535);
+                e.u.rumble.weak_magnitude = static_cast<u16>(light * 65535);
+                e.replay.length = 0;  // until it is stopped
+                if (ioctl(file, EVIOCSFF, &e) < 0)
+                {
+                    return;
+                }
+                effect = e.id;
+                input_event play = {};
+                play.type = EV_FF;
+                play.code = static_cast<u16>(effect);
+                play.value = heavy > 0 || light > 0 ? 1 : 0;
+                if (::write(file, &play, sizeof(play)) < 0)
+                {
+                    rumbles = false;
+                }
             }
 
             // -1 to 1 across the axis's range.
@@ -519,6 +556,14 @@ namespace nx
                     const long done[5] = { static_cast<long>(m_window), selection.property != 0, static_cast<long>(m_drop[DropCopy]), 0, 0 };
                     sendDrop(m_dropFrom, DropFinished, done);
                     m_dropFrom = 0;
+                }
+            }
+
+            void rumble(u32 pad, float heavy, float light) override
+            {
+                if (pad < kMaxPads)
+                {
+                    m_pads[pad].rumble(heavy, light);
                 }
             }
 

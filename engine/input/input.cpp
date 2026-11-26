@@ -206,8 +206,50 @@ namespace nx
 
     // --- Actions ---
 
+    void Input::rumble(int pad, float heavy, float light, float seconds)
+    {
+        for (u32 i = 0; i < kMaxPads; i++)
+        {
+            if (pad < 0 || static_cast<u32>(pad) == i)
+            {
+                Rumble& r = m_rumble[i];
+                r.heavy = heavy < 0 ? 0 : heavy > 1 ? 1 : heavy;
+                r.light = light < 0 ? 0 : light > 1 ? 1 : light;
+                r.left = seconds > 0 ? seconds : 0;
+            }
+        }
+    }
+
+    void Input::stopRumble()
+    {
+        rumble(-1, 0, 0, 0);
+    }
+
+    bool Input::rumbleChanged(u32 pad, float& heavy, float& light)
+    {
+        if (pad >= kMaxPads)
+        {
+            return false;
+        }
+        Rumble& r = m_rumble[pad];
+        const bool on = m_rumbleOn && r.left > 0 && m_raw.pads[pad].connected;
+        heavy = on ? r.heavy : 0;
+        light = on ? r.light : 0;
+        if (heavy == r.sentHeavy && light == r.sentLight)
+        {
+            return false;
+        }
+        r.sentHeavy = heavy;
+        r.sentLight = light;
+        return true;
+    }
+
     void Input::update(const InputState& given, float dt)
     {
+        for (Rumble& r : m_rumble)
+        {
+            r.left = r.left > dt ? r.left - dt : 0;
+        }
         // The stick moves a pointer, if it is to: faster the further it is pushed. A mouse that moves takes over.
         InputState state = given;
         m_stickPointing = false;

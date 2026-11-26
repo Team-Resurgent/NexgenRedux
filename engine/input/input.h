@@ -91,6 +91,19 @@ namespace nx
         // For tests and unattended runs: holds an action for the next update.
         void simulate(Action a) { m_simulated[index(a)] = true; }
 
+        // --- Rumble ---
+
+        // A pad's two motors, 0 to 1, for so many seconds: the heavy one on the left, the light one on the right. A pad
+        // of -1 is every pad. Each request for a pad replaces the last.
+        void rumble(int pad, float heavy, float light, float seconds);
+        void stopRumble();
+        // The player's choice; nothing rumbles without it.
+        void setRumbleOn(bool on) { m_rumbleOn = on; }
+        bool rumbleOn() const { return m_rumbleOn; }
+        // What a pad's motors should be doing now, for the platform to do: true when that has changed since it was
+        // last asked.
+        bool rumbleChanged(u32 pad, float& heavy, float& light);
+
         static bool parse(const char* name, Action& out);
         static const char* keyName(Key key);
         static const char* buttonName(Button button);
@@ -115,6 +128,13 @@ namespace nx
         bool m_repeat[kCount] = {};
         bool m_blocked[kCount] = {};
         bool m_simulated[kCount] = {};
+        struct Rumble
+        {
+            float heavy = 0, light = 0, left = 0;
+            float sentHeavy = 0, sentLight = 0;
+        };
+        Rumble m_rumble[kMaxPads];
+        bool m_rumbleOn = true;
         float m_heldFor[kCount] = {};
         float m_backHeldFor = 0;
         Vec2 m_move;

@@ -171,6 +171,14 @@ namespace nx
                 }
             }
 
+            void rumble(u32 pad, float heavy, float light) override
+            {
+                XINPUT_VIBRATION motors = {};
+                motors.wLeftMotorSpeed = static_cast<WORD>(heavy * 65535);
+                motors.wRightMotorSpeed = static_cast<WORD>(light * 65535);
+                XInputSetState(pad, &motors);
+            }
+
             void lockMouse(bool on) override
             {
                 m_wantLocked = on;

@@ -409,6 +409,11 @@ namespace nx
         bool inputUsingPad() { return services().input->usingPad(); }
         bool inputHasMouse() { return services().input->raw().hasMouse; }
         bool inputStickPointer() { return services().input->stickPointer(); }
+        void inputRumble(float strength, float seconds, int pad) { services().input->rumble(pad, strength, strength, seconds); }
+        void inputRumbleMotors(float heavy, float light, float seconds, int pad) { services().input->rumble(pad, heavy, light, seconds); }
+        void inputStopRumble() { services().input->stopRumble(); }
+        bool inputRumbleOn() { return services().input->rumbleOn(); }
+        void inputSetRumbleOn(bool on) { services().input->setRumbleOn(on); }
         void inputSetStickPointer(bool on) { services().input->setStickPointer(on); }
         bool inputWantsPointer() { return services().input->wantsPointer(); }
         void inputSetWantsPointer(bool on) { services().input->setWantsPointer(on); }
@@ -771,6 +776,11 @@ namespace nx
             b.function("Vec2 get_move() property", NX_FN(inputMove), "Direction from keys, d-pad and left stick: x right, y down, never longer than 1.");
             b.function("bool get_usingPad() property", NX_FN(inputUsingPad), "Whether a gamepad was used last.");
             b.function("bool get_hasMouse() property", NX_FN(inputHasMouse), "Whether a mouse has moved, or the stick moves a pointer.");
+            b.function("void rumble(float strength, float seconds = 0.2f, int pad = -1)", NX_FN(inputRumble), "Shakes a gamepad: strength 0 to 1, for so long. Pad -1 is every pad. Another rumble for the same pad replaces this one; the engine's menu, and leaving the screen, stop it.");
+            b.function("void rumbleMotors(float heavy, float light, float seconds, int pad = -1)", NX_FN(inputRumbleMotors), "The same, with each motor its own strength: the heavy one is a slow thud, the light one a quick buzz.");
+            b.function("void stopRumble()", NX_FN(inputStopRumble), "Stops every pad.");
+            b.function("bool get_rumbleOn() property", NX_FN(inputRumbleOn), "The player's choice: whether pads rumble at all. Kept with the settings.");
+            b.function("void set_rumbleOn(bool) property", NX_FN(inputSetRumbleOn), "The player's choice: whether pads rumble at all. Kept with the settings.");
             b.function("bool get_stickPointer() property", NX_FN(inputStickPointer), "The player's choice: whether, on screens that want a pointer, the left stick moves one and A clicks with it, as a mouse would. Kept with the settings.");
             b.function("void set_stickPointer(bool) property", NX_FN(inputSetStickPointer), "The player's choice: whether, on screens that want a pointer, the left stick moves one and A clicks with it, as a mouse would. The stick and A then do nothing else, and a mouse that moves takes over. Kept with the settings.");
             b.function("bool get_wantsPointer() property", NX_FN(inputWantsPointer), "Whether this screen has a use for a pointer.");
@@ -947,6 +957,7 @@ namespace nx
         s.input->loadBindings(s.save->get("bindings", ""));
         s.audio->setMasterVolume(static_cast<float>(atof(s.save->get("volume", "1"))));
         s.input->setStickPointer(strcmp(s.save->get("stickPointer", "0"), "1") == 0);
+        s.input->setRumbleOn(strcmp(s.save->get("rumble", "1"), "1") == 0);
         if (s.net)
         {
             s.net->setMeetingPlace(s.save->get("meeting", ""));
@@ -969,6 +980,7 @@ namespace nx
         };
         s.save->set("bindings", s.input->saveBindings().c_str());
         s.save->set("stickPointer", s.input->stickPointer() ? "1" : "0");
+        s.save->set("rumble", s.input->rumbleOn() ? "1" : "0");
         if (s.net)
         {
             s.save->set("meeting", s.net->meetingPlace().c_str());

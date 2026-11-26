@@ -155,6 +155,8 @@ namespace nx
 
         // The pointer is hidden and kept in the window, for looking about with the mouse. Let go when the window is left.
         virtual void lockMouse(bool) {}
+        // A pad's motors, 0 to 1: the heavy, slow one and the light, quick one. They run until told otherwise.
+        virtual void rumble(u32, float, float) {}
         // Whether the engine draws the mouse pointer, where nothing else does, and it is to be seen now.
         virtual bool drawsPointer() const { return false; }
 

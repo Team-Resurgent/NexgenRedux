@@ -143,6 +143,18 @@ namespace nx
                 return !m_quit;
             }
 
+            void rumble(u32 pad, float heavy, float light) override
+            {
+                const auto pads = gaming::Gamepad::Gamepads();
+                if (pad < pads.Size())
+                {
+                    gaming::GamepadVibration motors = {};
+                    motors.LeftMotor = heavy;
+                    motors.RightMotor = light;
+                    pads.GetAt(pad).Vibration(motors);
+                }
+            }
+
             const InputState& input() const override { return m_input; }
 
             u64 totalMemory() override { return MemoryManager::AppMemoryUsageLimit(); }

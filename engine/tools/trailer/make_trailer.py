@@ -14,6 +14,7 @@ Shots (in order; times are within the music as it is cut, beats are the music's)
     "image": a picture, with "zoom" [start, end] and "sweep": true for a light that passes across it; "fit" and
         "fitY" (0 top, 1 bottom) as for clips
     "focus": [x, y], where in the picture the crop is centred (0 to 1), to keep a corner out of the shot
+    "logo": a picture with transparency, on black, "logoSize" of the height (0.6), coming in at "logoIn" beats
     "mosaic": a list of videos, each { "file", "from" }, shown together in a grid of "columns"
     neither: black
     "grade": "dark", "mono", "night", "warm", "cold" or "vivid" (default, slightly richer than as recorded)
@@ -323,6 +324,14 @@ class Trailer:
                 chain.append("[pic][1:v]overlay=x='-w+(W+w)*(t-%.3f)/%.3f':y=0:enable='between(t,%.3f,%.3f)'[src]" % (t0, d, t0, t0 + d))
             else:
                 chain.append("[pic]null[src]")
+        elif 'logo' in s:
+            # On black, growing a little as it fades in.
+            inputs += ['-f', 'lavfi', '-t', '%.3f' % (L + 0.2), '-i', 'color=c=black:s=%dx%d:r=%d' % (W, H, fps)]
+            inputs += ['-loop', '1', '-t', '%.3f' % (L + 0.2), '-framerate', str(fps), '-i', self.find(s['logo'])]
+            lh = int(H * s.get('logoSize', 0.6)) // 2 * 2
+            t0 = s['_half'] + s.get('logoIn', 0.3) * self.beat
+            chain.append("[1:v]format=rgba,scale=-2:%d,fade=in:st=%.3f:d=%.3f:alpha=1[lg]" % (lh, t0, s.get('logoFade', 1.5) * self.beat))
+            chain.append("[0:v][lg]overlay=(W-w)/2:(H-h)*%.3f:format=auto,format=yuv420p,%s[src]" % (s.get('logoY', 0.5), self.zoomCrop(s)))
         elif 'mosaic' in s:
             cols = s.get('columns', 4)
             tiles = s['mosaic']
@@ -380,8 +389,9 @@ class Trailer:
         for n in range(1, len(parts)):
             chain.append("[%s][p%d]acrossfade=d=%.3f:c1=tri:c2=tri[q%d]" % (last, n, m.get('joinSeconds', 0.04), n))
             last = 'q%d' % n
-        end = self.total
-        chain.append("[%s]atrim=0:%.3f,afade=t=out:st=%.3f:d=%.3f[aout]" % (last, end, end - m.get('fadeOut', 1.5), m.get('fadeOut', 1.5)))
+        # It may end before the pictures do, which then go on in silence.
+        end = min(m.get('end', self.total), self.total)
+        chain.append("[%s]atrim=0:%.3f,afade=t=out:st=%.3f:d=%.3f,apad=whole_dur=%.3f[aout]" % (last, end, end - m.get('fadeOut', 1.5), m.get('fadeOut', 1.5), self.total))
         return chain
 
     def make(self):

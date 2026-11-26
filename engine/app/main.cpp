@@ -734,6 +734,10 @@ namespace
         {
             options.null = true;
         }
+        else if (strcmp(name, "clean") == 0)
+        {
+            options.clean = true;
+        }
 #if defined(NX_GPU_D3D8)
         else if (strcmp(name, "trial") == 0)
         {
@@ -781,8 +785,8 @@ int main(int argc, char** argv)
     bool ok = platform != nullptr;
     if (platform)
     {
-        // Consoles have no command line: a folder called tour, or demo, on the disc asks for one. One called
-        // trial has the saves.
+        // Consoles have no command line: a folder called tour, or demo, on the disc asks for one, and clean for the demos
+        // without their captions. One called trial has the saves.
         platform->listFolders("", findTour, &options);
         if (options.saves && !platform->setSaveFolder(options.saves))
         {

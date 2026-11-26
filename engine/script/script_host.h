@@ -14,6 +14,16 @@ class asITypeInfo;
 
 namespace nx
 {
+    // Told of every statement a script runs, and of every error, for a debugger.
+    struct ScriptWatcher
+    {
+        virtual ~ScriptWatcher() = default;
+        virtual void line(asIScriptContext* context) = 0;
+        virtual void exception(asIScriptContext* context) = 0;
+        // A module was made again: what was known of its files may have changed.
+        virtual void compiled() = 0;
+    };
+
     // Owns the AngelScript engine. All its memory is tagged MemTag::Script.
     class ScriptHost : NonCopyable
     {
@@ -69,6 +79,15 @@ namespace nx
 
         const char* lastError() const { return m_error; }
 
+        // One watcher, or none. It sees every context, coroutines' too.
+        void setWatcher(ScriptWatcher* watcher) { m_watcher = watcher; }
+        // Counts calls into scripts, so that a watcher can tell one from the next.
+        u32 runs() const { return m_runs; }
+        // The file a section was read from, where its name is shorter: "blocks/main.as" is "showcase/blocks/main.as".
+        void setSource(const char* section, const char* path);
+        // The file, or the section's own name.
+        const char* sourceOf(const char* section) const;
+
         // Statements a single call may run before it is treated as stuck.
         void setStatementLimit(u32 statements) { m_statementLimit = statements; }
 
@@ -86,6 +105,7 @@ namespace nx
         bool run();
         bool finished(asIScriptContext* context, int result);
         static void lineCallback(asIScriptContext* context, void* host);
+        static void exceptionCallback(asIScriptContext* context, void* host);
         static void messageCallback(const void* message, void* host);
 
         asIScriptEngine* m_engine = nullptr;
@@ -98,6 +118,9 @@ namespace nx
         u32 m_statementLimit = 20000000;
         u32 m_statements = 0;
         char m_error[256] = {};
+        ScriptWatcher* m_watcher = nullptr;
+        u32 m_runs = 0;
+        std::vector<std::pair<std::string, std::string>> m_sources;
     };
 
     // Vec2 and Vec3, with every operator. Called by ScriptHost::init.

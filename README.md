@@ -95,7 +95,7 @@ a compiler and the platform's SDK, downloads nothing, and uses no SDL or GLFW.
 ## Features
 
 - **Scripts** — AngelScript 2.39.0. Each screen is one folder with one script; a mistake in it shows its file and line, and
-  never takes the app down. Coroutines, tweens, and live reload while you edit.
+  never takes the app down. Coroutines, tweens, live reload while you edit, and a debugger for VS Code.
 - **2D drawing** — shapes, images, sprite sheets, nine-slice, tiling, scalable text, clipping and blending, batched, on any
   shape of screen.
 - **Scenes** — entities with behaviours, prefabs, tile maps, particles, collision and 2D physics, described in plain text files.
@@ -139,6 +139,10 @@ The [latest release](https://github.com/Team-Resurgent/NexgenRedux/releases/late
 
 To change a demo, edit its `main.as` in `media/showcase` (inside the app on macOS, under `Contents/Resources`). Started with
 `--dev`, the showcase reloads scripts and images as they are saved.
+
+To step through a script, install the VS Code extension in [engine/tools/vscode](engine/tools/vscode): breakpoints, stepping,
+the call stack and what each script holds, on a PC, or on a console from a computer. Started with `--debug`, the showcase
+listens for it on port 4711.
 
 ## A screen
 

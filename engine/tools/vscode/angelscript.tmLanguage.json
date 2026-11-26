@@ -1,0 +1,65 @@
+{
+  "name": "AngelScript",
+  "scopeName": "source.angelscript",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#strings" },
+    { "include": "#preprocessor" },
+    { "include": "#numbers" },
+    { "include": "#keywords" },
+    { "include": "#types" },
+    { "include": "#functions" },
+    { "include": "#namespaces" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        { "name": "comment.line.double-slash.angelscript", "match": "//.*$" },
+        { "name": "comment.block.angelscript", "begin": "/\\*", "end": "\\*/" }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        { "name": "string.quoted.triple.angelscript", "begin": "\"\"\"", "end": "\"\"\"" },
+        {
+          "name": "string.quoted.double.angelscript", "begin": "\"", "end": "\"",
+          "patterns": [{ "name": "constant.character.escape.angelscript", "match": "\\\\." }]
+        },
+        {
+          "name": "string.quoted.single.angelscript", "begin": "'", "end": "'",
+          "patterns": [{ "name": "constant.character.escape.angelscript", "match": "\\\\." }]
+        }
+      ]
+    },
+    "preprocessor": {
+      "patterns": [{ "name": "meta.preprocessor.angelscript", "match": "^\\s*#\\s*(include|if|else|endif|define|pragma)\\b.*$" }]
+    },
+    "numbers": {
+      "patterns": [
+        { "name": "constant.numeric.hex.angelscript", "match": "\\b0[xX][0-9a-fA-F_]+\\b" },
+        { "name": "constant.numeric.angelscript", "match": "\\b[0-9][0-9_]*(\\.[0-9]+)?([eE][+-]?[0-9]+)?[fFdD]?\\b" }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        { "name": "keyword.control.angelscript", "match": "\\b(if|else|for|foreach|while|do|switch|case|default|break|continue|return|try|catch)\\b" },
+        { "name": "keyword.operator.word.angelscript", "match": "\\b(and|or|xor|not|is|cast|function)\\b" },
+        { "name": "storage.modifier.angelscript", "match": "\\b(const|in|out|inout|private|protected|shared|external|abstract|final|override|explicit|property|get|set|funcdef|import|from|mixin|auto)\\b" },
+        { "name": "storage.type.angelscript", "match": "\\b(class|interface|enum|namespace|typedef)\\b" },
+        { "name": "constant.language.angelscript", "match": "\\b(true|false|null|this|super)\\b" }
+      ]
+    },
+    "types": {
+      "patterns": [
+        { "name": "storage.type.primitive.angelscript", "match": "\\b(void|bool|int|int8|int16|int32|int64|uint|uint8|uint16|uint32|uint64|float|double|string|array|dictionary)\\b" },
+        { "name": "entity.name.type.angelscript", "match": "\\b[A-Z][A-Za-z0-9_]*\\b(?!\\s*::)" }
+      ]
+    },
+    "functions": {
+      "patterns": [{ "name": "entity.name.function.angelscript", "match": "\\b[a-z_][A-Za-z0-9_]*(?=\\s*\\()" }]
+    },
+    "namespaces": {
+      "patterns": [{ "name": "entity.name.namespace.angelscript", "match": "\\b[A-Za-z_][A-Za-z0-9_]*(?=\\s*::)" }]
+    }
+  }
+}

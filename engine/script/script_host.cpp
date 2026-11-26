@@ -97,6 +97,7 @@ namespace nx
             return false;
         }
         m_context->SetLineCallback(asFUNCTION(lineCallback), this, asCALL_CDECL);
+        m_context->SetExceptionCallback(asFUNCTION(exceptionCallback), this, asCALL_CDECL);
 
         // AngelScript makes these again for each module that uses them, and keeps a little of every one
         // that was filled from a list. Held here, they are made once.
@@ -169,6 +170,10 @@ namespace nx
             return false;
         }
         m_statements = 0;
+        if (m_watcher)
+        {
+            m_watcher->compiled();
+        }
         if (m->ResetGlobalVars(m_context) < 0)
         {
             const char* section = nullptr;
@@ -294,11 +299,51 @@ namespace nx
         if (++host->m_statements > host->m_statementLimit)
         {
             context->Abort();
+            return;
         }
+        if (host->m_watcher)
+        {
+            host->m_watcher->line(context);
+        }
+    }
+
+    void ScriptHost::exceptionCallback(asIScriptContext* context, void* data)
+    {
+        ScriptHost* host = static_cast<ScriptHost*>(data);
+        if (host->m_watcher)
+        {
+            host->m_watcher->exception(context);
+        }
+    }
+
+    void ScriptHost::setSource(const char* section, const char* path)
+    {
+        for (auto& source : m_sources)
+        {
+            if (source.first == section)
+            {
+                source.second = path;
+                return;
+            }
+        }
+        m_sources.emplace_back(section, path);
+    }
+
+    const char* ScriptHost::sourceOf(const char* section) const
+    {
+        for (const auto& source : m_sources)
+        {
+            if (section && source.first == section)
+            {
+                return source.second.c_str();
+            }
+        }
+        return section ? section : "";
     }
 
     bool ScriptHost::prepare(asIScriptFunction* function)
     {
+        m_runs++;
         m_statements = 0;
         m_error[0] = 0;
         if (function == nullptr)
@@ -320,12 +365,14 @@ namespace nx
         if (context)
         {
             context->SetLineCallback(asFUNCTION(lineCallback), this, asCALL_CDECL);
+            context->SetExceptionCallback(asFUNCTION(exceptionCallback), this, asCALL_CDECL);
         }
         return context;
     }
 
     bool ScriptHost::resume(asIScriptContext* context, bool& suspended)
     {
+        m_runs++;
         m_statements = 0;
         m_error[0] = 0;
         const int result = context->Execute();

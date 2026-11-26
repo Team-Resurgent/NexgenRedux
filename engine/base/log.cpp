@@ -23,6 +23,11 @@ namespace nx
         g_sink = sink ? sink : defaultSink;
     }
 
+    LogSink logSink()
+    {
+        return g_sink;
+    }
+
     void log(LogLevel level, const char* format, ...)
     {
         char buffer[1024];

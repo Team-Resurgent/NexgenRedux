@@ -1,0 +1,91 @@
+{
+  "name": "nexgen-redux",
+  "displayName": "Nexgen Redux",
+  "description": "Debug Nexgen Redux scripts: breakpoints, stepping, the call stack and what each script holds, on a PC or on a console over the network. With AngelScript colouring.",
+  "version": "1.0.0",
+  "publisher": "TeamResurgent",
+  "icon": "icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Team-Resurgent/NexgenRedux.git"
+  },
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": ["Debuggers", "Programming Languages"],
+  "activationEvents": ["onDebug", "onLanguage:angelscript"],
+  "main": "./extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "angelscript",
+        "aliases": ["AngelScript"],
+        "extensions": [".as"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "angelscript",
+        "scopeName": "source.angelscript",
+        "path": "./angelscript.tmLanguage.json"
+      }
+    ],
+    "breakpoints": [{ "language": "angelscript" }],
+    "debuggers": [
+      {
+        "type": "nexgen",
+        "label": "Nexgen Redux",
+        "languages": ["angelscript"],
+        "configurationAttributes": {
+          "launch": {
+            "required": ["program"],
+            "properties": {
+              "program": { "type": "string", "description": "The engine: nexgen.exe, or the showcase you built." },
+              "args": { "type": "array", "items": { "type": "string" }, "default": ["--dev"], "description": "What else to start it with, such as --dev to reload scripts as they are saved, or --screen ID." },
+              "cwd": { "type": "string", "description": "Where to start it. The program's own folder unless given." },
+              "port": { "type": "number", "default": 4711, "description": "The port it listens on for the debugger." },
+              "media": { "type": "string", "description": "The media folder the scripts are in, so that \"showcase/blocks/main.as\" can be found. Looked for in the workspace unless given." }
+            }
+          },
+          "attach": {
+            "properties": {
+              "host": { "type": "string", "default": "127.0.0.1", "description": "The machine running it, started with --debug: this one, or a console's address." },
+              "port": { "type": "number", "default": 4711, "description": "The port it listens on." },
+              "timeout": { "type": "number", "default": 10, "description": "Seconds to keep trying to connect." },
+              "media": { "type": "string", "description": "The media folder the scripts are in. Looked for in the workspace unless given." }
+            }
+          }
+        },
+        "initialConfigurations": [
+          {
+            "type": "nexgen",
+            "request": "launch",
+            "name": "Run and debug Nexgen Redux",
+            "program": "${workspaceFolder}/build/showcase/Release/nexgen.exe",
+            "args": ["--dev"]
+          },
+          {
+            "type": "nexgen",
+            "request": "attach",
+            "name": "Attach to Nexgen Redux",
+            "host": "127.0.0.1",
+            "port": 4711
+          }
+        ],
+        "configurationSnippets": [
+          {
+            "label": "Nexgen Redux: run and debug",
+            "description": "Starts the engine and debugs its scripts.",
+            "body": { "type": "nexgen", "request": "launch", "name": "Run and debug Nexgen Redux", "program": "^\"\\${workspaceFolder}/build/showcase/Release/nexgen.exe\"", "args": ["--dev"] }
+          },
+          {
+            "label": "Nexgen Redux: attach",
+            "description": "Debugs an engine already started with --debug, here or on a console.",
+            "body": { "type": "nexgen", "request": "attach", "name": "Attach to Nexgen Redux", "host": "127.0.0.1", "port": 4711 }
+          }
+        ]
+      }
+    ]
+  }
+}

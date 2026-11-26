@@ -251,6 +251,7 @@ namespace nx
         // Its path is in every error message, so leave out the part that is always the same.
         char shown[96];
         snprintf(shown, sizeof(shown), "%s/main.as", entry.info.id);
+        host.setSource(shown, path);
         if (!host.compile(entry.module, shown, reinterpret_cast<const char*>(source.data), source.size))
         {
             entry.failed = true;

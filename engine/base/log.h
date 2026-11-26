@@ -8,6 +8,8 @@ namespace nx
 
     // Replaces the sink (default: stdout). Set it before starting any thread.
     void setLogSink(LogSink sink);
+    // The one in use, to pass messages on to.
+    LogSink logSink();
 
 #if defined(__clang__) || defined(__GNUC__)
     __attribute__((format(printf, 2, 3)))

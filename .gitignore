@@ -9,3 +9,6 @@ build/
 *.webm
 *.pcm
 trailer-shots*/
+
+# The VS Code extension, packed
+*.vsix

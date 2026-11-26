@@ -116,8 +116,8 @@ a compiler and the platform's SDK, downloads nothing, and uses no SDL or GLFW.
 | Original Xbox | Working on a console, and in xemu (64 and 128 MB) | Direct3D 8 | DirectSound |
 | Linux | Working (X11) | OpenGL 3.3 | miniaudio |
 | macOS 11 and later | Builds and passes its tests in CI (Intel and Apple silicon); not yet run on a Mac with a screen | OpenGL 3.3 | miniaudio |
+| Xbox 360 | Working in Xenia, built with RXDK-360's clang; not yet tried on a console | Direct3D 9 | XAudio2 |
 | UWP: Xbox One, Series and Windows | Working on Windows; not yet tried on a console | Direct3D 11 | miniaudio |
-| Xbox 360 | Shared code compiles; to come | | |
 
 ## Download
 

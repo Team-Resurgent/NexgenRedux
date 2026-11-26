@@ -13,7 +13,7 @@ From this folder:
 | Linux | `cmake -S . -B build/linux -DCMAKE_BUILD_TYPE=Release`, `cmake --build build/linux`, `ctest --test-dir build/linux` |
 | macOS | The same as Linux. Tested in CI only, without a screen |
 | Original Xbox | `cmake --preset xboxog-release`, `cmake --build --preset xboxog-release`, then run `build/xboxog-release/XISO/showcase.iso` |
-| Xbox 360 | `cmake --preset xbox360`, `cmake --build --preset xbox360` (libraries only) |
+| Xbox 360 | `cmake --preset xbox360 -DRXDK360_CC=<RXDK-360 source tree>/build/llvm/bin/clang.exe`, `cmake --build --preset xbox360`, then run `build/xbox360/nexgen/default.xex` in Xenia |
 | UWP: Xbox One, Series and Windows | `cmake --preset uwp`, `cmake --build --preset uwp`; the package is in `build/uwp/AppPackages` |
 
 Needs CMake 3.21 and, for the Xbox targets, Ninja on the path (it comes with Visual Studio).
@@ -25,8 +25,10 @@ Needs CMake 3.21 and, for the Xbox targets, Ninja on the path (it comes with Vis
 - **UWP:** Visual Studio with the Universal Windows Platform tools. Windows installs only signed packages, so sign it, or unpack it
   with `makeappx unpack` and run `Add-AppxPackage -Register AppxManifest.xml` in Developer Mode. Its log is `nexgen.log` in the
   app's LocalState folder.
-- **Xbox 360:** RXDK-360 from November 2026 or later. With an older one, set `RXDK360_TARGET=powerpc-unknown-xbox360`,
-  or point `RXDK360_CC` at a newer clang.
+- **Xbox 360:** RXDK-360 from November 2026 or later, built from its source, and Visual Studio 2022 or later with its Xbox 360
+  platform: the libraries are compiled with its clang, and the title is linked by its MSBuild toolset into `default.xex`, with
+  the media beside it. Rebuild its `libcpp.a` (`tools/build_libcpp.py`) whenever its LLVM is: an old one leaves `std::stringstream`
+  empty. The log is in Xenia's `xenia.log`, or a dev kit's debug output.
 
 `.github/workflows/engine.yml` builds, tests and packages Windows, Linux, macOS, UWP and the original Xbox, and
 publishes the packages from `main` in the `latest` release.

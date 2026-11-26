@@ -15,7 +15,7 @@
     { "name": "xboxog-release", "inherits": "xboxog-base", "displayName": "Original Xbox (Release)", "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" } },
     { "name": "xboxog-debug", "inherits": "xboxog-base", "displayName": "Original Xbox (Debug)", "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" } },
     {
-      "name": "xbox360", "inherits": "base", "displayName": "Xbox 360 (shared layers only)", "generator": "Ninja",
+      "name": "xbox360", "inherits": "base", "displayName": "Xbox 360", "generator": "Ninja",
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/Xbox360Toolchain.cmake",
         "CMAKE_BUILD_TYPE": "Release",

@@ -864,7 +864,12 @@ NX_TEST(thingsAreHeldByBones)
                     robot.rootMotion = false;
                 }
                 if (frames == 96)
-                    check(robot.layerPlayed);
+                {
+                    check(robot.layerPlayed && !robot.ragdolled);
+                    check(robot.ragdoll(true, Vec3(0, 0, 2)) && robot.ragdolled);
+                }
+                if (frames == 99)
+                    check(robot.ragdoll(false) && !robot.ragdolled);
             }
             void draw(Canvas@ c) { Space::draw(c); }
         }
@@ -872,7 +877,7 @@ NX_TEST(thingsAreHeldByBones)
     NX_EXPECT(r.screens.init(r.services, "showcase", "main"));
     r.step(2);
     r.screens.push("shapes");
-    r.step(100);
+    r.step(104);
     NX_EXPECT(!r.screens.failed());
     r.screens.home();
     r.step(3);
@@ -988,6 +993,85 @@ NX_TEST(animationsBlendLayerTravelAndLook)
     p.draw(2);
     NX_EXPECT(p.rig.device->stats().rejected == 0);
     p.world.clear();
+    p.rig.assets.release(asset);
+}
+
+NX_TEST(ragdollsFallAndGetUp)
+{
+    Place p;
+    Asset* asset = p.rig.assets.model("global/model/robot.glb");
+    p.rig.assets.finish();
+    NX_EXPECT(asset->ready && asset->model);
+    p.thing({ 0, -0.5f, 0 }, Shape3::Box, { 30, 0.5f, 30 }, 0);
+    const u32 robot = p.walker({ 0, 0, 0 });
+    p.space.setModel(robot, asset);
+    NX_EXPECT(p.space.play(robot, "run", true, 0));
+    const u32 head = p.world.spawn({});
+    NX_EXPECT(p.space.attachToBone(head, robot, "head"));
+    p.step(20);
+    auto where = [&](u32 id) {
+        p.space.transform(id & 0xFFFF);
+        const Mat4& w = p.space.getSpatial(id)->world;
+        return Vec3(w.m[12], w.m[13], w.m[14]);
+    };
+    const float standing = where(head).y;
+    NX_EXPECT(standing > 1.3f);
+    const u32 before = p.world.count();
+
+    // Limp, sent backwards: a body for each bone that moves skin, and down it goes.
+    NX_EXPECT(!p.space.ragdolled(robot));
+    NX_EXPECT(p.space.ragdoll(robot, true, 60, { 0, 1, -3 }, 0.5f));
+    NX_EXPECT(p.space.ragdolled(robot));
+    const u32 bodies = p.world.count() - before;
+    NX_EXPECT(bodies >= 10 && bodies <= 12);
+    NX_EXPECT(p.space.joints() == bodies - 1);
+    p.step(180);
+    NX_EXPECT(where(head).y < 0.7f && where(head).y > 0);
+    // It went where it was sent, and lies on the ground rather than under it.
+    NX_EXPECT(p.at(robot).z < -0.3f && p.at(robot).y > -0.2f && p.at(robot).y < 0.4f);
+    const Ragdoll& limp = *p.space.getAppearance(robot)->moves->ragdoll;
+    for (const u32 part : limp.parts)
+    {
+        if (part)
+        {
+            NX_EXPECT(p.space.getCollider(part)->together == robot && p.space.getSpatial(part)->place.y > -0.05f);
+        }
+    }
+    // What hits a body hits it.
+    u32 hit = 0;
+    Vec3 at, normal;
+    const Vec3 lying = where(head);
+    NX_EXPECT(p.space.raycast(lying + Vec3(0, 3, 0), lying - Vec3(0, 1, 0), 0xFFFF, 0, hit, at, normal) && hit == robot);
+    NX_EXPECT(!p.space.raycast(lying + Vec3(0, 3, 0), lying + Vec3(0, -0.1f, 0), 0xFFFF, robot, hit, at, normal) || hit != robot);
+    // A blow moves it.
+    const Vec3 was = p.at(robot);
+    p.space.push(robot, Vec3(60 * 4, 0, 0), nullptr);
+    p.step(30);
+    NX_EXPECT(p.at(robot).x > was.x + 0.3f);
+
+    // Up again, into what it plays: the bodies go and it stands.
+    NX_EXPECT(p.space.ragdoll(robot, false, 60, {}, 0.5f));
+    NX_EXPECT(!p.space.ragdolled(robot));
+    p.step(2);
+    NX_EXPECT(p.world.count() == before && p.space.joints() == 0);
+    NX_EXPECT(where(head).y < standing - 0.3f);
+    p.step(40);
+    NX_EXPECT(where(head).y > standing - 0.25f);
+
+    // Down again, and gone with it.
+    NX_EXPECT(p.space.ragdoll(robot, true, 60, {}, 0.5f));
+    NX_EXPECT(p.world.count() > before);
+    p.step(10);
+    p.space.setCamera({ 0, 2, 8 }, { 0, 1, 0 }, 60);
+    p.draw(2);
+    NX_EXPECT(p.rig.device->stats().rejected == 0);
+    p.world.destroyEntity(robot);
+    p.step(2);
+    NX_EXPECT(p.world.count() == before - 2 && p.space.joints() == 0);
+
+    // A shape with no bones can't.
+    const u32 box = p.thing({ 5, 1, 0 }, Shape3::Box, { 0.5f, 0.5f, 0.5f }, 1);
+    NX_EXPECT(!p.space.ragdoll(box, true, 60, {}, 0.5f));
     p.rig.assets.release(asset);
 }
 

@@ -304,6 +304,21 @@ robot.lookAway();
 
 The Moves demo has one of each, and the robot's "stride" is a walk that goes forward, for root motion.
 
+### Ragdolls
+
+`ragdoll(true)` makes a model go limp. It gets a body for each bone that moves some of its skin, sized from that skin and pinned
+where the bones meet, and each swings no more than about 57 degrees from how it sits on the one above. It falls from the pose it
+was in, carried on as it was moving, plus whatever push you give it:
+
+```cpp
+robot.ragdoll(true, away * 4 + Vec3(0, 2, 0));   // knocked over
+robot.push(blow, hitPlace);                      // limp, a blow moves the limb nearest the place
+robot.ragdoll(false);                            // gets up where it lies, into what it plays, over 0.6 seconds
+```
+
+While it is limp its own collider isn't there, what hits one of its limbs (a ray, say) hits it, and its `place` follows where it lies.
+The robot has a dozen bodies; a few robots at once suit the original Xbox. The Topple demo knocks robots off a ledge.
+
 ### Holding things, and joints
 
 `attach(parent)` makes one thing move with another. `attach(parent, "hand.r")` makes it move with one of the parent's bones instead,

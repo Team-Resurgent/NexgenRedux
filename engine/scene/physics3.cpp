@@ -107,6 +107,7 @@ namespace nx
         r.axes[2] = c.axes[2];
         r.model = c.model;
         r.size = c.size;
+        r.together = c.together;
         r.low = c.at - c.reach;
         r.high = c.at + c.reach;
     }
@@ -657,7 +658,7 @@ namespace nx
     bool Space::visibleCollider(const Collider3& c) const
     {
         const World::Entity& e = m_world.m_entities[c.owner];
-        return e.live && !e.dying && e.parts3[0] != kNone;
+        return e.live && !e.dying && e.parts3[0] != kNone && !c.off;
     }
 
     u32 Space::idOf(u32 index) const
@@ -821,7 +822,7 @@ namespace nx
     {
         Body3& b = m_bodies[index];
         const World::Entity& e = m_world.m_entities[b.owner];
-        if (e.dying || e.parts3[0] == kNone || e.parts3[3] == kNone || e.parent != kNone)
+        if (e.dying || e.parts3[0] == kNone || e.parts3[3] == kNone || e.parent != kNone || m_colliders[e.parts3[3]].off)
         {
             return;
         }
@@ -1115,7 +1116,7 @@ namespace nx
             {
                 const u32 ib = m_rigidOrder[k];
                 Rigid& b = m_rigid[ib];
-                if (b.low.y > a.high.y || b.high.y < a.low.y || b.low.z > a.high.z || b.high.z < a.low.z || (!moves(a) && !moves(b)))
+                if (b.low.y > a.high.y || b.high.y < a.low.y || b.low.z > a.high.z || b.high.z < a.low.z || (!moves(a) && !moves(b)) || (a.together && a.together == b.together))
                 {
                     continue;
                 }
@@ -1308,7 +1309,7 @@ namespace nx
         };
         for (const Collider3& c : m_colliders)
         {
-            if (!(groups & (1u << c.group)) || !visibleCollider(c) || idOf(c.owner) == except)
+            if (!(groups & (1u << c.group)) || !visibleCollider(c) || idOf(c.owner) == except || (c.together && c.together == except))
             {
                 continue;
             }
@@ -1379,7 +1380,7 @@ namespace nx
             if (t <= 1 && t < best)
             {
                 best = t;
-                id = idOf(c.owner);
+                id = c.together ? c.together : idOf(c.owner);
                 normal = n;
             }
         }
@@ -1441,6 +1442,37 @@ namespace nx
 
     void Space::push(u32 id, const Vec3& impulse, const Vec3* at)
     {
+        const Appearance* look = getAppearance(id);
+        if (look && look->moves && look->moves->ragdoll && look->moves->ragdoll->on && look->model && look->model->model)
+        {
+            // Limp: a blow at a place moves the body nearest it; one without, all of them.
+            const Ragdoll& r = *look->moves->ragdoll;
+            const u32 count = look->model->model->bones.count();
+            u32 nearest = 0;
+            float best = 1e30f;
+            for (u32 b = 0; b < count && at; b++)
+            {
+                if (const Spatial* s = r.parts[b] ? getSpatial(r.parts[b]) : nullptr)
+                {
+                    const Vec3 d = s->place - *at;
+                    nearest = d.dot(d) < best ? r.parts[b] : nearest;
+                    best = fminf(best, d.dot(d));
+                }
+            }
+            if (nearest)
+            {
+                push(nearest, impulse, at);
+                return;
+            }
+            for (u32 b = 0; b < count; b++)
+            {
+                if (const Body3* part = r.parts[b] ? getBody(r.parts[b]) : nullptr)
+                {
+                    push(r.parts[b], impulse * (part->mass / r.mass), nullptr);
+                }
+            }
+            return;
+        }
         Body3* b = getBody(id);
         if (b == nullptr)
         {
@@ -1457,6 +1489,341 @@ namespace nx
             b->spin = b->spin + (*at - r.place).cross(impulse) * (1 / (0.5f * b->mass * reach * reach));
         }
     }
+    // --- Ragdolls ---
+
+    namespace
+    {
+        // Each bone after those above it.
+        template <typename Fn>
+        void downward(const ModelData& model, Fn fn)
+        {
+            bool done[kModelBones] = {};
+            for (u32 i = 0; i < model.bones.count(); i++)
+            {
+                u32 waiting[kModelBones];
+                u32 count = 0;
+                for (int at = static_cast<int>(i); at >= 0 && !done[at] && count < kModelBones; at = model.bones[static_cast<u32>(at)].parent)
+                {
+                    waiting[count++] = static_cast<u32>(at);
+                }
+                while (count)
+                {
+                    const u32 b = waiting[--count];
+                    fn(b, model.bones[b].parent);
+                    done[b] = true;
+                }
+            }
+        }
+    }
+
+    bool Space::ragdoll(u32 id, bool on, float mass, const Vec3& push, float change)
+    {
+        Appearance* a = getAppearance(id);
+        if (a == nullptr || m_world.find(id) == nullptr || a->model == nullptr || a->model->model == nullptr || a->model->model->weights.count() == 0)
+        {
+            return false;
+        }
+        Moves* m = moves(id);
+        if (m == nullptr)
+        {
+            return false;
+        }
+        if (m->ragdoll == nullptr && !on)
+        {
+            return true;
+        }
+        if (m->ragdoll == nullptr)
+        {
+            m->ragdoll = static_cast<Ragdoll*>(memAlloc(sizeof(Ragdoll), MemTag::General));
+            if (m->ragdoll == nullptr)
+            {
+                return false;
+            }
+            Ragdoll& fresh = *m->ragdoll;
+            for (u32 b = 0; b < kModelBones; b++)
+            {
+                fresh.parts[b] = 0;
+            }
+            fresh.on = false;
+            fresh.leaving = fresh.leaveFor = 0;
+        }
+        Ragdoll& r = *m->ragdoll;
+        const ModelData& model = *a->model->model;
+        if (!on)
+        {
+            if (r.on)
+            {
+                // Gets up from where it lies.
+                posed(*a, r.last);
+                dropRagdoll(*a);
+                r.leaving = r.leaveFor = change > 0 ? change : 0;
+            }
+            return true;
+        }
+        if (r.on)
+        {
+            // Already limp: sent off again.
+            for (u32 b = 0; b < model.bones.count(); b++)
+            {
+                if (Body3* body = r.parts[b] ? getBody(r.parts[b]) : nullptr)
+                {
+                    body->velocity = body->velocity + push;
+                    body->still = 0;
+                }
+            }
+            return true;
+        }
+
+        const u32 index = id & ((1u << World::kIndexBits) - 1);
+        transform(index);
+        const Spatial owner = *getSpatial(id);
+        const float scale = (fabsf(owner.size.x) + fabsf(owner.size.y) + fabsf(owner.size.z)) / 3;
+        // Where each bone is now, and was at rest.
+        BonePose locals[kModelBones], rest[kModelBones];
+        posed(*a, locals);
+        model.sample(-1, 0, rest);
+        Mat4 worlds[kModelBones];
+        model.place(locals, worlds);
+        Quat turns[kModelBones], restTurns[kModelBones];
+        downward(model, [&](u32 b, int p) {
+            turns[b] = p >= 0 ? turns[p] * locals[b].turn : locals[b].turn;
+            restTurns[b] = p >= 0 ? restTurns[p] * rest[b].turn : rest[b].turn;
+        });
+
+        // How far each bone's own skin reaches, in that bone's own space.
+        Vec3 low[kModelBones], high[kModelBones];
+        u32 points[kModelBones] = {};
+        for (u32 i = 0; i < model.weights.count() && i < model.mesh.vertices.count(); i++)
+        {
+            const ModelWeight& w = model.weights[i];
+            u32 most = 0;
+            for (u32 k = 1; k < 4; k++)
+            {
+                most = w.weights[k] > w.weights[most] ? k : most;
+            }
+            const u32 b = w.bones[most];
+            if (w.weights[most] < 128 || b >= model.bones.count())
+            {
+                continue;
+            }
+            const gpu::MeshVertex& v = model.mesh.vertices[i];
+            const Vec3 q = model.bones[b].inverseBind.transformPoint({ v.x, v.y, v.z });
+            low[b] = points[b] ? Vec3(fminf(low[b].x, q.x), fminf(low[b].y, q.y), fminf(low[b].z, q.z)) : q;
+            high[b] = points[b] ? Vec3(fmaxf(high[b].x, q.x), fmaxf(high[b].y, q.y), fmaxf(high[b].z, q.z)) : q;
+            points[b]++;
+        }
+
+        // A capsule round each, along its longest side.
+        Vec3 halves[kModelBones];
+        float volume[kModelBones] = {}, total = 0;
+        for (u32 b = 0; b < model.bones.count(); b++)
+        {
+            r.parts[b] = 0;
+            if (points[b] < 4)
+            {
+                continue;
+            }
+            const Vec3 half = (high[b] - low[b]) * 0.5f;
+            const float sides[3] = { half.x, half.y, half.z };
+            u32 along = 1;
+            for (u32 k = 0; k < 3; k++)
+            {
+                along = sides[k] > sides[along] ? k : along;
+            }
+            float radius = 0;
+            for (u32 k = 0; k < 3; k++)
+            {
+                radius += k == along ? 0 : sides[k] * 0.45f;
+            }
+            radius = fmaxf(radius, 0.02f);
+            const float length = fmaxf(sides[along], radius);
+            r.middle[b] = (low[b] + high[b]) * 0.5f;
+            r.frame[b] = along == 1 ? Quat() : along == 0 ? Quat::axisAngle({ 0, 0, 1 }, -1.5707963f) : Quat::axisAngle({ 1, 0, 0 }, 1.5707963f);
+            r.low[b] = radius * scale;
+            halves[b] = Vec3(radius, length, radius) * scale;
+            volume[b] = radius * radius * length;
+            total += volume[b];
+        }
+        if (total <= 0)
+        {
+            return false;
+        }
+        r.mass = mass > 0 ? mass : 60;
+        r.scale = scale;
+        const Collider3* own = getCollider(id);
+        const u8 group = own ? own->group : 0;
+        const Body3* ownBody = getBody(id);
+        const Vec3 moving = (ownBody ? ownBody->velocity : Vec3()) + push;
+
+        // Bodies where the bones are, moving as the whole was.
+        for (u32 b = 0; b < model.bones.count(); b++)
+        {
+            if (volume[b] <= 0)
+            {
+                continue;
+            }
+            const u32 part = m_world.spawn({});
+            Spatial* s = spatial(part);
+            Collider3* c = collider(part);
+            Body3* bd = body(part);
+            if (s == nullptr || c == nullptr || bd == nullptr)
+            {
+                m_world.destroyEntity(part);
+                continue;
+            }
+            s->place = owner.world.transformPoint(worlds[b].transformPoint(r.middle[b]));
+            s->turn = (owner.turn * turns[b] * r.frame[b]).normalized();
+            c->shape = Shape3::Capsule;
+            c->half = halves[b];
+            c->middle = {};
+            c->wall = false;
+            c->group = group;
+            c->together = id;
+            bd->mass = r.mass * volume[b] / total;
+            bd->gravity = 1;
+            bd->drag = 0.15f;
+            bd->friction = 0.8f;
+            bd->velocity = moving;
+            transform(part & ((1u << World::kIndexBits) - 1));
+            r.parts[b] = part;
+        }
+
+        // Each pinned where its bone meets the one above, swinging only so far from how it sits there at rest.
+        for (u32 b = 0; b < model.bones.count(); b++)
+        {
+            if (r.parts[b] == 0)
+            {
+                continue;
+            }
+            int above = model.bones[b].parent;
+            while (above >= 0 && r.parts[above] == 0)
+            {
+                above = model.bones[static_cast<u32>(above)].parent;
+            }
+            if (above < 0)
+            {
+                continue;
+            }
+            const u32 p = static_cast<u32>(above);
+            const Vec3 at = owner.world.transformPoint(Vec3(worlds[b].m[12], worlds[b].m[13], worlds[b].m[14]));
+            // Its length as it lies now, and as it would lie on the one above were both at rest.
+            const Vec3 now = (owner.turn * turns[b] * r.frame[b]).rotate({ 0, 1, 0 });
+            const Quat parentNow = owner.turn * turns[p] * r.frame[p];
+            const Quat parentRest = restTurns[p] * r.frame[p];
+            const Vec3 atRest = (parentNow * parentRest.conjugate()).rotate((restTurns[b] * r.frame[b]).rotate({ 0, 1, 0 }));
+            Joint3 j = {};
+            j.kind = JointKind::Pin;
+            j.a = r.parts[b];
+            j.b = r.parts[p];
+            j.axisA = now;
+            j.axisB = atRest;
+            j.cone = 1.0f;   // about 57 degrees
+            addJoint(j, at, at);
+        }
+
+        // Itself, not there until it gets up.
+        if (Collider3* c = getCollider(id))
+        {
+            c->off = true;
+        }
+        if (Body3* body = getBody(id))
+        {
+            body->velocity = {};
+        }
+        r.on = true;
+        r.leaving = 0;
+        return true;
+    }
+
+    bool Space::ragdolled(u32 id) const
+    {
+        const Appearance* a = const_cast<Space*>(this)->getAppearance(id);
+        return a && a->moves && a->moves->ragdoll && a->moves->ragdoll->on;
+    }
+
+    void Space::ragdollPose(const Appearance& a, BonePose* bones) const
+    {
+        const Ragdoll& r = *a.moves->ragdoll;
+        const ModelData& model = *a.model->model;
+        const World::Entity& e = m_world.m_entities[a.owner];
+        if (e.parts3[0] == kNone)
+        {
+            return;
+        }
+        const Spatial& owner = m_spatials[e.parts3[0]];
+        const Mat4 into = owner.world.inverse();
+        const Quat back = owner.turn.conjugate();
+        Mat4 worlds[kModelBones];
+        Quat turns[kModelBones];
+        bool held[kModelBones] = {};   // a body above it
+        Space& self = const_cast<Space&>(*this);
+        downward(model, [&](u32 b, int p) {
+            const Spatial* part = r.parts[b] ? self.getSpatial(r.parts[b]) : nullptr;
+            if (part)
+            {
+                const Quat bone = part->turn * r.frame[b].conjugate();
+                const Quat turn = (back * bone).normalized();
+                bones[b].turn = p >= 0 ? (turns[p].conjugate() * turn).normalized() : turn;
+                if (p < 0 || !held[p])
+                {
+                    // The highest: where it is, as well as how it is turned.
+                    const Vec3 origin = part->place - bone.rotate(r.middle[b] * r.scale);
+                    const Vec3 inModel = into.transformPoint(origin);
+                    bones[b].place = p >= 0 ? worlds[p].inverse().transformPoint(inModel) : inModel;
+                }
+            }
+            held[b] = part != nullptr || (p >= 0 && held[p]);
+            turns[b] = p >= 0 ? turns[p] * bones[b].turn : bones[b].turn;
+            const Mat4 local = compose(bones[b].place, bones[b].turn, bones[b].size);
+            worlds[b] = p >= 0 ? worlds[p] * local : local;
+        });
+    }
+
+    void Space::followRagdoll(Appearance& a)
+    {
+        // Where it lies, for whoever asks where it is: under its highest body, on the lowest.
+        const Ragdoll& r = *a.moves->ragdoll;
+        const ModelData& model = *a.model->model;
+        const World::Entity& e = m_world.m_entities[a.owner];
+        if (e.parts3[0] == kNone)
+        {
+            return;
+        }
+        const Spatial* top = nullptr;
+        float lowest = 1e30f;
+        downward(model, [&](u32 b, int) {
+            if (const Spatial* part = r.parts[b] ? getSpatial(r.parts[b]) : nullptr)
+            {
+                top = top ? top : part;
+                lowest = fminf(lowest, part->place.y - r.low[b]);
+            }
+        });
+        if (top)
+        {
+            Spatial& s = m_spatials[e.parts3[0]];
+            s.place = { top->place.x, lowest, top->place.z };
+        }
+    }
+
+    void Space::dropRagdoll(Appearance& a)
+    {
+        Ragdoll& r = *a.moves->ragdoll;
+        for (u32 b = 0; b < kModelBones; b++)
+        {
+            if (r.parts[b])
+            {
+                m_world.destroyEntity(r.parts[b]);
+                r.parts[b] = 0;
+            }
+        }
+        r.on = false;
+        const World::Entity& e = m_world.m_entities[a.owner];
+        if (e.parts3[3] != kNone)
+        {
+            m_colliders[e.parts3[3]].off = false;
+        }
+    }
+
     // --- Joints ---
 
     bool Space::addJoint(Joint3& j, const Vec3& atA, const Vec3& atB)
@@ -1656,6 +2023,24 @@ namespace nx
                     j.bias[0] = error > 0 ? error * beta : error / dt;   // a slack rope lets them come closer
                 }
             }
+            if (j.kind == JointKind::Pin && j.cone > 0)
+            {
+                // Swung further than it may: turned back about the way across both axes, never pulled further.
+                const Vec3 axisA = a.turn.rotate(j.bodyAxisA).normalized();
+                const Vec3 axisB = eb ? b.turn.rotate(j.bodyAxisB).normalized() : j.bodyAxisB.normalized();
+                const Vec3 across = axisA.cross(axisB);
+                const float sine = across.length();
+                const float angle = atan2f(sine, axisA.dot(axisB));
+                j.turnMass[0] = 0;
+                j.turnImpulse[0] = 0;
+                if (angle > j.cone && sine > 1e-5f)
+                {
+                    j.across[0] = across * (1 / sine);
+                    j.turnBias[0] = (angle - j.cone) * beta;
+                    const float turn = inertia(a, j.across[0]).dot(j.across[0]) + inertia(b, j.across[0]).dot(j.across[0]);
+                    j.turnMass[0] = turn > 0 ? 1 / turn : 0;
+                }
+            }
             if (j.kind == JointKind::Hinge)
             {
                 // The axis as each sees it: what turns B's onto A's is put right, about the two ways across it.
@@ -1765,6 +2150,14 @@ namespace nx
                 const float more = -(apart.dot(j.axis) + j.bias[0] + j.softness * j.impulse[0]) * j.mass[0];
                 j.impulse[0] += more;
                 pushJoint(a, b, j, j.axis * more);
+            }
+            if (j.kind == JointKind::Pin && j.turnMass[0] > 0)
+            {
+                // A turning toward B about the way across closes the angle; it may close, never open.
+                const Vec3& t = j.across[0];
+                const float before = j.turnImpulse[0];
+                j.turnImpulse[0] = fminf(0.0f, before + (-j.turnBias[0] - (b.spin - a.spin).dot(t)) * j.turnMass[0]);
+                turnJoint(a, b, t * (j.turnImpulse[0] - before));
             }
             if (j.kind == JointKind::Hinge)
             {

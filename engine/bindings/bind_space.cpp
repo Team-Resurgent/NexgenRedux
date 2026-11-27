@@ -353,6 +353,16 @@ namespace nx
         {
             return e->world && e->world->space().lookAt(e->id, bone.c_str(), place, amount);
         }
+        bool entityRagdoll(bool limp, const Vec3& push, float change, EntityRef* e)
+        {
+            if (e->world == nullptr)
+            {
+                return false;
+            }
+            const Body3* body = e->world->space().getBody(e->id);
+            return e->world->space().ragdoll(e->id, limp, body && body->mass > 0 ? body->mass : 60, push, change);
+        }
+        bool getRagdolled(const EntityRef* e) { return e->world && e->world->space().ragdolled(e->id); }
         void entityLookAway(EntityRef* e)
         {
             const Appearance* a = someLook(e);
@@ -738,6 +748,8 @@ namespace nx
         b.method("void set_rootMotion(bool) property", NX_OBJ_LAST(setRootMotion), "Where its animations carry the model's highest bone along the ground, the whole thing goes instead, so its feet don't slide: a walker so moved still stops at walls.");
         b.method("bool lookAt(const string &in bone, const Vec3 &in place, float amount = 1)", NX_OBJ_LAST(entityLookAt), "Turns a bone of its model, as a head, toward a place, up to 75 degrees, over whatever its animation does; amount is how much. It turns there smoothly, and can be asked every update as the place moves. False if the bone isn't there.");
         b.method("void lookAway()", NX_OBJ_LAST(entityLookAway), "Turns the bone back to what its animation does.");
+        b.method("bool ragdoll(bool limp, const Vec3 &in push = Vec3(), float change = 0.6f)", NX_OBJ_LAST(entityRagdoll), "Goes limp: a body for each bone of its model that moves some of its skin, pinned where the bones meet and swinging only so far, falls as it is pushed, sent off at a speed as well as how it was moving; its own collider isn't there meanwhile, and what hits a body hits it. `push` on it then pushes the body nearest the place. false gets it up again, into whatever it plays, over some seconds. False if its model doesn't bend.");
+        b.method("bool get_ragdolled() const property", NX_OBJ_LAST(getRagdolled), "Whether it is limp.");
 
         b.method("Vec3 get_motion() const property", NX_OBJ_LAST(getMotion), "Metres a second.");
         b.method("void set_motion(const Vec3 &in) property", NX_OBJ_LAST(setMotion), "Sets it going.");

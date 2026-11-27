@@ -162,6 +162,20 @@ namespace nx
         float lookAmount, lookWanted;
         // The highest moving bone's travel moves the whole thing instead.
         bool root;
+        struct Ragdoll* ragdoll;   // owned; made the first time it goes limp
+    };
+
+    // A model gone limp: a body for each bone that moves some of its skin, pinned to the one above.
+    struct Ragdoll
+    {
+        u32 parts[kModelBones];       // the bodies' ids, or 0
+        Vec3 middle[kModelBones];     // each body's middle and turn in its bone's own space
+        Quat frame[kModelBones];
+        float low[kModelBones];       // how far below its middle a body reaches, at most
+        BonePose last[kModelBones];   // where it lay, to get up from
+        float leaving, leaveFor;      // seconds left of getting up, and all of them
+        float mass, scale;
+        bool on;
     };
 
     struct Light3
@@ -177,7 +191,9 @@ namespace nx
         Shape3 shape;
         u8 group;
         bool wall;
+        bool off;              // not there for anything: a ragdoll's owner while it is limp
         u16 hits;
+        u32 together;          // a ragdoll's bodies: its owner's id; they don't touch each other
         Vec3 half;             // a sphere's radius is x; a capsule's radius is x and its half height, ends and all, y
         Vec3 middle;           // from the entity's place
         // Where that is, kept until it moves or is changed.
@@ -271,6 +287,10 @@ namespace nx
         bool layerPlayed(u32 id) const;
         // Turns a bone, as a head, toward a place; amount 0 turns it back.
         bool lookAt(u32 id, const char* bone, const Vec3& place, float amount);
+        // Goes limp, falling as bodies pinned together, sent off at some speed; or gets up again over some seconds.
+        // False if it has no model that bends.
+        bool ragdoll(u32 id, bool on, float mass, const Vec3& push, float change);
+        bool ragdolled(u32 id) const;
         Moves* moves(u32 id);   // made if it isn't there
         void pendingAnimation(u32 id, const char* name);
         Vec3 worldPlace(u32 id) const;
@@ -575,6 +595,7 @@ namespace nx
         struct Rigid
         {
             u32 entity;        // index, or kNone
+            u32 together;      // a ragdoll's: its owner, whose bodies don't touch each other
             u32 body;          // or kNone for something that doesn't move
             Shape3 shape;
             Vec3 place, velocity, spin;
@@ -633,6 +654,10 @@ namespace nx
         bool bend(Appearance& a);
         // Every bone of its model now, ready for the vertices.
         void poseOf(const Appearance& a, Mat4* out) const;
+        void posed(const Appearance& a, BonePose* out) const;
+        void ragdollPose(const Appearance& a, BonePose* bones) const;
+        void followRagdoll(Appearance& a);
+        void dropRagdoll(Appearance& a);
         void sampleTrack(const Appearance& a, int animation, float time, BonePose* out) const;
         float trackLength(const Appearance& a, int animation) const;
         int rootOf(const Appearance& a, int animation) const;
@@ -783,6 +808,7 @@ namespace nx
             bool known;
             Vec3 bodyA, bodyB, bodyAxisA, bodyAxisB;
             float length, stiffness, damping;
+            float cone;               // a pin's: how far A's axis may swing from B's, in radians; 0 for as far as it likes
             // This step's:
             u32 rigidA, rigidB;
             Vec3 fromA, fromB, axis, across[2];

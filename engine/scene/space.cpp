@@ -300,6 +300,11 @@ namespace nx
         {
             a.effect->release();
         }
+        if (a.moves && a.moves->ragdoll)
+        {
+            dropRagdoll(a);
+            memFree(a.moves->ragdoll);
+        }
         memFree(a.moves);
         a.moves = nullptr;
         a.model = a.texture = nullptr;
@@ -310,6 +315,10 @@ namespace nx
 
     void Space::removed(u32 index)
     {
+        if (m_joints3.count())
+        {
+            unjoin(m_world.idOf(index));
+        }
         const u32 look = m_world.m_entities[index].parts3[1];
         if (look != kNone)
         {
@@ -395,6 +404,11 @@ namespace nx
             }
             a->model = model;
             a->animation = a->before = -1;
+            if (a->moves && a->moves->ragdoll)
+            {
+                dropRagdoll(*a);
+                a->moves->ragdoll->leaving = 0;
+            }
             if (a->moves)
             {
                 a->moves->blendCount = 0;
@@ -657,6 +671,15 @@ namespace nx
                 }
                 const float step = dt * 4;
                 m->lookAmount += m->lookWanted > m->lookAmount ? fminf(step, m->lookWanted - m->lookAmount) : -fminf(step, m->lookAmount - m->lookWanted);
+                if (m->ragdoll)
+                {
+                    if (m->ragdoll->on)
+                    {
+                        followRagdoll(a);
+                        a.bentReady = false;
+                    }
+                    m->ragdoll->leaving -= m->ragdoll->leaving > 0 ? dt : 0;
+                }
             }
             if (a.animation == -1)
             {
@@ -835,8 +858,14 @@ namespace nx
 
     void Space::poseOf(const Appearance& a, Mat4* out) const
     {
-        const ModelData& model = *a.model->model;
         BonePose bones[kModelBones];
+        posed(a, bones);
+        a.model->model->finish(bones, out);
+    }
+
+    void Space::posed(const Appearance& a, BonePose* bones) const
+    {
+        const ModelData& model = *a.model->model;
         sampleTrack(a, a.animation, a.time, bones);
         if (a.change > 0 && a.changeFor > 0)
         {
@@ -875,6 +904,24 @@ namespace nx
                     off.y = 0;
                 }
                 bones[root].place = bones[root].place - off;
+            }
+        }
+        if (m && m->ragdoll)
+        {
+            const Ragdoll& r = *m->ragdoll;
+            if (r.on)
+            {
+                // Limp: where its bodies have fallen, and nothing else.
+                ragdollPose(a, bones);
+                return;
+            }
+            if (r.leaving > 0 && r.leaveFor > 0)
+            {
+                // Getting up: from where it lay into what it now plays.
+                BonePose lay[kModelBones];
+                memcpy(lay, r.last, sizeof(BonePose) * model.bones.count());
+                model.mix(lay, bones, 1 - r.leaving / r.leaveFor);
+                memcpy(bones, lay, sizeof(BonePose) * model.bones.count());
             }
         }
         if (m && m->layer >= 0 && m->layerWeight > 0)
@@ -926,7 +973,6 @@ namespace nx
                 }
             }
         }
-        model.finish(bones, out);
     }
 
     Moves* Space::moves(u32 id)

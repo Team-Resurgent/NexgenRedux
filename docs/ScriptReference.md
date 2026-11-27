@@ -672,6 +672,8 @@ Entities that move, collide and are drawn by the engine. Each screen has its own
 | `void set_rootMotion(bool) property` | Where its animations carry the model's highest bone along the ground, the whole thing goes instead, so its feet don't slide: a walker so moved still stops at walls. |
 | `bool lookAt(const string &in bone, const Vec3 &in place, float amount = 1)` | Turns a bone of its model, as a head, toward a place, up to 75 degrees, over whatever its animation does; amount is how much. It turns there smoothly, and can be asked every update as the place moves. False if the bone isn't there. |
 | `void lookAway()` | Turns the bone back to what its animation does. |
+| `bool ragdoll(bool limp, const Vec3 &in push = Vec3(), float change = 0.6f)` | Goes limp: a body for each bone of its model that moves some of its skin, pinned where the bones meet and swinging only so far, falls as it is pushed, sent off at a speed as well as how it was moving; its own collider isn't there meanwhile, and what hits a body hits it. `push` on it then pushes the body nearest the place. false gets it up again, into whatever it plays, over some seconds. False if its model doesn't bend. |
+| `bool get_ragdolled() const property` | Whether it is limp. |
 | `Vec3 get_motion() const property` | Metres a second. |
 | `void set_motion(const Vec3 &in) property` | Sets it going. |
 | `Vec3 get_turning() const property` | Degrees a second about each axis. |

@@ -333,6 +333,17 @@ class Session {
             break;
         }
 
+        // The entities of the screen on top, one's properties, and changing one.
+        case 'nexgenEntities':
+            this.reply(r, await this.ask('entities', {}));
+            break;
+        case 'nexgenEntity':
+            this.reply(r, await this.ask('entity', { entity: a.entity }));
+            break;
+        case 'nexgenSetEntity':
+            this.reply(r, await this.ask('setEntity', { entity: a.entity, property: a.property, value: String(a.value) }));
+            break;
+
         case 'terminate':
         case 'disconnect':
             this.ended = true;
@@ -410,6 +421,34 @@ function activate(context) {
             await vscode.commands.executeCommand('markdown.showPreview', document.uri).then(undefined, () => vscode.window.showTextDocument(document));
         }
     }));
+    // The entities of the screen on top, as a tree beside the call stack: each with its properties and its children,
+    // looked at again every second and a half while the game runs.
+    const entities = new Entities(session);
+    context.subscriptions.push(vscode.window.registerTreeDataProvider('nexgenEntities', entities));
+    context.subscriptions.push(vscode.commands.registerCommand('nexgen.refreshEntities', () => entities.refresh()));
+    context.subscriptions.push(vscode.commands.registerCommand('nexgen.changeProperty', async item => {
+        const s = session();
+        if (!s || !item || !item.property) {
+            return;
+        }
+        const value = await vscode.window.showInputBox({ prompt: `${item.property.name} of ${item.owner}`, value: item.property.value });
+        if (value !== undefined) {
+            const answer = await s.customRequest('nexgenSetEntity', { entity: item.entity, property: item.property.name, value });
+            if (!answer.done) {
+                vscode.window.showWarningMessage(`${item.property.name} can't be ${value}.`);
+            }
+            entities.refresh();
+        }
+    }));
+    const timer = setInterval(() => {
+        const s = vscode.debug.activeDebugSession;
+        if (s && s.type === 'nexgen') {
+            entities.refresh();
+        }
+    }, 1500);
+    context.subscriptions.push({ dispose: () => clearInterval(timer) });
+    context.subscriptions.push(vscode.debug.onDidTerminateDebugSession(() => entities.refresh()));
+
     context.subscriptions.push(vscode.debug.registerDebugAdapterDescriptorFactory('nexgen', {
         createDebugAdapterDescriptor: session => new vscode.DebugAdapterInlineImplementation(new Session(session)),
     }));
@@ -422,6 +461,66 @@ function activate(context) {
             return config;
         },
     }));
+}
+
+class Entities {
+    constructor(session) {
+        this.session = session;
+        this.changed = new vscode.EventEmitter();
+        this.onDidChangeTreeData = this.changed.event;
+        this.list = [];
+    }
+
+    refresh() {
+        this.changed.fire();
+    }
+
+    async getChildren(item) {
+        const s = vscode.debug.activeDebugSession;
+        if (!s || s.type !== 'nexgen') {
+            return [];
+        }
+        try {
+            if (!item) {
+                const answer = await s.customRequest('nexgenEntities', {});
+                this.list = answer.entities || [];
+                return this.list.filter(e => !e.parent).map(e => this.entityItem(e));
+            }
+            if (item.entity && !item.property) {
+                const answer = await s.customRequest('nexgenEntity', { entity: item.entity });
+                const owner = item.label;
+                const properties = (answer.properties || []).map(p => {
+                    const t = new vscode.TreeItem(p.name);
+                    t.description = p.value;
+                    t.tooltip = `${p.name}: ${p.value}`;
+                    t.entity = item.entity;
+                    t.owner = owner;
+                    t.property = p;
+                    t.contextValue = p.changes ? 'nexgenChangeable' : 'nexgenProperty';
+                    return t;
+                });
+                const children = this.list.filter(e => e.parent === item.entity).map(e => this.entityItem(e));
+                return properties.concat(children);
+            }
+        } catch (e) {
+            return [];
+        }
+        return [];
+    }
+
+    entityItem(e) {
+        const t = new vscode.TreeItem(e.name || `#${e.entity & 0xFFFF}`, vscode.TreeItemCollapsibleState.Collapsed);
+        t.id = String(e.entity);
+        t.description = `${e.space ? 'space' : 'plane'} ${e.place}`;
+        t.entity = e.entity;
+        t.contextValue = 'nexgenEntity';
+        t.iconPath = new vscode.ThemeIcon(e.space ? 'symbol-namespace' : 'symbol-field');
+        return t;
+    }
+
+    getTreeItem(item) {
+        return item;
+    }
 }
 
 function deactivate() {}

@@ -3,6 +3,8 @@
 
 #include "base/thread.h"
 #include "net/net.h"
+#include "net/socket.h"
+#include "net/websocket.h"
 #include "scene/sharing.h"
 
 #include <math.h>
@@ -112,6 +114,110 @@ namespace
     {
         return create<Request>(MemTag::General, net, url.c_str(), "GET", std::string(), "");
     }
+}
+
+NX_TEST(webSocketsTalkBothWays)
+{
+    // A server, here: it answers the upgrade, says back what comes, and more.
+    NX_EXPECT(netStart());
+    TcpSocket listener, server;
+    NX_EXPECT(listener.listen(0, true));
+    const u16 port = listener.port();
+    char url[64];
+    snprintf(url, sizeof(url), "ws://127.0.0.1:%u/chat", static_cast<unsigned>(port));
+    WebSocket* ws = create<WebSocket>(MemTag::General, url);
+    std::string in;
+    const auto until = [&](auto&& done)
+    {
+        for (int i = 0; i < 1500; i++)
+        {
+            char buffer[4096];
+            const size_t got = server.state() == TcpState::Open ? server.receive(buffer, sizeof(buffer)) : 0;
+            in.append(buffer, got);
+            if (done())
+            {
+                return true;
+            }
+            sleepMilliseconds(2);
+        }
+        return false;
+    };
+    const auto put = [&](const std::string& bytes)
+    {
+        size_t at = 0;
+        for (int i = 0; i < 500 && at < bytes.size(); i++)
+        {
+            at += server.send(bytes.data() + at, bytes.size() - at);
+        }
+    };
+    const auto frame = [](int first, const std::string& payload)
+    {
+        std::string f;
+        f += static_cast<char>(first);
+        f += static_cast<char>(payload.size());
+        return f + payload;
+    };
+    // One masked frame from the client, unmasked: its kind, and what it says.
+    const auto take = [&](int& kind, std::string& payload)
+    {
+        if (in.size() < 6)
+        {
+            return false;
+        }
+        const size_t n = static_cast<u8>(in[1]) & 0x7F;
+        if (in.size() < 6 + n)
+        {
+            return false;
+        }
+        kind = static_cast<u8>(in[0]) & 0x0F;
+        payload.assign(in, 6, n);
+        for (size_t i = 0; i < n; i++)
+        {
+            payload[i] = static_cast<char>(payload[i] ^ in[2 + (i & 3)]);
+        }
+        in.erase(0, 6 + n);
+        return true;
+    };
+    Endpoint from;
+    NX_EXPECT(until([&]() { return listener.accept(server, from); }));
+    NX_EXPECT(until([&]() { return in.find("\r\n\r\n") != std::string::npos; }));
+    NX_EXPECT(in.find("GET /chat HTTP/1.1") == 0 && in.find("Upgrade: websocket") != std::string::npos && in.find("Sec-WebSocket-Key: ") != std::string::npos);
+    in.clear();
+    NX_EXPECT(ws->state() == WebSocket::State::Connecting);
+    put("HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n\r\n");
+    NX_EXPECT(until([&]() { return ws->state() == WebSocket::State::Open; }));
+
+    // What the client says arrives, masked; what is said back, whole or in pieces, is read in order.
+    NX_EXPECT(ws->send("hello there"));
+    int kind = 0;
+    std::string said;
+    NX_EXPECT(until([&]() { return take(kind, said); }) && kind == 1 && said == "hello there");
+    put(frame(0x81, "back again"));
+    put(frame(0x01, "in two ") + frame(0x80, "pieces"));
+    std::string heard;
+    NX_EXPECT(until([&]() { return ws->receive(heard); }) && heard == "back again");
+    NX_EXPECT(until([&]() { return ws->receive(heard); }) && heard == "in two pieces");
+    NX_EXPECT(!ws->receive(heard));
+    // A ping is answered.
+    put(frame(0x89, "are you there"));
+    NX_EXPECT(until([&]() { return take(kind, said); }) && kind == 10 && said == "are you there");
+    // The server closes it.
+    put(frame(0x88, std::string("\x03\xE8", 2)));
+    NX_EXPECT(until([&]() { return ws->state() == WebSocket::State::Closed; }));
+    NX_EXPECT(!ws->send("too late"));
+    ws->release();
+
+    // What can't be reached, or isn't a WebSocket address, closes with a reason.
+    WebSocket* bad = create<WebSocket>(MemTag::General, "http://127.0.0.1/");
+    for (int i = 0; i < 500 && bad->state() != WebSocket::State::Closed; i++)
+    {
+        sleepMilliseconds(2);
+    }
+    NX_EXPECT(bad->state() == WebSocket::State::Closed && !bad->error().empty());
+    bad->release();
+    server.close();
+    listener.close();
+    netStop();
 }
 
 NX_TEST(addressesAreText)

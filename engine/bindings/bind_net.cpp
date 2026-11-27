@@ -1,5 +1,6 @@
 #include "bindings/script_refs.h"
 #include "net/net.h"
+#include "net/websocket.h"
 #include "scene/sharing.h"
 #include "script/script_host.h"
 
@@ -15,6 +16,13 @@ namespace nx
         Message* makeMessage() { return create<Message>(MemTag::Script); }
         Room* makeRoom() { return create<Room>(MemTag::Script, net()); }
         Connection* makeConnection() { return create<Connection>(MemTag::Script, net()); }
+        WebSocket* makeWebSocket(const std::string& url) { return create<WebSocket>(MemTag::Script, url.c_str()); }
+        bool webSocketOpen(const WebSocket* w) { return w->state() == WebSocket::State::Open; }
+        bool webSocketConnecting(const WebSocket* w) { return w->state() == WebSocket::State::Connecting; }
+        bool webSocketClosed(const WebSocket* w) { return w->state() == WebSocket::State::Closed; }
+        std::string webSocketError(const WebSocket* w) { return w->error(); }
+        bool webSocketSend(const std::string& text, WebSocket* w) { return w->send(text); }
+        bool webSocketReceive(std::string& out, WebSocket* w) { return w->receive(out); }
         Datagrams* makeDatagrams() { return create<Datagrams>(MemTag::Script, net()); }
 
         // "192.168.1.2" or "192.168.1.2:27310". Names are looked up only by Net::get, which needn't wait.
@@ -283,6 +291,18 @@ namespace nx
         b.method("string get_error() const property", NX_OBJ_LAST(requestError), "Why it failed.");
         b.method("uint get_received() const property", NX_METHOD(Request, received), "Bytes that have come.");
         b.method("float get_progress() const property", NX_METHOD(Request, progress), "0 to 1, or 0 while nobody knows.");
+
+        b.refType("WebSocket", 0, "Messages both ways with a web server, kept open: ws://, or wss:// whose certificate is checked. It connects by itself; what comes waits until it is read.");
+        b.behaviour(asBEHAVE_FACTORY, "WebSocket@ f(const string &in url)", NX_FN(makeWebSocket));
+        b.behaviour(asBEHAVE_ADDREF, "void f()", NX_METHOD(WebSocket, addRef));
+        b.behaviour(asBEHAVE_RELEASE, "void f()", NX_METHOD(WebSocket, release));
+        b.method("bool get_connecting() const property", NX_OBJ_LAST(webSocketConnecting), "Whether it is still connecting.");
+        b.method("bool get_connected() const property", NX_OBJ_LAST(webSocketOpen), "Whether messages can go both ways.");
+        b.method("bool get_closed() const property", NX_OBJ_LAST(webSocketClosed), "Whether it is over; error says why, unless it was closed here.");
+        b.method("string get_error() const property", NX_OBJ_LAST(webSocketError), "Why it closed or never opened.");
+        b.method("bool send(const string &in text)", NX_OBJ_LAST(webSocketSend), "Sends a message, once it is connected; in order. False once it has closed.");
+        b.method("bool receive(string &out message)", NX_OBJ_LAST(webSocketReceive), "The next message that has come, oldest first. False if there is none.");
+        b.method("void close()", NX_METHOD(WebSocket, close), "Says goodbye, and closes it.");
 
         b.refType("Connection", 0, "A stream of text to or from another program, over TCP. What is sent arrives, and in order.");
         b.behaviour(asBEHAVE_FACTORY, "Connection@ f()", NX_FN(makeConnection));

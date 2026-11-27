@@ -127,6 +127,18 @@ function check(what, good) {
     check('stepped out', (await waitFor('stopped')).reason === 'step');
     await ok('continue', { threadId: 1 });
 
+    // The entities of the screen on top, what one is like, and changing it.
+    const list = await ok('nexgenEntities', {});
+    check(`entities listed (${(list.entities || []).length})`, Array.isArray(list.entities) && list.count === list.entities.length);
+    if (list.entities.length) {
+        const first = list.entities[0];
+        const about = await ok('nexgenEntity', { entity: first.entity });
+        const shown = (about.properties || []).find(p => p.name === 'shown');
+        check(`${first.name || first.entity}: ${(about.properties || []).length} properties`, shown && shown.changes);
+        check('one changed', (await ok('nexgenSetEntity', { entity: first.entity, property: 'shown', value: shown.value })).done);
+    }
+    check('nothing there is refused', !(await ok('nexgenSetEntity', { entity: 12345678, property: 'shown', value: 'true' })).done);
+
     // Where the time goes: samples of what runs, while it runs.
     await ok('nexgenProfile', { on: true });
     await new Promise(resolve => setTimeout(resolve, 1500));

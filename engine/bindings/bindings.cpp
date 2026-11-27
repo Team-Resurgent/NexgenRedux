@@ -3,6 +3,7 @@
 #include "bindings/script_refs.h"
 #include "screens/screens.h"
 #include "net/net.h"
+#include "screens/playlist.h"
 #include "video/video.h"
 
 #include <math.h>
@@ -363,6 +364,28 @@ namespace nx
             return playSound(*sound, o);
         }
 
+        Playlist* makePlaylist()
+        {
+            Services& s = services();
+            return create<Playlist>(MemTag::Script, *s.assets, *s.audio);
+        }
+        void playlistAdd(SoundRef* sound, Playlist* p)
+        {
+            if (sound == nullptr)
+            {
+                scriptError("null sound");
+                return;
+            }
+            p->add(sound->asset);
+        }
+        bool playlistShuffle(const Playlist* p) { return p->shuffle; }
+        void setPlaylistShuffle(bool v, Playlist* p) { p->shuffle = v; }
+        bool playlistLoop(const Playlist* p) { return p->loop; }
+        void setPlaylistLoop(bool v, Playlist* p) { p->loop = v; }
+        float playlistCrossfade(const Playlist* p) { return p->crossfade; }
+        void setPlaylistCrossfade(float v, Playlist* p) { p->crossfade = v > 0 ? v : 0; }
+        void setPlaylistIndex(u32 v, Playlist* p) { p->jump(v, -1); }
+
         PlayingSound soundPlayMusic(float volume, float fadeIn, bool loop, SoundRef* sound)
         {
             PlayOptions o;
@@ -384,7 +407,7 @@ namespace nx
             o.loop = loop;
             o.priority = loop ? 140 : 120;
             const PlayingSound playing = playSound(*sound, o);
-            space.follow(Voice{ playing.value }, entity, place, volume, range);
+            space.follow(Voice{ playing.value }, entity, place, volume, range, pitch);
             return playing;
         }
         PlayingSound soundPlayAt(const Vec3& place, float volume, float range, float pitch, SoundRef* sound)
@@ -940,6 +963,33 @@ namespace nx
             b.method("float get_seconds() const property", NX_OBJ_LAST(soundSeconds), "How long it is; 0 if that isn't known.");
             b.method("bool get_ready() const property", NX_METHOD(SoundRef, ready), "Whether it has arrived. Until then it plays as silence.");
             b.method("bool get_failed() const property", NX_METHOD(SoundRef, failed), "Whether the file could not be loaded.");
+
+            b.refType("Playlist", 0, "Music, one track after another, the next fading in as the last fades out: in order or shuffled, round again or not. It moves on by itself while its screen is on top.");
+            b.behaviour(asBEHAVE_FACTORY, "Playlist@ f()", NX_FN(makePlaylist));
+            b.behaviour(asBEHAVE_ADDREF, "void f()", NX_METHOD(Playlist, addRef));
+            b.behaviour(asBEHAVE_RELEASE, "void f()", NX_METHOD(Playlist, release));
+            b.method("void add(Sound@+ track)", NX_OBJ_LAST(playlistAdd), "One more, at the end. Up to 64.");
+            b.method("void clear()", NX_METHOD(Playlist, clear), "None, and quiet.");
+            b.method("void play(float fadeSeconds = 0)", NX_METHOD(Playlist, play), "From the track it is at, fading in. A track that hasn't arrived starts once it has.");
+            b.method("void next(float fadeSeconds = -1)", NX_METHOD(Playlist, next), "On to the next now, over crossfade seconds unless told.");
+            b.method("void previous(float fadeSeconds = -1)", NX_METHOD(Playlist, previous), "Back to the one before.");
+            b.method("void stop(float fadeSeconds = 1)", NX_METHOD(Playlist, stop), "Quiet, fading out; play starts the same track again.");
+            b.method("uint get_count() const property", NX_METHOD(Playlist, count), "How many tracks.");
+            b.method("uint get_index() const property", NX_METHOD(Playlist, index), "Which is playing, from 0.");
+            b.method("void set_index(uint) property", NX_OBJ_LAST(setPlaylistIndex), "Straight to one, fading across.");
+            b.method("bool get_playing() const property", NX_METHOD(Playlist, playing), "Whether it is playing, or about to.");
+            b.method("bool get_shuffle() const property", NX_OBJ_LAST(playlistShuffle), "Whether each next is any but the last.");
+            b.method("void set_shuffle(bool) property", NX_OBJ_LAST(setPlaylistShuffle), "Each next any but the last, or in order.");
+            b.method("bool get_loop() const property", NX_OBJ_LAST(playlistLoop), "Whether it goes round again after the last; true to begin with.");
+            b.method("void set_loop(bool) property", NX_OBJ_LAST(setPlaylistLoop), "Round again after the last, or stop.");
+            b.method("float get_crossfade() const property", NX_OBJ_LAST(playlistCrossfade), "Seconds each track overlaps the next; 2 to begin with.");
+            b.method("void set_crossfade(float) property", NX_OBJ_LAST(setPlaylistCrossfade), "Seconds each track overlaps the next; 0 for one straight after another.");
+            b.method("float get_volume() const property", NX_METHOD(Playlist, volume), "How loud, 1 as it is.");
+            b.method("void set_volume(float) property", NX_METHOD(Playlist, setVolume), "Louder or softer, gradually.");
+            b.method("bool get_paused() const property", NX_METHOD(Playlist, paused), "Whether it is held where it is.");
+            b.method("void set_paused(bool) property", NX_METHOD(Playlist, setPaused), "Holds it where it is, or lets it go on.");
+            b.method("float get_position() const property", NX_METHOD(Playlist, position), "Seconds into the track playing.");
+            b.method("float get_seconds() const property", NX_METHOD(Playlist, seconds), "How long the track playing is; 0 if that isn't known.");
 
             b.section("Audio", "Volumes, and what is being heard. A screen's sounds pause while it is covered and stop when it closes.");
             b.names("Audio");

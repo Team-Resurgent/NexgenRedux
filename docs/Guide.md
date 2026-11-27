@@ -53,6 +53,14 @@ in the Debug Console. Its profiler, on the debug toolbar, shows which functions 
 started with `--debug`, which listens on that machine only unless `--debug-remote` is given. On a console, a folder called `debug`
 beside the title lets a computer on the network attach to it.
 
+While it runs, *Nexgen entities* beside the call stack lists the entities of the screen on top, each with its children and what it
+is like: where it is, how it is turned and big, its colour, model, animation, body and collider. The pencil beside a property
+changes it there and then, as the game goes on: a robot moved to `1, 5, 2`, a body sent off at `0, 8, 0`.
+
+To see what touches what, `Space::showShapes` and `Scene::showShapes` draw every collider over the picture: grey walls, green
+bodies (darker asleep), blue walkers and characters, orange ragdolls, yellow areas that only feel. `Space::showNavigation` draws the
+squares that `Space::navigate` found can be walked on. In Guards, Tumble, Topple and Physics, C or the left trigger shows them.
+
 ## Screens
 
 A screen is a class that implements `Screen`. The engine calls the methods it has:
@@ -304,6 +312,26 @@ robot.lookAway();
 
 The Moves demo has one of each, and the robot's "stride" is a walk that goes forward, for root motion.
 
+`robot.reach("hand.r", place)` bends a limb's two bones, over whatever it plays, so that its end touches a place: a hand on a lever,
+a foot on a step. Up to four at once; amount 0 lets one go. In the Moves demo, Fire makes the robots reach for the drone.
+
+For more than a few animations, `#include "global:states.as"` brings in `AnimationStates`: states, each an animation, and links
+between them, with how long each change takes and whether it waits for the first to finish. `travel` goes the shortest way along
+the links, playing each state between, and a state that doesn't loop can say what comes after it:
+
+```cpp
+AnimationStates moves(robot);
+moves.add("idle");
+moves.add("walk");
+moves.add("leap", "jump", false, "idle");    // jumps once, then idles
+moves.link("idle", "walk", 0.2f, true);      // both ways
+moves.link("walk", "leap", 0.1f);
+moves.start("idle");
+// each update:
+moves.update(dt);
+moves.travel(jumping ? "leap" : speed > 0.1f ? "walk" : "idle");
+```
+
 ### Ragdolls
 
 `ragdoll(true)` makes a model go limp. It gets a body for each bone that moves some of its skin, sized from that skin and pinned
@@ -334,6 +362,23 @@ Space::spring(weight, null, Vec3(3, 3, 0), Vec3(3, 6, 0), 40, 1, 2);  // stiffne
 ```
 
 A joint goes when either thing does, or with `Space::unjoin`. The Tumble demo's *Swings* has one of each.
+
+Joints can be held within limits, as a door stops against a wall or a neck turns only so far:
+
+```cpp
+Space::hinge(door, null, Vec3(0, 1, 0), Vec3(0, 1, 0), 0, 100);   // opens one way, to 100 degrees
+Space::join(head, neck, at, 40);                                    // swings no more than 40 degrees from how it hangs now
+```
+
+A ray can slip past what something thick would hit. `Space::sphereCast` moves a ball along a line instead, and says where its
+middle is when it first touches, and which way that faces; `Space::spherePick` says what it touched. For a character's way ahead,
+a thrown thing, or a camera kept out of walls:
+
+```cpp
+Vec3 at, normal;
+if (Space::sphereCast(target, wanted, 0.3f, at, normal))
+    camera = at;                    // as near as it can be without going into the wall
+```
 
 ### A world to walk in
 
@@ -794,6 +839,24 @@ Audio::clearEffects();
 A screen starts with none, and they go when it closes. The Sounds demo puts its pads in a room, a hall, a canyon, under water and
 on the radio.
 
+Sounds in space, from `playAt` or an entity's `sound`, are quieter further away and come from where they are. `Space::doppler = 1`
+bends them as well, higher coming closer and lower going away, as a car or a siren passing is; more than 1 makes it plainer. A
+camera that cuts somewhere new isn't taken for a speed. The Moves demo's drone is heard going by.
+
+Music from one track to the next is a `Playlist`:
+
+```cpp
+Playlist@ list = Playlist();
+list.add(Assets::sound("asset:one.ogg"));
+list.add(Assets::sound("asset:two.ogg"));
+list.shuffle = true;                // any but the last, each time
+list.crossfade = 3;                 // each fades into the next over 3 seconds
+list.play();
+list.next();                        // now, over crossfade; previous(), stop(), index, paused, position and seconds too
+```
+
+It goes on by itself while its screen is on top, round again unless `loop` is false. The Music demo is one.
+
 ### Video
 
 Films are MPEG-1 with MP2 sound, in a `.mpg`, decoded as they play on every machine, the original Xbox included. ffmpeg makes
@@ -963,6 +1026,23 @@ if (request.done && !request.failed)
 
 Certificates are checked, against those in `media/global/certificates.pem`: a server that can't be trusted is refused, and `error`
 says why. An answer may be up to 4 MB. `Net::post` sends something.
+
+A `WebSocket` stays open, for messages both ways with a web server: a chat, a lobby, scores as they change.
+
+```cpp
+WebSocket@ socket = WebSocket("wss://example.com/chat");
+
+if (socket.connected)
+    socket.send("hello");
+string message;
+while (socket.receive(message))
+    show(message);
+if (socket.closed)
+    show(socket.error);
+```
+
+It connects, sends and reads on a thread of its own, so nothing waits; `wss://` is over TLS, its certificate checked as for `Net::get`.
+Messages may be up to 4 MB, and pings are answered for you.
 
 ### Anything else
 

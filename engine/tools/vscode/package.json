@@ -2,7 +2,7 @@
   "name": "nexgen-redux",
   "displayName": "Nexgen Redux",
   "description": "Debug Nexgen Redux scripts: breakpoints, stepping, the call stack and what each script holds, on a PC or on a console over the network. With AngelScript colouring.",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "publisher": "TeamResurgent",
   "icon": "icon.png",
   "repository": {
@@ -13,17 +13,33 @@
     "vscode": "^1.80.0"
   },
   "categories": ["Debuggers", "Programming Languages"],
-  "activationEvents": ["onDebug", "onLanguage:angelscript", "onCommand:nexgen.profileStart", "onCommand:nexgen.profileStop"],
+  "activationEvents": ["onDebug", "onLanguage:angelscript", "onCommand:nexgen.profileStart", "onCommand:nexgen.profileStop", "onView:nexgenEntities"],
   "main": "./extension.js",
   "contributes": {
     "commands": [
       { "command": "nexgen.profileStart", "title": "Start profiling scripts", "category": "Nexgen Redux", "icon": "$(pulse)" },
-      { "command": "nexgen.profileStop", "title": "Stop profiling and show where the time went", "category": "Nexgen Redux", "icon": "$(graph)" }
+      { "command": "nexgen.profileStop", "title": "Stop profiling and show where the time went", "category": "Nexgen Redux", "icon": "$(graph)" },
+      { "command": "nexgen.refreshEntities", "title": "Look at the entities again", "category": "Nexgen Redux", "icon": "$(refresh)" },
+      { "command": "nexgen.changeProperty", "title": "Change", "category": "Nexgen Redux", "icon": "$(edit)" }
     ],
+    "views": {
+      "debug": [
+        { "id": "nexgenEntities", "name": "Nexgen entities", "when": "debugType == nexgen" }
+      ]
+    },
     "menus": {
       "debug/toolbar": [
         { "command": "nexgen.profileStart", "when": "debugType == nexgen" },
         { "command": "nexgen.profileStop", "when": "debugType == nexgen" }
+      ],
+      "view/title": [
+        { "command": "nexgen.refreshEntities", "when": "view == nexgenEntities", "group": "navigation" }
+      ],
+      "view/item/context": [
+        { "command": "nexgen.changeProperty", "when": "view == nexgenEntities && viewItem == nexgenChangeable", "group": "inline" }
+      ],
+      "commandPalette": [
+        { "command": "nexgen.changeProperty", "when": "false" }
       ]
     },
     "languages": [

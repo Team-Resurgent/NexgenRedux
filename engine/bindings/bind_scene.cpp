@@ -446,6 +446,8 @@ namespace nx
             return list;
         }
         Vec2 sceneGetGravity() { return world().gravity(); }
+        bool sceneShowShapes() { return world().m_showShapes; }
+        void sceneSetShowShapes(bool v) { world().m_showShapes = v; }
         void sceneGravity(const Vec2& g) { world().setGravity(g); }
         Color sceneAmbient() { return world().ambient(); }
         void sceneSetAmbient(const Color& c) { world().setAmbient(c); }
@@ -591,6 +593,8 @@ namespace nx
         b.function("array<Entity@>@ within(const Vec2 &in position, float radius, uint groups = 0xFFFF)", NX_FN(sceneWithin), "Everything whose collider touches a circle.");
         b.function("Entity@ raycast(const Vec2 &in from, const Vec2 &in to, Vec2 &out hit, uint groups = 0xFFFF)", NX_FN(sceneRaycast), "The first collider on a line, and where, or null.");
         b.function("Vec2 get_gravity() property", NX_FN(sceneGetGravity), "What pulls on those that feel it.");
+        b.function("bool get_showShapes() property", NX_FN(sceneShowShapes), "Whether colliders are drawn over the scene.");
+        b.function("void set_showShapes(bool) property", NX_FN(sceneSetShowShapes), "Draws every collider over the scene, to see what touches what: grey walls, green bodies with mass, blue characters and the rest, yellow areas that only feel.");
         b.function("void set_gravity(const Vec2 &in) property", NX_FN(sceneGravity), "Units a second, each second.");
         b.function("Color get_ambient() property", NX_FN(sceneAmbient), "The light everywhere, before lights add to it. White, as it starts, is no lighting at all; anything darker turns lighting on, so that entities' lights show and solid tiles and occluders cast shadows.");
         b.function("void set_ambient(const Color &in) property", NX_FN(sceneSetAmbient), "The light everywhere, before lights add to it: Color(0.1f, 0.1f, 0.2f) is a dark night.");

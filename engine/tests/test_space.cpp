@@ -227,6 +227,113 @@ NX_TEST(jointsHoldInSpace)
     NX_EXPECT(!p.space.pin(door, door, {}) && !p.space.pin(0, door, {}));
 }
 
+NX_TEST(limitsAndSweptBalls)
+{
+    Place p;
+    // A door that opens one way to 90 degrees, pushed hard both ways, keeps between them.
+    const u32 door = p.thing({ 0.5f, 3, 0 }, Shape3::Box, { 0.5f, 1, 0.05f }, 1);
+    p.space.getBody(door)->gravity = 0;
+    NX_EXPECT(p.space.hinge(door, 0, { 0, 3, 0 }, { 0, 1, 0 }, 0, 1.5707963f));
+    p.step();
+    float least = 10, most = -10;
+    const auto turned = [&] {
+        const Vec3 along = p.space.getSpatial(door)->turn.rotate({ 1, 0, 0 });
+        return atan2f(-along.z, along.x);
+    };
+    for (int i = 0; i < 240; i++)
+    {
+        // Thrown open, then shut, then open again.
+        if (i % 80 == 0)
+        {
+            p.space.getBody(door)->velocity = { 0, 0, i % 160 == 0 ? -6.0f : 6.0f };
+            p.space.forget();
+        }
+        p.step();
+        least = fminf(least, turned());
+        most = fmaxf(most, turned());
+    }
+    NX_EXPECT(least > -0.12f && most < 1.5707963f + 0.12f && most > 1.2f);
+
+    // A ball hanging from a pin, that may swing no more than 30 degrees from straight down, struck hard.
+    const u32 bob = p.thing({ 10, 4, 0 }, Shape3::Sphere, { 0.2f, 0.2f, 0.2f }, 1);
+    NX_EXPECT(p.space.pin(bob, 0, { 10, 6, 0 }, 0.5235988f));
+    p.space.getBody(bob)->velocity = { 12, 0, 0 };
+    p.space.forget();
+    float widest = 0;
+    for (int i = 0; i < 180; i++)
+    {
+        p.step();
+        const Vec3 hang = (p.at(bob) - Vec3(10, 6, 0)).normalized();
+        widest = fmaxf(widest, acosf(fminf(1, -hang.y)));
+    }
+    NX_EXPECT(widest > 0.4f && widest < 0.5235988f + 0.1f);
+
+    // A ball along a line stops its own width short of a wall, facing back.
+    const u32 wall = p.thing({ 25, 1, 0 }, Shape3::Box, { 0.5f, 0.5f, 0.5f }, 0);
+    u32 id = 0;
+    Vec3 at, normal;
+    NX_EXPECT(p.space.sweep({ 20, 1, 0 }, { 30, 1, 0 }, 0.5f, 0xFFFF, 0, id, at, normal));
+    NX_EXPECT(id == wall && fabsf(at.x - 24) < 0.03f && normal.x < -0.9f);
+    // What a thin ray passes over, a thick ball catches.
+    Vec3 hit;
+    NX_EXPECT(!p.space.raycast({ 20, 1.8f, 0 }, { 30, 1.8f, 0 }, 0xFFFF, 0, id, hit, normal));
+    NX_EXPECT(p.space.sweep({ 20, 1.8f, 0 }, { 30, 1.8f, 0 }, 0.5f, 0xFFFF, 0, id, at, normal) && id == wall && at.x < 25);
+    NX_EXPECT(!p.space.sweep({ 20, 1.8f, 0 }, { 30, 1.8f, 0 }, 0.5f, 0xFFFF, wall, id, at, normal));
+    // Down onto the ground.
+    p.space.setGround(0);
+    NX_EXPECT(p.space.sweep({ 40, 5, 0 }, { 40, -5, 0 }, 0.5f, 0xFFFF, 0, id, at, normal) && id == 0 && fabsf(at.y - 0.5f) < 0.03f && normal.y > 0.99f);
+    // Nothing there.
+    NX_EXPECT(!p.space.sweep({ 50, 5, 0 }, { 60, 5, 0 }, 0.5f, 0xFFFF, 0, id, at, normal) && close(at, { 60, 5, 0 }));
+}
+
+NX_TEST(soundsBendAsTheyPass)
+{
+    Place p;
+    Asset* engine = p.rig.assets.sound("global/sound/engine.wav");
+    p.rig.assets.finish();
+    NX_EXPECT(engine->ready && engine->sound);
+    p.space.setCamera({ 0, 0, 0 }, { 0, 0, -1 }, 60);
+    const u32 car = p.world.spawn({});
+    p.space.spatial(car)->place = { 0, 0, -120 };
+    PlayOptions o;
+    o.loop = true;
+    p.rig.assets.addRef(engine);
+    const Voice voice = p.rig.audio.play(*engine->sound, engine, o);
+    NX_EXPECT(voice.value != 0);
+    p.space.follow(voice, car, { 0, 0, -120 }, 1, 300, 1);
+    // Without Doppler, as it is.
+    for (int i = 0; i < 20; i++)
+    {
+        p.space.spatial(car)->place.z += 40.0f / 60;
+        p.step();
+    }
+    NX_EXPECT(p.space.pitchOf(voice) == 1);
+    // Coming at 40 metres a second, higher; going at that, lower.
+    p.space.m_doppler = 1;
+    for (int i = 0; i < 60; i++)
+    {
+        p.space.spatial(car)->place.z += 40.0f / 60;
+        p.step();
+    }
+    const float coming = p.space.pitchOf(voice);
+    NX_EXPECT(fabsf(coming - 343.0f / 303) < 0.03f);
+    p.space.spatial(car)->place.z = 5;
+    p.step();
+    for (int i = 0; i < 60; i++)
+    {
+        p.space.spatial(car)->place.z += 40.0f / 60;
+        p.step();
+    }
+    const float going = p.space.pitchOf(voice);
+    NX_EXPECT(fabsf(going - 343.0f / 383) < 0.03f);
+    // A jump is not a speed.
+    p.space.spatial(car)->place.z = -200;
+    p.step();
+    NX_EXPECT(fabsf(p.space.pitchOf(voice) - going) < 0.02f);
+    p.rig.audio.stop(voice, 0);
+    p.rig.assets.release(engine);
+}
+
 NX_TEST(ballsBounceAndRoll)
 {
     Place p;
@@ -989,6 +1096,24 @@ NX_TEST(animationsBlendLayerTravelAndLook)
     p.step(60);
     NX_EXPECT(fabsf(facing(head).x) < 0.3f);
 
+    // Reaching: the end of the forearm goes to a place it can reach, and lets go again.
+    const u32 reacher = robot({ 0, 0, -30 });
+    NX_EXPECT(p.space.play(reacher, "idle", true, 0));
+    const u32 wrist = p.world.spawn({});
+    NX_EXPECT(p.space.attachToBone(wrist, reacher, "hand.r"));
+    p.space.spatial(wrist)->place = { -0.02f, -0.3f, 0 };
+    p.step(2);
+    const Vec3 resting = where(wrist);
+    const Vec3 target(-0.5f, 1.1f, -29.6f);
+    NX_EXPECT(!close(resting, target, 0.2f));
+    NX_EXPECT(p.space.reach(reacher, "hand.r", target, 1));
+    NX_EXPECT(!p.space.reach(reacher, "tail", target, 1) && !p.space.reach(reacher, "hips", target, 1));
+    p.step(40);
+    NX_EXPECT(close(where(wrist), target, 0.04f));
+    NX_EXPECT(p.space.reach(reacher, "hand.r", target, 0));
+    p.step(40);
+    NX_EXPECT(close(where(wrist), resting, 0.1f));
+
     p.space.setCamera({ 0, 2, 8 }, { 0, 1, 0 }, 60);
     p.draw(2);
     NX_EXPECT(p.rig.device->stats().rejected == 0);
@@ -1120,6 +1245,62 @@ NX_TEST(decalsLieOverWhatIsThere)
     p.space.setCamera({ 0, 3, 8 }, { 0, 0, 0 }, 60);
     p.draw(2);
     NX_EXPECT(p.rig.device->stats().rejected == 0);
+}
+
+NX_TEST(animationStatesTravel)
+{
+    Rig r;
+    NX_EXPECT(r.ok);
+    r.platform.extraPath = "showcase/shapes/main.as";
+    r.platform.extraText = R"(
+        #include "global:states.as"
+        class A : Screen
+        {
+            Entity@ robot;
+            AnimationStates@ moves;
+            array<string> been;
+            int frames = 0;
+            void check(bool good) { if (!good) { array<int> nope; nope[1] = 0; } }
+            void came(const string &in state) { been.insertLast(state); }
+            void onEnter()
+            {
+                @robot = Space::spawn(Vec3());
+                robot.model(Assets::model("global:model/robot.glb"));
+                @moves = AnimationStates(robot);
+                @moves.entered = AnimationEntered(this.came);
+                moves.add("idle");
+                moves.add("walk");
+                moves.add("leap", "jump", false, "idle");
+                moves.link("idle", "walk", 0.2f, true);
+                moves.link("walk", "leap", 0.1f);
+                moves.start("idle");
+                check(!moves.travel("nowhere"));
+            }
+            void update(float dt)
+            {
+                frames++;
+                moves.update(dt);
+                if (frames == 10)
+                    check(moves.travel("leap") && moves.route.length() == 2);
+                if (frames == 120)
+                {
+                    // Idle, through walk to the leap, and back to idle once it was done.
+                    check(been.length() == 4 && been[0] == "idle" && been[1] == "walk" && been[2] == "leap" && been[3] == "idle");
+                    check(moves.state == "idle" && !moves.finished);
+                    Screens::home();
+                }
+            }
+            void draw(Canvas@ c) { Space::draw(c); }
+        }
+    )";
+    NX_EXPECT(r.screens.init(r.services, "showcase", "main"));
+    r.step(2);
+    r.screens.push("shapes");
+    for (int i = 0; i < 200 && (i < 5 || r.screens.depth() > 1); i++)
+    {
+        r.step();
+    }
+    NX_EXPECT(!r.screens.failed() && r.screens.depth() == 1);
 }
 
 NX_TEST(scriptsDrawIntoPictures)

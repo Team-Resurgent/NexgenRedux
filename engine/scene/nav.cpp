@@ -1,4 +1,5 @@
 #include "scene/space.h"
+#include "scene/world.h"
 
 #include <math.h>
 #include <string.h>
@@ -20,8 +21,128 @@ namespace nx
         };
     }
 
+    void Space::drawOverlays()
+    {
+        gpu::Device& device = *m_solids->device();
+        gpu::MeshDraw d;
+        d.lines = true;
+        d.lit = d.fogged = d.depthWrite = false;
+        d.cull = gpu::Cull::None;
+        if (m_showNavigation && m_navSide)
+        {
+            if (m_navMeshVersion != m_navVersion || !m_navMesh)
+            {
+                // A square for each place that can be walked on; every second or more of them, if there are very many.
+                device.destroyMesh(m_navMesh);
+                m_navMesh = {};
+                m_navMeshVersion = m_navVersion;
+                u32 walkable = 0;
+                for (u32 i = 0; i < m_navSide * m_navSide; i++)
+                {
+                    walkable += (m_navFlags[i] & kWalk) ? 1 : 0;
+                }
+                u32 stride = 1;
+                while (walkable / (stride * stride) > 16000)
+                {
+                    stride++;
+                }
+                MeshData mesh;
+                const gpu::Color green(0.3f, 1, 0.5f, 1);
+                const float c = m_navCell * 0.45f;
+                for (u32 z = 0; z < m_navSide; z += stride)
+                {
+                    for (u32 x = 0; x < m_navSide; x += stride)
+                    {
+                        const u32 i = z * m_navSide + x;
+                        if (!(m_navFlags[i] & kWalk))
+                        {
+                            continue;
+                        }
+                        const Vec3 m(m_navLow.x + (static_cast<float>(x) + 0.5f) * m_navCell, m_navHeight[i] + 0.04f, m_navLow.z + (static_cast<float>(z) + 0.5f) * m_navCell);
+                        mesh.quad(m + Vec3(-c, 0, c), m + Vec3(c, 0, c), m + Vec3(c, 0, -c), m + Vec3(-c, 0, -c), green);
+                    }
+                }
+                if (mesh.indices.count())
+                {
+                    m_navMesh = device.createMesh(mesh.vertices.begin(), mesh.vertices.count(), mesh.indices.begin(), mesh.indices.count(), false);
+                }
+            }
+            if (m_navMesh)
+            {
+                d.mesh = m_navMesh;
+                d.world = Mat4();
+                d.color = { 1, 1, 1, 0.8f };
+                d.blend = gpu::Blend::Alpha;
+                device.drawMesh(d);
+            }
+        }
+        if (!m_showShapes)
+        {
+            return;
+        }
+        d.blend = gpu::Blend::None;
+        for (const Collider3& c : m_colliders)
+        {
+            if (!visibleCollider(c))
+            {
+                continue;
+            }
+            const World::Entity& e = m_world.m_entities[c.owner];
+            const Body3* body = e.parts3[4] != kNone ? &m_bodies[e.parts3[4]] : nullptr;
+            d.color = c.together ? gpu::Color(1, 0.6f, 0.2f, 1) : c.wall ? gpu::Color(0.75f, 0.75f, 0.75f, 1)
+                    : body && body->walker ? gpu::Color(0.35f, 0.7f, 1, 1) : body && body->mass > 0 ? (body->still > 0.5f ? gpu::Color(0.2f, 0.55f, 0.3f, 1) : gpu::Color(0.35f, 1, 0.45f, 1))
+                    : gpu::Color(1, 0.85f, 0.3f, 1);
+            Rigid r;
+            makeRigid(c, r);
+            const auto shape = [&](Solid solid, const Vec3& place, const Vec3& size)
+            {
+                d.mesh = m_solids->get(solid, 1);
+                d.first = d.count = 0;
+                d.world = compose(place, r.turn, size);
+                device.drawMesh(d);
+            };
+            if (r.shape == Shape3::Sphere)
+            {
+                shape(Solid::Sphere, r.place, Vec3(1, 1, 1) * (r.half.x * 2));
+            }
+            else if (r.shape == Shape3::Capsule)
+            {
+                // Its round ends and its straight middle.
+                const float straight = fmaxf(0, r.half.y - r.half.x);
+                const Vec3 reach = r.axes[1] * straight;
+                shape(Solid::Sphere, r.place + reach, Vec3(1, 1, 1) * (r.half.x * 2));
+                shape(Solid::Sphere, r.place - reach, Vec3(1, 1, 1) * (r.half.x * 2));
+                if (straight > 0)
+                {
+                    shape(Solid::Cylinder, r.place, Vec3(r.half.x * 2, straight * 2, r.half.x * 2));
+                }
+            }
+            else if (r.shape == Shape3::Shell && r.model && r.model->gpuMesh)
+            {
+                // Its own triangles, of the first level.
+                u32 first = 0xFFFFFFFFu, end = 0;
+                for (const ModelPart& part : r.model->parts)
+                {
+                    first = part.first[0] < first ? part.first[0] : first;
+                    end = part.first[0] + part.count[0] > end ? part.first[0] + part.count[0] : end;
+                }
+                d.mesh = r.model->gpuMesh;
+                d.first = first;
+                d.count = end > first ? end - first : 0;
+                d.world = m_spatials[e.parts3[0]].world;
+                device.drawMesh(d);
+                d.first = d.count = 0;
+            }
+            else
+            {
+                shape(Solid::Box, r.place, r.half * 2);
+            }
+        }
+    }
+
     void Space::clearNav()
     {
+        m_navVersion++;
         m_navSide = 0;
         m_navHeight.clear();
         m_navFlags.clear();
@@ -49,6 +170,7 @@ namespace nx
         m_navSeen.resize(count);
         memset(m_navSeen.begin(), 0, count * sizeof(u32));
         m_navVisit = 0;
+        m_navVersion++;
         m_navSide = side;
         m_navCell = cell;
         m_navClimb = climb;

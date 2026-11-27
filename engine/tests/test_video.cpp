@@ -102,6 +102,56 @@ NX_TEST(whatIsNotAVideoIsRefused)
     none->release();
 }
 
+NX_TEST(playlistsPlayOneAfterAnother)
+{
+    Rig r;
+    NX_EXPECT(r.ok);
+    r.platform.extraPath = "showcase/shapes/main.as";
+    r.platform.extraText = R"(
+        class A : Screen
+        {
+            Playlist@ list = Playlist();
+            array<uint> heard;
+            // A mistake stops the screen, which the test sees.
+            void check(bool good) { if (!good) { array<int> nope; nope[1] = 0; } }
+            void onEnter()
+            {
+                list.add(Assets::sound("global:sound/coin.wav"));
+                list.add(Assets::sound("global:sound/bell.wav"));
+                list.add(Assets::sound("global:sound/coin.wav"));
+                list.loop = false;
+                list.crossfade = 0;
+                check(list.count == 3 && !list.playing);
+                list.play();
+            }
+            void update(float dt)
+            {
+                if (heard.length() == 0 || heard[heard.length() - 1] != list.index)
+                    heard.insertLast(list.index);
+                if (!list.playing && heard.length() > 1)
+                {
+                    check(heard.length() == 3 && heard[0] == 0 && heard[1] == 1 && heard[2] == 2);
+                    // Straight to one, and round again.
+                    list.loop = true;
+                    list.index = 1;
+                    check(list.playing && list.index == 1);
+                    list.stop(0);
+                    Screens::home();
+                }
+            }
+            void draw(Canvas@ c) {}
+        }
+    )";
+    NX_EXPECT(r.screens.init(r.services, "showcase", "main"));
+    r.step(2);
+    r.screens.push("shapes");
+    for (int i = 0; i < 1200 && (i < 5 || r.screens.depth() > 1); i++)
+    {
+        r.step();
+    }
+    NX_EXPECT(!r.screens.failed() && r.screens.depth() == 1);
+}
+
 NX_TEST(scriptsPlayVideos)
 {
     Rig r;

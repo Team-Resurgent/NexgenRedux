@@ -1633,6 +1633,36 @@ namespace nx
             drawLights(canvas, view);
             canvas.setBlend(gpu::Blend::Alpha);
         }
+        if (m_showShapes)
+        {
+            // Every collider, a line as wide on the screen however near the camera is.
+            const float width = 1.5f / (m_hasCamera && m_cameraZoom > 0 ? m_cameraZoom : 1);
+            for (const Collider& c : m_colliders)
+            {
+                const Entity& e = m_entities[c.owner];
+                if (!e.live || e.dying)
+                {
+                    continue;
+                }
+                const u32 b = e.parts[static_cast<size_t>(Component::Body)];
+                const Body* body = b != kNone ? &m_bodies[b] : nullptr;
+                const Color color = c.wall ? Color(0.75f, 0.75f, 0.75f, 0.9f) : body && body->mass > 0 ? Color(0.35f, 1, 0.45f, 0.9f)
+                                  : body ? Color(0.35f, 0.7f, 1, 0.9f) : Color(1, 0.85f, 0.3f, 0.9f);
+                const Placed p(c, e.world);
+                if (c.shape == Shape::Circle)
+                {
+                    canvas.ring(p.at.x, p.at.y, p.hx, width, color);
+                    canvas.line(p.at.x, p.at.y, p.at.x + p.u.x * p.hx, p.at.y + p.u.y * p.hx, width, color);
+                    continue;
+                }
+                const Vec2 x = p.u * p.hx, y = p.v * p.hy;
+                const Vec2 corners[4] = { p.at - x - y, p.at + x - y, p.at + x + y, p.at - x + y };
+                for (u32 i = 0; i < 4; i++)
+                {
+                    canvas.line(corners[i].x, corners[i].y, corners[(i + 1) % 4].x, corners[(i + 1) % 4].y, width, color);
+                }
+            }
+        }
         canvas.pop();
     }
 

@@ -58,6 +58,11 @@ namespace nx
     private:
         enum class Mode : u8 { Run, Pause, StepIn, StepOver, StepOut };
 
+        // The entities of the screen on top, and what each is like, to look at and change while it runs.
+        void entities(int id);
+        void entity(int id, const JsonValue& ask);
+        void setEntity(int id, const JsonValue& ask);
+
         struct Breakpoints
         {
             std::string file;

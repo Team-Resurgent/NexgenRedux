@@ -352,6 +352,11 @@ namespace nx
     void Space::clear()
     {
         m_decals.clear();
+        if (m_navMesh && m_solids)
+        {
+            m_solids->device()->destroyMesh(m_navMesh);
+            m_navMesh = {};
+        }
         freeCards();
         clearMists();
         clearVoxels();
@@ -414,6 +419,10 @@ namespace nx
             {
                 a->moves->blendCount = 0;
                 a->moves->layer = a->moves->lookBone = -1;
+                for (int& bone : a->moves->reachBone)
+                {
+                    bone = -1;
+                }
             }
         }
     }
@@ -629,7 +638,7 @@ namespace nx
     {
         m_look.exposureAdapt = 1 - expf(-dt * m_exposureSpeed);
         m_time += dt;
-        listen();
+        listen(dt);
         stream();
         animate(dt);
         follow(dt);
@@ -673,6 +682,15 @@ namespace nx
                 }
                 const float step = dt * 4;
                 m->lookAmount += m->lookWanted > m->lookAmount ? fminf(step, m->lookWanted - m->lookAmount) : -fminf(step, m->lookAmount - m->lookWanted);
+                for (u32 r = 0; r < Moves::kReaches; r++)
+                {
+                    float& amount = m->reachAmount[r];
+                    amount += m->reachWanted[r] > amount ? fminf(step, m->reachWanted[r] - amount) : -fminf(step, amount - m->reachWanted[r]);
+                    if (amount <= 0 && m->reachWanted[r] <= 0)
+                    {
+                        m->reachBone[r] = -1;
+                    }
+                }
                 if (m->ragdoll)
                 {
                     if (m->ragdoll->on)
@@ -932,6 +950,13 @@ namespace nx
             model.sample(m->layer, m->layerTime, over);
             model.mix(bones, over, m->layerWeight, m->only);
         }
+        for (u32 r = 0; m && r < Moves::kReaches; r++)
+        {
+            if (m->reachBone[r] >= 0 && m->reachAmount[r] > 0)
+            {
+                reachWith(a, bones, static_cast<u32>(m->reachBone[r]), m->reachAt[r], m->reachAmount[r]);
+            }
+        }
         if (m && m->lookBone >= 0 && m->lookAmount > 0 && static_cast<u32>(m->lookBone) < model.bones.count())
         {
             const World::Entity& e = m_world.m_entities[a.owner];
@@ -991,6 +1016,10 @@ namespace nx
             {
                 *a->moves = Moves{};
                 a->moves->layer = a->moves->layerBone = a->moves->lookBone = -1;
+                for (int& bone : a->moves->reachBone)
+                {
+                    bone = -1;
+                }
             }
         }
         return a->moves;
@@ -1111,6 +1140,129 @@ namespace nx
         }
         const Moves& m = *a->moves;
         return m.layerRate < 0 || (!m.layerLoop && m.layerTime >= a->model->model->animations[static_cast<u32>(m.layer)].length);
+    }
+
+    bool Space::reach(u32 id, const char* bone, const Vec3& place, float amount)
+    {
+        Appearance* a = getAppearance(id);
+        if (a == nullptr || a->model == nullptr || a->model->model == nullptr)
+        {
+            return false;
+        }
+        const ModelData& model = *a->model->model;
+        int found = -1;
+        for (u32 i = 0; i < model.bones.count(); i++)
+        {
+            found = strcmp(model.bones[i].name, bone) == 0 ? static_cast<int>(i) : found;
+        }
+        Moves* m = found >= 0 && model.bones[static_cast<u32>(found)].parent >= 0 ? moves(id) : nullptr;
+        if (m == nullptr)
+        {
+            return false;
+        }
+        // Its own slot, or a free one, or the faintest.
+        u32 slot = Moves::kReaches;
+        for (u32 r = 0; r < Moves::kReaches && slot == Moves::kReaches; r++)
+        {
+            slot = m->reachBone[r] == found ? r : slot;
+        }
+        for (u32 r = 0; r < Moves::kReaches && slot == Moves::kReaches; r++)
+        {
+            slot = m->reachBone[r] < 0 ? r : slot;
+        }
+        if (slot == Moves::kReaches)
+        {
+            slot = 0;
+            for (u32 r = 1; r < Moves::kReaches; r++)
+            {
+                slot = m->reachAmount[r] < m->reachAmount[slot] ? r : slot;
+            }
+        }
+        if (m->reachBone[slot] != found)
+        {
+            m->reachAmount[slot] = 0;
+        }
+        m->reachBone[slot] = found;
+        m->reachAt[slot] = place;
+        m->reachWanted[slot] = amount < 0 ? 0 : amount > 1 ? 1 : amount;
+        return true;
+    }
+
+    // The two bones above a limb's end turned, by the law of cosines, so that the end is at a place; part of the way, by
+    // amount. In the model's space, from the bones as they are.
+    void Space::reachWith(const Appearance& a, BonePose* bones, u32 lower, const Vec3& place, float amount) const
+    {
+        const ModelData& model = *a.model->model;
+        const World::Entity& e = m_world.m_entities[a.owner];
+        const int up = model.bones[lower].parent;
+        if (e.parts3[0] == kNone || up < 0)
+        {
+            return;
+        }
+        const u32 upper = static_cast<u32>(up);
+        // Where the end is in the lower bone's space: at its first child, or as far again as it is from the upper.
+        Vec3 end = bones[lower].place;
+        for (u32 i = 0; i < model.bones.count(); i++)
+        {
+            if (model.bones[i].parent == static_cast<int>(lower))
+            {
+                end = bones[i].place;
+                break;
+            }
+        }
+        Mat4 worlds[kModelBones];
+        model.place(bones, worlds);
+        Quat turns[kModelBones];
+        bool known[kModelBones] = {};
+        const auto turnOf = [&](u32 b, auto&& self) -> Quat
+        {
+            if (!known[b])
+            {
+                const int p = model.bones[b].parent;
+                turns[b] = p >= 0 ? self(static_cast<u32>(p), self) * bones[b].turn : bones[b].turn;
+                known[b] = true;
+            }
+            return turns[b];
+        };
+        const Quat upperTurn = turnOf(upper, turnOf), lowerTurn = turnOf(lower, turnOf);
+        const int above = model.bones[upper].parent;
+        const Quat parentTurn = above >= 0 ? turnOf(static_cast<u32>(above), turnOf) : Quat();
+        const Vec3 A(worlds[upper].m[12], worlds[upper].m[13], worlds[upper].m[14]);
+        const Vec3 B(worlds[lower].m[12], worlds[lower].m[13], worlds[lower].m[14]);
+        const Vec3 C = worlds[lower].transformPoint(end);
+        const Vec3 T = m_spatials[e.parts3[0]].world.inverse().transformPoint(place);
+        const float lab = (B - A).length(), lcb = (C - B).length();
+        if (lab < 1e-4f || lcb < 1e-4f)
+        {
+            return;
+        }
+        const Vec3 at = T - A;
+        const float lat = fminf(fmaxf((at).length(), fabsf(lab - lcb) + 1e-3f), lab + lcb - 1e-3f);
+        const auto angle = [](const Vec3& x, const Vec3& y) { return acosf(fminf(1, fmaxf(-1, x.normalized().dot(y.normalized())))); };
+        const Vec3 ac = C - A, ab = B - A;
+        // Bent about the way across both; if they are in line, about the model's side.
+        Vec3 axis = ac.cross(ab);
+        if (axis.dot(axis) < 1e-10f)
+        {
+            axis = ac.cross(Vec3(0, 0, 1));
+            axis = axis.dot(axis) < 1e-10f ? Vec3(1, 0, 0) : axis;
+        }
+        axis = axis.normalized();
+        const float acab0 = angle(ac, ab), babc0 = angle(A - B, C - B);
+        const float acab1 = acosf(fminf(1, fmaxf(-1, (lcb * lcb - lab * lab - lat * lat) / (-2 * lab * lat))));
+        const float babc1 = acosf(fminf(1, fmaxf(-1, (lat * lat - lab * lab - lcb * lcb) / (-2 * lab * lcb))));
+        const Quat r0 = Quat::axisAngle(axis, acab1 - acab0);
+        const Quat r1 = Quat::axisAngle(axis, babc1 - babc0);
+        // Then the whole limb swung so that the end points at the place.
+        Vec3 swing = ac.cross(at);
+        const float sine = swing.length();
+        const Quat r2 = sine > 1e-6f ? Quat::axisAngle(swing * (1 / sine), angle(ac, at)) : Quat();
+        const Quat newUpper = (r2 * r0 * upperTurn).normalized();
+        const Quat newLower = (r2 * r0 * r1 * lowerTurn).normalized();
+        const Quat upperLocal = (parentTurn.conjugate() * newUpper).normalized();
+        const Quat lowerLocal = (newUpper.conjugate() * newLower).normalized();
+        bones[upper].turn = Quat::slerp(bones[upper].turn, upperLocal, amount);
+        bones[lower].turn = Quat::slerp(bones[lower].turn, lowerLocal, amount);
     }
 
     bool Space::lookAt(u32 id, const char* bone, const Vec3& place, float amount)
@@ -1739,6 +1891,10 @@ namespace nx
         {
             device.spaceLook(m_look, view.area);
         }
+        if (m_showShapes || m_showNavigation)
+        {
+            drawOverlays();
+        }
     }
 
     // --- Particles ---
@@ -1996,27 +2152,33 @@ namespace nx
 
     // --- Sound ---
 
-    void Space::follow(Voice voice, u32 entity, const Vec3& place, float volume, float range)
+    void Space::follow(Voice voice, u32 entity, const Vec3& place, float volume, float range, float pitch)
     {
         if (voice)
         {
-            m_heard.push({ voice, entity, place, volume, range > 0.1f ? range : 0.1f, -1, 0 });
+            m_heard.push({ voice, entity, place, volume, range > 0.1f ? range : 0.1f, -1, 0, pitch, -1, pitch });
         }
     }
 
-    void Space::hear(const Vec3& place, float volume, float range, float& gain, float& pan) const
+    void Space::hear(const Vec3& place, float volume, float range, float& gain, float& pan, float* nearest) const
     {
         gain = pan = 0;
+        float closest = 1e30f;
         for (u32 i = 0; i < m_earCount; i++)
         {
             const Vec3 d = place - m_ears[i];
             const float far = d.length();
             const float near = fmaxf(0, 1 - far / range);
+            closest = fminf(closest, far);
             if (near * near * volume > gain)
             {
                 gain = near * near * volume;
                 pan = far > 0.01f ? d.dot(m_earSides[i]) / far * 0.85f * fminf(1, far * 0.5f) : 0;
             }
+        }
+        if (nearest)
+        {
+            *nearest = closest;
         }
     }
 
@@ -2066,7 +2228,7 @@ namespace nx
         }
     }
 
-    void Space::listen()
+    void Space::listen(float dt)
     {
         if (m_focusCount)
         {
@@ -2096,8 +2258,22 @@ namespace nx
                 m_heard.swapRemove(i);
                 continue;
             }
-            float gain, pan;
-            hear(h.entity ? worldPlace(h.entity) : h.place, h.volume, h.range, gain, pan);
+            float gain, pan, far;
+            hear(h.entity ? worldPlace(h.entity) : h.place, h.volume, h.range, gain, pan, &far);
+            // Doppler: higher coming closer, lower going away, as fast as the distance changes against sound's 343
+            // metres a second. A jump, as a camera cut, is no speed at all.
+            if (m_doppler > 0 && dt > 0 && far < 1e29f)
+            {
+                const float speed = h.far >= 0 ? (far - h.far) / dt * m_doppler : 0;
+                const float pitch = fabsf(speed) < 150 ? h.pitch * 343 / (343 + fmaxf(-200.0f, speed)) : h.bent;
+                const float bent = h.bent + (fminf(2.0f, fmaxf(0.5f, pitch)) - h.bent) * fminf(1, dt * 10);
+                if (fabsf(bent - h.bent) > 0.002f)
+                {
+                    h.bent = bent;
+                    m_audio->setPitch(h.voice, bent);
+                }
+            }
+            h.far = far;
             // Only when it makes a difference: the mixer is told through a short queue.
             if (fabsf(gain - h.gain) > 0.008f || (gain == 0 && h.gain > 0))
             {

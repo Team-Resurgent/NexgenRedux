@@ -1440,6 +1440,99 @@ namespace nx
         return best <= 1;
     }
 
+    bool Space::sweep(const Vec3& from, const Vec3& to, float radius, u32 groups, u32 except, u32& id, Vec3& at, Vec3& normal) const
+    {
+        radius = radius > 0.001f ? radius : 0.001f;
+        // Whether a ball there touches anything, what, and which way that faces.
+        const auto touches = [&](const Vec3& p, u32& who, Vec3& n)
+        {
+            for (const Collider3& c : m_colliders)
+            {
+                if (!(groups & (1u << c.group)) || !visibleCollider(c) || idOf(c.owner) == except || (c.together && c.together == except))
+                {
+                    continue;
+                }
+                Rigid ball = {}, r;
+                makeRigid(c, r);
+                ball.shape = Shape3::Sphere;
+                ball.place = p;
+                ball.half.x = radius;
+                Contact contacts[4];
+                if (touchPair(ball, r, contacts) > 0)
+                {
+                    who = c.together ? c.together : idOf(c.owner);
+                    n = -contacts[0].normal;
+                    return true;
+                }
+            }
+            if (groups & 1)
+            {
+                if (m_landOn && p.y - radius < heightAt(p.x, p.z))
+                {
+                    const float e = 0.25f;
+                    who = 0;
+                    n = Vec3(heightAt(p.x - e, p.z) - heightAt(p.x + e, p.z), 2 * e, heightAt(p.x, p.z - e) - heightAt(p.x, p.z + e)).normalized();
+                    return true;
+                }
+                if (m_hasGround && p.y - radius < m_ground)
+                {
+                    who = 0;
+                    n = { 0, 1, 0 };
+                    return true;
+                }
+            }
+            return false;
+        };
+        id = 0;
+        u32 who = 0;
+        Vec3 n;
+        if (touches(from, who, n))
+        {
+            id = who;
+            at = from;
+            normal = n.dot(n) > 1e-8f ? n.normalized() : Vec3(0, 1, 0);
+            return true;
+        }
+        // Along it a half radius at a time, then closer between the last step that was clear and the first that wasn't.
+        const Vec3 way = to - from;
+        const float length = way.length();
+        const u32 steps = length > 0 ? static_cast<u32>(fminf(ceilf(length / (radius * 0.5f)), 512)) : 0;
+        float clear = 0;
+        for (u32 i = 1; i <= steps; i++)
+        {
+            const float t = static_cast<float>(i) / static_cast<float>(steps);
+            if (!touches(from + way * t, who, n))
+            {
+                clear = t;
+                continue;
+            }
+            float low = clear, high = t;
+            for (u32 k = 0; k < 10; k++)
+            {
+                const float middle = (low + high) * 0.5f;
+                u32 w;
+                Vec3 m;
+                if (touches(from + way * middle, w, m))
+                {
+                    high = middle;
+                    who = w;
+                    n = m;
+                }
+                else
+                {
+                    low = middle;
+                }
+            }
+            id = who;
+            at = from + way * low;
+            n = n.dot(n) > 1e-8f ? n.normalized() : -way.normalized();
+            normal = n.dot(way) > 0 ? -n : n;
+            return true;
+        }
+        at = to;
+        return false;
+    }
+
     void Space::push(u32 id, const Vec3& impulse, const Vec3* at)
     {
         const Appearance* look = getAppearance(id);
@@ -1838,11 +1931,13 @@ namespace nx
         const Spatial& sa = m_spatials[ea->parts3[0]];
         j.localA = sa.world.inverse().transformPoint(atA);
         j.axisA = sa.turn.conjugate().rotate(j.axisA);
+        j.refA = sa.turn.conjugate().rotate(j.refA);
         if (eb)
         {
             const Spatial& sb = m_spatials[eb->parts3[0]];
             j.localB = sb.world.inverse().transformPoint(atB);
             j.axisB = sb.turn.conjugate().rotate(j.axisB);
+            j.refB = sb.turn.conjugate().rotate(j.refB);
         }
         else
         {
@@ -1855,16 +1950,25 @@ namespace nx
         return m_joints3.push(j);
     }
 
-    bool Space::pin(u32 a, u32 b, const Vec3& at)
+    bool Space::pin(u32 a, u32 b, const Vec3& at, float swing)
     {
         Joint3 j = {};
         j.kind = JointKind::Pin;
         j.a = a;
         j.b = b;
+        if (swing > 0)
+        {
+            // Measured along the way from the pin to a's middle, as it is now.
+            const Spatial* s = getSpatial(a);
+            Vec3 arm = s ? s->place - at : Vec3();
+            arm = arm.dot(arm) > 1e-8f ? arm.normalized() : Vec3(0, -1, 0);
+            j.axisA = j.axisB = arm;
+            j.cone = swing;
+        }
         return addJoint(j, at, at);
     }
 
-    bool Space::hinge(u32 a, u32 b, const Vec3& at, const Vec3& axis)
+    bool Space::hinge(u32 a, u32 b, const Vec3& at, const Vec3& axis, float low, float high)
     {
         if (axis.dot(axis) < 1e-8f)
         {
@@ -1875,6 +1979,12 @@ namespace nx
         j.a = a;
         j.b = b;
         j.axisA = j.axisB = axis.normalized();
+        if (low < high)
+        {
+            j.low = low;
+            j.high = high;
+            j.refA = j.refB = (fabsf(j.axisA.x) > 0.7f ? Vec3(0, 1, 0) : Vec3(1, 0, 0)).cross(j.axisA).normalized();
+        }
         return addJoint(j, at, at);
     }
 
@@ -1965,16 +2075,19 @@ namespace nx
                 const Spatial& sa = m_spatials[ea->parts3[0]];
                 j.bodyA = a.turn.conjugate().rotate(sa.world.transformPoint(j.localA) - a.place);
                 j.bodyAxisA = a.turn.conjugate().rotate(sa.turn.rotate(j.axisA));
+                j.bodyRefA = a.turn.conjugate().rotate(sa.turn.rotate(j.refA));
                 if (eb)
                 {
                     const Spatial& sb = m_spatials[eb->parts3[0]];
                     j.bodyB = b.turn.conjugate().rotate(sb.world.transformPoint(j.localB) - b.place);
                     j.bodyAxisB = b.turn.conjugate().rotate(sb.turn.rotate(j.axisB));
+                    j.bodyRefB = b.turn.conjugate().rotate(sb.turn.rotate(j.refB));
                 }
                 else
                 {
                     j.bodyB = j.localB;
                     j.bodyAxisB = j.axisB;
+                    j.bodyRefB = j.refB;
                 }
                 j.known = true;
             }
@@ -2033,7 +2146,24 @@ namespace nx
                 const float angle = atan2f(sine, axisA.dot(axisB));
                 j.turnMass[0] = 0;
                 j.turnImpulse[0] = 0;
-                if (angle > j.cone && sine > 1e-5f)
+                j.stopMass = 0;
+                j.stopImpulse = 0;
+                const Vec3 arm = a.place - worldA;
+                const float reach = arm.length();
+                const float along = reach > 0.05f ? axisA.dot(arm) / reach : 0;
+                if (angle > j.cone && sine > 1e-5f && fabsf(along) > 0.5f)
+                {
+                    // Its middle, moving on away from where it may be, is stopped by its own weight: better than
+                    // turning it back alone when it is small and far from the pin. The axis may point either way along it.
+                    j.stopWay = (axisA - axisB * axisA.dot(axisB)).normalized() * (along > 0 ? 1.0f : -1.0f);
+                    j.stopFromB = eb ? a.place - b.place : Vec3();
+                    const auto moving = [](const Rigid& r) { return r.still ? 0.0f : r.inverseMass; };
+                    const Vec3 turnB = j.stopFromB.cross(j.stopWay);
+                    const float k = moving(a) + moving(b) + inertia(b, turnB).dot(turnB);
+                    j.stopMass = k > 0 ? 1 / k : 0;
+                    j.stopBias = (angle - j.cone) * reach * beta;
+                }
+                else if (angle > j.cone && sine > 1e-5f)
                 {
                     j.across[0] = across * (1 / sine);
                     j.turnBias[0] = (angle - j.cone) * beta;
@@ -2056,6 +2186,19 @@ namespace nx
                 const Vec3 wrong = axisA.cross(axisB);
                 j.turnBias[0] = -wrong.dot(across0) * beta;
                 j.turnBias[1] = -wrong.dot(across1) * beta;
+                // How far A has turned about it from where it began on B, and whether that is too far.
+                j.limitSide = 0;
+                if (j.low < j.high)
+                {
+                    const Vec3 ra = a.turn.rotate(j.bodyRefA);
+                    const Vec3 rb = eb ? b.turn.rotate(j.bodyRefB) : j.bodyRefB;
+                    const float angle = atan2f(rb.cross(ra).dot(axisA), rb.dot(ra));
+                    j.limitSide = angle < j.low ? 1.0f : angle > j.high ? -1.0f : 0.0f;
+                    j.limitBias = (angle < j.low ? j.low - angle : angle - j.high) * beta;
+                    const float turn = inertia(a, axisA).dot(axisA) + inertia(b, axisA).dot(axisA);
+                    j.limitMass = turn > 0 ? 1 / turn : 0;
+                }
+                j.limitImpulse = 0;
             }
 
             // How hard each way is to move, and last step's pushes again to begin with.
@@ -2151,6 +2294,23 @@ namespace nx
                 j.impulse[0] += more;
                 pushJoint(a, b, j, j.axis * more);
             }
+            if (j.kind == JointKind::Pin && j.stopMass > 0)
+            {
+                const Vec3 b2 = b.velocity + b.spin.cross(j.stopFromB);
+                const float along = (a.velocity - b2).dot(j.stopWay);
+                const float before = j.stopImpulse;
+                j.stopImpulse = fminf(0.0f, before + (-j.stopBias - along) * j.stopMass);
+                const Vec3 push = j.stopWay * (j.stopImpulse - before);
+                if (!a.still)
+                {
+                    a.velocity = a.velocity + push * a.inverseMass;
+                }
+                if (!b.still)
+                {
+                    b.velocity = b.velocity - push * b.inverseMass;
+                    b.spin = b.spin - inertia(b, j.stopFromB.cross(push));
+                }
+            }
             if (j.kind == JointKind::Pin && j.turnMass[0] > 0)
             {
                 // A turning toward B about the way across closes the angle; it may close, never open.
@@ -2158,6 +2318,15 @@ namespace nx
                 const float before = j.turnImpulse[0];
                 j.turnImpulse[0] = fminf(0.0f, before + (-j.turnBias[0] - (b.spin - a.spin).dot(t)) * j.turnMass[0]);
                 turnJoint(a, b, t * (j.turnImpulse[0] - before));
+            }
+            if (j.kind == JointKind::Hinge && j.limitSide != 0)
+            {
+                // Turned too far: turned back, never held further.
+                const float s = j.limitSide;
+                const float now = (a.spin - b.spin).dot(j.axis) * s;
+                const float before = j.limitImpulse;
+                j.limitImpulse = fmaxf(0.0f, before + (j.limitBias - now) * j.limitMass);
+                turnJoint(a, b, j.axis * (-s * (j.limitImpulse - before)));
             }
             if (j.kind == JointKind::Hinge)
             {

@@ -284,6 +284,25 @@ namespace nx
         return true;
     }
 
+    size_t SecureStream::receiveNow(void* data, size_t size, bool& ended)
+    {
+        ended = false;
+        for (;;)
+        {
+            const int result = mbedtls_ssl_read(&m_parts->ssl, static_cast<unsigned char*>(data), size);
+            if (result > 0)
+            {
+                return static_cast<size_t>(result);
+            }
+            if (result == MBEDTLS_ERR_SSL_RECEIVED_NEW_SESSION_TICKET)
+            {
+                continue;
+            }
+            ended = result != MBEDTLS_ERR_SSL_WANT_READ && result != MBEDTLS_ERR_SSL_WANT_WRITE;
+            return 0;
+        }
+    }
+
     size_t SecureStream::receive(void* data, size_t size)
     {
         for (;;)

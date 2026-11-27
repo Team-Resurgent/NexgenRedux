@@ -95,18 +95,18 @@ a compiler and the platform's SDK, downloads nothing, and uses no SDL or GLFW.
 ## Features
 
 - **Scripts** — AngelScript 2.39.0. Each screen is one folder with one script; a mistake in it shows its file and line, and
-  never takes the app down. Coroutines, tweens, live reload while you edit, and a debugger for VS Code.
+  never takes the app down. Coroutines, tweens, live reload while you edit, and a debugger for VS Code that shows the entities as they run and changes them.
 - **2D drawing** — shapes, images, sprite sheets, nine-slice, tiling, scalable text, clipping and blending, batched, on any
   shape of screen.
 - **Scenes** — entities with behaviours, prefabs, tile maps, particles, collision and 2D physics, described in plain text files.
-- **3D** — glTF, FBX, OBJ, STL and PLY models, with animation (crossfades, blends by speed, layers, root motion, heads that look and ragdolls), lights, shadows, fog, sky, water and mist; hills and endless land that streams as you go; worlds of blocks to dig and build in; rigid
+- **3D** — glTF, FBX, OBJ, STL and PLY models, with animation (crossfades, blends by speed, layers, root motion, heads that look, limbs that reach, states and ragdolls), lights, shadows, fog, sky, water and mist; hills and endless land that streams as you go; worlds of blocks to dig and build in; rigid
   bodies and characters that walk; culling and levels of detail; ray-marched shapes; particles; split screen.
 - **Shaders** — bloom, blur, decals, ambient occlusion, screen-space reflections, depth of field with bokeh and auto exposure where the GPU can, colour grading with looks and .cube tables (on the original Xbox too), and effects of your own over the picture (with depth and the sun, for god rays) or on things: one file for every GPU that has shaders.
 - **Interfaces** — widgets with layout, gamepad focus, themes, lists of any length, dialogs and a keyboard on the screen; from
   scripts or from files, in any of several languages.
-- **Networking** — rooms to play in on the local network or over the internet, by way of a meeting place that any build runs with `--meeting`; entities shared in a room, kept alike in every player's game and followed smoothly; TCP, UDP, and HTTPS with certificates that are checked.
+- **Networking** — rooms to play in on the local network or over the internet, by way of a meeting place that any build runs with `--meeting`; entities shared in a room, kept alike in every player's game and followed smoothly; TCP, UDP, WebSockets, and HTTPS and WSS with certificates that are checked.
 - **Console calls** — on the original Xbox: temperatures, fan, light, tray, drives, launching titles, and back to the dashboard.
-- **Sound** — 32 voices with volume, pan, pitch and fades, or from a place in space; WAV, Ogg Vorbis and MP3; spectrum and waveform for visualisers.
+- **Sound** — 32 voices with volume, pan, pitch and fades, or from a place in space with Doppler; playlists that crossfade; WAV, Ogg Vorbis and MP3; spectrum and waveform for visualisers.
 - **Video** — MPEG-1 films with their sound, decoded as they play, shown as an image like any other.
 - **Assets** — loaded in the background, shared, kept warm and unloaded only when a budget needs the room.
 - **Input** — keyboard, mouse and four gamepads as actions that players can rebind.

@@ -363,6 +363,10 @@ namespace nx
             return e->world->space().ragdoll(e->id, limp, body && body->mass > 0 ? body->mass : 60, push, change);
         }
         bool getRagdolled(const EntityRef* e) { return e->world && e->world->space().ragdolled(e->id); }
+        bool entityReach(const std::string& bone, const Vec3& place, float amount, EntityRef* e)
+        {
+            return e->world && e->world->space().reach(e->id, bone.c_str(), place, amount);
+        }
         void entityLookAway(EntityRef* e)
         {
             const Appearance* a = someLook(e);
@@ -596,6 +600,12 @@ namespace nx
             space().setExposureSpeed(speed);
         }
         bool spaceSeesDepth() { return space().seesDepth(); }
+        float spaceDoppler() { return space().m_doppler; }
+        bool spaceShowShapes() { return space().m_showShapes; }
+        void spaceSetShowShapes(bool v) { space().m_showShapes = v; }
+        bool spaceShowNavigation() { return space().m_showNavigation; }
+        void spaceSetShowNavigation(bool v) { space().m_showNavigation = v; }
+        void spaceSetDoppler(float v) { space().m_doppler = clampFloat(v, 0, 4); }
         std::string spaceLandEdits() { return space().landEdits(); }
         bool spaceRestoreLand(const std::string& text) { return space().setLandEdits(text); }
         float spaceLandSize() { return space().landSize(); }
@@ -627,8 +637,23 @@ namespace nx
         }
 
         u32 jointId(const EntityRef* e) { return e && e->world ? e->id : 0; }
-        bool spaceJoin(const EntityRef* a, const EntityRef* b, const Vec3& at) { return jointId(a) && space().pin(a->id, jointId(b), at); }
-        bool spaceHinge(const EntityRef* a, const EntityRef* b, const Vec3& at, const Vec3& axis) { return jointId(a) && space().hinge(a->id, jointId(b), at, axis); }
+        bool spaceJoin(const EntityRef* a, const EntityRef* b, const Vec3& at, float swing) { return jointId(a) && space().pin(a->id, jointId(b), at, swing * 0.0174533f); }
+        bool spaceHinge(const EntityRef* a, const EntityRef* b, const Vec3& at, const Vec3& axis, float low, float high)
+        {
+            return jointId(a) && space().hinge(a->id, jointId(b), at, axis, low * 0.0174533f, high * 0.0174533f);
+        }
+        bool spaceSphereCast(const Vec3& from, const Vec3& to, float radius, Vec3& at, Vec3& normal, u32 groups, const EntityRef* except)
+        {
+            u32 id = 0;
+            return space().sweep(from, to, radius, groups, except ? except->id : 0, id, at, normal);
+        }
+        EntityRef* spaceSpherePick(const Vec3& from, const Vec3& to, float radius, Vec3& at, u32 groups, const EntityRef* except)
+        {
+            u32 id = 0;
+            Vec3 normal;
+            space().sweep(from, to, radius, groups, except ? except->id : 0, id, at, normal);
+            return services().world->ref(id);
+        }
         bool spaceRope(const EntityRef* a, const EntityRef* b, const Vec3& atA, const Vec3& atB, float length) { return jointId(a) && space().rope(a->id, jointId(b), atA, atB, length); }
         bool spaceSpring(const EntityRef* a, const EntityRef* b, const Vec3& atA, const Vec3& atB, float stiffness, float damping, float length)
         {
@@ -779,6 +804,7 @@ namespace nx
         b.method("void set_rootMotion(bool) property", NX_OBJ_LAST(setRootMotion), "Where its animations carry the model's highest bone along the ground, the whole thing goes instead, so its feet don't slide: a walker so moved still stops at walls.");
         b.method("bool lookAt(const string &in bone, const Vec3 &in place, float amount = 1)", NX_OBJ_LAST(entityLookAt), "Turns a bone of its model, as a head, toward a place, up to 75 degrees, over whatever its animation does; amount is how much. It turns there smoothly, and can be asked every update as the place moves. False if the bone isn't there.");
         b.method("void lookAway()", NX_OBJ_LAST(entityLookAway), "Turns the bone back to what its animation does.");
+        b.method("bool reach(const string &in bone, const Vec3 &in place, float amount = 1)", NX_OBJ_LAST(entityReach), "Bends a bone and the one above it, over whatever the animation does, so that the bone's end touches a place: \"hand.r\" on a lever, \"foot.l\" on a step. Its end is where the bone below it starts, or as far again as it is from the one above. Up to four at once; amount 0 lets one go, smoothly, and it can be asked every update as the place moves. False if the bone isn't there.");
         b.method("bool ragdoll(bool limp, const Vec3 &in push = Vec3(), float change = 0.6f)", NX_OBJ_LAST(entityRagdoll), "Goes limp: a body for each bone of its model that moves some of its skin, pinned where the bones meet and swinging only so far, falls as it is pushed, sent off at a speed as well as how it was moving; its own collider isn't there meanwhile, and what hits a body hits it. `push` on it then pushes the body nearest the place. false gets it up again, into whatever it plays, over some seconds. False if its model doesn't bend.");
         b.method("bool get_ragdolled() const property", NX_OBJ_LAST(getRagdolled), "Whether it is limp.");
 
@@ -827,6 +853,12 @@ namespace nx
         b.function("void reflections(float strength = 0.6)", NX_FN(spaceReflections), "Shows what is around in what faces up, wet floors and still water, where it is on the screen: screen-space reflections. 0 for none. Where `depthEffects`.");
         b.function("void focus(float distance, float depth = 1, float blur = 10, float falloff = 6, float bokeh = 1)", NX_FN(spaceFocus), "Depth of field: sharp at so many metres and depth either side, blurred further from it, most so falloff metres on, by blur pixels across (at 720 high); the brightest spread into round bokeh, by bokeh. A distance of 0 for none. Where `depthEffects`.");
         b.function("void autoExposure(float brightness = 0.4, float range = 2.5, float speed = 2)", NX_FN(spaceExposure), "Makes the view brighter or darker, gradually, toward an average brightness (0 to 1), by as much as range times either way, as eyes adjust going in and out of the dark. 0 for none. Where `depthEffects`.");
+        b.function("bool get_showShapes() property", NX_FN(spaceShowShapes), "Whether colliders are drawn.");
+        b.function("void set_showShapes(bool) property", NX_FN(spaceSetShowShapes), "Draws every collider as lines over the view, to see what touches what: grey walls, green bodies (darker asleep), blue walkers, orange ragdolls, yellow areas that only feel.");
+        b.function("bool get_showNavigation() property", NX_FN(spaceShowNavigation), "Whether where things can walk is drawn.");
+        b.function("void set_showNavigation(bool) property", NX_FN(spaceSetShowNavigation), "Draws the squares that navigate found can be walked on, in green.");
+        b.function("float get_doppler() property", NX_FN(spaceDoppler), "How much sounds in space rise as they come closer and fall as they go, as a car or a siren passing does: 0, none, to begin with; 1 as they would.");
+        b.function("void set_doppler(float) property", NX_FN(spaceSetDoppler), "How much sounds in space rise as they come closer and fall as they go: 1 as they would, more to make it plain.");
         b.function("bool get_depthEffects() property", NX_FN(spaceSeesDepth), "Whether this GPU can do occlusion, reflections, focus and autoExposure, and depthAt in picture effects: everywhere but the original Xbox.");
         b.function("void fog(const Color &in color, float start, float end)", NX_FN(spaceFog), "Hides what is far away.");
         b.function("void grass(Model@+ tuft, float perSquareMetre = 3, float distance = 30)", NX_FN(spaceGrass), "Grows tufts of a model over the land near the camera, where it is green, flat enough and dry, coloured as the land is there; they bend in the wind. null for none.");
@@ -896,14 +928,16 @@ namespace nx
         b.function("void clearField()", NX_FN(spaceClearShapes), "Takes them all away. To move them, clear and add them again each update.");
         b.function("void fieldLook(float shine, float reflection = 0, float repeat = 0, float farthest = 60, uint steps = 80)", NX_FN(spaceShapeLook), "How they look; repeat makes the whole thing again every so many metres.");
         b.function("void burst(const string &in particles, const Vec3 &in place, uint count, const Vec3 &in aim = Vec3(0, 1, 0))", NX_FN(spaceBurst), "Throws out some particles. A spread of 360 goes every way, 90 is a cone.");
-        b.function("bool join(Entity@+ a, Entity@+ b, const Vec3 &in at)", NX_FN(spaceJoin), "Pins two bodies together at a place, free to turn about it; null for b pins a to the world there. Both need colliders, and a mass to move.");
-        b.function("bool hinge(Entity@+ a, Entity@+ b, const Vec3 &in at, const Vec3 &in axis)", NX_FN(spaceHinge), "The same, turning only about an axis through that place, as a door, a lid or a wheel does.");
+        b.function("bool join(Entity@+ a, Entity@+ b, const Vec3 &in at, float swing = 0)", NX_FN(spaceJoin), "Pins two bodies together at a place, free to turn about it; null for b pins a to the world there. Both need colliders, and a mass to move. A swing of more than 0 lets a swing no more than so many degrees from how it hangs from the pin now, as a shoulder or a neck does.");
+        b.function("bool hinge(Entity@+ a, Entity@+ b, const Vec3 &in at, const Vec3 &in axis, float low = 0, float high = 0)", NX_FN(spaceHinge), "The same, turning only about an axis through that place, as a door, a lid or a wheel does. If low is less than high, it turns only between them, in degrees from how it is now: a door that opens one way to 100, say 0 and 100.");
         b.function("bool rope(Entity@+ a, Entity@+ b, const Vec3 &in atA, const Vec3 &in atB, float length = -1)", NX_FN(spaceRope), "A place on each kept no further apart than a length, as a rope or a chain does: it pulls but never pushes. A length below 0 is as far apart as they are now.");
         b.function("bool spring(Entity@+ a, Entity@+ b, const Vec3 &in atA, const Vec3 &in atB, float stiffness = 60, float damping = 3, float length = -1)", NX_FN(spaceSpring), "A place on each pulled towards a length and pushed away from it: stiffness in newtons a metre, damping slows the bouncing. A length below 0 is as far apart as they are now.");
         b.function("void unjoin(Entity@+ e)", NX_FN(spaceUnjoin), "Lets go of every joint it is in. They also go when it does.");
         b.function("uint get_joints() property", NX_FN(spaceJoints), "How many there are.");
         b.function("bool raycast(const Vec3 &in from, const Vec3 &in to, Vec3 &out hit, Vec3 &out normal, uint groups = 0xFFFF, Entity@+ except = null)", NX_FN(spaceRaycast), "Whether there is anything on a line, where, and which way it faces. The land counts as group 0.");
         b.function("Entity@ pick(const Vec3 &in from, const Vec3 &in to, Vec3 &out hit, uint groups = 0xFFFF, Entity@+ except = null)", NX_FN(spacePick), "The first collider on a line, or null if there is none or the land comes first.");
+        b.function("bool sphereCast(const Vec3 &in from, const Vec3 &in to, float radius, Vec3 &out at, Vec3 &out normal, uint groups = 0xFFFF, Entity@+ except = null)", NX_FN(spaceSphereCast), "A ball moved along a line, as something that thick would: whether it touches anything, where its middle is when it first does, and which way that faces. For what a ray would slip past: a character's way ahead, a thrown thing, a camera kept out of walls. The land counts as group 0.");
+        b.function("Entity@ spherePick(const Vec3 &in from, const Vec3 &in to, float radius, Vec3 &out at, uint groups = 0xFFFF, Entity@+ except = null)", NX_FN(spaceSpherePick), "What such a ball first touches, or null if nothing or the land.");
         b.function("Entity@ decal(Texture@+ picture, const Vec3 &in place, const Vec3 &in facing, float size, float degrees = 0, const Color &in color = White)", NX_FN(spaceDecal), "Lays a picture over whatever is at a place, as a sticker would be: a mark, a hole, a splash, a footprint. Facing is the way the surface there faces (a ray's normal), size how big across, degrees how it is turned. It wraps over the models and meshes there that don't bend, the land and the ground, and stays where it is put, as an entity of its own that can be coloured, faded or destroyed. null if there is nothing there. On every GPU.");
         b.function("uint get_decals() property", NX_FN(spaceDecalLimit), "How many decals there can be; past it, the oldest goes. 64 to begin with.");
         b.function("void set_decals(uint) property", NX_FN(spaceSetDecalLimit), "How many decals there can be; past it, the oldest goes. 0 for no limit.");

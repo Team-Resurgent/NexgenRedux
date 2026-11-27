@@ -25,6 +25,8 @@ namespace nx
         bool send(const void* data, size_t size);
         // 0 at the end, or on failure.
         size_t receive(void* data, size_t size);
+        // What has come already, without waiting: 0 if nothing has, and then ended says whether that is because it is over.
+        size_t receiveNow(void* data, size_t size, bool& ended);
         const char* error() const { return m_error; }
 
     private:

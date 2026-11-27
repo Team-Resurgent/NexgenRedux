@@ -227,6 +227,19 @@ namespace nx
             char name[24];
         };
 
+        // Each that is there, with its id, in the order they were made: for looking at, not for changing.
+        template <typename Fn>
+        void eachEntity(Fn fn) const
+        {
+            for (u32 i = 0; i < m_entities.count(); i++)
+            {
+                if (m_entities[i].live && !m_entities[i].dying)
+                {
+                    fn(idOf(i), m_entities[i]);
+                }
+            }
+        }
+
         // nullptr if it has gone or been destroyed. Valid until the next spawn.
         Entity* find(u32 id);
         const Entity* find(u32 id) const { return const_cast<World*>(this)->find(id); }
@@ -613,6 +626,9 @@ namespace nx
         GrowArray<Event> m_events;
         GrowArray<DrawItem> m_drawList;
         bool m_drawDirty = true;
+    public:
+        bool m_showShapes = false;   // colliders drawn over everything: grey walls, green bodies, blue characters, yellow areas
+    private:
 
         Vec2 m_gravity;
         bool m_hasCamera = false;

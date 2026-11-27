@@ -1,4 +1,7 @@
 #include "script/debugger.h"
+#include "bindings/script_refs.h"
+#include "scene/space.h"
+#include "scene/world.h"
 #include "base/json_value.h"
 #include "base/log.h"
 
@@ -303,6 +306,18 @@ namespace nx
         {
             const JsonValue* on = ask.find("on");
             profile(id, on && on->flag());
+        }
+        else if (name == "entities")
+        {
+            entities(id);
+        }
+        else if (name == "entity")
+        {
+            entity(id, ask);
+        }
+        else if (name == "setEntity")
+        {
+            setEntity(id, ask);
         }
     }
 
@@ -881,6 +896,236 @@ namespace nx
         }
         send(reply.write(true));
     }
+    // --- Entities ---
+
+    namespace
+    {
+        std::string joined(const float* values, u32 count)
+        {
+            std::string out;
+            char part[32];
+            for (u32 i = 0; i < count; i++)
+            {
+                snprintf(part, sizeof(part), i ? ", %.3g" : "%.3g", static_cast<double>(values[i]));
+                out += part;
+            }
+            return out;
+        }
+
+        // Numbers apart by commas or spaces; how many there were.
+        u32 numbers(const std::string& text, float* out, u32 most)
+        {
+            u32 count = 0;
+            const char* at = text.c_str();
+            while (*at && count < most)
+            {
+                char* end = nullptr;
+                const float v = strtof(at, &end);
+                if (end == at)
+                {
+                    at++;
+                    continue;
+                }
+                out[count++] = v;
+                at = end;
+            }
+            return count;
+        }
+
+        // The world of the screen on top, through the scripts' engine; nullptr before there is one.
+        World* worldOf(ScriptHost* host)
+        {
+            const Services* s = host && host->engine() ? static_cast<const Services*>(host->engine()->GetUserData()) : nullptr;
+            return s ? s->world : nullptr;
+        }
+
+        void property(JsonValue& list, const char* name, const std::string& value, bool changes)
+        {
+            JsonValue& p = *list.add();
+            p.put("name")->setText(name);
+            p.put("value")->setText(value);
+            p.put("changes")->setFlag(changes);
+        }
+    }
+
+    void ScriptDebugger::entities(int id)
+    {
+        JsonValue reply;
+        putNumber(reply, "id", id);
+        JsonValue* list = reply.put("entities");
+        list->setArray();
+        World* world = worldOf(m_host);
+        u32 count = 0;
+        if (world)
+        {
+            world->eachEntity([&](u32 entity, const World::Entity& e)
+            {
+                if (count++ >= 4000)
+                {
+                    return;
+                }
+                JsonValue& item = *list->add();
+                item.put("entity")->setNumber(entity);
+                item.put("name")->setText(e.name);
+                item.put("parent")->setNumber(e.parent != 0xFFFFFFFFu ? world->parentOf(entity) : 0);
+                const Spatial* s = world->space().getSpatial(entity);
+                item.put("space")->setFlag(s != nullptr);
+                const float at[3] = { s ? s->place.x : e.position.x, s ? s->place.y : e.position.y, s ? s->place.z : 0 };
+                item.put("place")->setText(joined(at, s ? 3 : 2));
+            });
+        }
+        putNumber(reply, "count", count);
+        send(reply.write(true));
+    }
+
+    void ScriptDebugger::entity(int id, const JsonValue& ask)
+    {
+        JsonValue reply;
+        putNumber(reply, "id", id);
+        JsonValue* list = reply.put("properties");
+        list->setArray();
+        World* world = worldOf(m_host);
+        const JsonValue* which = ask.find("entity");
+        const World::Entity* e = world && which ? world->find(static_cast<u32>(which->number())) : nullptr;
+        if (e)
+        {
+            const u32 entity = static_cast<u32>(which->number());
+            Space& space = world->space();
+            property(*list, "name", e->name, false);
+            property(*list, "shown", e->visible ? "true" : "false", true);
+            if (const Spatial* s = space.getSpatial(entity))
+            {
+                const Vec3 angles = s->turn.angles() * 57.29578f;
+                const float place[3] = { s->place.x, s->place.y, s->place.z }, turn[3] = { angles.x, angles.y, angles.z }, size[3] = { s->size.x, s->size.y, s->size.z };
+                property(*list, "place", joined(place, 3), true);
+                property(*list, "angles", joined(turn, 3), true);
+                property(*list, "size", joined(size, 3), true);
+                if (const Appearance* a = space.getAppearance(entity))
+                {
+                    const float color[4] = { a->color.r, a->color.g, a->color.b, a->color.a };
+                    property(*list, "color", joined(color, 4), true);
+                    property(*list, "model", a->model ? a->model->key : a->custom ? "a mesh" : a->sprite ? "a sprite" : "a shape", false);
+                    if (a->model && a->model->model && a->animation >= 0)
+                    {
+                        property(*list, "animation", a->model->model->animations[static_cast<u32>(a->animation)].name, false);
+                    }
+                    property(*list, "ragdolled", space.ragdolled(entity) ? "true" : "false", false);
+                }
+                if (const Body3* b = space.getBody(entity))
+                {
+                    const float velocity[3] = { b->velocity.x, b->velocity.y, b->velocity.z };
+                    property(*list, "velocity", joined(velocity, 3), true);
+                    property(*list, "mass", joined(&b->mass, 1), true);
+                    property(*list, "walker", b->walker ? "true" : "false", false);
+                    property(*list, "on the ground", b->onGround ? "true" : "false", false);
+                }
+                if (const Collider3* c = space.getCollider(entity))
+                {
+                    static const char* const kShapes[] = { "sphere", "box", "capsule", "shell" };
+                    const float half[3] = { c->half.x, c->half.y, c->half.z };
+                    property(*list, "collider", std::string(kShapes[static_cast<u32>(c->shape) & 3]) + " " + joined(half, 3), false);
+                }
+            }
+            else
+            {
+                const float position[2] = { e->position.x, e->position.y }, scale[2] = { e->scale.x, e->scale.y };
+                property(*list, "position", joined(position, 2), true);
+                property(*list, "rotation", joined(&e->rotation, 1), true);
+                property(*list, "scale", joined(scale, 2), true);
+                property(*list, "layer", std::to_string(e->layer), false);
+                if (const Body* b = world->getBody(entity))
+                {
+                    const float velocity[2] = { b->velocity.x, b->velocity.y };
+                    property(*list, "velocity", joined(velocity, 2), true);
+                    property(*list, "on the ground", b->onGround ? "true" : "false", false);
+                }
+            }
+        }
+        send(reply.write(true));
+    }
+
+    void ScriptDebugger::setEntity(int id, const JsonValue& ask)
+    {
+        JsonValue reply;
+        putNumber(reply, "id", id);
+        World* world = worldOf(m_host);
+        const JsonValue* which = ask.find("entity");
+        const JsonValue* name = ask.find("property");
+        const JsonValue* value = ask.find("value");
+        World::Entity* e = world && which && name && value ? world->find(static_cast<u32>(which->number())) : nullptr;
+        bool done = false;
+        if (e)
+        {
+            const u32 entity = static_cast<u32>(which->number());
+            const std::string& what = name->text();
+            const std::string& text = value->text();
+            float v[4] = {};
+            const u32 n = numbers(text, v, 4);
+            Space& space = world->space();
+            Spatial* s = space.getSpatial(entity);
+            Appearance* a = space.getAppearance(entity);
+            Body3* b3 = space.getBody(entity);
+            if (what == "shown")
+            {
+                e->visible = text == "true" || text == "1";
+                done = true;
+            }
+            else if (s && n == 3 && (what == "place" || what == "angles" || what == "size"))
+            {
+                const Vec3 x(v[0], v[1], v[2]);
+                (what == "place" ? s->place : what == "size" ? s->size : s->place) = what == "angles" ? s->place : x;
+                if (what == "angles")
+                {
+                    s->turn = Quat::fromAngles(x * 0.0174533f);
+                }
+                space.forget();
+                done = true;
+            }
+            else if (a && what == "color" && n >= 3)
+            {
+                a->color = { v[0], v[1], v[2], n == 4 ? v[3] : a->color.a };
+                done = true;
+            }
+            else if (b3 && what == "velocity" && n == 3)
+            {
+                b3->velocity = { v[0], v[1], v[2] };
+                b3->still = 0;
+                space.forget();
+                done = true;
+            }
+            else if (b3 && what == "mass" && n == 1)
+            {
+                b3->mass = v[0] > 0 ? v[0] : 0;
+                done = true;
+            }
+            else if (!s && what == "position" && n == 2)
+            {
+                e->position = { v[0], v[1] };
+                done = true;
+            }
+            else if (!s && what == "rotation" && n == 1)
+            {
+                e->rotation = v[0];
+                done = true;
+            }
+            else if (!s && what == "scale" && n == 2)
+            {
+                e->scale = { v[0], v[1] };
+                done = true;
+            }
+            else if (!s && what == "velocity" && n == 2)
+            {
+                if (Body* b = world->getBody(entity))
+                {
+                    b->velocity = { v[0], v[1] };
+                    done = true;
+                }
+            }
+        }
+        reply.put("done")->setFlag(done);
+        send(reply.write(true));
+    }
+
     // --- The profiler ---
 
     void ScriptDebugger::sample(asIScriptContext* context)

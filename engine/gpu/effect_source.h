@@ -6,7 +6,9 @@
 // A picture effect has:
 //     float4 effect(float2 uv, float4 color)
 // and may use picture(uv), which is what was drawn there, size (in pixels), time (seconds) and values[0]
-// to values[3].
+// to values[3]. After Space::draw, where the GPU can, depthAt(uv) is how far away what is there is, in metres
+// (farthest for the sky), sunPlace where the sun is (0 to 1 across), sunInFront 1 if it is ahead, and upward which
+// way is up as the camera sees it: enough for god rays, fog by distance and the like. Elsewhere depthAt is farthest.
 //
 // A surface effect has:
 //     float4 paint(float4 color, float2 uv, float3 place, float3 normal, inout float glow)
@@ -20,6 +22,12 @@ namespace nx::gpu::shaders
         float values[16];
         float area[4];   // of the picture: from and size, 0 to 1
         float info[4];   // size, time
+        // Of the last view in space drawn on it: the projection's scales across and up, and what turns depth into
+        // distance; which way is up as the camera sees it, and how far it sees; where the sun is, 0 to 1 across the
+        // view, and 1 if it is in front of the camera.
+        float scene[4];
+        float up[4];
+        float sun[4];
     };
 
     inline const char kEffectGlslWords[] = R"(
@@ -40,9 +48,16 @@ layout(std140) uniform EffectValues
     vec4 values[4];
     vec4 effectArea;
     vec4 effectInfo;
+    vec4 effectScene;
+    vec4 effectUp;
+    vec4 effectSun;
 };
 #define size effectInfo.xy
 #define time effectInfo.z
+#define sunPlace effectSun.xy
+#define sunInFront effectSun.z
+#define upward effectUp.xyz
+#define farthest effectUp.w
 )";
 
     inline const char kEffectHlslWords[] = R"(
@@ -51,8 +66,15 @@ cbuffer EffectValues : register(b3)
     float4 values[4];
     float4 effectArea;
     float4 effectInfo;
+    float4 effectScene;
+    float4 effectUp;
+    float4 effectSun;
 };
 #define size effectInfo.xy
 #define time effectInfo.z
+#define sunPlace effectSun.xy
+#define sunInFront effectSun.z
+#define upward effectUp.xyz
+#define farthest effectUp.w
 )";
 }

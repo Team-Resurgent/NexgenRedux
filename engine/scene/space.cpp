@@ -351,6 +351,7 @@ namespace nx
 
     void Space::clear()
     {
+        m_decals.clear();
         freeCards();
         clearMists();
         clearVoxels();
@@ -626,6 +627,7 @@ namespace nx
 
     void Space::update(float dt)
     {
+        m_look.exposureAdapt = 1 - expf(-dt * m_exposureSpeed);
         m_time += dt;
         listen();
         stream();
@@ -1733,6 +1735,10 @@ namespace nx
             }
         }
         drawParticles(view);
+        if (m_look.occlusion > 0 || m_look.reflections > 0 || (m_look.focus > 0 && m_look.focusBlur > 0) || m_look.exposure > 0)
+        {
+            device.spaceLook(m_look, view.area);
+        }
     }
 
     // --- Particles ---
@@ -2151,5 +2157,284 @@ namespace nx
             d.depthWrite = d.lit = false;
             device.drawMesh(d);
         }
+    }
+
+    // --- Decals ---
+
+    namespace
+    {
+        // A polygon of up to nine corners, cut by one side of a box: what is within `limit` along axis k, from one way.
+        u32 clipSide(const Vec3* in, u32 count, Vec3* out, u32 k, float sign, float limit)
+        {
+            u32 made = 0;
+            const auto along = [&](const Vec3& p) { return (k == 0 ? p.x : k == 1 ? p.y : p.z) * sign; };
+            for (u32 i = 0; i < count; i++)
+            {
+                const Vec3& a = in[i];
+                const Vec3& b = in[(i + 1) % count];
+                const float da = limit - along(a), db = limit - along(b);
+                if (da >= 0 && made < 9)
+                {
+                    out[made++] = a;
+                }
+                if ((da >= 0) != (db >= 0) && made < 9)
+                {
+                    out[made++] = a + (b - a) * (da / (da - db));
+                }
+            }
+            return made;
+        }
+    }
+
+    u32 Space::decal(Asset* picture, const Vec3& place, const Vec3& facing, float size, float degrees, const gpu::Color& color)
+    {
+        if (m_solids == nullptr || size <= 0 || facing.dot(facing) < 1e-8f)
+        {
+            return 0;
+        }
+        // Its own directions: across, up the picture, and out of the surface.
+        const Vec3 out = facing.normalized();
+        const Vec3 other = fabsf(out.y) > 0.9f ? Vec3(0, 0, 1) : Vec3(0, 1, 0);
+        Vec3 across = other.cross(out).normalized();
+        Vec3 upward = out.cross(across);
+        const float turn = degrees * 0.0174533f;
+        const Vec3 a = across * cosf(turn) + upward * sinf(turn);
+        upward = out.cross(a);
+        across = a;
+        const float half = size * 0.5f, deep = fmaxf(half, 0.25f);
+        const float reach = sqrtf(half * half * 2 + deep * deep);
+        const auto into = [&](const Vec3& p) { const Vec3 d = p - place; return Vec3(d.dot(across), d.dot(upward), d.dot(out)); };
+
+        CustomMesh* mesh = create<CustomMesh>(MemTag::General);
+        if (mesh == nullptr)
+        {
+            return 0;
+        }
+        mesh->device = m_solids->device();
+        const float lift = 0.004f + size * 0.002f;
+        // One triangle of something, in the world: the part of it within the box, if it faces the way the decal does.
+        const auto take = [&](const Vec3& p0, const Vec3& p1, const Vec3& p2)
+        {
+            const Vec3 normal = (p1 - p0).cross(p2 - p0);
+            const float length = normal.length();
+            if (length < 1e-9f || normal.dot(out) < length * 0.2f)
+            {
+                return;
+            }
+            Vec3 polygon[9] = { into(p0), into(p1), into(p2) }, cut[9];
+            u32 count = 3;
+            for (u32 k = 0; k < 3 && count >= 3; k++)
+            {
+                const float limit = k == 2 ? deep : half;
+                count = clipSide(polygon, count, cut, k, 1, limit);
+                count = clipSide(cut, count, polygon, k, -1, limit);
+            }
+            if (count < 3)
+            {
+                return;
+            }
+            const Vec3 n = normal * (1 / length);
+            const u32 first = mesh->data.vertices.count();
+            for (u32 i = 0; i < count; i++)
+            {
+                const Vec3& q = polygon[i];
+                const Vec3 world = place + across * q.x + upward * q.y + out * q.z + n * lift;
+                if (!mesh->data.vertex(world, n, gpu::Color(1, 1, 1, 1), q.x / size + 0.5f, 0.5f - q.y / size))
+                {
+                    return;
+                }
+            }
+            for (u32 i = 2; i < count; i++)
+            {
+                mesh->data.triangle(first, first + i - 1, first + i);
+            }
+        };
+
+        // What is drawn there, that doesn't bend: models and meshes.
+        for (const Appearance& look : m_appearances)
+        {
+            const World::Entity& e = m_world.m_entities[look.owner];
+            if (look.decal || look.sprite || !e.shown || e.dying || e.parts3[0] == kNone)
+            {
+                continue;
+            }
+            const ModelData* model = look.model && look.model->ready ? look.model->model : nullptr;
+            if ((model == nullptr || model->weights.count()) && look.custom == nullptr)
+            {
+                continue;
+            }
+            const Mat4& world = m_spatials[e.parts3[0]].world;
+            Vec3 middle;
+            float radius;
+            if (look.custom)
+            {
+                // Its bounds are only kept once it is on the GPU.
+                look.custom->data.bounds(middle, radius);
+                middle = world.transformPoint(middle);
+                radius *= enlarges(world);
+            }
+            else
+            {
+                boundsOf(look, world, middle, radius);
+            }
+            if ((middle - place).length() > radius + reach)
+            {
+                continue;
+            }
+            if (look.custom)
+            {
+                const MeshData& d = look.custom->data;
+                for (u32 t = 0; t + 2 < d.indices.count(); t += 3)
+                {
+                    const gpu::MeshVertex* v[3] = { &d.vertices[d.indices[t]], &d.vertices[d.indices[t + 1]], &d.vertices[d.indices[t + 2]] };
+                    take(world.transformPoint({ v[0]->x, v[0]->y, v[0]->z }), world.transformPoint({ v[1]->x, v[1]->y, v[1]->z }), world.transformPoint({ v[2]->x, v[2]->y, v[2]->z }));
+                }
+                continue;
+            }
+            // The first level's triangles, by the cells the box covers, each once.
+            u32 triangles = 0;
+            for (const ModelPart& part : model->parts)
+            {
+                triangles = triangles > (part.first[0] + part.count[0]) / 3 ? triangles : (part.first[0] + part.count[0]) / 3;
+            }
+            const auto corners = [&](Vec3& least, Vec3& most)
+            {
+                const Mat4 back = world.inverse();
+                for (u32 i = 0; i < 8; i++)
+                {
+                    const Vec3 c = place + across * ((i & 1) ? half : -half) + upward * ((i & 2) ? half : -half) + out * ((i & 4) ? deep : -deep);
+                    const Vec3 m = back.transformPoint(c);
+                    least = i ? Vec3(fminf(least.x, m.x), fminf(least.y, m.y), fminf(least.z, m.z)) : m;
+                    most = i ? Vec3(fmaxf(most.x, m.x), fmaxf(most.y, m.y), fmaxf(most.z, m.z)) : m;
+                }
+            };
+            const auto triangle = [&](u32 t)
+            {
+                const gpu::MeshVertex* v[3] = { &model->mesh.vertices[model->mesh.indices[t * 3]], &model->mesh.vertices[model->mesh.indices[t * 3 + 1]], &model->mesh.vertices[model->mesh.indices[t * 3 + 2]] };
+                take(world.transformPoint({ v[0]->x, v[0]->y, v[0]->z }), world.transformPoint({ v[1]->x, v[1]->y, v[1]->z }), world.transformPoint({ v[2]->x, v[2]->y, v[2]->z }));
+            };
+            u8* seen = triangles ? static_cast<u8*>(memAlloc(triangles, MemTag::Frame)) : nullptr;
+            if (seen && model->makeCells())
+            {
+                memset(seen, 0, triangles);
+                Vec3 least, most;
+                corners(least, most);
+                int from[3], to[3];
+                model->cellsOf(least, most, from, to);
+                for (int z = from[2]; z <= to[2]; z++)
+                {
+                    for (int y = from[1]; y <= to[1]; y++)
+                    {
+                        for (int x = from[0]; x <= to[0]; x++)
+                        {
+                            const u32 cell = (static_cast<u32>(z) * model->cellCount[1] + static_cast<u32>(y)) * model->cellCount[0] + static_cast<u32>(x);
+                            for (u32 i = model->cellStarts[cell]; i < model->cellStarts[cell + 1]; i++)
+                            {
+                                const u32 t = model->cellTriangles[i];
+                                if (t < triangles && !seen[t])
+                                {
+                                    seen[t] = 1;
+                                    triangle(t);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                for (u32 t = 0; t < triangles; t++)
+                {
+                    triangle(t);
+                }
+            }
+            memFree(seen);
+        }
+
+        // The land, in small squares, and the flat ground.
+        float lowX = place.x, highX = place.x, lowZ = place.z, highZ = place.z, lowY = place.y, highY = place.y;
+        for (u32 i = 0; i < 8; i++)
+        {
+            const Vec3 c = place + across * ((i & 1) ? half : -half) + upward * ((i & 2) ? half : -half) + out * ((i & 4) ? deep : -deep);
+            lowX = fminf(lowX, c.x);
+            highX = fmaxf(highX, c.x);
+            lowZ = fminf(lowZ, c.z);
+            highZ = fmaxf(highZ, c.z);
+            lowY = fminf(lowY, c.y);
+            highY = fmaxf(highY, c.y);
+        }
+        if (m_landOn)
+        {
+            const u32 squares = 12;
+            const float stepX = (highX - lowX) / squares, stepZ = (highZ - lowZ) / squares;
+            for (u32 z = 0; z < squares; z++)
+            {
+                for (u32 x = 0; x < squares; x++)
+                {
+                    const float x0 = lowX + stepX * static_cast<float>(x), z0 = lowZ + stepZ * static_cast<float>(z);
+                    const Vec3 p00(x0, heightAt(x0, z0), z0), p10(x0 + stepX, heightAt(x0 + stepX, z0), z0);
+                    const Vec3 p01(x0, heightAt(x0, z0 + stepZ), z0 + stepZ), p11(x0 + stepX, heightAt(x0 + stepX, z0 + stepZ), z0 + stepZ);
+                    take(p00, p01, p11);
+                    take(p00, p11, p10);
+                }
+            }
+        }
+        if (m_hasGround && m_ground >= lowY && m_ground <= highY)
+        {
+            const Vec3 p00(lowX, m_ground, lowZ), p10(highX, m_ground, lowZ), p01(lowX, m_ground, highZ), p11(highX, m_ground, highZ);
+            take(p00, p01, p11);
+            take(p00, p11, p10);
+        }
+
+        if (mesh->data.indices.count() == 0)
+        {
+            mesh->release();
+            return 0;
+        }
+        const u32 id = m_world.spawn({});
+        if (id == 0)
+        {
+            mesh->release();
+            return 0;
+        }
+        spatial(id);
+        setCustom(id, mesh);
+        mesh->release();
+        if (picture)
+        {
+            setTexture(id, picture);
+        }
+        if (Appearance* look = getAppearance(id))
+        {
+            look->decal = true;
+            look->blend = gpu::Blend::Alpha;
+            look->casts = false;
+            look->color = color;
+        }
+        // The oldest go, past the limit.
+        const auto dropAt = [this](u32 i)
+        {
+            for (u32 k = i; k + 1 < m_decals.count(); k++)
+            {
+                m_decals[k] = m_decals[k + 1];
+            }
+            m_decals.resize(m_decals.count() - 1);
+        };
+        for (u32 i = 0; i < m_decals.count();)
+        {
+            if (m_world.find(m_decals[i]) == nullptr)
+            {
+                dropAt(i);
+                continue;
+            }
+            i++;
+        }
+        while (m_decalLimit && m_decals.count() >= m_decalLimit)
+        {
+            m_world.destroyEntity(m_decals[0]);
+            dropAt(0);
+        }
+        m_decals.push(id);
+        return id;
     }
 }

@@ -1,6 +1,7 @@
 #include "gpu/gl/gl_window.h"
 #include "gpu/effect_source.h"
 #include "gpu/gl/mesh_shaders.h"
+#include "gpu/gl/space_shaders.h"
 #include "gpu/mesh_uniforms.h"
 #include "gpu/gpu.h"
 #include "base/log.h"
@@ -34,7 +35,7 @@ namespace nx::gpu
             GL_TEXTURE_MAX_LEVEL = 0x813D, GL_RGBA8 = 0x8058, GL_TEXTURE0 = 0x84C0, GL_DEPTH24_STENCIL8 = 0x88F0, GL_ARRAY_BUFFER = 0x8892,
             GL_STREAM_DRAW = 0x88E0, GL_STATIC_DRAW = 0x88E4, GL_FRAGMENT_SHADER = 0x8B30, GL_VERTEX_SHADER = 0x8B31, GL_COMPILE_STATUS = 0x8B81,
             GL_LINK_STATUS = 0x8B82, GL_READ_FRAMEBUFFER = 0x8CA8, GL_DRAW_FRAMEBUFFER = 0x8CA9, GL_FRAMEBUFFER_COMPLETE = 0x8CD5,
-            GL_COLOR_ATTACHMENT0 = 0x8CE0, GL_FRAMEBUFFER = 0x8D40, GL_RENDERBUFFER = 0x8D41, GL_DEPTH_STENCIL_ATTACHMENT = 0x821A,
+            GL_COLOR_ATTACHMENT0 = 0x8CE0, GL_FRAMEBUFFER = 0x8D40, GL_RENDERBUFFER = 0x8D41, GL_DEPTH_STENCIL_ATTACHMENT = 0x821A, GL_RGBA16F = 0x881A, GL_DEPTH_STENCIL = 0x84F9, GL_UNSIGNED_INT_24_8 = 0x84FA,
             GL_CULL_NONE = 0, GL_UNSIGNED_SHORT = 0x1403, GL_REPEAT = 0x2901, GL_LINEAR_MIPMAP_LINEAR = 0x2703, GL_POLYGON_OFFSET_FILL = 0x8037,
             GL_DEPTH_CLAMP = 0x864F, GL_TEXTURE1 = 0x84C1, GL_TEXTURE2 = 0x84C2, GL_TEXTURE_3D = 0x806F, GL_TEXTURE_WRAP_R = 0x8072, GL_DEPTH_COMPONENT = 0x1902, GL_DEPTH_COMPONENT32F = 0x8CAC, GL_DEPTH_ATTACHMENT = 0x8D00,
             GL_TEXTURE_COMPARE_MODE = 0x884C, GL_TEXTURE_COMPARE_FUNC = 0x884D, GL_COMPARE_REF_TO_TEXTURE = 0x884E, GL_ELEMENT_ARRAY_BUFFER = 0x8893,
@@ -234,6 +235,11 @@ void main()
                 m_meshes.forEach([&](MeshSlot& m) { releaseMesh(m); });
                 m_effects.forEach([&](EffectSlot& e) { gl.DeleteProgram(e.program); });
                 gl.DeleteProgram(m_blurProgram);
+                for (GLuint& program : m_spacePrograms)
+                {
+                    gl.DeleteProgram(program);
+                    program = 0;
+                }
                 gl.DeleteProgram(m_gradeProgram);
                 for (const GLuint program : m_programs)
                 {
@@ -565,6 +571,7 @@ void main()
             bool beginFrame(const Color& clear) override
             {
                 NX_ASSERT(!m_inFrame);
+                m_viewDrawn = false;
                 if (!resize())
                 {
                     return false;
@@ -722,6 +729,8 @@ void main()
                 fillView(u, view, true);
                 upload(0, &u, sizeof(u));
                 m_viewTime = view.time;
+                sceneOf(view, m_scene);
+                m_viewDrawn = m_viewDrawn || m_screenTarget == 0;
                 gl.Disable(GL_SCISSOR_TEST);
                 gl.DepthMask(1);
                 gl.Clear(GL_DEPTH_BUFFER_BIT);
@@ -884,8 +893,196 @@ void main()
                 }
                 copyPicture();
                 setValues(values, time, area);
+                seeDepth(0);
                 pass(slot->program, m_copy, m_target, area, m_width, m_height, false);
                 return true;
+            }
+
+            bool blur(float pixels, const Scissor& area) override
+            {
+                if (m_screenTarget)
+                {
+                    return false;   // for the screen only
+                }
+                if (!m_inFrame || pixels <= 0 || !copyTargets())
+                {
+                    return false;
+                }
+                copyPicture();
+                // Halved until a pixel there is about as wide as the blur, then back.
+                u32 levels = 1;
+                while (levels < kBlurs && static_cast<float>(1u << levels) < pixels * static_cast<float>(m_height) / 720.0f)
+                {
+                    levels++;
+                }
+                const Scissor all;
+                const auto step = [&](float what, u32 width, u32 height)
+                {
+                    float values[16] = { what, 0, 1, 0, 1.0f / static_cast<float>(width), 1.0f / static_cast<float>(height) };
+                    setValues(values, 0, all);
+                };
+                for (u32 i = 0; i < levels; i++)
+                {
+                    step(1, i == 0 ? m_width : m_blurs[i - 1].width, i == 0 ? m_height : m_blurs[i - 1].height);
+                    pass(m_blurProgram, i == 0 ? m_copy : m_blurs[i - 1].texture, m_blurs[i].target, all, m_blurs[i].width, m_blurs[i].height, false);
+                }
+                for (u32 i = levels - 1; i > 0; i--)
+                {
+                    step(2, m_blurs[i].width, m_blurs[i].height);
+                    pass(m_blurProgram, m_blurs[i].texture, m_blurs[i - 1].target, all, m_blurs[i - 1].width, m_blurs[i - 1].height, false);
+                }
+                step(2, m_blurs[0].width, m_blurs[0].height);
+                pass(m_blurProgram, m_blurs[0].texture, m_target, all, m_width, m_height, false, area);
+                return true;
+            }
+
+            bool seesDepth() const override { return true; }
+
+            bool spaceLook(const SpaceLook& look, const Scissor& area) override
+            {
+                if (m_screenTarget || !m_inFrame || !m_viewDrawn || !copyTargets() || !workTargets())
+                {
+                    return false;
+                }
+                const float scale = static_cast<float>(m_height) / 720.0f;
+                const auto run = [&](u32 which, const float (&values)[16], GLuint extra)
+                {
+                    copyPicture();
+                    setValues(values, 0, area);
+                    seeDepth(extra);
+                    pass(m_spacePrograms[which], m_copy, m_target, area, m_width, m_height, false);
+                };
+                if (look.occlusion > 0)
+                {
+                    const float values[16] = { look.occlusion, look.occlusionRadius };
+                    copyPicture();
+                    setValues(values, 0, area);
+                    seeDepth(0);
+                    pass(m_spacePrograms[0], m_copy, m_work.target, area, m_width, m_height, false);
+                    run(1, values, m_work.texture);
+                }
+                if (look.reflections > 0)
+                {
+                    const float values[16] = { look.reflections };
+                    run(2, values, 0);
+                }
+                if (look.focus > 0 && look.focusBlur > 0)
+                {
+                    const float values[16] = { look.focus, look.focusDepth, look.focusFalloff, look.focusBlur * scale, look.bokeh };
+                    run(3, values, 0);
+                }
+                if (look.exposure > 0)
+                {
+                    // How bright it is, a little of the way there each frame; all of the way the first.
+                    const float measure[16] = { m_metered ? look.exposureAdapt : 1.0f };
+                    copyPicture();
+                    setValues(measure, 0, area);
+                    pass(m_spacePrograms[4], m_copy, m_meter.target, {}, 1, 1, false, {}, true);
+                    m_metered = true;
+                    const float values[16] = { 0, look.exposure, look.exposureRange > 1 ? look.exposureRange : 1 };
+                    run(5, values, m_meter.texture);
+                }
+                else
+                {
+                    m_metered = false;
+                }
+                return true;
+            }
+
+            // The programs for spaceLook, a picture as big as the screen for occlusion, one pixel for how bright it is, and
+            // a copy of how far away each pixel is: what is drawn into can't be read too.
+            bool workTargets()
+            {
+                if (m_workFine || m_workTried)
+                {
+                    return m_workFine;
+                }
+                m_workTried = true;
+                static const char* const kEntries[] = { "occlusionPs", "occludePs", "reflectPs", "focusPs", "meterPs", "exposePs" };
+                for (u32 i = 0; i < 6 && m_spacePrograms[5] == 0; i++)
+                {
+                    if (m_spacePrograms[i])
+                    {
+                        continue;
+                    }
+                    char error[512];
+                    std::string main = std::string("\nvoid main() { result = ") + kEntries[i] + "(at); }\n";
+                    const char* vertex[2] = { shaders::kMeshCommon, shaders::kScreenVertex };
+                    const char* fragment[4] = { "#version 330 core\n", shaders::kEffectGlslWords, shaders::kSpaceGlsl, main.c_str() };
+                    m_spacePrograms[i] = effectProgram(vertex, 2, fragment, 4, error, sizeof(error));
+                    if (m_spacePrograms[i] == 0)
+                    {
+                        NX_ERROR("opengl: %s: %s", kEntries[i], error);
+                        return false;
+                    }
+                }
+                m_workFine = makeTarget(m_work.texture, m_work.target, GL_RGBA8, GL_UNSIGNED_BYTE, m_width, m_height) &&
+                             makeTarget(m_meter.texture, m_meter.target, GL_RGBA16F, GL_FLOAT_, 1, 1) && depthCopy();
+                return m_workFine;
+            }
+
+            bool depthCopy()
+            {
+                if (m_depthCopy)
+                {
+                    return true;
+                }
+                gl.GenTextures(1, &m_depthCopy);
+                gl.BindTexture(GL_TEXTURE_2D, m_depthCopy);
+                gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+                gl.TexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, static_cast<GLsizei>(m_width), static_cast<GLsizei>(m_height), 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, nullptr);
+                gl.GenFramebuffers(1, &m_depthCopyTarget);
+                gl.BindFramebuffer(GL_FRAMEBUFFER, m_depthCopyTarget);
+                gl.FramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, m_depthCopy, 0);
+                const bool fine = gl.CheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
+                gl.BindFramebuffer(GL_FRAMEBUFFER, m_target);
+                m_boundTexture = {};
+                return fine;
+            }
+
+            // Effects see how far away each pixel is, from a copy, and perhaps a picture of their own.
+            void seeDepth(GLuint extra)
+            {
+                if (m_viewDrawn && (m_depthCopy || depthCopy()))
+                {
+                    gl.Disable(GL_SCISSOR_TEST);
+                    gl.BindFramebuffer(GL_READ_FRAMEBUFFER, m_target);
+                    gl.BindFramebuffer(GL_DRAW_FRAMEBUFFER, m_depthCopyTarget);
+                    const GLint width = static_cast<GLint>(m_width), height = static_cast<GLint>(m_height);
+                    gl.BlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+                    gl.BindFramebuffer(GL_FRAMEBUFFER, m_target);
+                }
+                const GLuint nearest = m_samplers[static_cast<u32>(Filter::Nearest)];
+                gl.ActiveTexture(GL_TEXTURE0 + 3);
+                gl.BindTexture(GL_TEXTURE_2D, m_viewDrawn ? m_depthCopy : 0);
+                gl.BindSampler(3, nearest);
+                gl.ActiveTexture(GL_TEXTURE0 + 4);
+                gl.BindTexture(GL_TEXTURE_2D, extra);
+                gl.BindSampler(4, nearest);
+                gl.ActiveTexture(GL_TEXTURE0);
+                m_boundTexture = {};
+            }
+
+            // What effects are told of a view: see EffectUniforms.
+            static void sceneOf(const View& view, float (&out)[12])
+            {
+                const Mat4& p = view.projection;
+                out[0] = p.m[0];
+                out[1] = p.m[5];
+                out[2] = p.m[10];
+                out[3] = p.m[14];
+                // Up and the sun, as the camera sees them: right, up and away.
+                const Vec3 up = view.view.transformDirection({ 0, 1, 0 });
+                out[4] = up.x;
+                out[5] = up.y;
+                out[6] = -up.z;
+                out[7] = p.m[10] + 1 != 0 ? p.m[14] / (1 + p.m[10]) : 1e6f;
+                const Vec3 sun = view.view.transformDirection(view.sunDirection);
+                const float ahead = -sun.z;
+                out[8] = ahead > 1e-4f ? 0.5f + 0.5f * sun.x * p.m[0] / ahead : 0.5f;
+                out[9] = ahead > 1e-4f ? 0.5f - 0.5f * sun.y * p.m[5] / ahead : 0.5f;
+                out[10] = ahead > 1e-4f ? 1.0f : 0.0f;
+                out[11] = 0;
             }
 
             bool bloom(const Bloom& bloom, const Scissor& area) override
@@ -1130,6 +1327,17 @@ void main()
                 const GLint image = gl.GetUniformLocation(program, "image");
                 const GLint shadow = gl.GetUniformLocation(program, "shadowMap");
                 const GLint volume = gl.GetUniformLocation(program, "volumeImage");
+                // Effects' own pictures: how far away each pixel is, and one more.
+                const GLint depth = gl.GetUniformLocation(program, "depthImage") >= 0 ? gl.GetUniformLocation(program, "depthImage") : gl.GetUniformLocation(program, "effectDepth");
+                const GLint extra = gl.GetUniformLocation(program, "extraImage");
+                if (depth >= 0)
+                {
+                    gl.Uniform1i(depth, 3);
+                }
+                if (extra >= 0)
+                {
+                    gl.Uniform1i(extra, 4);
+                }
                 if (image >= 0)
                 {
                     gl.Uniform1i(image, 0);
@@ -1166,11 +1374,17 @@ void main()
                     u.info[0] = static_cast<float>(area.width);
                     u.info[1] = static_cast<float>(area.height);
                 }
+                memcpy(u.scene, m_scene, sizeof(u.scene) + sizeof(u.up) + sizeof(u.sun));
+                if (!m_viewDrawn)
+                {
+                    u.scene[0] = 0;
+                    u.up[3] = 1e6f;
+                }
                 upload(3, &u, sizeof(u));
             }
 
             // Covers a target with a picture. Only part of it is changed, if there is a clip.
-            void pass(GLuint program, GLuint from, GLuint to, const Scissor& area, u32 width, u32 height, bool adds, const Scissor& clip = {})
+            void pass(GLuint program, GLuint from, GLuint to, const Scissor& area, u32 width, u32 height, bool adds, const Scissor& clip = {}, bool mixes = false)
             {
                 use(Mode::None);
                 m_mode = Mode::None;
@@ -1194,8 +1408,8 @@ void main()
                 gl.Disable(GL_DEPTH_TEST);
                 gl.Disable(GL_CULL_FACE);
                 gl.DepthMask(0);
-                set(GL_BLEND, adds);
-                gl.BlendFuncSeparate(GL_SRC_ALPHA, GL_ONE, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+                set(GL_BLEND, adds || mixes);
+                gl.BlendFuncSeparate(GL_SRC_ALPHA, mixes ? GL_ONE_MINUS_SRC_ALPHA : GL_ONE, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
                 gl.ActiveTexture(GL_TEXTURE0);
                 gl.BindTexture(GL_TEXTURE_2D, from);
                 gl.BindSampler(0, m_samplers[0]);
@@ -1316,6 +1530,17 @@ void main()
                 const GLint image = gl.GetUniformLocation(program, "image");
                 const GLint shadow = gl.GetUniformLocation(program, "shadowMap");
                 const GLint volume = gl.GetUniformLocation(program, "volumeImage");
+                // Effects' own pictures: how far away each pixel is, and one more.
+                const GLint depth = gl.GetUniformLocation(program, "depthImage") >= 0 ? gl.GetUniformLocation(program, "depthImage") : gl.GetUniformLocation(program, "effectDepth");
+                const GLint extra = gl.GetUniformLocation(program, "extraImage");
+                if (depth >= 0)
+                {
+                    gl.Uniform1i(depth, 3);
+                }
+                if (extra >= 0)
+                {
+                    gl.Uniform1i(extra, 4);
+                }
                 if (image >= 0)
                 {
                     gl.Uniform1i(image, 0);
@@ -1488,6 +1713,16 @@ void main()
                 gl.DeleteFramebuffers(1, &m_copyTarget);
                 gl.DeleteTextures(1, &m_copy);
                 m_copy = m_copyTarget = 0;
+                for (Blur* b : { &m_work, &m_meter })
+                {
+                    gl.DeleteFramebuffers(1, &b->target);
+                    gl.DeleteTextures(1, &b->texture);
+                    *b = {};
+                }
+                gl.DeleteFramebuffers(1, &m_depthCopyTarget);
+                gl.DeleteTextures(1, &m_depthCopy);
+                m_depthCopy = m_depthCopyTarget = 0;
+                m_workFine = m_workTried = false;
                 for (Blur& b : m_blurs)
                 {
                     gl.DeleteFramebuffers(1, &b.target);
@@ -1546,6 +1781,12 @@ void main()
             HandlePool<TextureSlot, TextureTag> m_textures;
             HandlePool<EffectSlot, EffectTag> m_effects;
             GLuint m_copy = 0, m_copyTarget = 0, m_blurProgram = 0, m_gradeProgram = 0;
+            GLuint m_spacePrograms[6] = {};
+            GLuint m_depthCopy = 0, m_depthCopyTarget = 0;
+            Blur m_work = {}, m_meter = {};
+            bool m_workFine = false, m_workTried = false, m_metered = false, m_viewDrawn = false;
+            // The last view in space this frame: what effects need to see it. See EffectUniforms.
+            float m_scene[12] = {};
             Blur m_blurs[kBlurs] = {};
             bool m_copyFine = false;
             float m_viewTime = 0;

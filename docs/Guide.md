@@ -679,9 +679,47 @@ float4 paint(float4 color, float2 uv, float3 place, float3 normal, inout float g
 | `picture(uv)` | The picture so far, anywhere; `uv` is 0 to 1 from the top left |
 | `size`, `time` | Of the picture in pixels, and seconds |
 | `values[0]` to `values[3]` | Sixteen numbers, set with `Effect::set` |
+| `depthAt(uv)` | After `Space::draw`, how far away what is there is, in metres; `farthest` for the sky |
+| `sunPlace`, `sunInFront` | Where the sun is, 0 to 1 across the view, and 1 if it is ahead of the camera |
+| `upward`, `farthest` | Which way is up as the camera sees it (right, up, away), and how far it sees |
+
+The last three rows are on GPUs where `Space::depthEffects`: Windows, Linux, macOS and the Xbox One. They are enough for god rays,
+fog by distance, outlines where things meet and the like: `global:effect/rays.fx` is god rays, written that way.
 
 It is written as HLSL is, and every number with a point in it. `float2` to `float4`, `lerp`, `frac`, `saturate` and `fmod` have their
-OpenGL names put in for you; keep to what both have. Don't name anything `out`, `in`, `sample` or `texture`.
+OpenGL names put in for you; keep to what both have. Don't name anything `out`, `in`, `sample`, `texture`, `step`, `distance` or any
+of the words in the table.
+
+### Blur, and finishing a view
+
+`c.blur(8)` blurs all that has been drawn so far, about 8 pixels across on a screen 720 high, or only inside the clip: frosted glass
+behind a pause menu, or a dream. It works on every GPU but the Xbox 360 for now.
+
+Where `Space::depthEffects`, each view in space can be finished from how far away each of its pixels is:
+
+```cpp
+Space::occlusion(1, 0.6f);          // corners and creases darker, within 0.6 metres
+Space::reflections(0.6f);           // wet floors and still water show what is around
+Space::focus(5, 1, 12);             // sharp at 5 metres, 1 either side; 12 pixels of blur, with bokeh
+Space::autoExposure(0.45f);         // brighter in the dark and darker in the light, gradually
+```
+
+Each takes 0 for none. Reflections show only what is on the screen and in what faces up; the further a pixel is from the focus, the
+more it is blurred, and the brightest spread into round bokeh. The Lens demo has them all, god rays and decals too, behind a frosted
+panel.
+
+### Decals
+
+```cpp
+Vec3 hit, normal;
+if (Space::raycast(from, to, hit, normal))
+    Space::decal(splash, hit, normal, 1.2f, random(0, 360), Red);
+```
+
+A decal lays a picture over whatever is at a place, as a sticker would be: a mark, a hole, a splash or a footprint. It wraps over the
+models and meshes there that don't bend, the land and the ground, and stays where it is put, as an entity of its own that can be
+coloured, faded or destroyed. `Space::decals` is how many there can be, 64 to begin with; past it, the oldest goes. They work on every
+GPU. `global:picture/decal-splash.png` (white, for colouring), `decal-scorch.png` and `decal-hole.png` are there to use.
 
 ### Grading
 

@@ -161,6 +161,15 @@ namespace nx::gpu
                 release(m_noDepth);
                 release(m_blurPs);
                 release(m_gradePs);
+                release(m_occlusionPs);
+                release(m_occludePs);
+                release(m_reflectPs);
+                release(m_focusPs);
+                release(m_meterPs);
+                release(m_exposePs);
+                release(m_meter.view);
+                release(m_meter.target);
+                release(m_meter.texture);
                 release(m_meshVs);
                 release(m_meshPs);
                 release(m_shadowVs);
@@ -502,6 +511,7 @@ namespace nx::gpu
             bool beginFrame(const Color& clear) override
             {
                 NX_ASSERT(!m_inFrame);
+                m_viewDrawn = false;
                 if (!resize())
                 {
                     return false;
@@ -652,6 +662,8 @@ namespace nx::gpu
                 fillView(u, view, false);
                 upload(m_viewUniforms, &u, sizeof(u));
                 m_viewTime = view.time;
+                sceneOf(view, m_scene);
+                m_viewDrawn = m_viewDrawn || !m_screen.colorView;
                 m_context->ClearDepthStencilView(m_depthView, D3D11_CLEAR_DEPTH, 1.0f, 0);
                 m_area = view.area;
                 m_mode = Mode::None;
@@ -775,7 +787,10 @@ namespace nx::gpu
                 {
                     pixel = std::string(kEffectHlslWords) +
                             "Texture2D image : register(t0);\nSamplerState imageSampler : register(s0);\n"
-                            "float4 picture(float2 uv) { return image.SampleLevel(imageSampler, effectArea.xy + saturate(uv) * effectArea.zw, 0); }\n#line 1\n" +
+                            "Texture2D effectDepth : register(t2);\nSamplerState effectPoint : register(s1);\n"
+                            "float4 picture(float2 uv) { return image.SampleLevel(imageSampler, effectArea.xy + saturate(uv) * effectArea.zw, 0); }\n"
+                            "float depthAt(float2 uv) { if (effectScene.x == 0.0) return farthest; float d = effectDepth.SampleLevel(effectPoint, effectArea.xy + saturate(uv) * effectArea.zw, 0).r; "
+                            "return min(effectScene.w / (d + effectScene.z), farthest); }\n#line 1\n" +
                             source +
                             "\nfloat4 effectMain(float2 at : TEXCOORD0) : SV_Target { float2 uv = float2(at.x * 0.5 + 0.5, 0.5 - at.y * 0.5); return float4(effect(uv, picture(uv)).rgb, 1.0); }\n";
                 }
@@ -830,7 +845,9 @@ namespace nx::gpu
                 }
                 m_context->CopyResource(m_copy, m_color);
                 setValues(values, time, area);
+                seeDepth(nullptr);
                 pass(slot->pixel, m_copyView, m_colorView, area, m_width, m_height, false);
+                unseeDepth();
                 m_context->OMSetRenderTargets(1, &m_colorView, m_depthView);
                 return true;
             }
@@ -888,6 +905,167 @@ namespace nx::gpu
                 m_context->PSSetShaderResources(1, 1, &none);
                 m_context->OMSetRenderTargets(1, &m_colorView, m_depthView);
                 return true;
+            }
+
+            bool blur(float pixels, const Scissor& area) override
+            {
+                if (m_screen.colorView)
+                {
+                    return false;   // for the screen only
+                }
+                if (!m_inFrame || pixels <= 0 || !copyTargets())
+                {
+                    return false;
+                }
+                m_context->CopyResource(m_copy, m_color);
+                // Halved until a pixel there is about as wide as the blur, then back.
+                u32 levels = 1;
+                while (levels < kBlurs && static_cast<float>(1u << levels) < pixels * static_cast<float>(m_height) / 720.0f)
+                {
+                    levels++;
+                }
+                const Scissor all;
+                const auto step = [&](float what, u32 width, u32 height)
+                {
+                    float values[16] = { what, 0, 1, 0, 1.0f / static_cast<float>(width), 1.0f / static_cast<float>(height) };
+                    setValues(values, 0, all);
+                };
+                for (u32 i = 0; i < levels; i++)
+                {
+                    step(1, i == 0 ? m_width : m_blurs[i - 1].width, i == 0 ? m_height : m_blurs[i - 1].height);
+                    pass(m_blurPs, i == 0 ? m_copyView : m_blurs[i - 1].view, m_blurs[i].target, all, m_blurs[i].width, m_blurs[i].height, false);
+                }
+                for (u32 i = levels - 1; i > 0; i--)
+                {
+                    step(2, m_blurs[i].width, m_blurs[i].height);
+                    pass(m_blurPs, m_blurs[i].view, m_blurs[i - 1].target, all, m_blurs[i - 1].width, m_blurs[i - 1].height, false);
+                }
+                step(2, m_blurs[0].width, m_blurs[0].height);
+                pass(m_blurPs, m_blurs[0].view, m_colorView, all, m_width, m_height, false, area);
+                m_context->OMSetRenderTargets(1, &m_colorView, m_depthView);
+                return true;
+            }
+
+            bool seesDepth() const override { return m_depthRead != nullptr && m_occlusionPs != nullptr; }
+
+            bool spaceLook(const SpaceLook& look, const Scissor& area) override
+            {
+                if (m_screen.colorView || !m_inFrame || !m_viewDrawn || !seesDepth() || !copyTargets() || !workTargets())
+                {
+                    return false;
+                }
+                const float scale = static_cast<float>(m_height) / 720.0f;
+                const auto run = [&](ID3D11PixelShader* shader, const float (&values)[16], ID3D11ShaderResourceView* extra)
+                {
+                    m_context->CopyResource(m_copy, m_color);
+                    setValues(values, 0, area);
+                    seeDepth(extra);
+                    pass(shader, m_copyView, m_colorView, area, m_width, m_height, false);
+                    unseeDepth();
+                };
+                if (look.occlusion > 0)
+                {
+                    const float values[16] = { look.occlusion, look.occlusionRadius };
+                    m_context->CopyResource(m_copy, m_color);
+                    setValues(values, 0, area);
+                    seeDepth(nullptr);
+                    pass(m_occlusionPs, m_copyView, m_work.target, area, m_width, m_height, false);
+                    unseeDepth();
+                    run(m_occludePs, values, m_work.view);
+                }
+                if (look.reflections > 0)
+                {
+                    const float values[16] = { look.reflections };
+                    run(m_reflectPs, values, nullptr);
+                }
+                if (look.focus > 0 && look.focusBlur > 0)
+                {
+                    const float values[16] = { look.focus, look.focusDepth, look.focusFalloff, look.focusBlur * scale, look.bokeh };
+                    run(m_focusPs, values, nullptr);
+                }
+                if (look.exposure > 0)
+                {
+                    // How bright it is, a little of the way there each frame; all of the way the first.
+                    const float measure[16] = { m_metered ? look.exposureAdapt : 1.0f };
+                    m_context->CopyResource(m_copy, m_color);
+                    setValues(measure, 0, area);
+                    pass(m_meterPs, m_copyView, m_meter.target, {}, 1, 1, false, {}, m_meshBlend[1]);
+                    m_metered = true;
+                    const float values[16] = { 0, look.exposure, look.exposureRange > 1 ? look.exposureRange : 1 };
+                    run(m_exposePs, values, m_meter.view);
+                }
+                else
+                {
+                    m_metered = false;
+                }
+                m_context->OMSetRenderTargets(1, &m_colorView, m_depthView);
+                return true;
+            }
+
+            // A picture as big as the screen for occlusion, and one pixel for how bright it is.
+            bool workTargets()
+            {
+                if (m_work.view && m_meter.view)
+                {
+                    return true;
+                }
+                D3D11_TEXTURE2D_DESC desc = {};
+                desc.Width = m_width;
+                desc.Height = m_height;
+                desc.MipLevels = desc.ArraySize = 1;
+                desc.SampleDesc.Count = 1;
+                desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+                desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+                const auto make = [&](Blur& b, const char* what)
+                {
+                    b.width = desc.Width;
+                    b.height = desc.Height;
+                    return b.view || (ok(m_device->CreateTexture2D(&desc, nullptr, &b.texture), what) && ok(m_device->CreateRenderTargetView(b.texture, nullptr, &b.target), what) &&
+                                      ok(m_device->CreateShaderResourceView(b.texture, nullptr, &b.view), what));
+                };
+                bool fine = make(m_work, "occlusion picture");
+                desc.Width = desc.Height = 1;
+                desc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+                fine = fine && make(m_meter, "exposure meter");
+                return fine;
+            }
+
+            // Effects see how far away each pixel is, and perhaps a picture of their own; nothing may be drawn into either
+            // meanwhile.
+            void seeDepth(ID3D11ShaderResourceView* extra)
+            {
+                m_context->OMSetRenderTargets(0, nullptr, nullptr);
+                ID3D11ShaderResourceView* views[2] = { m_viewDrawn ? m_depthRead : nullptr, extra };
+                m_context->PSSetShaderResources(2, 2, views);
+                m_context->PSSetSamplers(1, 1, &m_nearest);
+            }
+
+            void unseeDepth()
+            {
+                ID3D11ShaderResourceView* none[2] = {};
+                m_context->PSSetShaderResources(2, 2, none);
+            }
+
+            // What effects are told of a view: see EffectUniforms.
+            static void sceneOf(const View& view, float (&out)[12])
+            {
+                const Mat4& p = view.projection;
+                out[0] = p.m[0];
+                out[1] = p.m[5];
+                out[2] = p.m[10];
+                out[3] = p.m[14];
+                // Up and the sun, as the camera sees them: right, up and away.
+                const Vec3 up = view.view.transformDirection({ 0, 1, 0 });
+                out[4] = up.x;
+                out[5] = up.y;
+                out[6] = -up.z;
+                out[7] = p.m[10] + 1 != 0 ? p.m[14] / (1 + p.m[10]) : 1e6f;
+                const Vec3 sun = view.view.transformDirection(view.sunDirection);
+                const float ahead = -sun.z;
+                out[8] = ahead > 1e-4f ? 0.5f + 0.5f * sun.x * p.m[0] / ahead : 0.5f;
+                out[9] = ahead > 1e-4f ? 0.5f - 0.5f * sun.y * p.m[5] / ahead : 0.5f;
+                out[10] = ahead > 1e-4f ? 1.0f : 0.0f;
+                out[11] = 0;
             }
 
             void endFrame() override
@@ -992,6 +1170,12 @@ namespace nx::gpu
                 }
                 const float w = static_cast<float>(m_width), h = static_cast<float>(m_height);
                 u.area[2] = u.area[3] = 1;
+                memcpy(u.scene, m_scene, sizeof(u.scene) + sizeof(u.up) + sizeof(u.sun));
+                if (!m_viewDrawn)
+                {
+                    u.scene[0] = 0;
+                    u.up[3] = 1e6f;
+                }
                 u.info[0] = w;
                 u.info[1] = h;
                 u.info[2] = time;
@@ -1009,7 +1193,8 @@ namespace nx::gpu
             }
 
             // Covers a target with a picture. Only part of it is changed, if there is a clip.
-            void pass(ID3D11PixelShader* shader, ID3D11ShaderResourceView* from, ID3D11RenderTargetView* to, const Scissor& area, u32 width, u32 height, bool adds, const Scissor& clip = {})
+            void pass(ID3D11PixelShader* shader, ID3D11ShaderResourceView* from, ID3D11RenderTargetView* to, const Scissor& area, u32 width, u32 height, bool adds, const Scissor& clip = {},
+                      ID3D11BlendState* blend = nullptr)
             {
                 m_mode = Mode::None;
                 m_bound = {};
@@ -1035,7 +1220,7 @@ namespace nx::gpu
                 m_context->PSSetShader(shader, nullptr, 0);
                 m_context->PSSetShaderResources(0, 1, &from);
                 m_context->PSSetSamplers(0, 1, &m_linear);
-                m_context->OMSetBlendState(m_meshBlend[adds ? 2 : 0], nullptr, 0xFFFFFFFF);
+                m_context->OMSetBlendState(blend ? blend : m_meshBlend[adds ? 2 : 0], nullptr, 0xFFFFFFFF);
                 m_context->OMSetDepthStencilState(m_noDepth, 0);
                 m_context->Draw(3, 0);
                 m_context->PSSetShaderResources(0, 1, &none);
@@ -1149,7 +1334,13 @@ namespace nx::gpu
                 uniforms(sizeof(FieldUniforms), &m_fieldUniforms);
                 uniforms(sizeof(EffectUniforms), &m_effectUniforms);
                 fine = fine && ok(m_device->CreatePixelShader(blurPs, sizeof(blurPs), nullptr, &m_blurPs), "blur shader") &&
-                       ok(m_device->CreatePixelShader(gradePs, sizeof(gradePs), nullptr, &m_gradePs), "grade shader");
+                       ok(m_device->CreatePixelShader(gradePs, sizeof(gradePs), nullptr, &m_gradePs), "grade shader") &&
+                       ok(m_device->CreatePixelShader(occlusionPs, sizeof(occlusionPs), nullptr, &m_occlusionPs), "occlusion shader") &&
+                       ok(m_device->CreatePixelShader(occludePs, sizeof(occludePs), nullptr, &m_occludePs), "occlusion shader") &&
+                       ok(m_device->CreatePixelShader(reflectPs, sizeof(reflectPs), nullptr, &m_reflectPs), "reflection shader") &&
+                       ok(m_device->CreatePixelShader(focusPs, sizeof(focusPs), nullptr, &m_focusPs), "focus shader") &&
+                       ok(m_device->CreatePixelShader(meterPs, sizeof(meterPs), nullptr, &m_meterPs), "exposure shader") &&
+                       ok(m_device->CreatePixelShader(exposePs, sizeof(exposePs), nullptr, &m_exposePs), "exposure shader");
                 for (u32 i = 0; i < static_cast<u32>(Blend::Count); i++)
                 {
                     const Blend b = static_cast<Blend>(i);
@@ -1326,8 +1517,12 @@ namespace nx::gpu
                     release(b.target);
                     release(b.texture);
                 }
+                release(m_work.view);
+                release(m_work.target);
+                release(m_work.texture);
                 release(m_colorView);
                 release(m_depthView);
+                release(m_depthRead);
                 release(m_color);
                 release(m_depth);
             }
@@ -1371,13 +1566,22 @@ namespace nx::gpu
                 desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
                 desc.BindFlags = D3D11_BIND_RENDER_TARGET;
                 D3D11_TEXTURE2D_DESC depth = desc;
-                depth.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-                depth.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+                // Read by effects too.
+                depth.Format = DXGI_FORMAT_R24G8_TYPELESS;
+                depth.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
+                D3D11_DEPTH_STENCIL_VIEW_DESC write = {};
+                write.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+                write.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+                D3D11_SHADER_RESOURCE_VIEW_DESC read = {};
+                read.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+                read.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+                read.Texture2D.MipLevels = 1;
                 return ok(m_swapchain->ResizeBuffers(0, width, height, DXGI_FORMAT_UNKNOWN, 0), "resize") &&
                        ok(m_device->CreateTexture2D(&desc, nullptr, &m_color), "colour target") &&
                        ok(m_device->CreateRenderTargetView(m_color, nullptr, &m_colorView), "colour view") &&
                        ok(m_device->CreateTexture2D(&depth, nullptr, &m_depth), "depth target") &&
-                       ok(m_device->CreateDepthStencilView(m_depth, nullptr, &m_depthView), "depth view");
+                       ok(m_device->CreateDepthStencilView(m_depth, &write, &m_depthView), "depth view") &&
+                       ok(m_device->CreateShaderResourceView(m_depth, &read, &m_depthRead), "depth read");
             }
 
             NativeWindow m_window;
@@ -1403,6 +1607,18 @@ namespace nx::gpu
             ID3D11Buffer* m_effectUniforms = nullptr;
             ID3D11PixelShader* m_blurPs = nullptr;
             ID3D11PixelShader* m_gradePs = nullptr;
+            ID3D11PixelShader* m_occlusionPs = nullptr;
+            ID3D11PixelShader* m_occludePs = nullptr;
+            ID3D11PixelShader* m_reflectPs = nullptr;
+            ID3D11PixelShader* m_focusPs = nullptr;
+            ID3D11PixelShader* m_meterPs = nullptr;
+            ID3D11PixelShader* m_exposePs = nullptr;
+            ID3D11ShaderResourceView* m_depthRead = nullptr;
+            // The last view in space this frame: what effects need to see it. See EffectUniforms.
+            float m_scene[12] = {};
+            bool m_viewDrawn = false;
+            Blur m_work = {}, m_meter = {};
+            bool m_metered = false;
             ID3D11DepthStencilState* m_noDepth = nullptr;
             ID3D11RasterizerState* m_clipRaster = nullptr;
             ID3D11Texture2D* m_copy = nullptr;

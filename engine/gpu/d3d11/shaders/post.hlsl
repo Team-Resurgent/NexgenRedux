@@ -5,6 +5,9 @@ cbuffer EffectValues : register(b3)
     float4 values[4];            // what to do, threshold, strength; the size of a step
     float4 effectArea;
     float4 effectInfo;
+    float4 effectScene;
+    float4 effectUp;
+    float4 effectSun;
 };
 
 Texture2D image : register(t0);
@@ -43,4 +46,257 @@ float4 gradePs(float2 at : TEXCOORD0) : SV_Target
     float n = values[0].y;
     float3 graded = gradeTable.SampleLevel(imageSampler, color * ((n - 1.0) / n) + 0.5 / n, 0).rgb;
     return float4(lerp(color, graded, values[0].x), 1.0);
+}
+
+// --- Effects of a view in space, from how far away each pixel is. ---
+// effectScene: the projection's x and y scales, and what turns depth into away; effectUp: which way is up, as the
+// camera sees it, and how far it sees. Within the view's own area, `local` is 0 to 1 across it.
+
+Texture2D depthImage : register(t2);
+Texture2D extraImage : register(t3);
+SamplerState pointSampler : register(s1);
+
+float2 localOf(float2 at)
+{
+    return float2(at.x * 0.5 + 0.5, 0.5 - at.y * 0.5);
+}
+
+float2 fullOf(float2 local)
+{
+    return effectArea.xy + local * effectArea.zw;
+}
+
+float distanceAt(float2 local)
+{
+    float d = depthImage.SampleLevel(pointSampler, fullOf(local), 0).r;
+    return effectScene.w / (d + effectScene.z);
+}
+
+// Right, up and away from the camera.
+float3 placeAt(float2 local, float away)
+{
+    return float3((local.x * 2.0 - 1.0) / effectScene.x, (1.0 - local.y * 2.0) / effectScene.y, 1.0) * away;
+}
+
+float2 localOfPlace(float3 p)
+{
+    return float2(0.5 + 0.5 * p.x * effectScene.x / p.z, 0.5 - 0.5 * p.y * effectScene.y / p.z);
+}
+
+// The surface's way out, from its neighbours, the nearer on each side so that edges don't blur it.
+float3 normalAt(float2 local, float3 p)
+{
+    float2 pixel = 1.0 / effectInfo.xy;
+    float3 r = placeAt(local + float2(pixel.x, 0.0), distanceAt(local + float2(pixel.x, 0.0))) - p;
+    float3 l = p - placeAt(local - float2(pixel.x, 0.0), distanceAt(local - float2(pixel.x, 0.0)));
+    float3 d = placeAt(local + float2(0.0, pixel.y), distanceAt(local + float2(0.0, pixel.y))) - p;
+    float3 u = p - placeAt(local - float2(0.0, pixel.y), distanceAt(local - float2(0.0, pixel.y)));
+    float3 across = abs(r.z) < abs(l.z) ? r : l;
+    float3 down = abs(d.z) < abs(u.z) ? d : u;
+    float3 n = normalize(cross(across, down));
+    return dot(n, p) > 0.0 ? -n : n;
+}
+
+// The same pattern every four pixels, so that a 4 by 4 smoothing takes it away.
+float patternAt(float2 pixel)
+{
+    float2 p = fmod(floor(pixel), 4.0);
+    return frac((p.x + p.y * 4.0) * 0.618034 + 0.31);
+}
+
+// Ambient occlusion, into a picture of its own: 1 is open, 0 closed in. values[0]: strength, radius.
+float4 occlusionPs(float2 at : TEXCOORD0) : SV_Target
+{
+    float2 local = localOf(at);
+    float away = distanceAt(local);
+    if (away > effectUp.w * 0.98)
+    {
+        return float4(1.0, 1.0, 1.0, 1.0);
+    }
+    float3 p = placeAt(local, away);
+    float3 n = normalAt(local, p);
+    float turn = patternAt(at * 0.5 * effectInfo.xy + effectInfo.xy) * 6.283185;
+    float3 side = normalize(abs(n.y) < 0.9 ? cross(n, float3(0, 1, 0)) : cross(n, float3(1, 0, 0)));
+    float3 other = cross(n, side);
+    float radius = values[0].y;
+    float closed = 0.0;
+    [unroll] for (int i = 0; i < 12; i++)
+    {
+        float t = (float(i) + 0.5) / 12.0;
+        float angle = float(i) * 2.399963 + turn;
+        float r = sqrt(t) * 0.9;
+        float3 dir = side * (cos(angle) * r) + other * (sin(angle) * r) + n * sqrt(1.0 - r * r);
+        float3 s = p + dir * radius * lerp(0.15, 1.0, t * t);
+        if (s.z <= 0.05)
+        {
+            continue;
+        }
+        float2 there = localOfPlace(s);
+        float scene = distanceAt(there);
+        float near = smoothstep(0.0, 1.0, radius / max(abs(away - scene), 0.001));
+        closed += (scene < s.z - 0.02 ? 1.0 : 0.0) * near;
+    }
+    float open = 1.0 - closed / 12.0 * values[0].x;
+    return float4(open, open, open, 1.0);
+}
+
+// The colour times that, smoothed over the pattern among pixels about as far away.
+float4 occludePs(float2 at : TEXCOORD0) : SV_Target
+{
+    float2 local = localOf(at);
+    float3 color = image.SampleLevel(imageSampler, fullOf(local), 0).rgb;
+    float away = distanceAt(local);
+    float2 pixel = 1.0 / effectInfo.xy;
+    float sum = 0.0, weight = 0.0;
+    [unroll] for (int y = -2; y < 2; y++)
+    {
+        [unroll] for (int x = -2; x < 2; x++)
+        {
+            float2 there = local + (float2(float(x), float(y)) + 0.5) * pixel;
+            float w = 1.0 / (1.0 + abs(distanceAt(there) - away) * 8.0);
+            sum += extraImage.SampleLevel(pointSampler, fullOf(there), 0).r * w;
+            weight += w;
+        }
+    }
+    return float4(color * (sum / weight), 1.0);
+}
+
+// Reflections in what faces up: the reflected ray walked through how far things are until it goes behind something.
+// values[0]: strength.
+float4 reflectPs(float2 at : TEXCOORD0) : SV_Target
+{
+    float2 local = localOf(at);
+    float3 color = image.SampleLevel(imageSampler, fullOf(local), 0).rgb;
+    float away = distanceAt(local);
+    if (away > effectUp.w * 0.98)
+    {
+        return float4(color, 1.0);
+    }
+    float3 p = placeAt(local, away);
+    float3 n = normalAt(local, p);
+    float faces = smoothstep(0.75, 0.95, dot(n, effectUp.xyz));
+    if (faces <= 0.0)
+    {
+        return float4(color, 1.0);
+    }
+    float3 view = normalize(p);
+    float3 ray = reflect(view, n);
+    float t = 0.15 + patternAt(at * 0.5 * effectInfo.xy + effectInfo.xy) * 0.1;
+    float3 last = p;
+    float found = 0.0;
+    float2 hit = local;
+    [loop] for (int i = 0; i < 28; i++)
+    {
+        float3 s = p + ray * t;
+        if (s.z <= 0.05)
+        {
+            break;
+        }
+        float2 there = localOfPlace(s);
+        if (there.x < 0.0 || there.y < 0.0 || there.x > 1.0 || there.y > 1.0)
+        {
+            break;
+        }
+        float scene = distanceAt(there);
+        if (s.z > scene && s.z - scene < 0.3 + t * 0.15)
+        {
+            // Closer, between the last step and this.
+            float3 a = last, b = s;
+            [unroll] for (int k = 0; k < 5; k++)
+            {
+                float3 m = (a + b) * 0.5;
+                if (m.z > distanceAt(localOfPlace(m)))
+                {
+                    b = m;
+                }
+                else
+                {
+                    a = m;
+                }
+            }
+            hit = localOfPlace(b);
+            float2 edge = min(hit, 1.0 - hit);
+            found = saturate(min(edge.x, edge.y) * 8.0) * (1.0 - float(i) / 28.0);
+            break;
+        }
+        last = s;
+        t *= 1.18;
+    }
+    float fresnel = lerp(0.3, 1.0, pow(1.0 - saturate(dot(-view, n)), 3.0));
+    float3 seen = image.SampleLevel(imageSampler, fullOf(hit), 0).rgb;
+    return float4(lerp(color, seen, saturate(values[0].x * faces * found * fresnel)), 1.0);
+}
+
+// Depth of field: nearer or further than the focus, a disc of the colours around, as big as each is out of focus; the
+// brightest weigh the most, so lights spread into round bokeh. values[0]: focus away, depth in focus, how far
+// beyond it is the most blurred, the most blur in pixels.
+float blurOf(float away)
+{
+    return saturate((abs(away - values[0].x) - values[0].y) / max(values[0].z, 0.001)) * values[0].w;
+}
+
+float4 focusPs(float2 at : TEXCOORD0) : SV_Target
+{
+    float2 local = localOf(at);
+    float own = blurOf(distanceAt(local));
+    float2 pixel = 1.0 / effectInfo.xy;
+    float3 sum = image.SampleLevel(imageSampler, fullOf(local), 0).rgb;
+    float3 color = sum;
+    float weight = 1.0;
+    if (values[0].w <= 0.0)
+    {
+        return float4(color, 1.0);
+    }
+    float reach = values[0].w;
+    [loop] for (int i = 0; i < 40; i++)
+    {
+        float t = (float(i) + 0.5) / 40.0;
+        float angle = float(i) * 2.399963;
+        float2 offset = float2(cos(angle), sin(angle)) * sqrt(t) * reach;
+        float2 there = local + offset * pixel;
+        float far = length(offset);
+        float theirs = blurOf(distanceAt(there));
+        // What is blurred enough reaches here; what is behind something sharp doesn't.
+        float reaches = saturate(min(theirs, own + 2.0) - far + 1.0);
+        if (reaches <= 0.0)
+        {
+            continue;
+        }
+        float3 c = image.SampleLevel(imageSampler, fullOf(there), 0).rgb;
+        float bright = dot(c, float3(0.3, 0.59, 0.11));
+        float w = reaches * (1.0 + values[1].x * bright * bright * bright * bright * 8.0);
+        sum += c * w;
+        weight += w;
+    }
+    return float4(sum / weight, 1.0);
+}
+
+// Auto exposure. How bright the view is on average, into one pixel, moving there by values[0].x of the way.
+float4 meterPs(float2 at : TEXCOORD0) : SV_Target
+{
+    float sum = 0.0;
+    [unroll] for (int y = 0; y < 8; y++)
+    {
+        [unroll] for (int x = 0; x < 8; x++)
+        {
+            float2 local = (float2(float(x), float(y)) + 0.5) / 8.0;
+            float3 c = image.SampleLevel(imageSampler, fullOf(local), 0).rgb;
+            sum += log(dot(c, float3(0.3, 0.59, 0.11)) + 0.02);
+        }
+    }
+    float average = exp(sum / 64.0);
+    return float4(average, average, average, values[0].x);
+}
+
+// Brighter or darker toward values[0].y, by no more than values[0].z either way.
+float4 exposePs(float2 at : TEXCOORD0) : SV_Target
+{
+    float2 local = localOf(at);
+    float3 color = image.SampleLevel(imageSampler, fullOf(local), 0).rgb;
+    float average = extraImage.SampleLevel(pointSampler, float2(0.5, 0.5), 0).r;
+    float gain = clamp(values[0].y / max(average, 0.01), 1.0 / values[0].z, values[0].z);
+    // Brighter without burning out: what is already bright rolls off.
+    float3 lifted = color * gain;
+    lifted = gain > 1.0 ? lifted / (1.0 + max(lifted - 1.0, 0.0)) : lifted;
+    return float4(saturate(lifted), 1.0);
 }

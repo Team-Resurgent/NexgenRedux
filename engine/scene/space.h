@@ -125,6 +125,7 @@ namespace nx
         gpu::Color color;
         float glow, shine;
         bool impostor;         // far away, a picture of it instead
+        bool decal;            // laid over what is there: nothing else is laid over it
         Asset* sprite;         // held; a picture of angles across and frames down, instead of a model
         u8 spriteAngles, spriteFrames;
         u16 spriteFrame;
@@ -291,6 +292,16 @@ namespace nx
         // False if it has no model that bends.
         bool ragdoll(u32 id, bool on, float mass, const Vec3& push, float change);
         bool ragdolled(u32 id) const;
+        // A picture laid over whatever is drawn at a place, facing a way (the surface's), so big across and turned by
+        // degrees: what doesn't bend there, the land and the ground, cut to a square. Its own entity, or 0 if there is
+        // nothing there. Past the limit, the oldest goes.
+        u32 decal(Asset* picture, const Vec3& place, const Vec3& facing, float size, float degrees, const gpu::Color& color);
+        u32 decalLimit() const { return m_decalLimit; }
+        // How each view is finished, where the GPU can: see gpu::SpaceLook.
+        gpu::SpaceLook& look() { return m_look; }
+        void setExposureSpeed(float speed) { m_exposureSpeed = speed > 0 ? speed : 0.01f; }
+        bool seesDepth() const { return m_solids && m_solids->device() && m_solids->device()->seesDepth(); }
+        void setDecalLimit(u32 limit) { m_decalLimit = limit; }
         Moves* moves(u32 id);   // made if it isn't there
         void pendingAnimation(u32 id, const char* name);
         Vec3 worldPlace(u32 id) const;
@@ -893,6 +904,10 @@ namespace nx
         GrowArray<u32> m_navFrom, m_navSeen;
 
         bool m_landOn = false, m_island = false, m_started = false;
+        GrowArray<u32> m_decals;
+        u32 m_decalLimit = 64;
+        gpu::SpaceLook m_look;
+        float m_exposureSpeed = 2;
         u32 m_landSquares = 0;       // 0: endless
         u32 m_landSeed = 0, m_reach = 0, m_regionsWaiting = 0;
         float m_landSpacing = 1, m_landHeight = 0, m_landRough = 0;

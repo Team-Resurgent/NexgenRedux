@@ -1408,6 +1408,83 @@ namespace nx::gpu
                 return true;
             }
 
+            // Smaller, four looks at a time, spread along and down as far as it is to be blurred, and back over it.
+            bool blur(float pixels, const Scissor& area) override
+            {
+                if (m_drawing)
+                {
+                    return false;   // for the screen only
+                }
+                if (!m_inFrame || pixels <= 0 || !makeBloom())
+                {
+                    return false;
+                }
+                IDirect3DSurface8* target = nullptr;
+                IDirect3DSurface8* depth = nullptr;
+                m_device->GetRenderTarget(&target);
+                m_device->GetDepthStencilSurface(&depth);
+                if (target == nullptr)
+                {
+                    return false;
+                }
+                readScreen(target);
+                m_device->SetVertexShader(D3DFVF_XYZRHW | D3DFVF_TEX4);
+                for (DWORD i = 0; i < 4; i++)
+                {
+                    m_device->SetTextureStageState(i, D3DTSS_ADDRESSU, D3DTADDRESS_CLAMP);
+                    m_device->SetTextureStageState(i, D3DTSS_ADDRESSV, D3DTADDRESS_CLAMP);
+                    m_device->SetTextureStageState(i, D3DTSS_MINFILTER, D3DTEXF_LINEAR);
+                    m_device->SetTextureStageState(i, D3DTSS_MAGFILTER, D3DTEXF_LINEAR);
+                    m_device->SetTextureStageState(i, D3DTSS_TEXCOORDINDEX, i);
+                    m_device->SetTextureStageState(i, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_DISABLE);
+                }
+                const float w = static_cast<float>(m_width), h = static_cast<float>(m_height);
+                constexpr float bw = kBloomWidth, bh = kBloomHeight;
+                averageOf(&m_screen);
+                into(0);
+                quad(bw, bh, w, h, w / bw * 0.25f, h / bh * 0.25f, false);
+                // In the small picture's pixels, how far: a pass along and one down for each stretch of it.
+                const float reach = pixels * bh / 720.0f;
+                u32 from = 0;
+                for (u32 pass = 0; pass < 6 && static_cast<float>(pass / 2) * 2.5f < reach; pass++)
+                {
+                    averageOf(m_bloom[from]);
+                    from = 1 - from;
+                    into(from);
+                    const float step = fminf(reach * 0.5f, 1.2f + static_cast<float>(pass / 2) * 1.6f);
+                    quad(bw, bh, bw, bh, pass % 2 ? 0 : step, pass % 2 ? step : 0, true);
+                }
+                m_device->SetRenderTarget(target, depth);
+                wholeViewport();
+                if (area.enabled)
+                {
+                    setScissor(area);
+                }
+                m_device->SetTexture(0, m_bloom[from]);
+                for (DWORD i = 1; i < 4; i++)
+                {
+                    m_device->SetTexture(i, nullptr);
+                }
+                m_device->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
+                m_device->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+                m_device->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
+                m_device->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
+                m_device->SetTextureStageState(1, D3DTSS_COLOROP, D3DTOP_DISABLE);
+                m_device->SetTextureStageState(1, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
+                m_device->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
+                quad(w, h, bw, bh, 0, 0, false);
+                m_device->SetTexture(0, nullptr);
+                target->Release();
+                if (depth)
+                {
+                    depth->Release();
+                }
+                m_bound = {};
+                m_boundTexture = {};
+                m_mode = Mode::None;
+                return true;
+            }
+
             // A copy of the picture, and then from it each colour's parts made into a place in the table, in the GPU's
             // texture stages, and looked up there.
             bool grade(Texture table, float strength, const Scissor& area) override

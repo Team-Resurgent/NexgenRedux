@@ -248,6 +248,16 @@ namespace nx
         return m_device->bloom(b, {});
     }
 
+    bool Canvas::blur(float pixels)
+    {
+        if (m_inTarget)
+        {
+            return false;
+        }
+        flush();
+        return m_device->blur(pixels, m_state.scissor);
+    }
+
     bool Canvas::grade(ColorLook& look, float strength)
     {
         if (m_inTarget)

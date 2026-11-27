@@ -119,6 +119,8 @@ namespace nx
         bool effect(const Asset& effect, const float (&values)[16], float time);
         // Light that spills from what is bright.
         bool bloom(float strength, float threshold, float spread);
+        // All drawn so far, blurred about so many pixels across (at 720 high), within the clip if there is one.
+        bool blur(float pixels);
         // Each colour of it as a look says, mixed with what it was by strength.
         bool grade(ColorLook& look, float strength);
 

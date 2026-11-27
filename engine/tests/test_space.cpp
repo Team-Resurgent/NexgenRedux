@@ -1075,6 +1075,53 @@ NX_TEST(ragdollsFallAndGetUp)
     p.rig.assets.release(asset);
 }
 
+NX_TEST(decalsLieOverWhatIsThere)
+{
+    Place p;
+    p.space.setGround(0);
+    // On the ground: a square, just above it.
+    const u32 mark = p.space.decal(nullptr, { 0, 0, 0 }, { 0, 1, 0 }, 1, 0, { 1, 1, 1, 1 });
+    NX_EXPECT(mark != 0);
+    const CustomMesh* m = p.space.getAppearance(mark)->custom;
+    NX_EXPECT(m && m->data.indices.count() == 6);
+    for (const gpu::MeshVertex& v : m->data.vertices)
+    {
+        NX_EXPECT(fabsf(v.x) <= 0.501f && fabsf(v.z) <= 0.501f && v.y > 0 && v.y < 0.02f && v.ny > 0.99f);
+        NX_EXPECT(v.u >= -0.001f && v.u <= 1.001f && v.v >= -0.001f && v.v <= 1.001f);
+    }
+    // Over the corner of a box: only its front, cut at its edges.
+    CustomMesh* box = create<CustomMesh>(MemTag::General);
+    box->device = p.rig.device;
+    box->data.box({ 0, 0, 0 }, { 1, 1, 1 }, { 1, 1, 1, 1 });
+    const u32 cube = p.world.spawn({});
+    p.space.spatial(cube)->place = { 10, 1, 0 };
+    p.space.transform(cube & 0xFFFF);
+    p.space.setCustom(cube, box);
+    box->release();
+    const u32 corner = p.space.decal(nullptr, { 11, 2, 1 }, { 0, 0, 1 }, 1, 30, { 1, 0, 0, 1 });
+    NX_EXPECT(corner != 0);
+    const CustomMesh* c = p.space.getAppearance(corner)->custom;
+    NX_EXPECT(c && c->data.indices.count() >= 3);
+    for (const gpu::MeshVertex& v : c ? c->data.vertices : m->data.vertices)
+    {
+        NX_EXPECT(v.x <= 11.001f && v.y <= 2.001f && v.z > 1 && v.z < 1.02f && v.nz > 0.99f);
+    }
+    // Nowhere: nothing.
+    NX_EXPECT(p.space.decal(nullptr, { 100, 50, 100 }, { 0, 1, 0 }, 1, 0, { 1, 1, 1, 1 }) == 0);
+    // Past the limit, the oldest go.
+    p.space.setDecalLimit(3);
+    u32 made[5];
+    for (u32 i = 0; i < 5; i++)
+    {
+        made[i] = p.space.decal(nullptr, { static_cast<float>(i) * 2, 0, 5 }, { 0, 1, 0 }, 1, 0, { 1, 1, 1, 1 });
+    }
+    p.step(2);
+    NX_EXPECT(!p.world.alive(mark) && !p.world.alive(made[0]) && !p.world.alive(made[1]) && p.world.alive(made[2]) && p.world.alive(made[4]));
+    p.space.setCamera({ 0, 3, 8 }, { 0, 0, 0 }, 60);
+    p.draw(2);
+    NX_EXPECT(p.rig.device->stats().rejected == 0);
+}
+
 NX_TEST(scriptsDrawIntoPictures)
 {
     Rig r;

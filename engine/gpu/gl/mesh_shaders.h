@@ -249,6 +249,17 @@ vec4 picture(vec2 uv)
     vec2 p = effectArea.xy + clamp(uv, 0.0, 1.0) * effectArea.zw;
     return textureLod(image, vec2(p.x, 1.0 - p.y), 0.0);
 }
+uniform sampler2D effectDepth;
+float depthAt(vec2 uv)
+{
+    if (effectScene.x == 0.0)
+    {
+        return farthest;
+    }
+    vec2 p = effectArea.xy + clamp(uv, 0.0, 1.0) * effectArea.zw;
+    float d = textureLod(effectDepth, vec2(p.x, 1.0 - p.y), 0.0).r;
+    return min(effectScene.w / (d + effectScene.z), farthest);
+}
 )";
 
     inline const char kEffectPictureMain[] = R"(

@@ -411,6 +411,14 @@ namespace nx
             }
             return w.ref(id);
         }
+        EntityRef* spaceDecal(const TextureRef* picture, const Vec3& place, const Vec3& facing, float size, float degrees, const Color& color)
+        {
+            World& w = *services().world;
+            const u32 id = w.space().decal(picture ? picture->asset : nullptr, place, facing, size, degrees, color);
+            return id ? w.ref(id) : nullptr;
+        }
+        u32 spaceDecalLimit() { return space().decalLimit(); }
+        void spaceSetDecalLimit(u32 v) { space().setDecalLimit(v); }
         void spaceDraw(Canvas* c) { if (c) space().draw(*c, 0, 0, 0, 0); }
         void spaceDrawIn(Canvas* c, float x, float y, float w, float h) { if (c && w > 0 && h > 0) space().draw(*c, x, y, w, h); }
         void spaceCamera(const Vec3& from, const Vec3& to, float angle) { space().setCamera(from, to, angle); }
@@ -565,6 +573,29 @@ namespace nx
         bool spaceEdges() { return space().edges(); }
         void spaceSetEdges(bool v) { space().setEdges(v); }
         void spaceSkyPicture(const TextureRef* t) { space().setSkyPicture(t ? t->asset : nullptr); }
+        float clampFloat(float v, float low, float high) { return v < low ? low : v > high ? high : v; }
+        void spaceOcclusion(float strength, float radius)
+        {
+            space().look().occlusion = clampFloat(strength, 0, 1);
+            space().look().occlusionRadius = radius > 0.05f ? radius : 0.05f;
+        }
+        void spaceReflections(float strength) { space().look().reflections = clampFloat(strength, 0, 1); }
+        void spaceFocus(float distance, float depth, float blur, float falloff, float bokeh)
+        {
+            gpu::SpaceLook& l = space().look();
+            l.focus = distance > 0 ? distance : 0;
+            l.focusDepth = depth > 0 ? depth : 0;
+            l.focusBlur = clampFloat(blur, 0, 40);
+            l.focusFalloff = falloff > 0.01f ? falloff : 0.01f;
+            l.bokeh = clampFloat(bokeh, 0, 4);
+        }
+        void spaceExposure(float brightness, float range, float speed)
+        {
+            space().look().exposure = clampFloat(brightness, 0, 1);
+            space().look().exposureRange = range > 1 ? range : 1;
+            space().setExposureSpeed(speed);
+        }
+        bool spaceSeesDepth() { return space().seesDepth(); }
         std::string spaceLandEdits() { return space().landEdits(); }
         bool spaceRestoreLand(const std::string& text) { return space().setLandEdits(text); }
         float spaceLandSize() { return space().landSize(); }
@@ -792,6 +823,11 @@ namespace nx
         b.function("void sun(const Vec3 &in direction, const Color &in color)", NX_FN(spaceSun), "Light from far away; the direction is towards it.");
         b.function("void ambient(const Color &in sky, const Color &in ground)", NX_FN(spaceAmbient), "Light from everywhere: on what faces up, and on what faces down.");
         b.function("void sky(const Color &in top, const Color &in horizon)", NX_FN(spaceSky), "Draws a sky, with the sun in it. Without one, what is on the canvas already is behind.");
+        b.function("void occlusion(float strength = 1, float radius = 0.6)", NX_FN(spaceOcclusion), "Darkens corners, creases and what is under things, as light reaches them less: ambient occlusion, from how far away each pixel is, within so many metres. 0 for none. Where `depthEffects`.");
+        b.function("void reflections(float strength = 0.6)", NX_FN(spaceReflections), "Shows what is around in what faces up, wet floors and still water, where it is on the screen: screen-space reflections. 0 for none. Where `depthEffects`.");
+        b.function("void focus(float distance, float depth = 1, float blur = 10, float falloff = 6, float bokeh = 1)", NX_FN(spaceFocus), "Depth of field: sharp at so many metres and depth either side, blurred further from it, most so falloff metres on, by blur pixels across (at 720 high); the brightest spread into round bokeh, by bokeh. A distance of 0 for none. Where `depthEffects`.");
+        b.function("void autoExposure(float brightness = 0.45, float range = 4, float speed = 2)", NX_FN(spaceExposure), "Makes the view brighter or darker, gradually, toward an average brightness (0 to 1), by as much as range times either way, as eyes adjust going in and out of the dark. 0 for none. Where `depthEffects`.");
+        b.function("bool get_depthEffects() property", NX_FN(spaceSeesDepth), "Whether this GPU can do occlusion, reflections, focus and autoExposure, and depthAt in picture effects: on Windows, Linux, macOS and the Xbox One.");
         b.function("void fog(const Color &in color, float start, float end)", NX_FN(spaceFog), "Hides what is far away.");
         b.function("void grass(Model@+ tuft, float perSquareMetre = 3, float distance = 30)", NX_FN(spaceGrass), "Grows tufts of a model over the land near the camera, where it is green, flat enough and dry, coloured as the land is there; they bend in the wind. null for none.");
         b.function("bool navigate(const Vec3 &in middle, float size, float cell = 1, float climb = 0.6f, uint groups = 0xFFFD)", NX_FN(spaceNavigate), "Works out where things can walk, in squares over a part of the world as it is now: what is under each square, of the groups given (all but group 1, those that walk, unless told otherwise), not too steep and not under water; a step from one to the next no higher than a climb. Up to 256 squares a side. Again if the world changes.");
@@ -868,6 +904,9 @@ namespace nx
         b.function("uint get_joints() property", NX_FN(spaceJoints), "How many there are.");
         b.function("bool raycast(const Vec3 &in from, const Vec3 &in to, Vec3 &out hit, Vec3 &out normal, uint groups = 0xFFFF, Entity@+ except = null)", NX_FN(spaceRaycast), "Whether there is anything on a line, where, and which way it faces. The land counts as group 0.");
         b.function("Entity@ pick(const Vec3 &in from, const Vec3 &in to, Vec3 &out hit, uint groups = 0xFFFF, Entity@+ except = null)", NX_FN(spacePick), "The first collider on a line, or null if there is none or the land comes first.");
+        b.function("Entity@ decal(Texture@+ picture, const Vec3 &in place, const Vec3 &in facing, float size, float degrees = 0, const Color &in color = White)", NX_FN(spaceDecal), "Lays a picture over whatever is at a place, as a sticker would be: a mark, a hole, a splash, a footprint. Facing is the way the surface there faces (a ray's normal), size how big across, degrees how it is turned. It wraps over the models and meshes there that don't bend, the land and the ground, and stays where it is put, as an entity of its own that can be coloured, faded or destroyed. null if there is nothing there. On every GPU.");
+        b.function("uint get_decals() property", NX_FN(spaceDecalLimit), "How many decals there can be; past it, the oldest goes. 64 to begin with.");
+        b.function("void set_decals(uint) property", NX_FN(spaceSetDecalLimit), "How many decals there can be; past it, the oldest goes. 0 for no limit.");
         b.function("array<Entity@>@ within(const Vec3 &in place, float radius, uint groups = 0xFFFF)", NX_FN(spaceWithin), "Everything whose collider touches a ball.");
         b.function("bool toScreen(const Vec3 &in place, Vec2 &out screen)", NX_FN(spaceToScreen), "Where a place was when last drawn. False if it is behind the camera.");
         b.function("Vec3 ray(const Vec2 &in screen)", NX_FN(spaceRay), "The direction from the camera through a place on the screen.");

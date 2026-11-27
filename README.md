@@ -104,7 +104,7 @@ a compiler and the platform's SDK, downloads nothing, and uses no SDL or GLFW.
 - **Shaders** — bloom, colour grading with looks and .cube tables (on the original Xbox too), and effects of your own over the picture or on things: one file for every GPU that has shaders.
 - **Interfaces** — widgets with layout, gamepad focus, themes, lists of any length, dialogs and a keyboard on the screen; from
   scripts or from files, in any of several languages.
-- **Networking** — rooms to play in on the local network or over the internet, by way of a meeting place that any build runs with `--meeting`, TCP, UDP, and HTTPS with certificates that are checked.
+- **Networking** — rooms to play in on the local network or over the internet, by way of a meeting place that any build runs with `--meeting`; entities shared in a room, kept alike in every player's game and followed smoothly; TCP, UDP, and HTTPS with certificates that are checked.
 - **Console calls** — on the original Xbox: temperatures, fan, light, tray, drives, launching titles, and back to the dashboard.
 - **Sound** — 32 voices with volume, pan, pitch and fades, or from a place in space; WAV, Ogg Vorbis and MP3; spectrum and waveform for visualisers.
 - **Assets** — loaded in the background, shared, kept warm and unloaded only when a budget needs the room.

@@ -998,6 +998,13 @@ How a room is getting on.
 | `RoomIn` | In it, or hosting it. |
 | `RoomLost` | It couldn't be joined, or the host has gone. |
 
+## Entity@ Copy(const string &in kind, int player)
+
+Makes this game's copy of something another player shares, of the kind they named: an entity that looks like theirs, or null not to have one. It may be a method: `Copy(this.make)`.
+
+| | |
+|---|---|
+
 ## Room
 
 A game for up to 8 players on the same network, or on the internet by way of a meeting place, one of whom is the host. Keep it in a field, and it lasts until the screen closes.
@@ -1030,6 +1037,11 @@ A game for up to 8 players on the same network, or on the internet by way of a m
 | `Message@ receive()` | The next that has come, or null. |
 | `int arrived()` | A player who has come since it was last asked, or -1. |
 | `int departed()` | A player who has gone, or -1. |
+| `bool share(Entity@+ entity, const string &in kind)` | Keeps an entity of this player's alike in every other copy of the game in the room: where it is, how it is turned and looks, and the animation it plays. Each has a copy of its own, made by `sync`, which follows it. The kind says what to make. False if it is shared already, or is a copy. |
+| `void unshare(Entity@+ entity)` | No longer: the copies go, and it stays here as it is. Destroying it does the same. |
+| `void sync(Copy@ maker)` | Once a frame, while in the room: says where this player's shared ones are, 20 times a second, and moves the copies of everyone else's smoothly after theirs. `maker` is asked for a copy of each that another player shares; those of a player who leaves go. |
+| `int ownerOf(Entity@+ entity) const` | Whose a shared entity is: this player's own number for one shared here, another's for a copy of theirs, -1 for neither. |
+| `uint get_copies() const property` | How many copies of others' there are here. |
 
 ## Request
 

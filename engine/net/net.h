@@ -24,6 +24,7 @@ namespace nx
         u32 size = 0;
         u32 at = 0;       // reading
         int from = -1;    // the player who sent it
+        u8 channel = 0;   // 0 a script's; 1 the engine's own, for entities that are shared
         bool full = false, short_ = false;
         int refs = 1;
 
@@ -124,6 +125,16 @@ namespace nx
         bool send(const Message& message, bool sure, int to);
         // The next that has come, or nullptr. The caller releases it.
         Message* receive();
+        // The same for the engine's own, which keeps shared entities alike: never seen by receive.
+        bool sendShared(const Message& message, bool sure, int to);
+        Message* receiveShared();
+        // Somewhere for what shares entities to keep its own, freed with the room.
+        void* sharing() const { return m_sharing; }
+        void setSharing(void* sharing, void (*free)(void*))
+        {
+            m_sharing = sharing;
+            m_freeSharing = free;
+        }
         // A player who has come or gone since it was last asked, or -1.
         int arrived() { return take(m_arrived); }
         int departed() { return take(m_departed); }
@@ -225,6 +236,10 @@ namespace nx
         Player m_players[kRoomPlayers] = {};
         Link m_links[kRoomPlayers] = {};   // by player for the host; the first only, for the others
         GrowArray<Message*, MemTag::General> m_inbox;
+        GrowArray<Message*, MemTag::General> m_sharedInbox;
+        void* m_sharing = nullptr;
+        void (*m_freeSharing)(void*) = nullptr;
+        Message* take(GrowArray<Message*, MemTag::General>& inbox);
         GrowArray<Found, MemTag::General> m_found;
         u8 m_arrived = 0, m_departed = 0;
     };

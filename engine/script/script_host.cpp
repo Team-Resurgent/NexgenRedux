@@ -256,8 +256,12 @@ namespace nx
         return prepareMethod(object, method) && m_context->SetArgObject(0, argument) >= 0 && run();
     }
 
-    bool ScriptHost::callEvent(asIScriptFunction* function, void* first, void* second, const int* number)
+    bool ScriptHost::callEvent(asIScriptFunction* function, void* first, void* second, const int* number, void** returned)
     {
+        if (returned)
+        {
+            *returned = nullptr;
+        }
         const bool within = m_context->GetState() == asEXECUTION_ACTIVE;
         const u32 statements = m_statements;
         if (within && m_context->PushState() < 0)
@@ -273,6 +277,15 @@ namespace nx
         }
         ok = ok && (number == nullptr || m_context->SetArgDWord(at, static_cast<asDWORD>(*number)) >= 0);
         ok = ok && run();
+        if (ok && returned)
+        {
+            // Held before the call is put away, which lets go of it.
+            *returned = m_context->GetReturnObject();
+            if (*returned)
+            {
+                m_engine->AddRefScriptObject(*returned, m_engine->GetTypeInfoById(function->GetReturnTypeId()));
+            }
+        }
         if (within)
         {
             m_context->PopState();

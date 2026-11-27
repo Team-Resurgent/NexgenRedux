@@ -217,6 +217,10 @@ namespace nx
 
     Room::~Room()
     {
+        if (m_freeSharing)
+        {
+            m_freeSharing(m_sharing);
+        }
         leave();
         meet("");
         if (m_hostLookup)
@@ -278,6 +282,11 @@ namespace nx
             m->release();
         }
         m_inbox.clear();
+        for (Message* m : m_sharedInbox)
+        {
+            m->release();
+        }
+        m_sharedInbox.clear();
         m_socket.close();
         memset(m_players, 0, sizeof(m_players));
         m_hosting = false;
@@ -697,24 +706,50 @@ namespace nx
 
     Message* Room::receive()
     {
-        if (m_inbox.count() == 0)
+        return take(m_inbox);
+    }
+
+    Message* Room::receiveShared()
+    {
+        return take(m_sharedInbox);
+    }
+
+    Message* Room::take(GrowArray<Message*, MemTag::General>& inbox)
+    {
+        if (inbox.count() == 0)
         {
             return nullptr;
         }
-        Message* first = m_inbox[0];
-        for (u32 i = 1; i < m_inbox.count(); i++)
+        Message* first = inbox[0];
+        for (u32 i = 1; i < inbox.count(); i++)
         {
-            m_inbox[i - 1] = m_inbox[i];
+            inbox[i - 1] = inbox[i];
         }
-        m_inbox.resize(m_inbox.count() - 1);
+        inbox.resize(inbox.count() - 1);
         return first;
+    }
+
+    bool Room::sendShared(const Message& message, bool sure, int to)
+    {
+        Message* copy = create<Message>(MemTag::General);
+        if (copy == nullptr)
+        {
+            return false;
+        }
+        *copy = message;
+        copy->refs = 1;
+        copy->channel = 1;
+        const bool sent = send(*copy, sure, to);
+        copy->release();
+        return sent;
     }
 
     void Room::deliver(Message* message, int from)
     {
         message->from = from;
         message->at = 0;
-        if (m_inbox.count() >= kQueue || !m_inbox.push(message))
+        GrowArray<Message*, MemTag::General>& inbox = message->channel ? m_sharedInbox : m_inbox;
+        if (inbox.count() >= kQueue || !inbox.push(message))
         {
             message->release();  // nobody is listening
         }
@@ -735,7 +770,7 @@ namespace nx
         };
         const auto add = [](Writer& out, const Message& m, u8 flags, u16 number, u8 from, u8 whom)
         {
-            out.u8_(flags);
+            out.u8_(static_cast<u8>(flags | (m.channel ? 4 : 0)));
             out.u16_(number);
             out.u8_(from);
             out.u8_(whom);
@@ -914,6 +949,7 @@ namespace nx
             }
             memcpy(m->data, bytes, length);
             m->size = length;
+            m->channel = (flags & 4) ? 1 : 0;
             const bool internal = (flags & 2) != 0;
             if (!(flags & 1))
             {

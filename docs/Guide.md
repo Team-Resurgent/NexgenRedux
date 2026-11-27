@@ -803,6 +803,34 @@ for (Message@ m = room.receive(); m !is null; @m = room.receive())
 `room.state` is `RoomIn` once you are in, and `RoomLost` if the host goes. `arrived()` and `departed()` say who has come and gone. Use
 quick messages for what is out of date in a moment, such as where things are, and sure ones for what happened.
 
+### Shared entities
+
+Rather than saying where everything is yourself, share it: the room keeps an entity of yours alike in every other copy of the
+game, where it is, how it is turned, its frame, flip, alpha and whether it is shown, or in space its place, turn and animation.
+
+```cpp
+room.share(ship, "ship");                     // this player's; the kind says what to make of it elsewhere
+
+Entity@ make(const string &in kind, int player)   // makes this game's copy of another player's
+{
+    Entity@ e = Scene::spawn(Vec2(0, 0));
+    e.rect(46, 22, colorOf(player));
+    return e;
+}
+
+void update(float dt)
+{
+    room.sync(Copy(this.make));               // once a frame
+}
+```
+
+`sync` says where this player's are, 20 times a second, and moves the copies of everyone else's smoothly after theirs, going on
+the way they were going for a moment if a message is late; one that jumps a long way is jumped, not glided. Copies are hidden
+until it is known where they are. Whoever joins later is told of everything already shared, a copy goes when its original is
+unshared or destroyed, and all of a player's go when they leave. `ownerOf(e)` says whose an entity is. This travels on the
+room's own channel, alongside your messages, which still say everything else: who scored, what was picked up. A copy is placed
+by its owner, so give it no body of its own. The Arena demo shares each player's ship and the sparks it leaves.
+
 ### Playing over the internet
 
 Players on different networks meet at a **meeting place**: a machine every one of them can reach, such as a small server

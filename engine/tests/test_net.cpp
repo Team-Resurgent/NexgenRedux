@@ -3,6 +3,7 @@
 
 #include "base/thread.h"
 #include "net/net.h"
+#include "scene/sharing.h"
 
 #include <math.h>
 #include <string.h>
@@ -515,4 +516,166 @@ NX_TEST(scriptsUseTheNetwork)
         sleepMilliseconds(1);
     }
     NX_EXPECT(!r.screens.failed() && r.screens.depth() == 1);
+}
+
+NX_TEST(scriptsShareEntities)
+{
+    Rig r;
+    NX_EXPECT(r.ok);
+    r.platform.extraPath = "showcase/shapes/main.as";
+    r.platform.extraText = R"(
+        class A : Screen
+        {
+            Room@ host = Room();
+            Room@ guest = Room();
+            Entity@ ship;
+            Entity@ copy;
+            void onEnter()
+            {
+                host.host("sharing", "Host", 2);
+                guest.find("sharing");
+                @ship = Scene::spawn(Vec2(30, 40));
+                ship.rect(10, 10, Color(1, 1, 1, 1));
+                if (!host.share(ship, "ship") || host.share(ship, "ship")) print("shared twice");
+            }
+            Entity@ make(const string &in kind, int player)
+            {
+                if (kind != "ship" || player != 0) return null;
+                @copy = Scene::spawn(Vec2(0, 0));
+                copy.rect(10, 10, Color(1, 0, 0, 1));
+                return copy;
+            }
+            void update(float dt)
+            {
+                if (guest.state == RoomFinding && guest.found > 0) guest.join("sharing", 0, "Guest");
+                host.sync(null);
+                guest.sync(Copy(this.make));
+                if (copy !is null && guest.ownerOf(copy) == 0 && host.ownerOf(ship) == 0 && guest.copies == 1 &&
+                    abs(copy.position.x - 30) < 0.01 && abs(copy.position.y - 40) < 0.01 && copy.visible)
+                {
+                    host.unshare(ship);
+                    print("sharing works");
+                    Screens::home();
+                }
+            }
+            void draw(Canvas@ c) {}
+        }
+    )";
+    NX_EXPECT(r.screens.init(r.services, "showcase", "main"));
+    r.step(2);
+    r.screens.push("shapes");
+    for (int i = 0; i < 600 && (i < 5 || r.screens.depth() > 1); i++)
+    {
+        r.step();
+        sleepMilliseconds(1);
+    }
+    NX_EXPECT(!r.screens.failed() && r.screens.depth() == 1);
+}
+
+NX_TEST(sharedEntitiesAreFollowedByTheirCopies)
+{
+    Both n;
+    Rig rig;
+    World here{ rig.assets, rig.host, "none", 4096, 500 };
+    World there{ rig.assets, rig.host, "none", 4096, 500 };
+    Room host(n.a), guest(n.b);
+    NX_EXPECT(host.host("share", "host", 4));
+    NX_EXPECT(guest.join("share", Endpoint{ kLoopback, host.port() }, "guest"));
+    NX_EXPECT(n.until([&]() { return guest.state() == RoomState::In && host.players() == 2; }));
+
+    // Copies are made in the world of whoever is asked.
+    struct Made
+    {
+        World* world;
+        int count = 0, player = -1;
+        char kind[24] = {};
+        EntityRef* last = nullptr;
+    };
+    const Sharing::Maker make = [](void* user, const char* kind, int player) -> EntityRef*
+    {
+        Made& m = *static_cast<Made*>(user);
+        m.count++;
+        m.player = player;
+        snprintf(m.kind, sizeof(m.kind), "%s", kind);
+        const u32 id = m.world->spawn({});
+        m.world->visual(id);
+        EntityRef* r = m.world->ref(id);
+        r->addRef();
+        m.last = r;
+        return r;
+    };
+    Made atHost{ &here }, atGuest{ &there };
+    Sharing* a = Sharing::of(host);
+    Sharing* b = Sharing::of(guest);
+    NX_EXPECT(a && b && Sharing::of(host) == a);
+    const auto sync = [&](int count)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            n.step();
+            a->sync(host, n.now, make, &atHost);
+            b->sync(guest, n.now, make, &atGuest);
+        }
+    };
+
+    const u32 ship = here.spawn({ 10, 20 });
+    here.visual(ship)->frame = 3;
+    here.body(ship)->velocity = { 0, 0 };
+    EntityRef* shipRef = here.ref(ship);
+    shipRef->addRef();
+    NX_EXPECT(a->share(host, shipRef, "ship") && !a->share(host, shipRef, "ship"));
+    sync(10);
+    NX_EXPECT(b->copies() == 1 && atGuest.count == 1 && atGuest.player == 0 && strcmp(atGuest.kind, "ship") == 0);
+    EntityRef* copy = atGuest.last;
+    NX_EXPECT(copy != nullptr && b->ownerOf(guest, copy) == 0);
+    if (copy == nullptr)
+    {
+        shipRef->release();
+        return;
+    }
+    copy->addRef();
+    const auto at = [&](World& w, EntityRef* r) { const World::Entity* e = w.find(r->id); return e ? e->position : Vec2{ -1, -1 }; };
+    NX_EXPECT(n.until([&]() { sync(1); return fabsf(at(there, copy).x - 10) < 0.01f && fabsf(at(there, copy).y - 20) < 0.01f; }, 100));
+    NX_EXPECT(there.find(copy->id)->visible && there.getVisual(copy->id)->frame == 3);
+    NX_EXPECT(a->ownerOf(host, shipRef) == 0 && a->ownerOf(guest, copy) == -1);
+    // Moving, it is followed smoothly: part of the way at first, then all of it.
+    here.find(ship)->position = { 40, 20 };
+    sync(3);
+    const float x = at(there, copy).x;
+    NX_EXPECT(x > 10 && x < 40);
+    NX_EXPECT(n.until([&]() { sync(1); return fabsf(at(there, copy).x - 40) < 0.05f; }, 200));
+    // A jump is jumped.
+    here.find(ship)->position = { 900, 20 };
+    NX_EXPECT(n.until([&]() { sync(1); return at(there, copy).x == 900; }, 100));
+
+    // The guest's own are copied at the host.
+    const u32 rock = there.spawn({ 5, 5 });
+    EntityRef* rockRef = there.ref(rock);
+    rockRef->addRef();
+    NX_EXPECT(b->share(guest, rockRef, "rock"));
+    NX_EXPECT(!b->share(guest, copy, "copy"));  // a copy isn't its to share
+    NX_EXPECT(n.until([&]() { sync(1); return a->copies() == 1; }, 100));
+    NX_EXPECT(atHost.player == 1 && strcmp(atHost.kind, "rock") == 0);
+
+    // No longer shared: the copy goes, and the original stays.
+    a->unshare(host, shipRef);
+    NX_EXPECT(n.until([&]() { sync(1); return b->copies() == 0; }, 100));
+    NX_EXPECT(here.find(ship) != nullptr);
+    copy->release();
+
+    // Whoever comes later is told of what is already shared.
+    Room late(n.b);
+    World far{ rig.assets, rig.host, "none", 4096, 500 };
+    Made atLate{ &far };
+    NX_EXPECT(late.join("share", Endpoint{ kLoopback, host.port() }, "late"));
+    a->share(host, shipRef, "ship");
+    Sharing* c = Sharing::of(late);
+    NX_EXPECT(n.until([&]() { sync(1); c->sync(late, n.now, make, &atLate); return c->copies() == 2; }, 200));
+
+    // One who leaves takes theirs with them.
+    guest.leave();
+    NX_EXPECT(n.until([&]() { sync(1); c->sync(late, n.now, make, &atLate); return a->copies() == 0 && c->copies() == 1; }, 400));
+    late.leave();
+    shipRef->release();
+    rockRef->release();
 }

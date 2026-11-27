@@ -1,5 +1,7 @@
 #include "bindings/script_refs.h"
 #include "net/net.h"
+#include "scene/sharing.h"
+#include "script/script_host.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -85,6 +87,63 @@ namespace nx
                 return false;
             }
             return r->send(*m, sure, to);
+        }
+
+        // --- Entities that are shared ---
+
+        bool roomShare(EntityRef* e, const std::string& kind, Room* r)
+        {
+            Sharing* s = e ? Sharing::of(*r) : nullptr;
+            return s && s->share(*r, e, kind.c_str());
+        }
+        void roomUnshare(EntityRef* e, Room* r)
+        {
+            if (Sharing* s = Sharing::find(*r))
+            {
+                s->unshare(*r, e);
+            }
+        }
+        int roomOwner(const EntityRef* e, const Room* r)
+        {
+            const Sharing* s = Sharing::find(*r);
+            return s ? s->ownerOf(*r, e) : -1;
+        }
+        u32 roomCopies(const Room* r)
+        {
+            const Sharing* s = Sharing::find(*r);
+            return s ? s->copies() : 0;
+        }
+
+        struct Making
+        {
+            Services* services;
+            asIScriptFunction* maker;
+        };
+
+        EntityRef* makeCopy(void* user, const char* kind, int player)
+        {
+            Making& m = *static_cast<Making*>(user);
+            std::string text = kind;
+            void* made = nullptr;
+            if (!m.services->host->callEvent(m.maker, &text, nullptr, &player, &made))
+            {
+                return nullptr;
+            }
+            return static_cast<EntityRef*>(made);
+        }
+
+        void roomSync(asIScriptFunction* maker, Room* r)
+        {
+            Sharing* s = Sharing::of(*r);
+            if (s)
+            {
+                Making making = { &services(), maker };
+                s->sync(*r, services().time, maker ? makeCopy : nullptr, &making);
+            }
+            if (maker)
+            {
+                maker->Release();
+            }
         }
 
         // --- The web ---
@@ -177,6 +236,7 @@ namespace nx
         b.enumValue("RoomIn", static_cast<int>(RoomState::In), "In it, or hosting it.");
         b.enumValue("RoomLost", static_cast<int>(RoomState::Lost), "It couldn't be joined, or the host has gone.");
 
+        b.funcdef("Entity@ Copy(const string &in kind, int player)", "Makes this game's copy of something another player shares, of the kind they named: an entity that looks like theirs, or null not to have one. It may be a method: `Copy(this.make)`.");
         b.refType("Room", 0, "A game for up to 8 players on the same network, or on the internet by way of a meeting place, one of whom is the host. Keep it in a field, and it lasts until the screen closes.");
         b.behaviour(asBEHAVE_FACTORY, "Room@ f()", NX_FN(makeRoom));
         b.behaviour(asBEHAVE_ADDREF, "void f()", NX_METHOD(Room, addRef));
@@ -207,6 +267,11 @@ namespace nx
         b.method("Message@ receive()", NX_METHOD(Room, receive), "The next that has come, or null.");
         b.method("int arrived()", NX_METHOD(Room, arrived), "A player who has come since it was last asked, or -1.");
         b.method("int departed()", NX_METHOD(Room, departed), "A player who has gone, or -1.");
+        b.method("bool share(Entity@+ entity, const string &in kind)", NX_OBJ_LAST(roomShare), "Keeps an entity of this player's alike in every other copy of the game in the room: where it is, how it is turned and looks, and the animation it plays. Each has a copy of its own, made by `sync`, which follows it. The kind says what to make. False if it is shared already, or is a copy.");
+        b.method("void unshare(Entity@+ entity)", NX_OBJ_LAST(roomUnshare), "No longer: the copies go, and it stays here as it is. Destroying it does the same.");
+        b.method("void sync(Copy@ maker)", NX_OBJ_LAST(roomSync), "Once a frame, while in the room: says where this player's shared ones are, 20 times a second, and moves the copies of everyone else's smoothly after theirs. `maker` is asked for a copy of each that another player shares; those of a player who leaves go.");
+        b.method("int ownerOf(Entity@+ entity) const", NX_OBJ_LAST(roomOwner), "Whose a shared entity is: this player's own number for one shared here, another's for a copy of theirs, -1 for neither.");
+        b.method("uint get_copies() const property", NX_OBJ_LAST(roomCopies), "How many copies of others' there are here.");
 
         b.refType("Request", 0, "Something asked of a web server, over http:// or https://, whose certificate is checked.");
         b.behaviour(asBEHAVE_ADDREF, "void f()", NX_METHOD(Request, addRef));

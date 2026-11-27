@@ -476,6 +476,7 @@ namespace nx
         bool sceneBlocked(const Vec2& at) { return world().blockedAt(at); }
         u32 sceneTile(const Vec2& at) { return world().tileAt(at); }
         void sceneSetTile(const Vec2& at, u32 tile) { world().setTileAt(at, tile); }
+        void sceneTerrain(u32 tile, int first) { world().setTerrain(tile, first); }
         Vec2 sceneMapSize() { return world().mapSize(); }
     }
 
@@ -601,6 +602,7 @@ namespace nx
         b.function("bool blocked(const Vec2 &in place)", NX_FN(sceneBlocked), "Whether a solid tile is there, in any map.");
         b.function("uint tile(const Vec2 &in position)", NX_FN(sceneTile), "What the map has there: 0 is nothing.");
         b.function("void setTile(const Vec2 &in position, uint tile)", NX_FN(sceneSetTile), "Changes the map.");
+        b.function("void terrain(uint tile, int firstFrame = 0)", NX_FN(sceneTerrain), "Makes a tile of the last map a terrain, which joins up with itself: of 16 frames in its sheet from firstFrame on, the one drawn is chosen by which sides meet the same tile, up 1, right 2, down 4 and left 8; drawn in colours, its open sides are edged and its outer corners rounded. -1 makes it plain again. A map's \"terrains\" does the same: { \"2\": 1 }.");
         b.function("Vec2 get_mapSize() property", NX_FN(sceneMapSize), "How large the map is.");
         b.function("uint get_particles() property", NX_FN(sceneParticles), "How many particles there are, on the plane and in space. There may be 8000, or 1500 on the original Xbox; more are left out.");
         b.function("void clearParticles()", NX_FN(sceneClearParticles), "Does away with all there are. Emitters go on.");

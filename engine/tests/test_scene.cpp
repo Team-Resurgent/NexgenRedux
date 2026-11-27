@@ -253,6 +253,32 @@ NX_TEST(collidersOfEveryShapeMeet)
     NX_EXPECT(found == 1);
 }
 
+NX_TEST(terrainsJoinUp)
+{
+    Scene s;
+    NX_EXPECT(s.load(R"({
+        "map": { "tile": 10, "terrains": { "2": 1 }, "legend": { "w": 2, "g": 1 }, "rows": [
+            "gggggg",
+            "gwwwgg",
+            "gggggw",
+            "ggwggg" ] }
+    })"));
+    const auto at = [&](int x, int y) { return s.world.tileFrame({ static_cast<float>(x) * 10 + 5, static_cast<float>(y) * 10 + 5 }); };
+    NX_EXPECT(at(0, 0) == 0);                    // plain grass: its own frame
+    NX_EXPECT(at(1, 1) == 1 + 2);                // the left of a row: water to its right
+    NX_EXPECT(at(2, 1) == 1 + (2 | 8));          // the middle: right and left
+    NX_EXPECT(at(3, 1) == 1 + 8);                // the right end
+    NX_EXPECT(at(5, 2) == 1 + 2);                // at the map's right edge, which counts as more of it
+    NX_EXPECT(at(2, 3) == 1 + 4);                // at the bottom edge
+    s.world.setTileAt({ 25, 25 }, 2);            // joined below the middle one
+    NX_EXPECT(at(2, 1) == 1 + (2 | 4 | 8));
+    s.world.setTerrain(2, -1);                   // a tile like any other again
+    NX_EXPECT(at(2, 1) == 1);
+    s.world.setTerrain(2, 20);
+    NX_EXPECT(at(1, 1) == 20 + 2 && at(9, 9) == -1);
+    NX_EXPECT(!s.load(R"({ "map": { "terrains": { "70": 1 }, "legend": { "w": 2 }, "rows": [ "w" ] } })"));
+}
+
 NX_TEST(waysRoundTiles)
 {
     Scene s;

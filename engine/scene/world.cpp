@@ -1427,6 +1427,51 @@ namespace nx
         return x >= 0 && y >= 0 && x < static_cast<float>(map.width) && y < static_cast<float>(map.height) ? map.tiles[static_cast<size_t>(y) * map.width + static_cast<size_t>(x)] : 0;
     }
 
+    u32 World::terrainJoins(const TileMap& map, u32 x, u32 y)
+    {
+        const u16 tile = map.tiles[static_cast<size_t>(y) * map.width + x];
+        const auto same = [&](i32 dx, i32 dy)
+        {
+            const i32 nx = static_cast<i32>(x) + dx, ny = static_cast<i32>(y) + dy;
+            if (nx < 0 || ny < 0 || nx >= static_cast<i32>(map.width) || ny >= static_cast<i32>(map.height))
+            {
+                return true;
+            }
+            return map.tiles[static_cast<size_t>(ny) * map.width + static_cast<size_t>(nx)] == tile;
+        };
+        return (same(0, -1) ? 1u : 0u) | (same(1, 0) ? 2u : 0u) | (same(0, 1) ? 4u : 0u) | (same(-1, 0) ? 8u : 0u);
+    }
+
+    int World::tileFrame(Vec2 position) const
+    {
+        if (m_mapCount == 0)
+        {
+            return -1;
+        }
+        const TileMap& map = m_maps[m_mapCount - 1];
+        const float fx = floorf((position.x - map.origin.x) / map.size), fy = floorf((position.y - map.origin.y) / map.size);
+        if (fx < 0 || fy < 0 || fx >= static_cast<float>(map.width) || fy >= static_cast<float>(map.height))
+        {
+            return -1;
+        }
+        const u32 x = static_cast<u32>(fx), y = static_cast<u32>(fy);
+        const u32 tile = map.tiles[static_cast<size_t>(y) * map.width + x];
+        if (tile == 0)
+        {
+            return -1;
+        }
+        const u32 terrain = tile < 64 ? map.terrain[tile] : 0;
+        return static_cast<int>(terrain ? terrain - 1 + terrainJoins(map, x, y) : tile - 1);
+    }
+
+    void World::setTerrain(u32 tile, int firstFrame)
+    {
+        if (m_mapCount && tile >= 1 && tile < 64)
+        {
+            m_maps[m_mapCount - 1].terrain[tile] = static_cast<u16>(firstFrame < 0 ? 0 : firstFrame + 1);
+        }
+    }
+
     void World::setTileAt(Vec2 position, u32 tile)
     {
         if (m_mapCount == 0)
@@ -1705,9 +1750,18 @@ namespace nx
                     continue;
                 }
                 const float m[6] = { 1, 0, 0, 1, map.origin.x + (static_cast<float>(x) + 0.5f) * map.size, map.origin.y + (static_cast<float>(y) + 0.5f) * map.size };
+                // A terrain: which of its sides meet more of it. Past the map's edge counts as more, so the edge isn't one.
+                const u32 terrain = tile < 64 ? map.terrain[tile] : 0;
+                const u32 joins = terrain ? terrainJoins(map, x, y) : 0;
+                if (terrain && !map.texture)
+                {
+                    drawTerrainTile(canvas, map, x, y, map.colors[tile & 15], joins);
+                    m_stats.drawn++;
+                    continue;
+                }
                 if (map.texture)
                 {
-                    const u32 frame = (tile - 1) % (map.columns * map.rows);
+                    const u32 frame = (terrain ? terrain - 1 + joins : tile - 1) % (map.columns * map.rows);
                     // In a little from the edges, so a neighbour in the sheet doesn't show.
                     const float eu = 0.5f / static_cast<float>(map.texture->width), ev = 0.5f / static_cast<float>(map.texture->height);
                     const float du = 1.0f / static_cast<float>(map.columns), dv = 1.0f / static_cast<float>(map.rows);
@@ -1720,6 +1774,38 @@ namespace nx
                 }
                 m_stats.drawn++;
             }
+        }
+    }
+
+    // Without a sheet: the colour, with a light top and a shadowed bottom where a side is open, and outer corners rounded.
+    void World::drawTerrainTile(Canvas& canvas, const TileMap& map, u32 x, u32 y, const Color& color, u32 joins)
+    {
+        const float s = map.size, left = map.origin.x + static_cast<float>(x) * s, top = map.origin.y + static_cast<float>(y) * s;
+        const float r = s * 0.3f, band = s * 0.14f;
+        const bool up = joins & 1, right = joins & 2, down = joins & 4, leftSide = joins & 8;
+        const bool nw = !up && !leftSide, ne = !up && !right, se = !down && !right, sw = !down && !leftSide;
+        // Three strips, leaving out the corners that are rounded, and a quarter of a circle in each of those.
+        canvas.rect(left + (nw ? r : 0), top, s - (nw ? r : 0) - (ne ? r : 0), r, color);
+        canvas.rect(left, top + r, s, s - 2 * r, color);
+        canvas.rect(left + (sw ? r : 0), top + s - r, s - (sw ? r : 0) - (se ? r : 0), r, color);
+        const float corners[4][2] = { { left + r, top + r }, { left + s - r, top + r }, { left + s - r, top + s - r }, { left + r, top + s - r } };
+        const bool rounded[4] = { nw, ne, se, sw };
+        for (u32 i = 0; i < 4; i++)
+        {
+            if (rounded[i])
+            {
+                canvas.circle(corners[i][0], corners[i][1], r, color);
+            }
+        }
+        const Color light = { color.r + (1 - color.r) * 0.35f, color.g + (1 - color.g) * 0.35f, color.b + (1 - color.b) * 0.35f, color.a };
+        const Color dark = { color.r * 0.6f, color.g * 0.6f, color.b * 0.6f, color.a };
+        if (!up)
+        {
+            canvas.rect(left + (nw ? r : 0), top, s - (nw ? r : 0) - (ne ? r : 0), band, light);
+        }
+        if (!down)
+        {
+            canvas.rect(left + (sw ? r : 0), top + s - band, s - (sw ? r : 0) - (se ? r : 0), band, dark);
         }
     }
 

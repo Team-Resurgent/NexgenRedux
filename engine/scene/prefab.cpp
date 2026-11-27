@@ -591,6 +591,16 @@ namespace nx
                 }
             }
         }
+        for (Json t = json["terrains"].first(); t.exists(); t = t.next())
+        {
+            const int tile = atoi(t.key());
+            const double first = t.isNumber() ? t.number() : 0;
+            if (tile < 1 || tile > 63 || first < 0 || first > 60000)
+            {
+                return fail(file, t.line(), "%s: terrains are for tiles 1 to 63, each the first of its 16 frames", t.key());
+            }
+            map.terrain[tile] = static_cast<u16>(first + 1);
+        }
         if (json["image"].exists())
         {
             map.texture = readAsset(json["image"], AssetType::Texture, 0, file);

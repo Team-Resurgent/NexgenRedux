@@ -199,6 +199,13 @@ A map is rows of letters, and a legend says what each is: a tile's number, or a 
 
 With `"image"` and `"sheet"` it is drawn from a picture instead of colours.
 
+A tile can be a terrain, which joins up with its neighbours: with `"terrains": { "2": 1 }`, tile 2 is drawn with one of 16
+frames of the sheet from frame 1, chosen by which of its sides meet more tile 2: up 1, right 2, down 4 and left 8, added up. So
+water gets its shores, and a path its bends, wherever they are painted, and `Scene::setTile` joins them up again as it goes.
+Past the map's edge counts as more of it. A map drawn only in colours edges its terrains instead, lit along the top and
+shadowed along the bottom, with rounded outer corners. `Scene::terrain(tile, firstFrame)` does the same from a script, and the
+Tiles demo has both, to paint on.
+
 `Scene::path(from, to, way)` finds a way round the solid tiles: the corners of it, as straight as it can be, ending where it was
 asked to go. It goes diagonally too, but never across a corner, unless it is told to keep to straight steps. `Scene::blocked`
 says whether a solid tile is at a place.

@@ -167,6 +167,10 @@ namespace nx
         int layer;
         Color colors[16];        // of tiles drawn without a texture
         u8 solid[64];            // by tile: 1 solid, 2 only from above
+        // By tile: a terrain, which joins up with its neighbours. 0 is not one; otherwise one more than the first of its 16
+        // frames in the sheet, which are chosen by the sides that meet the same tile: up 1, right 2, down 4, left 8. Drawn
+        // in colours, its open sides are edged and its outer corners rounded instead.
+        u16 terrain[64];
         Vec2 origin;
     };
 
@@ -320,6 +324,12 @@ namespace nx
         bool blocked(int x, int y) const;
         bool blockedAt(Vec2 place) const;
         void setTileAt(Vec2 position, u32 tile);
+        // Makes a tile of the last map a terrain, from a frame of its sheet; -1 makes it a tile like any other again.
+        void setTerrain(u32 tile, int firstFrame);
+        // Which sides of a terrain's tile meet more of it, up 1, right 2, down 4, left 8; and the frame it is drawn with, or
+        // -1 where there is no tile. Of the last map.
+        static u32 terrainJoins(const TileMap& map, u32 x, u32 y);
+        int tileFrame(Vec2 position) const;
         Vec2 mapSize() const;
 
         // --- Rigid bodies ---
@@ -525,6 +535,7 @@ namespace nx
         void drawVisual(Canvas& canvas, const Visual& v, const float (&view)[4]);
         void drawParticles(Canvas& canvas, u32 style);
         void drawMap(Canvas& canvas, const TileMap& map, const float (&view)[4]);
+        void drawTerrainTile(Canvas& canvas, const TileMap& map, u32 x, u32 y, const Color& color, u32 joins);
 
         // prefab.cpp
         bool fail(const char* file, u32 line, const char* format, const char* what);

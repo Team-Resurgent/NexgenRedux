@@ -51,6 +51,7 @@ namespace nx
         struct Sound;
 
         bool openFile(u8* bytes, size_t size);
+        bool show();
         void startSound();
         void endSound(bool stopNow);
         friend struct VideoCallbacks;
@@ -59,9 +60,9 @@ namespace nx
         Audio& m_audio;
         plm_t* m_plm = nullptr;
         Asset* m_picture = nullptr;
-        u8* m_rgba = nullptr;
+        u8* m_rgba = nullptr;    // where the device can't be written to straight
         u8* m_bytes = nullptr;   // the file
-        void* m_newFrame = nullptr;
+        void* m_newFrame = nullptr;   // decoded, to be shown
         Sound* m_sound = nullptr;
         Voice m_voice;
         u32 m_width = 0, m_height = 0, m_frames = 0, m_group = 0;

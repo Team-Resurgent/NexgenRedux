@@ -248,6 +248,11 @@ namespace nx::gpu
         virtual void destroyTexture(Texture texture) = 0;
         // New pixels for a dynamic texture, all of them, top row first. False for one that isn't.
         virtual bool updateTexture(Texture texture, const u8* rgba) { (void)texture; (void)rgba; return false; }
+        // Where copying them in would cost too much: the memory a dynamic texture's next pixels are written straight into,
+        // b, g, r, a from the lowest byte, its rows `pitch` bytes apart, shown from unlockTexture on. nullptr where there is
+        // none, and updateTexture is the way.
+        virtual u8* lockTexture(Texture texture, u32& pitch) { (void)texture; (void)pitch; return nullptr; }
+        virtual void unlockTexture(Texture texture) { (void)texture; }
         // A picture that can be drawn into, Rgba8 and see-through until something is drawn, then drawn like any other.
         // None where there are none.
         virtual Texture createTarget(u32 width, u32 height) { (void)width; (void)height; return {}; }

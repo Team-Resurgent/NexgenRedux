@@ -13,6 +13,52 @@ namespace nx
     {
         Video* g_videos = nullptr;  // every one there is, to be updated
         constexpr u32 kMostSide = 1024;
+
+        // 0 to 255 from what the sums below can come to, -288 to 543.
+        struct Clamp
+        {
+            u8 table[832];
+            Clamp()
+            {
+                for (int i = 0; i < 832; i++)
+                {
+                    table[i] = static_cast<u8>(i < 288 ? 0 : i > 288 + 255 ? 255 : i - 288);
+                }
+            }
+            u32 operator()(int v) const { return table[v + 288]; }
+        };
+
+        // As plm_frame_to_bgra, but a whole pixel a write, alpha too, which memory that is written to a line at a time
+        // (as a texture's often is) takes much better than a byte at a time.
+        void toBgra(const plm_frame_t& frame, u8* dest, u32 pitch)
+        {
+            static const Clamp clamp;
+            const int cols = static_cast<int>(frame.width >> 1), rows = static_cast<int>(frame.height >> 1);
+            const int yw = static_cast<int>(frame.y.width), cw = static_cast<int>(frame.cb.width);
+            for (int row = 0; row < rows; row++)
+            {
+                const u8* y0 = frame.y.data + row * 2 * yw;
+                const u8* y1 = y0 + yw;
+                const u8* cb = frame.cb.data + row * cw;
+                const u8* cr = frame.cr.data + row * cw;
+                u32* out0 = reinterpret_cast<u32*>(dest + static_cast<size_t>(row) * 2 * pitch);
+                u32* out1 = reinterpret_cast<u32*>(reinterpret_cast<u8*>(out0) + pitch);
+                for (int col = 0; col < cols; col++)
+                {
+                    const int u = cb[col] - 128, v = cr[col] - 128;
+                    const int r = (v * 104597) >> 16, g = (u * 25674 + v * 53278) >> 16, b = (u * 132201) >> 16;
+                    const auto pixel = [&](int luma)
+                    {
+                        const int y = ((luma - 16) * 76309) >> 16;
+                        return 0xFF000000u | clamp(y + r) << 16 | clamp(y - g) << 8 | clamp(y + b);
+                    };
+                    out0[col * 2] = pixel(y0[col * 2]);
+                    out0[col * 2 + 1] = pixel(y0[col * 2 + 1]);
+                    out1[col * 2] = pixel(y1[col * 2]);
+                    out1[col * 2 + 1] = pixel(y1[col * 2 + 1]);
+                }
+            }
+        }
     }
 
     // What its sound plays from. The audio frees it, once nothing plays it.
@@ -128,16 +174,10 @@ namespace nx
         }
         m_width = static_cast<u32>(w);
         m_height = static_cast<u32>(h);
-        m_rgba = static_cast<u8*>(memAlloc(static_cast<size_t>(m_width) * m_height * 4, MemTag::Texture));
-        m_picture = m_rgba ? m_assets.dynamicTexture(m_width, m_height) : nullptr;
+        m_picture = m_assets.dynamicTexture(m_width, m_height);
         if (m_picture == nullptr)
         {
             return false;
-        }
-        for (size_t i = 0; i < static_cast<size_t>(m_width) * m_height * 4; i += 4)
-        {
-            m_rgba[i] = m_rgba[i + 1] = m_rgba[i + 2] = 0;
-            m_rgba[i + 3] = 255;  // what it decodes leaves this alone
         }
         plm_set_video_decode_callback(m_plm, VideoCallbacks::frame, this);
         plm_set_audio_decode_callback(m_plm, VideoCallbacks::samples, this);
@@ -147,9 +187,50 @@ namespace nx
         // The first picture straight away.
         if (plm_frame_t* first = plm_decode_video(m_plm))
         {
-            plm_frame_to_rgba(first, m_rgba, static_cast<int>(m_width * 4));
-            m_assets.device().updateTexture(m_picture->texture, m_rgba);
+            m_newFrame = first;
+            if (!show())
+            {
+                return false;
+            }
             plm_rewind(m_plm);
+        }
+        return true;
+    }
+
+    // The picture decoded last. Where the device lets it, straight into the texture, as converting it once and copying it
+    // again would cost the Original Xbox a frame.
+    bool Video::show()
+    {
+        if (m_newFrame == nullptr)
+        {
+            return true;
+        }
+        const plm_frame_t& frame = *static_cast<plm_frame_t*>(m_newFrame);
+        m_newFrame = nullptr;
+        gpu::Device& device = m_assets.device();
+        u32 pitch = 0;
+        if (u8* memory = device.lockTexture(m_picture->texture, pitch))
+        {
+            toBgra(frame, memory, pitch);
+            device.unlockTexture(m_picture->texture);
+        }
+        else
+        {
+            // Otherwise converted here first.
+            const size_t bytes = static_cast<size_t>(m_width) * m_height * 4;
+            if (m_rgba == nullptr && (m_rgba = static_cast<u8*>(memAlloc(bytes, MemTag::Texture))) != nullptr)
+            {
+                for (size_t i = 3; i < bytes; i += 4)
+                {
+                    m_rgba[i] = 255;  // what it converts leaves this alone
+                }
+            }
+            if (m_rgba == nullptr)
+            {
+                return false;
+            }
+            plm_frame_to_rgba(const_cast<plm_frame_t*>(&frame), m_rgba, static_cast<int>(m_width * 4));
+            device.updateTexture(m_picture->texture, m_rgba);
         }
         return true;
     }
@@ -225,6 +306,11 @@ namespace nx
 
     void Video::pause()
     {
+        if (m_playing && m_newFrame)
+        {
+            show();
+            m_frames++;
+        }
         m_playing = false;
         if (m_voice)
         {
@@ -274,19 +360,23 @@ namespace nx
         {
             return;
         }
-        // A long frame isn't caught up all at once.
-        m_newFrame = nullptr;
-        plm_decode(m_plm, dt < 0 ? 0 : dt > 0.1f ? 0.1 : static_cast<double>(dt));
+        // What was decoded the frame before is shown now, so that decoding and showing (each about half a frame on
+        // the Original Xbox) don't fall in the same one. In a film of 30 a second or fewer, the next is due two frames on at the
+        // soonest.
         if (m_newFrame)
         {
-            // Only the last of them is shown.
-            plm_frame_to_rgba(static_cast<plm_frame_t*>(m_newFrame), m_rgba, static_cast<int>(m_width * 4));
-            m_assets.device().updateTexture(m_picture->texture, m_rgba);
+            show();
             m_frames++;
-            m_newFrame = nullptr;
         }
+        // A long frame isn't caught up all at once. If more than one picture comes, only the last is shown.
+        plm_decode(m_plm, dt < 0 ? 0 : dt > 0.1f ? 0.1 : static_cast<double>(dt));
         if (plm_has_ended(m_plm))
         {
+            if (m_newFrame)
+            {
+                show();  // the last picture
+                m_frames++;
+            }
             m_playing = false;
             m_done = true;
             endSound(false);  // what is left of it plays out

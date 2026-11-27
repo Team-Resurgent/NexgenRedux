@@ -53,6 +53,9 @@ namespace nx::gpu
             IDirect3DTexture8* depth;
             // One that is changed often, by updateTexture: linear too, so it needn't be swizzled each time.
             bool linear;
+            // And a second, for lockTexture: what is written goes into the one not being drawn, and the two are swapped.
+            IDirect3DTexture8* spare;
+            u32 shown;   // the frame they were last swapped in
         };
 
         // D3DCOLOR is b, g, r, a in memory.
@@ -142,6 +145,10 @@ namespace nx::gpu
                     if (t.texture)
                     {
                         t.texture->Release();
+                    }
+                    if (t.spare)
+                    {
+                        t.spare->Release();
                     }
                     if (t.volume)
                     {
@@ -294,9 +301,14 @@ namespace nx::gpu
                 if (data.dynamic && data.format == PixelFormat::Rgba8)
                 {
                     TextureSlot t = {};
-                    if (FAILED(m_device->CreateTexture(data.fullWidth, data.fullHeight, 1, 0, D3DFMT_LIN_A8R8G8B8, D3DPOOL_DEFAULT, &t.texture)))
+                    if (FAILED(m_device->CreateTexture(data.fullWidth, data.fullHeight, 1, 0, D3DFMT_LIN_A8R8G8B8, D3DPOOL_DEFAULT, &t.texture)) ||
+                        FAILED(m_device->CreateTexture(data.fullWidth, data.fullHeight, 1, 0, D3DFMT_LIN_A8R8G8B8, D3DPOOL_DEFAULT, &t.spare)))
                     {
                         NX_ERROR("d3d8: no memory for a %ux%u texture", static_cast<unsigned>(data.fullWidth), static_cast<unsigned>(data.fullHeight));
+                        if (t.texture)
+                        {
+                            t.texture->Release();
+                        }
                         return {};
                     }
                     t.linear = true;
@@ -309,9 +321,10 @@ namespace nx::gpu
                     if (!handle)
                     {
                         t.texture->Release();
+                        t.spare->Release();
                         return {};
                     }
-                    m_textureBytes += t.info.bytes;
+                    m_textureBytes += t.info.bytes * 2;
                     updateTexture(handle, data.pixels);
                     return handle;
                 }
@@ -414,7 +427,7 @@ namespace nx::gpu
                     info.uMax = static_cast<float>(data.width) / static_cast<float>(fullWidth);
                     info.vMax = static_cast<float>(data.height) / static_cast<float>(fullHeight);
                     info.bytes = levels > 1 ? bytes + bytes / 3 : bytes;
-                    handle = m_textures.add({ texture, nullptr, info, nullptr, false });
+                    handle = m_textures.add({ texture, nullptr, info, nullptr, false, nullptr, 0 });
                 }
                 if (!handle && texture)
                 {
@@ -536,10 +549,14 @@ namespace nx::gpu
                 if (TextureSlot* t = m_textures.get(handle))
                 {
                     m_device->SetTexture(0, nullptr);
-                    m_textureBytes -= t->info.bytes;
+                    m_textureBytes -= t->info.bytes * (t->spare ? 2 : 1);
                     if (t->texture)
                     {
                         t->texture->Release();
+                    }
+                    if (t->spare)
+                    {
+                        t->spare->Release();
                     }
                     if (t->volume)
                     {
@@ -575,6 +592,38 @@ namespace nx::gpu
                 }
                 t->texture->UnlockRect(0);
                 return true;
+            }
+
+            u8* lockTexture(Texture handle, u32& pitch) override
+            {
+                TextureSlot* t = m_textures.get(handle);
+                if (t == nullptr || t->spare == nullptr)
+                {
+                    return nullptr;
+                }
+                // The spare was last drawn before they were swapped. Unless that was this frame or the one before,
+                // which the GPU may not have finished, it can be written now without waiting.
+                const DWORD flags = m_frameNumber - t->shown >= 2 ? D3DLOCK_NOOVERWRITE : 0;
+                D3DLOCKED_RECT locked;
+                if (FAILED(t->spare->LockRect(0, &locked, nullptr, flags)))
+                {
+                    return nullptr;
+                }
+                pitch = static_cast<u32>(locked.Pitch);
+                return static_cast<u8*>(locked.pBits);
+            }
+
+            void unlockTexture(Texture handle) override
+            {
+                if (TextureSlot* t = m_textures.get(handle); t && t->spare)
+                {
+                    t->spare->UnlockRect(0);
+                    IDirect3DTexture8* drawn = t->texture;
+                    t->texture = t->spare;
+                    t->spare = drawn;
+                    t->shown = m_frameNumber;
+                    m_boundTexture = {};  // bound again, to draw the new one
+                }
             }
 
             Texture createTarget(u32 width, u32 height) override
@@ -1547,6 +1596,7 @@ namespace nx::gpu
                 m_inFrame = false;
                 m_device->EndScene();
                 m_device->Present(nullptr, nullptr, nullptr, nullptr);
+                m_frameNumber++;
                 m_last = m_current;
             }
 
@@ -2266,6 +2316,7 @@ namespace nx::gpu
             size_t m_bufferBytes = 0;
             size_t m_textureBytes = 0;
             u32 m_streamed = 0;
+            u32 m_frameNumber = 0;
             u32 m_streamIndex = 0;
             u32 m_width = 0;
             u32 m_height = 0;

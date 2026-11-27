@@ -5,6 +5,7 @@
 #include "canvas/look.h"
 
 #include <math.h>
+#include <atomic>
 #include <string.h>
 
 #include <stdlib.h>
@@ -330,7 +331,7 @@ NX_TEST(bindingsChange)
 
 namespace
 {
-    u32 g_fetched = 0;
+    std::atomic<u32> g_fetched{ 0 };   // counted by the loading threads, several at once
 
     // Anything from the web is this one picture, but for what isn't there.
     bool pretendWeb(const char* url, FileData& out)

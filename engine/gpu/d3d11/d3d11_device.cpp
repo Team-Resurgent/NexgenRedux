@@ -251,11 +251,11 @@ namespace nx::gpu
                 D3D11_BLEND_DESC blend = {};
                 D3D11_RENDER_TARGET_BLEND_DESC& rt = blend.RenderTarget[0];
                 rt.BlendEnable = desc.blend != Blend::None;
-                rt.SrcBlend = D3D11_BLEND_SRC_ALPHA;
-                rt.DestBlend = desc.blend == Blend::Additive ? D3D11_BLEND_ONE : D3D11_BLEND_INV_SRC_ALPHA;
+                rt.SrcBlend = desc.blend == Blend::Multiply ? D3D11_BLEND_DEST_COLOR : D3D11_BLEND_SRC_ALPHA;
+                rt.DestBlend = desc.blend == Blend::Additive ? D3D11_BLEND_ONE : desc.blend == Blend::Multiply ? D3D11_BLEND_ZERO : D3D11_BLEND_INV_SRC_ALPHA;
                 rt.BlendOp = D3D11_BLEND_OP_ADD;
-                rt.SrcBlendAlpha = D3D11_BLEND_ONE;
-                rt.DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA;
+                rt.SrcBlendAlpha = desc.blend == Blend::Multiply ? D3D11_BLEND_ZERO : D3D11_BLEND_ONE;
+                rt.DestBlendAlpha = desc.blend == Blend::Multiply ? D3D11_BLEND_ONE : D3D11_BLEND_INV_SRC_ALPHA;
                 rt.BlendOpAlpha = D3D11_BLEND_OP_ADD;
                 rt.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 
@@ -1131,16 +1131,17 @@ namespace nx::gpu
                 uniforms(sizeof(EffectUniforms), &m_effectUniforms);
                 fine = fine && ok(m_device->CreatePixelShader(blurPs, sizeof(blurPs), nullptr, &m_blurPs), "blur shader") &&
                        ok(m_device->CreatePixelShader(gradePs, sizeof(gradePs), nullptr, &m_gradePs), "grade shader");
-                for (u32 i = 0; i < 3; i++)
+                for (u32 i = 0; i < static_cast<u32>(Blend::Count); i++)
                 {
+                    const Blend b = static_cast<Blend>(i);
                     D3D11_BLEND_DESC desc = {};
                     D3D11_RENDER_TARGET_BLEND_DESC& rt = desc.RenderTarget[0];
                     rt.BlendEnable = i != 0;
-                    rt.SrcBlend = D3D11_BLEND_SRC_ALPHA;
-                    rt.DestBlend = static_cast<Blend>(i) == Blend::Additive ? D3D11_BLEND_ONE : D3D11_BLEND_INV_SRC_ALPHA;
+                    rt.SrcBlend = b == Blend::Multiply ? D3D11_BLEND_DEST_COLOR : D3D11_BLEND_SRC_ALPHA;
+                    rt.DestBlend = b == Blend::Additive ? D3D11_BLEND_ONE : b == Blend::Multiply ? D3D11_BLEND_ZERO : D3D11_BLEND_INV_SRC_ALPHA;
                     rt.BlendOp = rt.BlendOpAlpha = D3D11_BLEND_OP_ADD;
-                    rt.SrcBlendAlpha = D3D11_BLEND_ONE;
-                    rt.DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA;
+                    rt.SrcBlendAlpha = b == Blend::Multiply ? D3D11_BLEND_ZERO : D3D11_BLEND_ONE;
+                    rt.DestBlendAlpha = b == Blend::Multiply ? D3D11_BLEND_ONE : D3D11_BLEND_INV_SRC_ALPHA;
                     rt.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
                     fine = fine && ok(m_device->CreateBlendState(&desc, &m_meshBlend[i]), "blend state");
                 }
@@ -1399,7 +1400,7 @@ namespace nx::gpu
             ID3D11Buffer* m_viewUniforms = nullptr;
             ID3D11Buffer* m_objectUniforms = nullptr;
             ID3D11Buffer* m_fieldUniforms = nullptr;
-            ID3D11BlendState* m_meshBlend[3] = {};
+            ID3D11BlendState* m_meshBlend[static_cast<u32>(Blend::Count)] = {};
             ID3D11DepthStencilState* m_meshDepth[2] = {};
             ID3D11DepthStencilState* m_skyDepth = nullptr;
             ID3D11RasterizerState* m_meshRaster[3] = {};  // the last, of lines

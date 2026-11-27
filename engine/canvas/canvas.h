@@ -104,6 +104,11 @@ namespace nx
         bool beginTarget(const Asset& target, const Color& clear);
         void endTarget();
         bool inTarget() const { return m_inTarget; }
+        // The size drawn into, in pixels, and what turns design units into them: x' = m0 x + m2 y + m4.
+        float pixelWidth() const { return m_pixelWidth; }
+        float pixelHeight() const { return m_pixelHeight; }
+        void getTransform(float (&m)[6]) const;
+        void setTransform(const float (&m)[6]);
 
         // Before something else draws: everything so far goes first.
         void finish() { flush(); }
@@ -152,7 +157,7 @@ namespace nx
 
         gpu::Device* m_device = nullptr;
         Assets* m_assets = nullptr;
-        gpu::Pipeline m_pipelines[3];
+        gpu::Pipeline m_pipelines[static_cast<u32>(gpu::Blend::Count)];
         gpu::Texture m_soft;
         gpu::Vertex* m_vertices = nullptr;
         u32 m_count = 0;

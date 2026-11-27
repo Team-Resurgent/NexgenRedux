@@ -203,6 +203,24 @@ With `"image"` and `"sheet"` it is drawn from a picture instead of colours.
 asked to go. It goes diagonally too, but never across a corner, unless it is told to keep to straight steps. `Scene::blocked`
 says whether a solid tile is at a place.
 
+### Lights
+
+`Scene::ambient` is the light everywhere: white, as it starts, is no lighting at all, and anything darker turns it on. Then an
+entity's `light(colour, radius)` lights what is round it, fading to nothing at the edge, and solid tiles cast shadows from it, as
+does any collider made an `occluder`:
+
+```cpp
+Scene::ambient = Color(0.07f, 0.07f, 0.13f);       // night
+hero.light(Color(1, 0.85f, 0.6f), 260);            // a lantern that goes where it does
+crate.box(44, 44);
+crate.occluder = true;                             // its shadow moves with it
+Scene::lightLayer = 5;                             // layers above 5 are drawn after the light, bright: flames, sparks
+```
+
+Lights add up, and are multiplied over what is drawn, so a red light on blue shows dark. `light(colour, 0)` puts one out. The
+Lights demo has torches that flicker, crystals of colour, and crates and a pillar that cast moving shadows. `BlendMultiply` is
+there for drawing of your own, too.
+
 ### Physics
 
 There are two kinds. A **solid** body is stopped by walls and tiles and never turns: use it for characters, with `onGround`,

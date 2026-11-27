@@ -898,6 +898,61 @@ NX_TEST(scriptsDrawIntoPictures)
     r.step(3);
 }
 
+NX_TEST(lightsOnThePlane)
+{
+    Rig r;
+    NX_EXPECT(r.ok);
+    r.platform.extraPath = "showcase/shapes/main.as";
+    r.platform.extraText = R"(
+        class A : Screen
+        {
+            Entity@ lamp;
+            Entity@ crate;
+            void check(bool good) { if (!good) { array<int> nope; nope[1] = 0; } }
+            void onEnter()
+            {
+                check(Scene::ambient.r == 1 && Scene::lightLayer == 32767);   // off, as it starts
+                Scene::ambient = Color(0.1f, 0.1f, 0.2f);
+                Scene::lightLayer = 5;
+                @lamp = Scene::spawn(Vec2(200, 200));
+                lamp.disc(8, Yellow);
+                lamp.light(Color(1, 0.8f, 0.5f), 250);
+                @crate = Scene::spawn(Vec2(300, 200));
+                crate.rect(40, 40, Gray);
+                check(!crate.occluder);
+                crate.box(40, 40);
+                crate.occluder = true;
+                check(crate.occluder);
+                Entity@ spark = Scene::spawn(Vec2(250, 260));
+                spark.disc(4, White);
+                spark.layer = 10;                  // above the light: drawn as it is
+            }
+            void update(float dt)
+            {
+                lamp.position = lamp.position + Vec2(30 * dt, 0);
+            }
+            void draw(Canvas@ c)
+            {
+                c.design(1280, 720);
+                Scene::draw(c);
+                Scene::draw(c, 6, 32767);          // only what is above the light: no lighting again
+            }
+            void onExit()
+            {
+                lamp.light(White, 0);              // put out
+            }
+        }
+    )";
+    NX_EXPECT(r.screens.init(r.services, "showcase", "main"));
+    r.step(2);
+    r.screens.push("shapes");
+    r.step(10);
+    NX_EXPECT(!r.screens.failed());
+    NX_EXPECT(r.device->stats().rejected == 0);
+    r.screens.home();
+    r.step(3);
+}
+
 NX_TEST(scriptsUseSpace)
 {
     Rig r;

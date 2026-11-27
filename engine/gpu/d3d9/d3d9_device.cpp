@@ -954,11 +954,12 @@ namespace nx::gpu
                 if (blend != Blend::None)
                 {
                     m_device->SetRenderState(D3DRS_BLENDOP, D3DBLENDOP_ADD);
-                    m_device->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
-                    m_device->SetRenderState(D3DRS_DESTBLEND, blend == Blend::Additive ? D3DBLEND_ONE : D3DBLEND_INVSRCALPHA);
+                    const bool multiply = blend == Blend::Multiply;
+                    m_device->SetRenderState(D3DRS_SRCBLEND, multiply ? D3DBLEND_DESTCOLOR : D3DBLEND_SRCALPHA);
+                    m_device->SetRenderState(D3DRS_DESTBLEND, blend == Blend::Additive ? D3DBLEND_ONE : multiply ? D3DBLEND_ZERO : D3DBLEND_INVSRCALPHA);
                     m_device->SetRenderState(D3DRS_SEPARATEALPHABLENDENABLE, TRUE);
-                    m_device->SetRenderState(D3DRS_SRCBLENDALPHA, D3DBLEND_ONE);
-                    m_device->SetRenderState(D3DRS_DESTBLENDALPHA, D3DBLEND_INVSRCALPHA);
+                    m_device->SetRenderState(D3DRS_SRCBLENDALPHA, multiply ? D3DBLEND_ZERO : D3DBLEND_ONE);
+                    m_device->SetRenderState(D3DRS_DESTBLENDALPHA, multiply ? D3DBLEND_ONE : D3DBLEND_INVSRCALPHA);
                 }
             }
 

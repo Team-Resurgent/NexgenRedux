@@ -26,7 +26,7 @@ namespace nx::gpu
 
         enum : GLenum
         {
-            GL_ONE = 1, GL_LINES = 0x0001, GL_TRIANGLES = 0x0004, GL_LEQUAL = 0x0203, GL_SRC_ALPHA = 0x0302, GL_ONE_MINUS_SRC_ALPHA = 0x0303,
+            GL_ONE = 1, GL_LINES = 0x0001, GL_TRIANGLES = 0x0004, GL_LEQUAL = 0x0203, GL_SRC_ALPHA = 0x0302, GL_ONE_MINUS_SRC_ALPHA = 0x0303, GL_ZERO = 0, GL_DST_COLOR = 0x0306,
             GL_ALWAYS = 0x0207, GL_BACK = 0x0405, GL_CCW = 0x0901, GL_CULL_FACE = 0x0B44, GL_FRONT_AND_BACK = 0x0408, GL_LINE = 0x1B01, GL_FILL = 0x1B02, GL_DEPTH_TEST = 0x0B71, GL_BLEND = 0x0BE2,
             GL_SCISSOR_TEST = 0x0C11, GL_UNPACK_ALIGNMENT = 0x0CF5, GL_PACK_ALIGNMENT = 0x0D05, GL_TEXTURE_2D = 0x0DE1, GL_UNSIGNED_BYTE = 0x1401,
             GL_FLOAT_ = 0x1406, GL_RGBA = 0x1908, GL_RGB = 0x1907, GL_R11F_G11F_B10F = 0x8C3A, GL_VERSION = 0x1F02, GL_NEAREST = 0x2600, GL_LINEAR = 0x2601, GL_TEXTURE_MAG_FILTER = 0x2800,
@@ -527,6 +527,18 @@ void main()
                 m_boundTexture = {};
             }
 
+            void blendFor(Blend blend)
+            {
+                if (blend == Blend::Multiply)
+                {
+                    gl.BlendFuncSeparate(GL_DST_COLOR, GL_ZERO, GL_ZERO, GL_ONE);
+                }
+                else
+                {
+                    gl.BlendFuncSeparate(GL_SRC_ALPHA, blend == Blend::Additive ? GL_ONE : GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+                }
+            }
+
             TextureInfo textureInfo(Texture handle) override
             {
                 const TextureSlot* t = m_textures.get(handle);
@@ -596,7 +608,7 @@ void main()
                 if (m_bound != draw.pipeline)
                 {
                     set(GL_BLEND, pipeline->blend != Blend::None);
-                    gl.BlendFuncSeparate(GL_SRC_ALPHA, pipeline->blend == Blend::Additive ? GL_ONE : GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+                    blendFor(pipeline->blend);
                     // With the test off, OpenGL also stops writing depth, so writes keep it on and always pass.
                     set(GL_DEPTH_TEST, pipeline->depthTest || pipeline->depthWrite);
                     gl.DepthFunc(pipeline->depthTest ? GL_LEQUAL : GL_ALWAYS);
@@ -727,7 +739,7 @@ void main()
                 if (!m_shadowing)
                 {
                     set(GL_BLEND, draw.blend != Blend::None);
-                    gl.BlendFuncSeparate(GL_SRC_ALPHA, draw.blend == Blend::Additive ? GL_ONE : GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+                    blendFor(draw.blend);
                     gl.DepthMask(draw.depthWrite);
                     set(GL_CULL_FACE, draw.cull == Cull::Back && !draw.lines);
                     if (draw.lines)

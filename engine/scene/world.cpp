@@ -101,6 +101,7 @@ namespace nx
     World::~World()
     {
         clear();
+        releaseLightMap();
         // References that scripts still hold must not look for this world any more.
         for (EntityRef* r = m_refs; r;)
         {
@@ -339,6 +340,7 @@ namespace nx
         removePart(m_colliders, Component::Collider, index);
         removePart(m_lifetimes, Component::Lifetime, index);
         removePart(m_emitters, Component::Emitter, index);
+        removePart(m_lights, Component::Light, index);
         m_space.removed(index);
         for (u32 b = e.behaviour; b != kNone;)
         {
@@ -520,6 +522,23 @@ namespace nx
     }
 
     // --- Components ---
+
+    Light2* World::light(u32 id)
+    {
+        Light2 fresh = {};
+        fresh.color = { 1, 1, 1, 1 };
+        fresh.radius = 100;
+        return getOrAdd(m_lights, Component::Light, id, fresh);
+    }
+
+    void World::removeLight(u32 id)
+    {
+        const Entity* e = find(id);
+        if (e && e->parts[static_cast<size_t>(Component::Light)] != kNone)
+        {
+            removePart(m_lights, Component::Light, id & ((1u << kIndexBits) - 1));
+        }
+    }
 
     Visual* World::visual(u32 id)
     {
@@ -1526,6 +1545,7 @@ namespace nx
         m_stats.drawn = 0;
         gpu::Blend blend = gpu::Blend::Alpha;
         canvas.setBlend(blend);
+        bool lit = !lightingOn() || first > m_lightLayer;
         for (const DrawItem& item : m_drawList)
         {
             const int layer = static_cast<int>(item.key >> 48) - 32768;
@@ -1536,6 +1556,13 @@ namespace nx
             if (layer > last)
             {
                 break;
+            }
+            if (!lit && layer > m_lightLayer)
+            {
+                drawLights(canvas, view);
+                lit = true;
+                blend = gpu::Blend::Alpha;
+                canvas.setBlend(blend);
             }
             const gpu::Blend wanted = item.kind == 0 ? m_visuals[item.index].blend : item.kind == 1 ? m_styles[item.index].blend : gpu::Blend::Alpha;
             if (wanted != blend)
@@ -1555,6 +1582,11 @@ namespace nx
             {
                 drawMap(canvas, m_maps[item.index], view);
             }
+        }
+        if (!lit && last >= m_lightLayer)
+        {
+            drawLights(canvas, view);
+            canvas.setBlend(gpu::Blend::Alpha);
         }
         canvas.pop();
     }

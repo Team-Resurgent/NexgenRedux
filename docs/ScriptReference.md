@@ -151,6 +151,7 @@ How drawing combines with what is there.
 | `BlendNone` | Replaces it. |
 | `BlendAlpha` | Covers it, by alpha. |
 | `BlendAdd` | Adds light to it. |
+| `BlendMultiply` | Darkens it by the colour: white leaves it as it was. For shading, and maps of light. |
 
 ## Filter
 
@@ -540,6 +541,8 @@ A script on an entity. Write a class that comes from it and any of these methods
 | `void circle(float radius, uint group = 0, uint hits = 0)` | Gives it a round collider in a group from 0 to 15. hits has a bit for each group it wants to know about: 1 << group. |
 | `void box(float w, float h, uint group = 0, uint hits = 0)` | The same with a box, which turns with it. |
 | `bool get_wall() const property` | Whether others stop at its collider. |
+| `bool get_occluder() const property` | Whether its collider casts shadows from lights on the plane. |
+| `void set_occluder(bool) property` | Makes its collider, a box or a circle, cast shadows from lights on the plane, as solid tiles do. It needs a collider first. |
 | `void set_wall(bool) property` | Makes solid and rigid bodies stop at its collider. |
 | `int get_group() const property` | Its collider's group, or -1. |
 | `uint get_hits() const property` | The groups it wants to know about, a bit for each. |
@@ -572,6 +575,10 @@ Entities that move, collide and are drawn by the engine. Each screen has its own
 | `Entity@ Scene::raycast(const Vec2 &in from, const Vec2 &in to, Vec2 &out hit, uint groups = 0xFFFF)` | The first collider on a line, and where, or null. |
 | `Vec2 Scene::get_gravity() property` | What pulls on those that feel it. |
 | `void Scene::set_gravity(const Vec2 &in) property` | Units a second, each second. |
+| `Color Scene::get_ambient() property` | The light everywhere, before lights add to it. White, as it starts, is no lighting at all; anything darker turns lighting on, so that entities' lights show and solid tiles and occluders cast shadows. |
+| `void Scene::set_ambient(const Color &in) property` | The light everywhere, before lights add to it: Color(0.1f, 0.1f, 0.2f) is a dark night. |
+| `int Scene::get_lightLayer() property` | Layers above this one are drawn after the lighting, as they are: glows, sparks, and what is shown over the world. All of them are lit unless it is set. |
+| `void Scene::set_lightLayer(int) property` | Layers above this one are drawn after the lighting, as they are. |
 | `void Scene::burst(const string &in particles, const Vec2 &in position, uint count)` | Throws out some particles. |
 | `bool Scene::join(Entity@+ a, Entity@+ b, const Vec2 &in at, float softness = 0)` | Pins two rigid bodies together at a place; null for b pins to the scene. |
 | `bool Scene::path(const Vec2 &in from, const Vec2 &in to, array<Vec2>@+ way, bool diagonal = true)` | The way from one place to another round the solid tiles of the maps, on the grid of the last: its corners, made as straight as it can be, ending at `to`. Diagonally too unless told not to, but never across a corner. False if there is none. |
@@ -622,7 +629,7 @@ Entities that move, collide and are drawn by the engine. Each screen has its own
 | `bool get_shadow() const property` | Whether it casts one. |
 | `void set_shadow(bool) property` | Whether it casts one. |
 | `uint get_detail() const property` | The level it was last drawn at: 0 is all of it, 2 the least. |
-| `void light(const Color &in color, float range)` | Lights what is within so many metres. |
+| `void light(const Color &in color, float range)` | Lights what is near it: in space, what is within so many metres; on the plane, so many units round it, fading to nothing, with shadows behind solid tiles and occluders, while Scene::ambient isn't white. A range of 0 puts out a light on the plane. |
 | `bool attach(Entity@+ parent, const string &in bone)` | Moves with one of the parent's model's bones, by name, as a hand holds a sword or a head wears a hat: its place, turn and size are then from that bone, and it follows every animation. False if either isn't in space. |
 | `uint get_bones() const property` | How many bones its model has, once it has come. |
 | `string bone(uint index) const` | The name of one. |

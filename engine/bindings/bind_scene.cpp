@@ -325,6 +325,18 @@ namespace nx
             }
         }
         bool entityTouching(const EntityRef* other, EntityRef* e) { return other && e->world && (e->world->touching(e->id, other->id) || e->world->space().touching(e->id, other->id)); }
+        void setOccluder(bool v, EntityRef* e)
+        {
+            if (Collider* c = e->world ? e->world->getCollider(e->id) : nullptr)
+            {
+                c->occluder = v;
+            }
+        }
+        bool getOccluder(const EntityRef* e)
+        {
+            const Collider* c = e->world ? e->world->getCollider(e->id) : nullptr;
+            return c && c->occluder;
+        }
         bool getWall(const EntityRef* e)
         {
             const Collider3* s = collider3Of(e);
@@ -435,6 +447,10 @@ namespace nx
         }
         Vec2 sceneGetGravity() { return world().gravity(); }
         void sceneGravity(const Vec2& g) { world().setGravity(g); }
+        Color sceneAmbient() { return world().ambient(); }
+        void sceneSetAmbient(const Color& c) { world().setAmbient(c); }
+        int sceneLightLayer() { return world().lightLayer(); }
+        void sceneSetLightLayer(int layer) { world().setLightLayer(layer); }
         void sceneBurst(const std::string& name, const Vec2& at, u32 count)
         {
             if (!world().burst(name.c_str(), at, count))
@@ -545,6 +561,8 @@ namespace nx
         b.method("void circle(float radius, uint group = 0, uint hits = 0)", NX_OBJ_LAST(entityCircle), "Gives it a round collider in a group from 0 to 15. hits has a bit for each group it wants to know about: 1 << group.");
         b.method("void box(float w, float h, uint group = 0, uint hits = 0)", NX_OBJ_LAST(entityBox), "The same with a box, which turns with it.");
         b.method("bool get_wall() const property", NX_OBJ_LAST(getWall), "Whether others stop at its collider.");
+        b.method("bool get_occluder() const property", NX_OBJ_LAST(getOccluder), "Whether its collider casts shadows from lights on the plane.");
+        b.method("void set_occluder(bool) property", NX_OBJ_LAST(setOccluder), "Makes its collider, a box or a circle, cast shadows from lights on the plane, as solid tiles do. It needs a collider first.");
         b.method("void set_wall(bool) property", NX_OBJ_LAST(setWall), "Makes solid and rigid bodies stop at its collider.");
         b.method("int get_group() const property", NX_OBJ_LAST(getGroup), "Its collider's group, or -1.");
         b.method("uint get_hits() const property", NX_OBJ_LAST(getHits), "The groups it wants to know about, a bit for each.");
@@ -573,6 +591,10 @@ namespace nx
         b.function("Entity@ raycast(const Vec2 &in from, const Vec2 &in to, Vec2 &out hit, uint groups = 0xFFFF)", NX_FN(sceneRaycast), "The first collider on a line, and where, or null.");
         b.function("Vec2 get_gravity() property", NX_FN(sceneGetGravity), "What pulls on those that feel it.");
         b.function("void set_gravity(const Vec2 &in) property", NX_FN(sceneGravity), "Units a second, each second.");
+        b.function("Color get_ambient() property", NX_FN(sceneAmbient), "The light everywhere, before lights add to it. White, as it starts, is no lighting at all; anything darker turns lighting on, so that entities' lights show and solid tiles and occluders cast shadows.");
+        b.function("void set_ambient(const Color &in) property", NX_FN(sceneSetAmbient), "The light everywhere, before lights add to it: Color(0.1f, 0.1f, 0.2f) is a dark night.");
+        b.function("int get_lightLayer() property", NX_FN(sceneLightLayer), "Layers above this one are drawn after the lighting, as they are: glows, sparks, and what is shown over the world. All of them are lit unless it is set.");
+        b.function("void set_lightLayer(int) property", NX_FN(sceneSetLightLayer), "Layers above this one are drawn after the lighting, as they are.");
         b.function("void burst(const string &in particles, const Vec2 &in position, uint count)", NX_FN(sceneBurst), "Throws out some particles.");
         b.function("bool join(Entity@+ a, Entity@+ b, const Vec2 &in at, float softness = 0)", NX_FN(sceneJoin), "Pins two rigid bodies together at a place; null for b pins to the scene.");
         b.function("bool path(const Vec2 &in from, const Vec2 &in to, array<Vec2>@+ way, bool diagonal = true)", NX_FN(scenePath), "The way from one place to another round the solid tiles of the maps, on the grid of the last: its corners, made as straight as it can be, ending at `to`. Diagonally too unless told not to, but never across a corner. False if there is none.");

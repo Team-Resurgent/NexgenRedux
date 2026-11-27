@@ -1145,8 +1145,8 @@ namespace nx::gpu
                 m_device->SetRenderState(D3DRS_CULLMODE, draw.cull == Cull::Back ? D3DCULL_CW : D3DCULL_NONE);
                 m_device->SetRenderState(D3DRS_ZWRITEENABLE, draw.depthWrite);
                 m_device->SetRenderState(D3DRS_ALPHABLENDENABLE, draw.blend != Blend::None);
-                m_device->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
-                m_device->SetRenderState(D3DRS_DESTBLEND, draw.blend == Blend::Additive ? D3DBLEND_ONE : D3DBLEND_INVSRCALPHA);
+                m_device->SetRenderState(D3DRS_SRCBLEND, draw.blend == Blend::Multiply ? D3DBLEND_DESTCOLOR : D3DBLEND_SRCALPHA);
+                m_device->SetRenderState(D3DRS_DESTBLEND, draw.blend == Blend::Additive ? D3DBLEND_ONE : draw.blend == Blend::Multiply ? D3DBLEND_ZERO : D3DBLEND_INVSRCALPHA);
                 // Cut out where the picture is clear. The wind's bending needs a vertex shader, so here it stays still.
                 m_device->SetRenderState(D3DRS_ALPHATESTENABLE, draw.cutout > 0);
                 if (draw.cutout > 0)
@@ -2181,8 +2181,8 @@ namespace nx::gpu
                 m_device->SetRenderState(D3DRS_ZWRITEENABLE, desc.depthWrite);
                 m_device->SetRenderState(D3DRS_ALPHABLENDENABLE, desc.blend != Blend::None);
                 m_device->SetRenderState(D3DRS_BLENDOP, D3DBLENDOP_ADD);
-                m_device->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
-                m_device->SetRenderState(D3DRS_DESTBLEND, desc.blend == Blend::Additive ? D3DBLEND_ONE : D3DBLEND_INVSRCALPHA);
+                m_device->SetRenderState(D3DRS_SRCBLEND, desc.blend == Blend::Multiply ? D3DBLEND_DESTCOLOR : D3DBLEND_SRCALPHA);
+                m_device->SetRenderState(D3DRS_DESTBLEND, desc.blend == Blend::Additive ? D3DBLEND_ONE : desc.blend == Blend::Multiply ? D3DBLEND_ZERO : D3DBLEND_INVSRCALPHA);
             }
 
             IDirect3D8* m_d3d = nullptr;

@@ -741,6 +741,7 @@ namespace nx
             b.enumValue("BlendNone", static_cast<int>(gpu::Blend::None), "Replaces it.");
             b.enumValue("BlendAlpha", static_cast<int>(gpu::Blend::Alpha), "Covers it, by alpha.");
             b.enumValue("BlendAdd", static_cast<int>(gpu::Blend::Additive), "Adds light to it.");
+            b.enumValue("BlendMultiply", static_cast<int>(gpu::Blend::Multiply), "Darkens it by the colour: white leaves it as it was. For shading, and maps of light.");
             b.enumType("Filter", "How images are scaled.");
             b.enumValue("FilterLinear", static_cast<int>(gpu::Filter::Linear), "Smoothly.");
             b.enumValue("FilterNearest", static_cast<int>(gpu::Filter::Nearest), "As sharp pixels.");

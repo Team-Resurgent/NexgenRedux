@@ -57,7 +57,7 @@ namespace nx
         m_assets = &assets;
         m_vertices = static_cast<gpu::Vertex*>(memAlloc(sizeof(gpu::Vertex) * kMaxVertices, MemTag::Frame));
         bool ok = m_vertices != nullptr;
-        for (u32 i = 0; i < 3; i++)
+        for (u32 i = 0; i < static_cast<u32>(gpu::Blend::Count); i++)
         {
             gpu::PipelineDesc desc;
             desc.blend = static_cast<gpu::Blend>(i);
@@ -154,6 +154,22 @@ namespace nx
         m_texture = {};
         design(m_pixelWidth, m_pixelHeight);
         return true;
+    }
+
+    void Canvas::getTransform(float (&m)[6]) const
+    {
+        for (u32 i = 0; i < 6; i++)
+        {
+            m[i] = m_state.m[i];
+        }
+    }
+
+    void Canvas::setTransform(const float (&m)[6])
+    {
+        for (u32 i = 0; i < 6; i++)
+        {
+            m_state.m[i] = m[i];
+        }
     }
 
     void Canvas::endTarget()

@@ -23,7 +23,8 @@ namespace nx::gpu
     static_assert(sizeof(Vertex) == 24);
 
     enum class Topology : u8 { Triangles, Lines };
-    enum class Blend : u8 { None, Alpha, Additive };
+    // Multiply darkens what is there by the colour: for light maps and shading. Its alpha leaves what is there as it was.
+    enum class Blend : u8 { None, Alpha, Additive, Multiply, Count };
     enum class Cull : u8 { None, Back };
     enum class Filter : u8 { Linear, Nearest };
 

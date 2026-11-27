@@ -275,9 +275,27 @@ namespace nx
         void setShadow(bool v, EntityRef* e) { if (Appearance* a = lookOf(e)) a->casts = v; }
         u32 getDetail(const EntityRef* e) { const Appearance* a = e->world ? e->world->space().getAppearance(e->id) : nullptr; return a ? a->detail : 0; }
         void entityEffect(EffectUse* effect, EntityRef* e) { if (e->world) e->world->space().setEffect(e->id, effect); }
+        // In space it lights what is within so many metres; on the plane, so many units round it.
         void entityLight(const Color& color, float range, EntityRef* e)
         {
-            if (Light3* l = e->world ? e->world->space().light(e->id) : nullptr)
+            if (e->world == nullptr)
+            {
+                return;
+            }
+            if (e->world->space().getSpatial(e->id) == nullptr)
+            {
+                if (range <= 0)
+                {
+                    e->world->removeLight(e->id);
+                }
+                else if (Light2* l = e->world->light(e->id))
+                {
+                    l->color = color;
+                    l->radius = range;
+                }
+                return;
+            }
+            if (Light3* l = e->world->space().light(e->id))
             {
                 l->color = color;
                 l->range = range > 0.01f ? range : 0.01f;
@@ -664,7 +682,7 @@ namespace nx
         b.method("bool get_shadow() const property", NX_OBJ_LAST(getShadow), "Whether it casts one.");
         b.method("void set_shadow(bool) property", NX_OBJ_LAST(setShadow), "Whether it casts one.");
         b.method("uint get_detail() const property", NX_OBJ_LAST(getDetail), "The level it was last drawn at: 0 is all of it, 2 the least.");
-        b.method("void light(const Color &in color, float range)", NX_OBJ_LAST(entityLight), "Lights what is within so many metres.");
+        b.method("void light(const Color &in color, float range)", NX_OBJ_LAST(entityLight), "Lights what is near it: in space, what is within so many metres; on the plane, so many units round it, fading to nothing, with shadows behind solid tiles and occluders, while Scene::ambient isn't white. A range of 0 puts out a light on the plane.");
         b.method("bool attach(Entity@+ parent, const string &in bone)", NX_OBJ_LAST(entityAttachBone), "Moves with one of the parent's model's bones, by name, as a hand holds a sword or a head wears a hat: its place, turn and size are then from that bone, and it follows every animation. False if either isn't in space.");
         b.method("uint get_bones() const property", NX_OBJ_LAST(entityBones), "How many bones its model has, once it has come.");
         b.method("string bone(uint index) const", NX_OBJ_LAST(entityBone), "The name of one.");

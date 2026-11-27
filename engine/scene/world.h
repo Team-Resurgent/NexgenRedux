@@ -79,6 +79,7 @@ namespace nx
         Shape shape;
         u8 group;
         bool wall;          // doesn't move; solid and rigid bodies are stopped by it
+        bool occluder;      // casts shadows from lights on the plane
         u16 hits;           // groups it wants to know about
         float halfWidth, halfHeight;  // a circle's radius is halfWidth
     };
@@ -120,7 +121,15 @@ namespace nx
         float rate, owed;
     };
 
-    enum class Component : u8 { Visual, Animation, Body, Collider, Lifetime, Emitter, Count };
+    // A light on the plane: what is within its radius is lit, fading to nothing at the edge, where nothing is in the way.
+    struct Light2
+    {
+        u32 owner;
+        Color color;
+        float radius;
+    };
+
+    enum class Component : u8 { Visual, Animation, Body, Collider, Lifetime, Emitter, Light, Count };
 
     // A thing that can be made again and again, read from a file.
     struct Prefab
@@ -235,6 +244,18 @@ namespace nx
         Body* getBody(u32 id) { return get(m_bodies, Component::Body, id); }
         Collider* getCollider(u32 id) { return get(m_colliders, Component::Collider, id); }
         Lifetime* getLifetime(u32 id) { return get(m_lifetimes, Component::Lifetime, id); }
+        Light2* light(u32 id);
+        Light2* getLight(u32 id) { return get(m_lights, Component::Light, id); }
+        void removeLight(u32 id);
+
+        // --- Lights on the plane (lights2d.cpp) ---
+        // Lighting is on while the ambient light isn't white: everything drawn is darkened to it, and lights add to it.
+        void setAmbient(const Color& color) { m_ambient = color; }
+        Color ambient() const { return m_ambient; }
+        // Layers above this one are drawn after the light, as they are: glows, sparks, what is shown over the world.
+        void setLightLayer(int layer) { m_lightLayer = layer; }
+        int lightLayer() const { return m_lightLayer; }
+        bool lightingOn() const { return m_ambient.r < 0.999f || m_ambient.g < 0.999f || m_ambient.b < 0.999f; }
 
         // Takes a reference to the asset, letting go of the one before.
         void setLook(u32 id, Look look, Asset* asset);
@@ -538,6 +559,15 @@ namespace nx
         GrowArray<Collider> m_colliders;
         GrowArray<Lifetime> m_lifetimes;
         GrowArray<Emitter> m_emitters;
+        GrowArray<Light2> m_lights;
+        Color m_ambient = { 1, 1, 1, 1 };
+        int m_lightLayer = 32767;
+        Asset* m_lightMap = nullptr;            // a picture the size of the screen, made when first wanted
+        GrowArray<Vec2> m_lightEdges;           // pairs: what is in the way of a light, found again each frame
+        GrowArray<float> m_lightAngles;
+        void drawLights(Canvas& canvas, const float (&view)[4]);
+        void lightEdges(const float (&box)[4]);
+        void releaseLightMap();
         GrowArray<Behaviour> m_behaviours;
         u32 m_freeBehaviour = kNone;
         u32 m_unstarted = 0;

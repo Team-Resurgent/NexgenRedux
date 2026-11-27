@@ -89,6 +89,30 @@ one blend mode goes to the GPU together, so sort by image where you can.
 `[/u]` or `[/s]`, and `[[` for a bracket itself. Colours are names (white, black, red, green, blue, yellow, orange, pink, purple,
 cyan, gray) or `#rrggbb`. It wraps as `paragraph` does, and `richHeight` says how tall it will be.
 
+### Polygons, paths, meshes and masks
+
+`polygon` fills up to 256 corners, either way round and concave too, as long as its sides don't cross; `polygonLine` is its
+outline and `polyline` lines through points, both mitred where they turn and bevelled where that would be sharp. `ellipse` and
+`ellipseLine` are circles stretched.
+
+`mesh` draws triangles of a picture: a point and where in the picture it comes from (`uvs`, 0 to 1 across it) for each corner,
+three indices to a triangle, or a fan from the first point without them. A colour for each point tints it, and with no picture it
+is coloured triangles. A flag that waves, cloth, water, a picture wrapped round a shape.
+
+A mask hides what is drawn outside a shape, or inside it:
+
+```cpp
+c.mask();                                         // what is drawn now marks the mask, and isn't seen
+c.circle(spot.x, spot.y, 80, White);
+c.text(font, "NEXGEN", 640, 300, White, AlignCenter);   // text and pictures mark their shapes, not their squares
+c.masked();                                       // only what is inside it is seen; masked(false) for outside
+c.image(scene, 0, 0, 1280, 720);
+c.unmask();
+```
+
+Each `mask()` starts a new one. A mask doesn't last into or out of a picture being drawn into, or into the next frame. On every
+GPU; the Paths and Masks demo has them all.
+
 ### Pictures to draw into
 
 `Assets::picture(width, height)` makes a blank picture of its own. Between `c.beginPicture(picture)` and `c.endPicture()`,
@@ -113,6 +137,25 @@ void draw(Canvas@ c)
 
 A minimap, a screen in a room, a mirror, or something drawn once and shown many times. One is drawn into at a time; effects,
 bloom and grading are for the screen. Up to 2048 pixels a side, and 1024 on the original Xbox; the Pictures demo has one.
+
+### Pixels
+
+`Pixels` is a picture a script reads and writes one pixel at a time: made blank, read from a file with `Assets::pixels`, or the
+last frame shown with `App::screenshot()`. Its `texture` draws it, sent to the GPU again when a pixel has changed:
+
+```cpp
+Pixels@ board = Pixels(96, 54, Black);
+board.set(10, 4, Yellow);
+Color under = board.get(10, 4);
+c.filter = FilterNearest;                          // sharp, drawn ten times as big
+c.image(board.texture, 0, 0, 960, 540);
+
+Pixels@ shot = App::screenshot();                  // in update(), not draw(); null on the Xbox 360
+if (shot !is null) shot.save("saved:shot.png");    // a PNG with the saves; Assets::pixels("saved:shot.png") reads it
+```
+
+`paste` puts one on another, `copy` makes another, and `png()` is the PNG file in a string, to send. Up to 2048 a side. The Life
+demo draws Conway's Life this way.
 
 ## Scenes
 
@@ -241,6 +284,29 @@ there for drawing of your own, too.
 There are two kinds. A **solid** body is stopped by walls and tiles and never turns: use it for characters, with `onGround`,
 `onWall` and `onCeiling`. A body with **mass** is rigid: it pushes, stacks, bounces and turns. `Scene::join` pins two together, for
 chains, hinges and wheels.
+
+A collider is a `circle`, a `box`, a convex `polygon` of up to 8 corners (made convex if it isn't), or a `chain`: lines through
+up to 256 points that never move, for ground with hills and slopes, hit from either side. Characters stand on a chain's gentle
+parts, walk up and down them, and are stopped by its steep ones; to them a polygon is the box around it. A wall with `oneWay` is
+solid only from above: what is under it jumps up through it and lands on it, characters and rigid bodies alike.
+
+Joints hold rigid bodies together, or to the scene where the second is null. Bodies joined together pass through each other:
+
+```cpp
+Scene::hinge(wheel, car, wheel.position);                  // turns freely
+Scene::hinge(door, null, hingePlace, -80, 80);             // between two angles, in degrees
+Scene::motor(wheel, 700, 4e4f);                            // driven: degrees a second, and how strongly
+Scene::weld(a, b, between);                                // as one
+Scene::rope(lamp, null, lamp.position, hook, 120);         // no further apart than a length
+Scene::spring(bob, null, bob.position, hook, 2, 0.2f);     // bounces twice a second, settling slowly
+Scene::slider(lift, null, lift.position, Vec2(0, 1), -200, 0);   // along a line, between two places
+Scene::drag(rock, mouse);                                  // pulled softly, as a hand would; dragTo moves it on
+Scene::unjoin(rock);                                       // every joint it is in
+```
+
+`Scene::contact(a, b, at, normal, impulse)` says whether two touched in the last step, where, which way and how hard: for a knock
+as loud as the hit, or sparks where it was. The Contraptions demo has a car on hills, a lamp on a spring, a weight on a rope,
+a block on a rail, a door, and platforms that balls come up through.
 
 ## Three dimensions
 
@@ -1099,6 +1165,29 @@ Assets::write("asset:level.json", j.write());
 `Assets::write` writes only a screen's own `asset:` files that end in `.json`. With `--dev` it is the file in the media; otherwise
 it is kept with the saves, on consoles too, and `Assets::read` and `Space::load` read that one from then on. `Assets::forget` goes
 back to the one that came with the screen.
+
+### Bytes
+
+A string holds any bytes, and `Data` works on them: `compress` and `uncompress` in zlib's format, which most languages read;
+`md5`, `sha1` and `sha256`, fingerprints as hex digits; `base64` and `unbase64`, `hex` and `unhex`, to carry bytes as text.
+
+```cpp
+string packed = Data::base64(Data::compress(level.write()));   // small enough to share as a code
+string sum = Data::sha256(Assets::read("asset:level.json"));  // has it changed?
+```
+
+### Random numbers from a seed
+
+`random()` and `randomInt` share one generator. A `Random` is one of a script's own: the same seed gives the same numbers in the
+same order on every machine, for a world made from a number, a replay, or the same deal twice. `normal(mean, deviation)` is mostly
+near the mean and seldom far from it, in a bell curve; `randomNormal` is the same from the shared one. `state` is where it has got
+to, as text to keep in a save and give back.
+
+```cpp
+Random r(seed);
+float height = r.normal(1.7f, 0.1f);
+int card = r.randomInt(0, 51);
+```
 
 ## On the original Xbox
 

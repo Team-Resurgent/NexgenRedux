@@ -296,6 +296,34 @@ namespace nx
         }
         void entityCircle(float r, u32 group, u32 hits, EntityRef* e) { collide(e, Shape::Circle, r, r, group, hits); }
         void entityBox(float w, float h, u32 group, u32 hits, EntityRef* e) { collide(e, Shape::Box, w * 0.5f, h * 0.5f, group, hits); }
+        void entityPolygon(const CScriptArray* points, u32 group, u32 hits, EntityRef* e)
+        {
+            Vec2 p[64];
+            const u32 n = copyArray(points, p, 64);
+            if (group >= kGroups)
+            {
+                scriptError("groups are 0 to 15");
+            }
+            else if (!e->world || !e->world->setPolygon(e->id, p, n, group, hits))
+            {
+                scriptError("a polygon needs three corners or more, not all in a line");
+            }
+        }
+        void entityChain(const CScriptArray* points, bool loop, u32 group, u32 hits, EntityRef* e)
+        {
+            Vec2 p[256];
+            const u32 n = points && points->GetSize() <= 256 ? copyArray(points, p, 256) : 0;
+            if (group >= kGroups)
+            {
+                scriptError("groups are 0 to 15");
+            }
+            else if (!e->world || n < 2 || !e->world->setChain(e->id, p, n, loop, group, hits))
+            {
+                scriptError("a chain needs 2 to 256 points");
+            }
+        }
+        bool getOneWay(const EntityRef* e) { const Collider* c = e->world ? e->world->getCollider(e->id) : nullptr; return c && c->oneWay; }
+        void setOneWay(bool v, EntityRef* e) { if (Collider* c = e->world ? e->world->getCollider(e->id) : nullptr) c->oneWay = v; }
         void setWall(bool v, EntityRef* e)
         {
             if (Collider3* s = collider3Of(e))
@@ -461,6 +489,31 @@ namespace nx
             }
         }
         bool sceneJoin(const EntityRef* a, const EntityRef* b, const Vec2& at, float softness) { return a && world().join(a->id, b ? b->id : 0, at, softness); }
+        u32 idOrZero(const EntityRef* e) { return e ? e->id : 0; }
+        bool sceneHinge(const EntityRef* a, const EntityRef* b, const Vec2& at, float low, float high, float speed, float torque)
+        {
+            return a && world().hinge(a->id, idOrZero(b), at, low, high, speed, torque);
+        }
+        bool sceneWeld(const EntityRef* a, const EntityRef* b, const Vec2& at) { return a && world().weld(a->id, idOrZero(b), at); }
+        bool sceneRope(const EntityRef* a, const EntityRef* b, const Vec2& atA, const Vec2& atB, float length) { return a && world().rope(a->id, idOrZero(b), atA, atB, length); }
+        bool sceneSpring(const EntityRef* a, const EntityRef* b, const Vec2& atA, const Vec2& atB, float frequency, float damping, float length)
+        {
+            return a && world().spring(a->id, idOrZero(b), atA, atB, frequency, damping, length);
+        }
+        bool sceneSlider(const EntityRef* a, const EntityRef* b, const Vec2& at, const Vec2& axis, float low, float high)
+        {
+            return a && world().slider(a->id, idOrZero(b), at, axis, low, high);
+        }
+        bool sceneDrag(const EntityRef* a, const Vec2& at, float strength) { return a && world().drag(a->id, at, strength); }
+        void sceneDragTo(const EntityRef* a, const Vec2& to) { if (a) world().dragTo(a->id, to); }
+        void sceneMotor(const EntityRef* a, float speed, float torque) { if (a) world().setMotor(a->id, speed, torque); }
+        void sceneUnjoin(const EntityRef* a) { if (a) world().unjoin(a->id); }
+        bool sceneContact(const EntityRef* a, const EntityRef* b, Vec2& at, Vec2& normal, float& impulse)
+        {
+            at = normal = {};
+            impulse = 0;
+            return a && b && world().contact(a->id, b->id, at, normal, impulse);
+        }
         bool scenePath(const Vec2& from, const Vec2& to, CScriptArray* out, bool diagonal)
         {
             GrowArray<Vec2> way;
@@ -563,6 +616,10 @@ namespace nx
 
         b.method("void circle(float radius, uint group = 0, uint hits = 0)", NX_OBJ_LAST(entityCircle), "Gives it a round collider in a group from 0 to 15. hits has a bit for each group it wants to know about: 1 << group.");
         b.method("void box(float w, float h, uint group = 0, uint hits = 0)", NX_OBJ_LAST(entityBox), "The same with a box, which turns with it.");
+        b.method("void polygon(const array<Vec2> &in corners, uint group = 0, uint hits = 0)", NX_OBJ_LAST(entityPolygon), "The same with a convex polygon, around its place, which turns and grows with it: up to 8 corners, made convex if they aren't. A rigid body of any shape: a wedge, a rock, a car's body.");
+        b.method("void chain(const array<Vec2> &in points, bool loop = false, uint group = 0, uint hits = 0)", NX_OBJ_LAST(entityChain), "Lines through up to 256 points, around its place, that never move: ground with slopes and hills, a curved ramp, the inside of a bowl if loop. Bodies hit them from either side; characters stand on them and walk up their gentle parts, and are stopped by the steep ones.");
+        b.method("bool get_oneWay() const property", NX_OBJ_LAST(getOneWay), "Whether a wall is solid only from above.");
+        b.method("void set_oneWay(bool) property", NX_OBJ_LAST(setOneWay), "Makes a wall solid only from above, as a platform that what is under it can jump up through and land on: for characters and rigid bodies alike.");
         b.method("bool get_wall() const property", NX_OBJ_LAST(getWall), "Whether others stop at its collider.");
         b.method("bool get_occluder() const property", NX_OBJ_LAST(getOccluder), "Whether its collider casts shadows from lights on the plane.");
         b.method("void set_occluder(bool) property", NX_OBJ_LAST(setOccluder), "Makes its collider, a box or a circle, cast shadows from lights on the plane, as solid tiles do. It needs a collider first.");
@@ -602,6 +659,16 @@ namespace nx
         b.function("void set_lightLayer(int) property", NX_FN(sceneSetLightLayer), "Layers above this one are drawn after the lighting, as they are.");
         b.function("void burst(const string &in particles, const Vec2 &in position, uint count)", NX_FN(sceneBurst), "Throws out some particles.");
         b.function("bool join(Entity@+ a, Entity@+ b, const Vec2 &in at, float softness = 0)", NX_FN(sceneJoin), "Pins two rigid bodies together at a place; null for b pins to the scene.");
+        b.function("bool hinge(Entity@+ a, Entity@+ b, const Vec2 &in at, float low = 0, float high = 0, float motorSpeed = 0, float motorTorque = 0)", NX_FN(sceneHinge), "The same, with limits: a turns only between low and high degrees from how it is now, if low is less than high; and a motor that turns it at so many degrees a second, as strongly as its torque, if that isn't 0. A door, a flipper, a wheel that drives.");
+        b.function("bool weld(Entity@+ a, Entity@+ b, const Vec2 &in at)", NX_FN(sceneWeld), "Holds two together as one, turned as they are now; null for b holds a where it is.");
+        b.function("bool rope(Entity@+ a, Entity@+ b, const Vec2 &in atA, const Vec2 &in atB, float length = -1)", NX_FN(sceneRope), "A place on each no further apart than a length, as a rope: it pulls, never pushes. Below 0, as far apart as they are now.");
+        b.function("bool spring(Entity@+ a, Entity@+ b, const Vec2 &in atA, const Vec2 &in atB, float frequency = 3, float damping = 0.5, float length = -1)", NX_FN(sceneSpring), "A place on each pulled towards a length and pushed away from it: frequency is how many times a second it would bounce, damping from 0, bouncing on, to 1, settling at once. The same whatever their weight.");
+        b.function("bool slider(Entity@+ a, Entity@+ b, const Vec2 &in at, const Vec2 &in axis, float low = 0, float high = 0)", NX_FN(sceneSlider), "Lets a move only along a line through a place on b, which turns with b, without turning itself: a lift, a piston, a drawer. Between low and high along it, from where it is now, if low is less than high.");
+        b.function("bool drag(Entity@+ a, const Vec2 &in at, float strength = 5)", NX_FN(sceneDrag), "Pulls a place on a body towards a place in the scene, softly, as a hand would: for picking things up with the mouse. No harder than strength times its weight. Move it on with dragTo; let go with unjoin.");
+        b.function("void dragTo(Entity@+ a, const Vec2 &in place)", NX_FN(sceneDragTo), "Where a body's drag pulls towards now.");
+        b.function("void motor(Entity@+ a, float speed, float torque)", NX_FN(sceneMotor), "Changes the motor of a's hinges: degrees a second, and how strongly; 0 torque for none.");
+        b.function("void unjoin(Entity@+ a)", NX_FN(sceneUnjoin), "Every joint that a is in.");
+        b.function("bool contact(Entity@+ a, Entity@+ b, Vec2 &out at, Vec2 &out normal, float &out impulse)", NX_FN(sceneContact), "Whether two rigid bodies, or a body and a wall, touched in the last step: where, which way from a to b, and how hard they pressed. For a sound as loud as a knock, or sparks where it was."); 
         b.function("bool path(const Vec2 &in from, const Vec2 &in to, array<Vec2>@+ way, bool diagonal = true)", NX_FN(scenePath), "The way from one place to another round the solid tiles of the maps, on the grid of the last: its corners, made as straight as it can be, ending at `to`. Diagonally too unless told not to, but never across a corner. False if there is none.");
         b.function("bool blocked(const Vec2 &in place)", NX_FN(sceneBlocked), "Whether a solid tile is there, in any map.");
         b.function("uint tile(const Vec2 &in position)", NX_FN(sceneTile), "What the map has there: 0 is nothing.");

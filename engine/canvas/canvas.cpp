@@ -112,6 +112,7 @@ namespace nx
         m_depth = 0;
         m_overflowed = false;
         m_texture = {};
+        noMask();
         design(m_pixelWidth, m_pixelHeight);
     }
 
@@ -148,6 +149,7 @@ namespace nx
         s.offsetX = m_offsetX;
         s.offsetY = m_offsetY;
         m_inTarget = true;
+        noMask();
         const gpu::TextureInfo info = m_device->textureInfo(target.texture);
         m_pixelWidth = static_cast<float>(info.width);
         m_pixelHeight = static_cast<float>(info.height);
@@ -193,6 +195,7 @@ namespace nx
         m_offsetX = s.offsetX;
         m_offsetY = s.offsetY;
         m_texture = {};
+        noMask();
         m_assets->setFontScale(m_scale);
     }
 
@@ -397,10 +400,11 @@ namespace nx
 
     void Canvas::use(gpu::Texture texture, float uMax, float vMax)
     {
-        if (m_count && (texture != m_texture || m_state.blend != m_batchBlend || m_state.filter != m_batchFilter || !same(m_state.scissor, m_batchScissor)))
+        if (m_count && (texture != m_texture || m_state.blend != m_batchBlend || m_state.filter != m_batchFilter || !same(m_state.scissor, m_batchScissor) || m_stencil != m_batchStencil))
         {
             flush();
         }
+        m_batchStencil = m_stencil;
         m_texture = texture;
         m_uMax = uMax;
         m_vMax = vMax;
@@ -432,6 +436,10 @@ namespace nx
         draw.texture = m_texture;
         draw.filter = m_batchFilter;
         draw.scissor = m_batchScissor;
+        draw.stencil = m_batchStencil;
+        draw.stencilRef = m_stencilRef;
+        draw.clearStencil = m_clearStencil;
+        m_clearStencil = false;
         draw.transform = Mat4::ortho(0, m_pixelWidth, m_pixelHeight, 0, 0, 1);
         m_device->draw(draw);
         m_draws++;
@@ -635,6 +643,265 @@ namespace nx
     {
         use({}, 1, 1);
         addTriangle({ a.x, a.y, 0, 0, pack(ca) }, { b.x, b.y, 0, 0, pack(cb) }, { c.x, c.y, 0, 0, pack(cc) });
+    }
+
+    // --- Polygons, lines, ellipses and meshes ---
+
+    void Canvas::polygon(const Vec2* points, u32 count, const Color& color)
+    {
+        count = count < kMostPoints ? count : kMostPoints;
+        if (points == nullptr || count < 3)
+        {
+            return;
+        }
+        use({}, 1, 1);
+        const u32 c = pack(color);
+        float area = 0;
+        for (u32 i = 0; i < count; i++)
+        {
+            const Vec2 a = points[i], b = points[(i + 1) % count];
+            area += a.x * b.y - a.y * b.x;
+        }
+        // Ears cut off one at a time: a corner that turns the way the whole does, with no other corner inside it.
+        u16 left[kMostPoints];
+        for (u32 i = 0; i < count; i++)
+        {
+            left[i] = static_cast<u16>(i);
+        }
+        const float way = area < 0 ? -1.0f : 1.0f;
+        const auto cross = [](Vec2 o, Vec2 a, Vec2 b) { return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x); };
+        u32 n = count;
+        u32 tries = 0;
+        u32 i = 0;
+        while (n > 3 && tries < n)
+        {
+            const Vec2 a = points[left[(i + n - 1) % n]], b = points[left[i % n]], q = points[left[(i + 1) % n]];
+            bool ear = cross(a, b, q) * way > 0;
+            for (u32 k = 0; ear && k < n; k++)
+            {
+                const Vec2 p = points[left[k]];
+                if (k == (i + n - 1) % n || k == i % n || k == (i + 1) % n)
+                {
+                    continue;
+                }
+                ear = !(cross(a, b, p) * way >= 0 && cross(b, q, p) * way >= 0 && cross(q, a, p) * way >= 0);
+            }
+            if (ear)
+            {
+                addTriangle({ a.x, a.y, 0, 0, c }, { b.x, b.y, 0, 0, c }, { q.x, q.y, 0, 0, c });
+                for (u32 k = i % n; k + 1 < n; k++)
+                {
+                    left[k] = left[k + 1];
+                }
+                n--;
+                tries = 0;
+            }
+            else
+            {
+                i++;
+                tries++;
+            }
+        }
+        // The last, or what is left of one whose sides cross, as a fan.
+        for (u32 k = 1; k + 1 < n; k++)
+        {
+            const Vec2 a = points[left[0]], b = points[left[k]], q = points[left[k + 1]];
+            addTriangle({ a.x, a.y, 0, 0, c }, { b.x, b.y, 0, 0, c }, { q.x, q.y, 0, 0, c });
+        }
+    }
+
+    void Canvas::polyline(const Vec2* points, u32 count, float thickness, const Color& color, bool closed)
+    {
+        if (points == nullptr || thickness <= 0)
+        {
+            return;
+        }
+        Vec2 q[kMostPoints];
+        u32 n = 0;
+        for (u32 i = 0; i < count && n < kMostPoints; i++)
+        {
+            if (n == 0 || fabsf(points[i].x - q[n - 1].x) + fabsf(points[i].y - q[n - 1].y) > 1e-4f)
+            {
+                q[n++] = points[i];
+            }
+        }
+        if (closed && n > 2 && fabsf(q[n - 1].x - q[0].x) + fabsf(q[n - 1].y - q[0].y) <= 1e-4f)
+        {
+            n--;
+        }
+        closed = closed && n >= 3;
+        if (n < 2)
+        {
+            return;
+        }
+        use({}, 1, 1);
+        const u32 c = pack(color);
+        const float half = thickness * 0.5f;
+        const u32 segments = closed ? n : n - 1;
+        const auto normal = [&](u32 s) {
+            const Vec2 a = q[s % n], b = q[(s + 1) % n];
+            const float dx = b.x - a.x, dy = b.y - a.y, length = sqrtf(dx * dx + dy * dy);
+            return Vec2(-dy / length, dx / length);
+        };
+        // Where each line starts and ends, to either side.
+        Vec2 start[kMostPoints], finish[kMostPoints];
+        for (u32 j = 0; j < n; j++)
+        {
+            const bool end = !closed && (j == 0 || j == n - 1);
+            if (end)
+            {
+                const Vec2 m = normal(j == 0 ? 0 : n - 2);
+                start[j] = finish[j] = Vec2(m.x * half, m.y * half);
+                continue;
+            }
+            const Vec2 n0 = normal((j + n - 1) % n), n1 = normal(j);
+            Vec2 m(n0.x + n1.x, n0.y + n1.y);
+            const float length = sqrtf(m.x * m.x + m.y * m.y);
+            const float along = length > 1e-3f ? (m.x * n1.x + m.y * n1.y) / length : 0;
+            if (along > 0.5f)
+            {
+                // A mitre, no more than twice as far out as the line is thick.
+                const float out = half / (along * length);
+                start[j] = finish[j] = Vec2(m.x * out, m.y * out);
+                continue;
+            }
+            // Too sharp: each line squared off, and the outside corner filled.
+            finish[j] = Vec2(n0.x * half, n0.y * half);
+            start[j] = Vec2(n1.x * half, n1.y * half);
+            const Vec2 d1(q[(j + 1) % n].x - q[j].x, q[(j + 1) % n].y - q[j].y);
+            const float side = d1.x * n0.x + d1.y * n0.y > 0 ? -1.0f : 1.0f;
+            const Vec2 p = q[j];
+            addTriangle({ p.x, p.y, 0, 0, c }, { p.x + finish[j].x * side, p.y + finish[j].y * side, 0, 0, c }, { p.x + start[j].x * side, p.y + start[j].y * side, 0, 0, c });
+        }
+        for (u32 s = 0; s < segments; s++)
+        {
+            const u32 a = s, b = (s + 1) % n;
+            const Vec2 pa = q[a], pb = q[b], oa = start[a], ob = finish[b];
+            addQuad({ pa.x + oa.x, pa.y + oa.y, 0, 0, c }, { pb.x + ob.x, pb.y + ob.y, 0, 0, c }, { pb.x - ob.x, pb.y - ob.y, 0, 0, c }, { pa.x - oa.x, pa.y - oa.y, 0, 0, c });
+        }
+    }
+
+    namespace
+    {
+        // Points round an ellipse, as many as stay within a quarter of a pixel of it.
+        u32 ellipsePoints(const float* m, float x, float y, float rx, float ry, Vec2* out, u32 most)
+        {
+            const float radius = rx > ry ? rx : ry;
+            const float pixels = radius * sqrtf(fabsf(m[0] * m[3] - m[1] * m[2]));
+            const float side = pixels > 1 ? 2 * acosf(1 - 0.25f / pixels) : 1.5f;
+            u32 steps = static_cast<u32>(ceilf(2 * kPi / side));
+            steps = steps < 8 ? 8 : steps > most ? most : steps;
+            for (u32 i = 0; i < steps; i++)
+            {
+                const float a = 2 * kPi * static_cast<float>(i) / static_cast<float>(steps);
+                out[i] = Vec2(x + cosf(a) * rx, y + sinf(a) * ry);
+            }
+            return steps;
+        }
+    }
+
+    void Canvas::ellipse(float x, float y, float rx, float ry, const Color& color)
+    {
+        if (rx <= 0 || ry <= 0)
+        {
+            return;
+        }
+        Vec2 p[160];
+        const u32 n = ellipsePoints(m_state.m, x, y, rx, ry, p, 160);
+        use({}, 1, 1);
+        const u32 c = pack(color);
+        for (u32 i = 0; i < n; i++)
+        {
+            const Vec2 a = p[i], b = p[(i + 1) % n];
+            addTriangle({ x, y, 0, 0, c }, { a.x, a.y, 0, 0, c }, { b.x, b.y, 0, 0, c });
+        }
+    }
+
+    void Canvas::ellipseLine(float x, float y, float rx, float ry, float thickness, const Color& color)
+    {
+        if (rx <= 0 || ry <= 0)
+        {
+            return;
+        }
+        Vec2 p[160];
+        const u32 n = ellipsePoints(m_state.m, x, y, rx, ry, p, 160);
+        polyline(p, n, thickness, color, true);
+    }
+
+    void Canvas::mesh(const Asset* texture, const Vec2* points, const Vec2* uvs, const Color* colors, u32 count, const u32* indices, u32 indexCount, const Color& tint)
+    {
+        if (points == nullptr || count < 3)
+        {
+            return;
+        }
+        if (texture && texture->texture)
+        {
+            const gpu::TextureInfo info = m_device->textureInfo(texture->texture);
+            use(texture->texture, info.uMax, info.vMax);
+        }
+        else
+        {
+            use({}, 1, 1);
+        }
+        const auto corner = [&](u32 i) {
+            Color k = tint;
+            if (colors)
+            {
+                k = { k.r * colors[i].r, k.g * colors[i].g, k.b * colors[i].b, k.a * colors[i].a };
+            }
+            const Vec2 uv = uvs ? uvs[i] : Vec2(0, 0);
+            return Point{ points[i].x, points[i].y, uv.x, uv.y, pack(k) };
+        };
+        if (indices)
+        {
+            for (u32 i = 0; i + 2 < indexCount; i += 3)
+            {
+                if (indices[i] < count && indices[i + 1] < count && indices[i + 2] < count)
+                {
+                    addTriangle(corner(indices[i]), corner(indices[i + 1]), corner(indices[i + 2]));
+                }
+            }
+            return;
+        }
+        for (u32 i = 1; i + 1 < count; i++)
+        {
+            addTriangle(corner(0), corner(i), corner(i + 1));
+        }
+    }
+
+    // --- Masks ---
+
+    void Canvas::mask()
+    {
+        flush();
+        m_stencil = gpu::Stencil::Write;
+        if (m_stencilRef == 0 || m_stencilRef == 255)
+        {
+            // Started afresh: at first, and when the marks would come round again.
+            m_stencilRef = 1;
+            m_clearStencil = true;
+        }
+        else
+        {
+            m_stencilRef++;
+        }
+    }
+
+    void Canvas::masked(bool inside)
+    {
+        flush();
+        m_stencil = inside ? gpu::Stencil::Inside : gpu::Stencil::Outside;
+        if (m_stencilRef == 0)
+        {
+            m_stencilRef = 1;
+            m_clearStencil = true;
+        }
+    }
+
+    void Canvas::unmask()
+    {
+        flush();
+        m_stencil = gpu::Stencil::None;
     }
 
     // --- Images ---

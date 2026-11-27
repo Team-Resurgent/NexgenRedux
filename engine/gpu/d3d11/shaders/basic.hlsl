@@ -33,3 +33,11 @@ float4 psMain(VertexOut input) : SV_Target
 {
     return image.Sample(imageSampler, input.uv) * input.color;
 }
+
+// Marking a mask: only where it is more opaque than not, so text and pictures mark their shapes.
+float4 maskPs(VertexOut input) : SV_Target
+{
+    float4 color = image.Sample(imageSampler, input.uv) * input.color;
+    clip(color.a - 0.5);
+    return color;
+}

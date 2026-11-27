@@ -27,6 +27,9 @@ namespace nx::gpu
     enum class Blend : u8 { None, Alpha, Additive, Multiply, Count };
     enum class Cull : u8 { None, Back };
     enum class Filter : u8 { Linear, Nearest };
+    // A 2D draw and the stencil: Write marks where it covers with stencilRef and draws no colour; Inside and
+    // Outside draw only where the stencil is (or isn't) stencilRef.
+    enum class Stencil : u8 { None, Write, Inside, Outside };
 
     struct PipelineDesc
     {
@@ -70,6 +73,9 @@ namespace nx::gpu
         Filter filter = Filter::Linear;
         Scissor scissor;
         Mat4 transform;  // model to clip space
+        Stencil stencil = Stencil::None;
+        u8 stencilRef = 0;
+        bool clearStencil = false;  // the stencil of what is drawn into to 0 first, all of it
     };
 
     enum class PixelFormat : u8

@@ -13,7 +13,7 @@ import tempfile
 SHADERS = pathlib.Path(__file__).resolve().parent.parent / "gpu" / "d3d11" / "shaders"
 # Shader model 4.0 runs on feature level 10_0 and up.
 FILES = {
-    "basic": [("basicVs", "vsMain", "vs_4_0"), ("basicPs", "psMain", "ps_4_0")],
+    "basic": [("basicVs", "vsMain", "vs_4_0"), ("basicPs", "psMain", "ps_4_0"), ("maskPs", "maskPs", "ps_4_0")],
     "mesh": [("meshVs", "meshVs", "vs_4_0"), ("meshPs", "meshPs", "ps_4_0"), ("shadowVs", "shadowVs", "vs_4_0"),
              ("screenVs", "screenVs", "vs_4_0"), ("skyPs", "skyPs", "ps_4_0"), ("fieldPs", "fieldPs", "ps_4_0")],
     "post": [("blurPs", "blurPs", "ps_4_0"), ("gradePs", "gradePs", "ps_4_0"), ("occlusionPs", "occlusionPs", "ps_4_0"), ("occludePs", "occludePs", "ps_4_0"),

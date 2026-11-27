@@ -67,6 +67,23 @@ namespace nx
         void ring(float x, float y, float radius, float thickness, const Color& color);
         void arc(float x, float y, float radius, float thickness, float startDegrees, float endDegrees, const Color& color);
         void triangle(const Vec2& a, const Vec2& b, const Vec2& c, const Color& ca, const Color& cb, const Color& cc);
+        // Up to kMostPoints corners, either way round, concave too, as long as its sides don't cross.
+        void polygon(const Vec2* points, u32 count, const Color& color);
+        // Lines through the points, mitred where they meet (bevelled where that would be sharp); closed back to the first.
+        void polyline(const Vec2* points, u32 count, float thickness, const Color& color, bool closed = false);
+        void ellipse(float x, float y, float rx, float ry, const Color& color);
+        void ellipseLine(float x, float y, float rx, float ry, float thickness, const Color& color);
+        // Triangles of a picture (or of plain colour, with none): a corner each three indices, or a fan from the first
+        // point without them. uvs from 0 to 1 over the picture; colors, if there are, tint each corner.
+        void mesh(const Asset* texture, const Vec2* points, const Vec2* uvs, const Color* colors, u32 count, const u32* indices, u32 indexCount, const Color& tint);
+        static constexpr u32 kMostPoints = 256;
+
+        // Masks: what is drawn after mask() is not seen but marks where; after masked(), only what is inside that
+        // (or outside it) is seen; unmask() is back to everything. Each mask() starts a new one. A mask doesn't last
+        // into or out of a picture, or into the next frame.
+        void mask();
+        void masked(bool inside = true);
+        void unmask();
 
         // --- Images ---
 
@@ -174,6 +191,10 @@ namespace nx
         gpu::Blend m_batchBlend = gpu::Blend::Alpha;
         gpu::Filter m_batchFilter = gpu::Filter::Linear;
         gpu::Scissor m_batchScissor;
+        gpu::Stencil m_stencil = gpu::Stencil::None, m_batchStencil = gpu::Stencil::None;
+        u8 m_stencilRef = 0;
+        bool m_clearStencil = false;
+        void noMask() { m_stencil = gpu::Stencil::None; m_stencilRef = 0; m_clearStencil = false; }
         float m_uMax = 1, m_vMax = 1;
 
         float m_pixelWidth = 1, m_pixelHeight = 1;

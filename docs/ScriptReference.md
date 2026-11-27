@@ -250,6 +250,15 @@ What each colour of a picture becomes: warmer, colder, faded, harder. Settings, 
 | `void arc(float x, float y, float radius, float thickness, float from, float to, const Color &in color)` | Part of a ring, or a slice of a circle, between two angles in degrees. |
 | `void glow(float x, float y, float radius, const Color &in color)` | A round glow, fading to nothing at its edge. With BlendAdd it is light. |
 | `void triangle(const Vec2 &in a, const Vec2 &in b, const Vec2 &in c, const Color &in ca, const Color &in cb, const Color &in cc)` | A triangle with a colour at each corner. |
+| `void polygon(const array<Vec2> &in corners, const Color &in color)` | A filled polygon of up to 256 corners, either way round: concave ones too, as long as their sides don't cross. |
+| `void polygonLine(const array<Vec2> &in corners, float thickness, const Color &in color)` | A polygon's outline, with mitred corners. |
+| `void polyline(const array<Vec2> &in points, float thickness, const Color &in color)` | Lines through up to 256 points, joined with mitres where they meet (bevelled where that would be sharp): a path, a graph, a trail. |
+| `void ellipse(float x, float y, float rx, float ry, const Color &in color)` | A filled ellipse, so far across to each side and up and down. |
+| `void ellipseLine(float x, float y, float rx, float ry, float thickness, const Color &in color)` | An ellipse's outline. |
+| `void mesh(const Texture@+ texture, const array<Vec2> &in points, const array<Vec2> &in uvs, const Color &in tint = White, const array<uint>@+ triangles = null, const array<Color>@+ colors = null)` | Triangles of a picture, each corner a point and where in the picture it comes from (uvs, 0 to 1 across it): bent, stretched, torn. Three indices to a triangle, or a fan from the first point without them. A colour for each point, if given, tints it; null texture is plain colour. For a water surface, cloth, a picture wrapped round a shape. |
+| `void mask()` | What is drawn after this is not seen but marks out a mask: shapes, lines, text, images (all of each image's square). Each mask() starts a new mask. |
+| `void masked(bool inside = true)` | Then what is drawn is seen only inside the mask, or only outside it: a spotlight, a torn edge, a window into another scene. A mask doesn't last into or out of a picture, or into the next frame. |
+| `void unmask()` | Everything is seen again. |
 | `bool effect(Effect@+ effect)` | Puts all that has been drawn so far through a shader. False where there are none. |
 | `bool blur(float pixels = 8)` | Blurs all that has been drawn so far, about so many pixels across on a screen 720 high: only inside the clip, if there is one, for frosted glass behind a panel. Draw the panel after. On every GPU; false where it can't be done. |
 | `bool bloom(float strength = 0.8, float threshold = 0.7, float spread = 1)` | Lets light spill from what is bright, of all that has been drawn so far. False where it can't be done. |
@@ -466,6 +475,70 @@ Numbers, text and flags, in lists and by name: for files, and for what comes fro
 | `void Assets::forget(const string &in name)` | Goes back to the file that came with the screen, and loses what was written over it. While developing it is the only one, and nothing is done. |
 | `bool Assets::write(const string &in name, const string &in text)` | Writes one of the screen's own files: `asset:` something `.json`. While developing it is the file itself; otherwise it is kept with the saves, and read from there from then on. False if it couldn't be. |
 
+## Pixels
+
+Pictures as colours that a script reads and writes, one pixel at a time: made, loaded, drawn and saved.
+
+| | |
+|---|---|
+
+## Pixels
+
+A picture held as its pixels, from the top left, up to 2048 a side.
+
+| | |
+|---|---|
+| `uint get_width() const property` | Across. |
+| `uint get_height() const property` | Down. |
+| `Color get(uint x, uint y) const` | One pixel's colour; see-through black outside. |
+| `void set(uint x, uint y, const Color &in color)` | Changes one; nothing outside. |
+| `void fill(const Color &in color)` | Every one the same. |
+| `void paste(const Pixels@+ from, int x, int y)` | Another's pixels over these, its top left at x, y, as they are: what is see-through in it is see-through here. |
+| `Pixels@ copy() const` | Another the same, of its own. |
+| `Texture@ get_texture() property` | To draw them: the same texture each time, sent to the GPU again if a pixel has changed since it was last asked for. Change many, then draw. Null where the GPU can't. |
+| `string png() const` | As a PNG file, in a string: to send, or to keep in a save. |
+| `bool save(const string &in name)` | Keeps them as a PNG with the saves: `saved:` and a short, plain name that ends in .png. Assets::pixels reads it back. On a computer it is a file in the saves' folder. False if it couldn't be. |
+| `Pixels@ Assets::pixels(const string &in name)` | A picture's pixels, read now: `asset:`, `global:` or `own:`, or `saved:` for one that Pixels.save kept. Null if there is none. |
+
+## Data
+
+Bytes in strings: squeezed, fingerprinted, and written as text. A string can hold any bytes.
+
+| | |
+|---|---|
+| `string Data::compress(const string &in bytes, int level = 6)` | Smaller, in zlib's format, which most languages can read: level 1 is quickest, 9 smallest. |
+| `string Data::uncompress(const string &in bytes)` | As it was before compress(), or what zlib made. |
+| `string Data::md5(const string &in bytes)` | A fingerprint, as 32 hex digits: the same bytes give the same one. For telling whether a file has changed, not for secrets. |
+| `string Data::sha1(const string &in bytes)` | The same, 40 digits. |
+| `string Data::sha256(const string &in bytes)` | The same, 64 digits, and hard to forge. |
+| `string Data::base64(const string &in bytes)` | Any bytes as letters, digits, + and /: for JSON, the web, or copying by hand. |
+| `string Data::unbase64(const string &in text)` | The bytes again; the web's kind, with - and _, too. |
+| `string Data::hex(const string &in bytes)` | Each byte as two hex digits. |
+| `string Data::unhex(const string &in text)` | The bytes again. |
+
+## Random
+
+Random numbers of a script's own, from a seed: the same seed gives the same numbers, in the same order, on every machine. For worlds made from a number, replays, and dealing the same cards twice.
+
+| | |
+|---|---|
+
+## Random
+
+A generator of its own.
+
+| | |
+|---|---|
+| `float random()` | From 0 up to 1. |
+| `float random(float low, float high)` | Between two numbers. |
+| `int randomInt(int low, int high)` | A whole number from low to high, including both. |
+| `float normal(float mean = 0, float deviation = 1)` | Mostly near the mean and seldom far from it, in a bell curve: about two in three within one deviation. For heights, aim, damage that varies. |
+| `uint get_seed() const property` | What it started from. |
+| `void set_seed(uint) property` | Starts again from a seed. |
+| `string get_state() const property` | Where it has got to, as text, to keep in a save. |
+| `void set_state(const string &in) property` | Goes on from where it had got to. |
+| `float randomNormal(float mean = 0, float deviation = 1)` | From the shared generator, as Random.normal. |
+
 ## Paths and noise
 
 Ways for things to follow, and smooth randomness to make worlds with.
@@ -594,6 +667,10 @@ A script on an entity. Write a class that comes from it and any of these methods
 | `int get_onWall() const property` | -1 for something solid on its left, 1 on its right, otherwise 0. |
 | `void circle(float radius, uint group = 0, uint hits = 0)` | Gives it a round collider in a group from 0 to 15. hits has a bit for each group it wants to know about: 1 << group. |
 | `void box(float w, float h, uint group = 0, uint hits = 0)` | The same with a box, which turns with it. |
+| `void polygon(const array<Vec2> &in corners, uint group = 0, uint hits = 0)` | The same with a convex polygon, around its place, which turns and grows with it: up to 8 corners, made convex if they aren't. A rigid body of any shape: a wedge, a rock, a car's body. |
+| `void chain(const array<Vec2> &in points, bool loop = false, uint group = 0, uint hits = 0)` | Lines through up to 256 points, around its place, that never move: ground with slopes and hills, a curved ramp, the inside of a bowl if loop. Bodies hit them from either side; characters stand on them and walk up their gentle parts, and are stopped by the steep ones. |
+| `bool get_oneWay() const property` | Whether a wall is solid only from above. |
+| `void set_oneWay(bool) property` | Makes a wall solid only from above, as a platform that what is under it can jump up through and land on: for characters and rigid bodies alike. |
 | `bool get_wall() const property` | Whether others stop at its collider. |
 | `bool get_occluder() const property` | Whether its collider casts shadows from lights on the plane. |
 | `void set_occluder(bool) property` | Makes its collider, a box or a circle, cast shadows from lights on the plane, as solid tiles do. It needs a collider first. |
@@ -637,6 +714,16 @@ Entities that move, collide and are drawn by the engine. Each screen has its own
 | `void Scene::set_lightLayer(int) property` | Layers above this one are drawn after the lighting, as they are. |
 | `void Scene::burst(const string &in particles, const Vec2 &in position, uint count)` | Throws out some particles. |
 | `bool Scene::join(Entity@+ a, Entity@+ b, const Vec2 &in at, float softness = 0)` | Pins two rigid bodies together at a place; null for b pins to the scene. |
+| `bool Scene::hinge(Entity@+ a, Entity@+ b, const Vec2 &in at, float low = 0, float high = 0, float motorSpeed = 0, float motorTorque = 0)` | The same, with limits: a turns only between low and high degrees from how it is now, if low is less than high; and a motor that turns it at so many degrees a second, as strongly as its torque, if that isn't 0. A door, a flipper, a wheel that drives. |
+| `bool Scene::weld(Entity@+ a, Entity@+ b, const Vec2 &in at)` | Holds two together as one, turned as they are now; null for b holds a where it is. |
+| `bool Scene::rope(Entity@+ a, Entity@+ b, const Vec2 &in atA, const Vec2 &in atB, float length = -1)` | A place on each no further apart than a length, as a rope: it pulls, never pushes. Below 0, as far apart as they are now. |
+| `bool Scene::spring(Entity@+ a, Entity@+ b, const Vec2 &in atA, const Vec2 &in atB, float frequency = 3, float damping = 0.5, float length = -1)` | A place on each pulled towards a length and pushed away from it: frequency is how many times a second it would bounce, damping from 0, bouncing on, to 1, settling at once. The same whatever their weight. |
+| `bool Scene::slider(Entity@+ a, Entity@+ b, const Vec2 &in at, const Vec2 &in axis, float low = 0, float high = 0)` | Lets a move only along a line through a place on b, which turns with b, without turning itself: a lift, a piston, a drawer. Between low and high along it, from where it is now, if low is less than high. |
+| `bool Scene::drag(Entity@+ a, const Vec2 &in at, float strength = 5)` | Pulls a place on a body towards a place in the scene, softly, as a hand would: for picking things up with the mouse. No harder than strength times its weight. Move it on with dragTo; let go with unjoin. |
+| `void Scene::dragTo(Entity@+ a, const Vec2 &in place)` | Where a body's drag pulls towards now. |
+| `void Scene::motor(Entity@+ a, float speed, float torque)` | Changes the motor of a's hinges: degrees a second, and how strongly; 0 torque for none. |
+| `void Scene::unjoin(Entity@+ a)` | Every joint that a is in. |
+| `bool Scene::contact(Entity@+ a, Entity@+ b, Vec2 &out at, Vec2 &out normal, float &out impulse)` | Whether two rigid bodies, or a body and a wall, touched in the last step: where, which way from a to b, and how hard they pressed. For a sound as loud as a knock, or sparks where it was. |
 | `bool Scene::path(const Vec2 &in from, const Vec2 &in to, array<Vec2>@+ way, bool diagonal = true)` | The way from one place to another round the solid tiles of the maps, on the grid of the last: its corners, made as straight as it can be, ending at `to`. Diagonally too unless told not to, but never across a corner. False if there is none. |
 | `bool Scene::blocked(const Vec2 &in place)` | Whether a solid tile is there, in any map. |
 | `uint Scene::tile(const Vec2 &in position)` | What the map has there: 0 is nothing. |
@@ -1398,6 +1485,7 @@ The machine and how it is doing.
 | `float App::get_time() property` | Seconds since the app started. |
 | `double App::get_now() property` | Seconds from some moment, to a millionth or so: for timing how long something takes. Unlike `time`, it goes on during a frame. |
 | `float App::get_fps() property` | Frames a second, averaged. |
+| `Pixels@ App::screenshot()` | The last frame shown, as pixels to look at, draw or save: from update(), not draw(). Null where the GPU can't read it back (the Xbox 360). |
 | `uint App::get_draws() property` | Draw calls in the last frame. |
 | `string App::get_platform() property` | What it is running on. |
 | `string App::get_gpu() property` | What is drawing. |

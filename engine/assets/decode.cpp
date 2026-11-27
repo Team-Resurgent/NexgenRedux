@@ -53,6 +53,30 @@ namespace nx
         nxDecodeFree(pixels);
     }
 
+    u8* encodePng(const u8* rgba, u32 width, u32 height, size_t& size)
+    {
+        int written = 0;
+        u8* png = rgba && width && height && width <= 8192 && height <= 8192 ? nx_png_write(rgba, static_cast<int>(width), static_cast<int>(height), &written) : nullptr;
+        size = png ? static_cast<size_t>(written) : 0;
+        return png;
+    }
+
+    u8* compressBytes(const u8* data, size_t size, size_t& outSize, int level)
+    {
+        int written = 0;
+        u8* out = size <= 0x3FFFFFFF ? nx_zlib_compress(data, static_cast<int>(size), &written, level < 1 ? 1 : level > 9 ? 9 : level) : nullptr;
+        outSize = out ? static_cast<size_t>(written) : 0;
+        return out;
+    }
+
+    u8* uncompressBytes(const u8* data, size_t size, size_t& outSize)
+    {
+        int written = 0;
+        u8* out = data && size && size <= 0x3FFFFFFF ? nx_zlib_uncompress(data, static_cast<int>(size), &written) : nullptr;
+        outSize = out ? static_cast<size_t>(written) : 0;
+        return out;
+    }
+
     bool renderFont(const u8* data, size_t size, u32 pixels, FontData& font, FontImage& image)
     {
         NxFont* source = nx_font_open(data, size, static_cast<int>(pixels));

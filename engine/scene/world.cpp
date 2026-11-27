@@ -337,6 +337,12 @@ namespace nx
         removePart(m_visuals, Component::Visual, index);
         removePart(m_animations, Component::Animation, index);
         removePart(m_bodies, Component::Body, index);
+        if (e.parts[static_cast<size_t>(Component::Collider)] != kNone)
+        {
+            Collider& c = m_colliders[e.parts[static_cast<size_t>(Component::Collider)]];
+            memFree(c.points);
+            c.points = nullptr;
+        }
         removePart(m_colliders, Component::Collider, index);
         removePart(m_lifetimes, Component::Lifetime, index);
         removePart(m_emitters, Component::Emitter, index);
@@ -571,6 +577,109 @@ namespace nx
         Collider fresh = {};
         fresh.halfWidth = fresh.halfHeight = 8;
         return getOrAdd(m_colliders, Component::Collider, id, fresh);
+    }
+
+    bool World::setPolygon(u32 id, const Vec2* points, u32 count, u32 group, u32 hits)
+    {
+        Collider* c = count >= 3 ? collider(id) : nullptr;
+        if (c == nullptr)
+        {
+            return false;
+        }
+        // Convex, round the way its faces face out: the hull of what was given, at most kPolygonPoints corners.
+        Vec2 sorted[64];
+        count = count < 64 ? count : 64;
+        for (u32 i = 0; i < count; i++)
+        {
+            sorted[i] = points[i];
+        }
+        std::sort(sorted, sorted + count, [](Vec2 a, Vec2 b) { return a.x < b.x || (a.x == b.x && a.y < b.y); });
+        Vec2 hull[128];
+        u32 n = 0;
+        const auto turn = [](Vec2 o, Vec2 a, Vec2 b) { return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x); };
+        for (u32 pass = 0; pass < 2; pass++)
+        {
+            const u32 start = n;
+            for (u32 k = 0; k < count; k++)
+            {
+                const Vec2 p = sorted[pass ? count - 1 - k : k];
+                while (n >= start + 2 && turn(hull[n - 2], hull[n - 1], p) <= 0)
+                {
+                    n--;
+                }
+                hull[n++] = p;
+            }
+            n--;
+        }
+        if (n < 3)
+        {
+            return false;
+        }
+        // That goes the other way round from the boxes': turned over.
+        u32 kept = n < kPolygonPoints ? n : kPolygonPoints;
+        Vec2* own = static_cast<Vec2*>(memAlloc(sizeof(Vec2) * kept, MemTag::Scene));
+        if (own == nullptr)
+        {
+            return false;
+        }
+        for (u32 i = 0; i < kept; i++)
+        {
+            own[i] = hull[(n - i * n / kept) % n];
+        }
+        float area = 0, hx = 0, hy = 0;
+        for (u32 i = 0; i < kept; i++)
+        {
+            const Vec2 a = own[i], b = own[(i + 1) % kept];
+            area += a.x * b.y - a.y * b.x;
+            hx = fmaxf(hx, fabsf(a.x));
+            hy = fmaxf(hy, fabsf(a.y));
+        }
+        if (area < 0)
+        {
+            for (u32 i = 0; i < kept / 2; i++)
+            {
+                const Vec2 t = own[i];
+                own[i] = own[kept - 1 - i];
+                own[kept - 1 - i] = t;
+            }
+        }
+        memFree(c->points);
+        c->points = own;
+        c->count = kept;
+        c->shape = Shape::Polygon;
+        c->halfWidth = hx > 0 ? hx : 1;
+        c->halfHeight = hy > 0 ? hy : 1;
+        c->group = static_cast<u8>(group);
+        c->hits = static_cast<u16>(hits);
+        return true;
+    }
+
+    bool World::setChain(u32 id, const Vec2* points, u32 count, bool loop, u32 group, u32 hits)
+    {
+        Collider* c = count >= 2 && count <= 256 ? collider(id) : nullptr;
+        Vec2* own = c ? static_cast<Vec2*>(memAlloc(sizeof(Vec2) * count, MemTag::Scene)) : nullptr;
+        if (own == nullptr)
+        {
+            return false;
+        }
+        float hx = 0, hy = 0;
+        for (u32 i = 0; i < count; i++)
+        {
+            own[i] = points[i];
+            hx = fmaxf(hx, fabsf(points[i].x));
+            hy = fmaxf(hy, fabsf(points[i].y));
+        }
+        memFree(c->points);
+        c->points = own;
+        c->count = count;
+        c->loop = loop && count >= 3;
+        c->shape = Shape::Chain;
+        c->wall = true;   // it never moves
+        c->halfWidth = hx > 0 ? hx : 1;
+        c->halfHeight = hy > 0 ? hy : 1;
+        c->group = static_cast<u8>(group);
+        c->hits = static_cast<u16>(hits);
+        return true;
     }
 
     Lifetime* World::lifetime(u32 id)
@@ -917,6 +1026,7 @@ namespace nx
             }
             e.position = e.position + out;
         }
+        const bool wasOnGround = b.onGround;
         // In steps too short to pass through anything.
         const float longest = fabsf(by.x) > fabsf(by.y) ? fabsf(by.x) : fabsf(by.y);
         const float limit = (halfX < halfY ? halfX : halfY) > 2 ? (halfX < halfY ? halfX : halfY) : 2;
@@ -940,6 +1050,16 @@ namespace nx
                     b.velocity.x *= -b.bounce;
                     by.x = 0;
                 }
+                // Up a slope of a chain, as far as a step.
+                const Box moved = { e.position.x - halfX, e.position.x + halfX, e.position.y - halfY, e.position.y + halfY };
+                const float ground = chainGround(moved, b.owner);
+                const float sunk = moved.maxY - ground;
+                if (sunk > 0 && sunk <= fmaxf(halfX, 6.0f) && b.velocity.y >= -1)
+                {
+                    e.position.y = ground - halfY - gap;
+                    b.onGround = true;
+                    b.velocity.y = b.velocity.y > 0 ? 0 : b.velocity.y;
+                }
             }
             if (dy != 0)
             {
@@ -953,6 +1073,31 @@ namespace nx
                     b.velocity.y = fabsf(b.velocity.y) > 60 ? b.velocity.y * -b.bounce : 0;
                     by.y = 0;
                 }
+                else if (dy > 0)
+                {
+                    // Down onto a chain, from above it.
+                    const float ground = chainGround(box, b.owner);
+                    if (box.maxY > ground && bottomBefore <= ground + 1)
+                    {
+                        e.position.y = ground - halfY - gap;
+                        b.onGround = true;
+                        b.velocity.y = fabsf(b.velocity.y) > 60 ? b.velocity.y * -b.bounce : 0;
+                        by.y = 0;
+                    }
+                }
+            }
+        }
+        // Down a slope it was walking on, rather than off it into the air.
+        if (wasOnGround && !b.onGround && b.velocity.y >= 0)
+        {
+            const Box box = { e.position.x - halfX, e.position.x + halfX, e.position.y - halfY, e.position.y + halfY };
+            const float ground = chainGround(box, b.owner);
+            const float drop = ground - box.maxY;
+            if (drop >= 0 && drop <= fmaxf(halfX, 6.0f))
+            {
+                e.position.y = ground - halfY - gap;
+                b.onGround = true;
+                b.velocity.y = 0;
             }
         }
     }
@@ -989,17 +1134,70 @@ namespace nx
             {
                 continue;
             }
+            if (c.shape == Shape::Chain)
+            {
+                // Its steep parts stop those that walk, as walls; the rest is ground, which chainGround finds.
+                Vec2 points[256];
+                const u32 count = worldPoints(c, points, 256);
+                const u32 pieces = count >= 2 ? (c.loop ? count : count - 1) : 0;
+                for (u32 k = 0; k < pieces && !c.oneWay; k++)
+                {
+                    const Vec2 a = points[k], b = points[(k + 1) % count];
+                    if (fabsf(b.y - a.y) <= fabsf(b.x - a.x) * 1.2f)
+                    {
+                        continue;
+                    }
+                    const Box wall = { fminf(a.x, b.x) - 0.5f, fmaxf(a.x, b.x) + 0.5f, fminf(a.y, b.y), fmaxf(a.y, b.y) };
+                    if (box.minX < wall.maxX && box.maxX > wall.minX && box.minY < wall.maxY && box.maxY > wall.minY)
+                    {
+                        fn(false, wall);
+                    }
+                }
+                continue;
+            }
             float hx = 0, hy = 0;
             halfExtent(c, hx, hy);
             const float* w = m_entities[c.owner].world;
             if (box.minX < w[4] + hx && box.maxX > w[4] - hx && box.minY < w[5] + hy && box.maxY > w[5] - hy)
             {
-                fn(false, Box{ w[4] - hx, w[4] + hx, w[5] - hy, w[5] + hy });
+                fn(c.oneWay, Box{ w[4] - hx, w[4] + hx, w[5] - hy, w[5] + hy });
             }
         }
     }
 
     // The nearest edge of anything solid that a box has moved into along an axis.
+    float World::chainGround(const Box& box, u32 self) const
+    {
+        float best = 1e30f;
+        for (const Collider& c : m_colliders)
+        {
+            if (c.shape != Shape::Chain || c.owner == self || m_entities[c.owner].dying)
+            {
+                continue;
+            }
+            Vec2 points[256];
+            const u32 count = worldPoints(c, points, 256);
+            const u32 pieces = count >= 2 ? (c.loop ? count : count - 1) : 0;
+            for (u32 k = 0; k < pieces; k++)
+            {
+                const Vec2 a = points[k], b = points[(k + 1) % count];
+                if (fabsf(b.y - a.y) > fabsf(b.x - a.x) * 1.2f || a.x == b.x)
+                {
+                    continue;
+                }
+                // Highest where it is under the box: at one end of what they share.
+                const float from = fmaxf(box.minX, fminf(a.x, b.x)), to = fminf(box.maxX, fmaxf(a.x, b.x));
+                if (from > to)
+                {
+                    continue;
+                }
+                const auto y = [&](float x) { return a.y + (b.y - a.y) * (x - a.x) / (b.x - a.x); };
+                best = fminf(best, fminf(y(from), y(to)));
+            }
+        }
+        return best;
+    }
+
     bool World::obstacle(const Box& box, u32 axis, bool positive, float bottomBefore, u32 self, float& edge) const
     {
         bool found = false;
@@ -1159,6 +1357,17 @@ namespace nx
     void World::halfExtent(const Collider& c, float& x, float& y) const
     {
         const float* m = m_entities[c.owner].world;
+        if ((c.shape == Shape::Polygon || c.shape == Shape::Chain) && c.points)
+        {
+            x = y = 0;
+            for (u32 i = 0; i < c.count; i++)
+            {
+                const Vec2 p = c.points[i];
+                x = fmaxf(x, fabsf(m[0] * p.x + m[2] * p.y));
+                y = fmaxf(y, fabsf(m[1] * p.x + m[3] * p.y));
+            }
+            return;
+        }
         if (c.shape == Shape::Circle)
         {
             const float sx = m[0] * m[0] + m[1] * m[1], sy = m[2] * m[2] + m[3] * m[3];
@@ -1208,8 +1417,151 @@ namespace nx
         }
     }
 
+    u32 World::worldPoints(const Collider& c, Vec2* out, u32 most) const
+    {
+        if (c.points == nullptr)
+        {
+            return 0;
+        }
+        const float* m = m_entities[c.owner].world;
+        const u32 count = c.count < most ? c.count : most;
+        for (u32 i = 0; i < count; i++)
+        {
+            const Vec2 p = c.points[i];
+            out[i] = { m[0] * p.x + m[2] * p.y + m[4], m[1] * p.x + m[3] * p.y + m[5] };
+        }
+        return count;
+    }
+
+    namespace
+    {
+        // The pieces of a collider as convex outlines, for tests: a box or a polygon is one, a chain one for each line.
+        struct Outline
+        {
+            Vec2 points[kPolygonPoints];
+            u32 count;
+        };
+
+        bool separated(const Outline& a, const Outline& b)
+        {
+            for (u32 pass = 0; pass < 2; pass++)
+            {
+                const Outline& x = pass ? b : a;
+                const Outline& y = pass ? a : b;
+                for (u32 i = 0; i < x.count; i++)
+                {
+                    const Vec2 edge = x.points[(i + 1) % x.count] - x.points[i];
+                    const Vec2 n(edge.y, -edge.x);
+                    float lowX = 1e30f, highX = -1e30f, lowY = 1e30f, highY = -1e30f;
+                    for (u32 k = 0; k < x.count; k++)
+                    {
+                        const float d = n.dot(x.points[k]);
+                        lowX = fminf(lowX, d);
+                        highX = fmaxf(highX, d);
+                    }
+                    for (u32 k = 0; k < y.count; k++)
+                    {
+                        const float d = n.dot(y.points[k]);
+                        lowY = fminf(lowY, d);
+                        highY = fmaxf(highY, d);
+                    }
+                    if (highY < lowX || highX < lowY)
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        float distanceToSegment(Vec2 p, Vec2 a, Vec2 b)
+        {
+            const Vec2 ab = b - a;
+            const float t = ab.dot(ab) > 0 ? fminf(1, fmaxf(0, (p - a).dot(ab) / ab.dot(ab))) : 0;
+            const Vec2 d = p - (a + ab * t);
+            return sqrtf(d.dot(d));
+        }
+
+        bool circleInOutline(const Outline& o, Vec2 at, float radius)
+        {
+            bool inside = o.count >= 3;
+            for (u32 i = 0; i < o.count; i++)
+            {
+                const Vec2 a = o.points[i], b = o.points[(i + 1) % o.count];
+                if (distanceToSegment(at, a, b) <= radius)
+                {
+                    return true;
+                }
+                inside = inside && (b - a).y * (at - a).x - (b - a).x * (at - a).y <= 0;
+            }
+            return inside;
+        }
+    }
+
+    // A box, polygon or chain as outlines; how many.
+    u32 World::outlines(const Collider& c, void* out, u32 most) const
+    {
+        Outline* o = static_cast<Outline*>(out);
+        if (c.shape == Shape::Box)
+        {
+            const Placed p(c, m_entities[c.owner].world);
+            const Vec2 x = p.u * p.hx, y = p.v * p.hy;
+            o[0] = { { p.at - x - y, p.at + x - y, p.at + x + y, p.at - x + y }, 4 };
+            return 1;
+        }
+        Vec2 points[256];
+        const u32 count = worldPoints(c, points, 256);
+        if (c.shape == Shape::Polygon)
+        {
+            o[0].count = count < kPolygonPoints ? count : kPolygonPoints;
+            for (u32 i = 0; i < o[0].count; i++)
+            {
+                o[0].points[i] = points[i];
+            }
+            return o[0].count >= 3 ? 1 : 0;
+        }
+        u32 made = 0;
+        const u32 pieces = count >= 2 ? (c.loop ? count : count - 1) : 0;
+        for (u32 k = 0; k < pieces && made < most; k++)
+        {
+            o[made++] = { { points[k], points[(k + 1) % count] }, 2 };
+        }
+        return made;
+    }
+
     bool World::overlap(const Collider& a, const Collider& b) const
     {
+        if (a.shape >= Shape::Polygon || b.shape >= Shape::Polygon)
+        {
+            static Outline oa[255], ob[255];
+            const Collider& round = a.shape == Shape::Circle ? a : b;
+            const Collider& other = a.shape == Shape::Circle ? b : a;
+            if (round.shape == Shape::Circle)
+            {
+                const Placed p(round, m_entities[round.owner].world);
+                const u32 n = outlines(other, ob, 255);
+                for (u32 i = 0; i < n; i++)
+                {
+                    if (circleInOutline(ob[i], p.at, p.hx))
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }
+            const u32 na = outlines(a, oa, 255), nb = outlines(b, ob, 255);
+            for (u32 i = 0; i < na; i++)
+            {
+                for (u32 k = 0; k < nb; k++)
+                {
+                    if (!separated(oa[i], ob[k]))
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
         const Placed pa(a, m_entities[a.owner].world), pb(b, m_entities[b.owner].world);
         if (a.shape == Shape::Circle && b.shape == Shape::Circle)
         {
@@ -1230,6 +1582,19 @@ namespace nx
 
     bool World::touchesCircle(const Collider& c, Vec2 position, float radius) const
     {
+        if (c.shape >= Shape::Polygon)
+        {
+            static Outline o[255];
+            const u32 n = outlines(c, o, 255);
+            for (u32 i = 0; i < n; i++)
+            {
+                if (circleInOutline(o[i], position, radius))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
         const Placed p(c, m_entities[c.owner].world);
         if (c.shape == Shape::Circle)
         {
@@ -1284,7 +1649,51 @@ namespace nx
             const Placed p(c, m_entities[c.owner].world);
             const Vec2 d = from - p.at;
             float at = 2;
-            if (c.shape == Shape::Circle)
+            if (c.shape >= Shape::Polygon)
+            {
+                // Each outline's faces, the way in being the last face crossed going in.
+                static Outline o[255];
+                const u32 n = outlines(c, o, 255);
+                for (u32 i = 0; i < n; i++)
+                {
+                    const Outline& x = o[i];
+                    if (x.count == 2)
+                    {
+                        const Vec2 e = x.points[1] - x.points[0];
+                        const float den = way.x * e.y - way.y * e.x;
+                        if (fabsf(den) > 1e-9f)
+                        {
+                            const Vec2 q = x.points[0] - from;
+                            const float t = (q.x * e.y - q.y * e.x) / den, u = (q.x * way.y - q.y * way.x) / den;
+                            at = t >= 0 && t <= 1 && u >= 0 && u <= 1 ? fminf(at, t) : at;
+                        }
+                        continue;
+                    }
+                    float low = 0, high = 1;
+                    for (u32 k = 0; k < x.count && low <= high; k++)
+                    {
+                        const Vec2 a = x.points[k], e = x.points[(k + 1) % x.count] - a;
+                        const Vec2 normal(e.y, -e.x);
+                        const float num = normal.dot(a - from), den = normal.dot(way);
+                        if (fabsf(den) < 1e-12f)
+                        {
+                            low = num < 0 ? 2 : low;
+                            continue;
+                        }
+                        const float t = num / den;
+                        if (den < 0)
+                        {
+                            low = fmaxf(low, t);
+                        }
+                        else
+                        {
+                            high = fminf(high, t);
+                        }
+                    }
+                    at = low <= high ? fminf(at, low) : at;
+                }
+            }
+            else if (c.shape == Shape::Circle)
             {
                 const float a = way.dot(way), b = d.dot(way), k = d.dot(d) - p.hx * p.hx;
                 const float root = b * b - a * k;
@@ -1648,6 +2057,18 @@ namespace nx
                 const Body* body = b != kNone ? &m_bodies[b] : nullptr;
                 const Color color = c.wall ? Color(0.75f, 0.75f, 0.75f, 0.9f) : body && body->mass > 0 ? Color(0.35f, 1, 0.45f, 0.9f)
                                   : body ? Color(0.35f, 0.7f, 1, 0.9f) : Color(1, 0.85f, 0.3f, 0.9f);
+                if (c.shape >= Shape::Polygon)
+                {
+                    Vec2 points[256];
+                    const u32 count = worldPoints(c, points, 256);
+                    const u32 lines = count >= 2 ? (c.shape == Shape::Polygon || c.loop ? count : count - 1) : 0;
+                    for (u32 i = 0; i < lines; i++)
+                    {
+                        const Vec2 a = points[i], q = points[(i + 1) % count];
+                        canvas.line(a.x, a.y, q.x, q.y, width, c.oneWay ? Color(0.75f, 0.75f, 0.75f, 0.45f) : color);
+                    }
+                    continue;
+                }
                 const Placed p(c, e.world);
                 if (c.shape == Shape::Circle)
                 {

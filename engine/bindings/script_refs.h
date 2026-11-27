@@ -9,6 +9,18 @@
 // What the files of bindings share.
 namespace nx
 {
+    // A script's array of a value type holds each one apart: copied out one at a time, up to most.
+    template <typename T, typename Array>
+    u32 copyArray(Array* a, T* out, u32 most)
+    {
+        const u32 n = a ? (a->GetSize() < most ? a->GetSize() : most) : 0;
+        for (u32 i = 0; i < n; i++)
+        {
+            out[i] = *static_cast<const T*>(a->At(i));
+        }
+        return n;
+    }
+
     inline Services& services()
     {
         return *static_cast<Services*>(asGetActiveContext()->GetEngine()->GetUserData());
@@ -74,5 +86,10 @@ namespace nx
     bool readOwn(const Services& services, const char* name, FileData& out);
     // bind_xbox.cpp
     void bindXbox(Binder& binder);
+    // bind_data.cpp
+    void bindData(Binder& binder);
+    struct Pixels;
+    // The last frame shown; nullptr where the GPU can't read it back, or in the middle of drawing.
+    Pixels* takeScreenshot();
     void bindMachines(Binder& binder);
 }

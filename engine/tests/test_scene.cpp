@@ -389,6 +389,200 @@ NX_TEST(solidBodiesStopAtTilesAndWalls)
     NX_EXPECT(s.world.tileAt({ 90, 45 }) == 0 && s.world.tileAt({ 5, 85 }) == 1 && s.world.tileAt({ -5, -5 }) == 0 && s.world.mapSize() == Vec2(220, 100));
 }
 
+NX_TEST(polygonsChainsAndOneWayWalls)
+{
+    Scene s;
+    s.world.setGravity({ 0, 1000 });
+    s.ground(100);
+    // A wedge falls and settles on its long side, made convex and turned the right way round whatever it was given.
+    const u32 wedge = s.world.spawn({ 0, 40 });
+    const Vec2 corners[] = { { 20, 10 }, { -20, 10 }, { 0, -10 }, { 0, 0 } };   // the last is inside: left out
+    NX_EXPECT(s.world.setPolygon(wedge, corners, 4, 0, 0));
+    NX_EXPECT(s.world.getCollider(wedge)->count == 3);
+    s.world.body(wedge)->mass = 1;
+    s.world.body(wedge)->gravity = 1;
+    s.step(120);
+    NX_EXPECT(fabsf(s.world.find(wedge)->position.y - 90) < 1.5f && fabsf(s.world.getBody(wedge)->velocity.y) < 5);
+    // Squares as polygons stack, as boxes do.
+    u32 stack[3];
+    for (u32 i = 0; i < 3; i++)
+    {
+        stack[i] = s.world.spawn({ 200, 80 - static_cast<float>(i) * 22 });
+        const Vec2 square[] = { { -10, -10 }, { 10, -10 }, { 10, 10 }, { -10, 10 } };
+        s.world.setPolygon(stack[i], square, 4, 0, 0);
+        s.world.body(stack[i])->mass = 1;
+        s.world.body(stack[i])->gravity = 1;
+        s.world.body(stack[i])->friction = 0.6f;
+    }
+    s.step(180);
+    NX_EXPECT(fabsf(s.world.find(stack[2])->position.y - 50) < 2 && fabsf(s.world.find(stack[2])->position.x - 200) < 2);
+
+    // A ball rolls down a slope of a chain.
+    const u32 hill = s.world.spawn({ 0, 0 });
+    const Vec2 line[] = { { 400, 0 }, { 600, 80 }, { 700, 80 }, { 720, 20 } };
+    NX_EXPECT(s.world.setChain(hill, line, 4, false, 0, 0));
+    const u32 ball = s.world.spawn({ 420, -10 });
+    s.world.collider(ball)->shape = Shape::Circle;
+    s.world.collider(ball)->halfWidth = s.world.collider(ball)->halfHeight = 8;
+    s.world.body(ball)->mass = 1;
+    s.world.body(ball)->gravity = 1;
+    s.step(60);
+    NX_EXPECT(s.world.find(ball)->position.x > 470 && s.world.find(ball)->position.y < 90);
+
+    // A character walks up it, and down, and is stopped by its steep end.
+    const u32 walker = s.world.spawn({ 650, 50 });
+    s.world.collider(walker)->shape = Shape::Box;
+    s.world.collider(walker)->halfWidth = s.world.collider(walker)->halfHeight = 8;
+    Body* w = s.world.body(walker);
+    w->solid = true;
+    w->gravity = 1;
+    s.step(30);
+    NX_EXPECT(s.world.getBody(walker)->onGround && fabsf(s.world.find(walker)->position.y - 72) < 1);
+    for (int i = 0; i < 60; i++)
+    {
+        s.world.getBody(walker)->velocity.x = -120;
+        s.step();
+    }
+    // Up the slope: higher the further left, standing on it.
+    const Vec2 up = s.world.find(walker)->position;
+    NX_EXPECT(up.x < 600 && up.y < 72 && fabsf(up.y + 8 - (up.x - 400) * 0.4f) < 6 && s.world.getBody(walker)->onGround);
+    for (int i = 0; i < 90; i++)
+    {
+        s.world.getBody(walker)->velocity.x = 200;
+        s.step();
+    }
+    NX_EXPECT(s.world.find(walker)->position.x < 712 && s.world.find(walker)->position.x > 680 && s.world.getBody(walker)->onGround);
+
+    // A one-way wall: a body thrown up through it lands on it; a character jumps through it and stands on it.
+    const u32 shelf = s.world.spawn({ -300, 50 });
+    s.world.collider(shelf)->shape = Shape::Box;
+    s.world.collider(shelf)->halfWidth = 60;
+    s.world.collider(shelf)->halfHeight = 4;
+    s.world.collider(shelf)->wall = true;
+    s.world.collider(shelf)->oneWay = true;
+    const u32 thrown = s.rigid({ -300, 90 }, 12, 12, 1);
+    s.world.getBody(thrown)->velocity = { 0, -500 };
+    s.step(90);
+    NX_EXPECT(fabsf(s.world.find(thrown)->position.y - 40) < 1.5f);
+    const u32 jumper = s.rigid({ -340, 92 }, 12, 12, 0);
+    s.world.getBody(jumper)->solid = true;
+    s.step(10);
+    s.world.getBody(jumper)->velocity = { 0, -520 };
+    s.step(90);
+    NX_EXPECT(fabsf(s.world.find(jumper)->position.y - 40) < 1 && s.world.getBody(jumper)->onGround);
+
+    // Rays and circles meet them.
+    Vec2 hit;
+    NX_EXPECT(s.world.raycast({ 0, -100 }, { 0, 200 }, 0xFFFF, hit) == wedge && fabsf(hit.y - (s.world.find(wedge)->position.y - 10)) < 1.5f);
+    NX_EXPECT(s.world.raycast({ 500, -100 }, { 500, 200 }, 0xFFFF, hit) == hill && fabsf(hit.y - 40) < 0.5f);
+    bool near = false;
+    s.world.within({ 550, 55 }, 10, 0xFFFF, [&](u32 id) { near = near || id == hill; });
+    NX_EXPECT(near);
+    s.world.destroyEntity(hill);
+    s.step();
+}
+
+NX_TEST(jointsOfEveryKind)
+{
+    Scene s;
+    s.world.setGravity({ 0, 1000 });
+    const float pi = 3.14159265f;
+    // Welded to the scene: it neither falls nor turns.
+    const u32 welded = s.rigid({ 0, 0 }, 40, 10, 1);
+    NX_EXPECT(s.world.weld(welded, 0, { -20, 0 }));
+    s.step(60);
+    NX_EXPECT(fabsf(s.world.find(welded)->position.y) < 1 && fabsf(s.world.find(welded)->rotation) < 1);
+
+    // A plank on a hinge that turns no further than 30 degrees either way.
+    const u32 plank = s.rigid({ 220, 0 }, 40, 6, 1);
+    NX_EXPECT(s.world.hinge(plank, 0, { 200, 0 }, -30, 30, 0, 0));
+    float most = -1e9f;
+    for (int i = 0; i < 90; i++)
+    {
+        s.step();
+        most = fmaxf(most, s.world.find(plank)->rotation);
+    }
+    NX_EXPECT(most > 25 && most < 33);
+
+    // A wheel turned by its motor.
+    const u32 wheel = s.world.spawn({ 400, 0 });
+    s.world.collider(wheel)->shape = Shape::Circle;
+    s.world.collider(wheel)->halfWidth = s.world.collider(wheel)->halfHeight = 20;
+    s.world.body(wheel)->mass = 1;
+    s.world.body(wheel)->gravity = 1;
+    NX_EXPECT(s.world.hinge(wheel, 0, { 400, 0 }, 0, 0, 180, 1e6f));
+    s.step(60);
+    NX_EXPECT(fabsf(s.world.getBody(wheel)->spin - 180) < 5 && fabsf(s.world.find(wheel)->position.y) < 1);
+    s.world.setMotor(wheel, -90, 1e6f);
+    s.step(30);
+    NX_EXPECT(fabsf(s.world.getBody(wheel)->spin + 90) < 5);
+
+    // A car: a body on two wheels whose hinges' motors drive it along the ground.
+    {
+        Scene car;
+        car.world.setGravity({ 0, 1000 });
+        car.ground(100);
+        const u32 body = car.rigid({ 0, 60 }, 100, 20, 4);
+        u32 wheels[2];
+        for (u32 i = 0; i < 2; i++)
+        {
+            wheels[i] = car.world.spawn({ i ? 40.0f : -40.0f, 80 });
+            car.world.collider(wheels[i])->shape = Shape::Circle;
+            car.world.collider(wheels[i])->halfWidth = car.world.collider(wheels[i])->halfHeight = 17;
+            car.world.body(wheels[i])->mass = 1;
+            car.world.body(wheels[i])->gravity = 1;
+            car.world.body(wheels[i])->friction = 1.2f;
+            NX_EXPECT(car.world.hinge(wheels[i], body, car.world.find(wheels[i])->position, 0, 0, 0, 0));
+        }
+        car.step(30);
+        for (u32 i = 0; i < 2; i++)
+        {
+            car.world.setMotor(wheels[i], 720, 3e5f);
+        }
+        car.step(120);
+        NX_EXPECT(car.world.find(body)->position.x > 200 && fabsf(car.world.find(body)->rotation) < 20);
+    }
+
+    // A rope lets a weight fall as far as its length; a spring stretches as its frequency says.
+    const u32 weight = s.rigid({ 600, 0 }, 10, 10, 1);
+    NX_EXPECT(s.world.rope(weight, 0, { 600, 0 }, { 600, -50 }, 80));
+    s.step(120);
+    NX_EXPECT(fabsf(s.world.find(weight)->position.y - 30) < 1.5f);
+    const u32 bob = s.rigid({ 800, 0 }, 10, 10, 1);
+    NX_EXPECT(s.world.spring(bob, 0, { 800, 0 }, { 800, -50 }, 2, 1, 50));
+    s.step(240);
+    const float stretch = 1000 / ((2 * pi * 2) * (2 * pi * 2));
+    NX_EXPECT(fabsf(s.world.find(bob)->position.y - stretch) < 1.5f);
+
+    // A slider keeps to its line through the scene, between its ends.
+    const u32 carriage = s.rigid({ 1000, 0 }, 20, 10, 1);
+    NX_EXPECT(s.world.slider(carriage, 0, { 1000, 0 }, { 1, 0 }, -20, 40));
+    s.world.getBody(carriage)->velocity = { 600, 0 };
+    s.step(60);
+    NX_EXPECT(fabsf(s.world.find(carriage)->position.y) < 1 && fabsf(s.world.find(carriage)->rotation) < 2 && fabsf(s.world.find(carriage)->position.x - 1040) < 2);
+
+    // Dragged to a place, and on as it moves.
+    const u32 dragged = s.rigid({ 1200, 0 }, 10, 10, 1);
+    NX_EXPECT(s.world.drag(dragged, { 1200, 0 }, 5));
+    s.world.dragTo(dragged, { 1250, -40 });
+    s.step(90);
+    NX_EXPECT(fabsf(s.world.find(dragged)->position.x - 1250) < 3 && fabsf(s.world.find(dragged)->position.y + 40) < 6);
+    s.world.unjoin(dragged);
+    s.step(30);
+    NX_EXPECT(s.world.find(dragged)->position.y > -20);
+
+    // Where a box rests on the ground, and how hard.
+    const u32 floor = s.ground(300);
+    const u32 box = s.rigid({ 1400, 280 }, 20, 20, 2);
+    s.step(60);
+    Vec2 at, normal;
+    float impulse = 0;
+    NX_EXPECT(s.world.contact(box, floor, at, normal, impulse));
+    NX_EXPECT(fabsf(at.y - 300) < 1.5f && fabsf(at.x - 1400) < 2 && normal.y > 0.99f && impulse > 0);
+    NX_EXPECT(s.world.contact(floor, box, at, normal, impulse) && normal.y < -0.99f);
+    NX_EXPECT(!s.world.contact(box, weight, at, normal, impulse));
+}
+
 NX_TEST(rigidBodiesStackAndRest)
 {
     Scene s;

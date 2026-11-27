@@ -40,11 +40,13 @@ namespace nx::gpu
             GL_DEPTH_CLAMP = 0x864F, GL_TEXTURE1 = 0x84C1, GL_TEXTURE2 = 0x84C2, GL_TEXTURE_3D = 0x806F, GL_TEXTURE_WRAP_R = 0x8072, GL_DEPTH_COMPONENT = 0x1902, GL_DEPTH_COMPONENT32F = 0x8CAC, GL_DEPTH_ATTACHMENT = 0x8D00,
             GL_TEXTURE_COMPARE_MODE = 0x884C, GL_TEXTURE_COMPARE_FUNC = 0x884D, GL_COMPARE_REF_TO_TEXTURE = 0x884E, GL_ELEMENT_ARRAY_BUFFER = 0x8893,
             GL_UNIFORM_BUFFER = 0x8A11, GL_DYNAMIC_DRAW = 0x88E8,
+            GL_STENCIL_TEST = 0x0B90, GL_EQUAL = 0x0202, GL_NOTEQUAL = 0x0205, GL_KEEP = 0x1E00, GL_REPLACE = 0x1E01,
             GL_BC1 = 0x83F0, GL_BC3 = 0x83F3  // EXT_texture_compression_s3tc, which every desktop driver has
         };
         enum : GLbitfield
         {
             GL_DEPTH_BUFFER_BIT = 0x0100,
+            GL_STENCIL_BUFFER_BIT = 0x0400,
             GL_COLOR_BUFFER_BIT = 0x4000
         };
 
@@ -71,6 +73,11 @@ namespace nx::gpu
         F(GLuint, CreateProgram, ()) \
         F(GLuint, CreateShader, (GLenum)) \
         F(void, CullFace, (GLenum)) \
+        F(void, ClearStencil, (GLint)) \
+        F(void, ColorMask, (GLboolean, GLboolean, GLboolean, GLboolean)) \
+        F(void, StencilFunc, (GLenum, GLint, GLuint)) \
+        F(void, StencilMask, (GLuint)) \
+        F(void, StencilOp, (GLenum, GLenum, GLenum)) \
         F(void, PolygonMode, (GLenum, GLenum)) \
         F(void, DeleteBuffers, (GLsizei, const GLuint*)) \
         F(void, DeleteFramebuffers, (GLsizei, const GLuint*)) \
@@ -120,6 +127,7 @@ namespace nx::gpu
         F(void, TexImage3D, (GLenum, GLint, GLint, GLsizei, GLsizei, GLsizei, GLint, GLenum, GLenum, const void*)) \
         F(void, TexParameteri, (GLenum, GLenum, GLint)) \
         F(void, Uniform1i, (GLint, GLint)) \
+        F(void, Uniform1f, (GLint, GLfloat)) \
         F(void, UniformBlockBinding, (GLuint, GLuint, GLuint)) \
         F(void, UniformMatrix4fv, (GLint, GLsizei, GLboolean, const GLfloat*)) \
         F(void, UseProgram, (GLuint)) \
@@ -169,10 +177,15 @@ void main()
 in vec4 vertexColor;
 in vec2 vertexUv;
 uniform sampler2D image;
+uniform float cut;
 layout(location = 0) out vec4 result;
 void main()
 {
     result = texture(image, vertexUv) * vertexColor;
+    if (result.a < cut)
+    {
+        discard;  // marking a mask: only where it is more opaque than not
+    }
 }
 )";
 
@@ -646,7 +659,28 @@ void main()
                     m_boundTexture = handle;
                 }
                 gl.BindSampler(0, m_samplers[static_cast<u32>(draw.filter)]);
+                if (draw.clearStencil)
+                {
+                    set(GL_SCISSOR_TEST, false);
+                    gl.StencilMask(0xFF);
+                    gl.ClearStencil(0);
+                    gl.Clear(GL_STENCIL_BUFFER_BIT);
+                    set(GL_SCISSOR_TEST, true);
+                }
                 setScissor(draw.scissor);
+                if (draw.stencil != Stencil::None)
+                {
+                    const bool write = draw.stencil == Stencil::Write;
+                    set(GL_STENCIL_TEST, true);
+                    gl.StencilMask(write ? 0xFF : 0);
+                    gl.StencilFunc(write ? GL_ALWAYS : draw.stencil == Stencil::Inside ? GL_EQUAL : GL_NOTEQUAL, draw.stencilRef, 0xFF);
+                    gl.StencilOp(GL_KEEP, GL_KEEP, write ? GL_REPLACE : GL_KEEP);
+                    if (write)
+                    {
+                        gl.ColorMask(0, 0, 0, 0);
+                        gl.Uniform1f(m_cut, 0.5f);
+                    }
+                }
                 gl.UniformMatrix4fv(m_transform, 1, 0, draw.transform.m);
                 const GLuint array = buffer ? buffer->array : m_stream.array;
                 if (m_boundArray != array)
@@ -655,6 +689,12 @@ void main()
                     m_boundArray = array;
                 }
                 gl.DrawArrays(pipeline->topology == Topology::Lines ? GL_LINES : GL_TRIANGLES, static_cast<GLint>(draw.first), static_cast<GLsizei>(draw.count));
+                if (draw.stencil != Stencil::None)
+                {
+                    set(GL_STENCIL_TEST, false);
+                    gl.ColorMask(1, 1, 1, 1);
+                    gl.Uniform1f(m_cut, 0);
+                }
 
                 m_current.draws++;
                 m_current.vertices += draw.count;
@@ -1699,6 +1739,7 @@ void main()
                     return false;
                 }
                 m_transform = gl.GetUniformLocation(m_program, "transform");
+                m_cut = gl.GetUniformLocation(m_program, "cut");
                 gl.UseProgram(m_program);
                 gl.Uniform1i(gl.GetUniformLocation(m_program, "image"), 0);
                 return true;
@@ -1771,6 +1812,7 @@ void main()
             GlWindow* m_window;
             GLuint m_program = 0;
             GLint m_transform = -1;
+            GLint m_cut = -1;
             GLuint m_samplers[3] = {};
             GLuint m_volumeSampler = 0;
             BufferSlot m_stream = {};

@@ -6,6 +6,8 @@
 #include "screens/playlist.h"
 #include "video/video.h"
 
+#include <scriptarray/scriptarray.h>
+
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -270,6 +272,47 @@ namespace nx
         }
 
         bool beginPicture(const TextureRef* t, const Color& clear, Canvas* c) { return t && t->asset && c->beginTarget(*t->asset, clear); }
+        void drawPolygon(const CScriptArray* points, const Color& color, Canvas* c)
+        {
+            Vec2 p[Canvas::kMostPoints];
+            c->polygon(p, copyArray(points, p, Canvas::kMostPoints), color);
+        }
+        void drawPolygonLine(const CScriptArray* points, float thickness, const Color& color, Canvas* c)
+        {
+            Vec2 p[Canvas::kMostPoints];
+            c->polyline(p, copyArray(points, p, Canvas::kMostPoints), thickness, color, true);
+        }
+        void drawPolyline(const CScriptArray* points, float thickness, const Color& color, Canvas* c)
+        {
+            Vec2 p[Canvas::kMostPoints];
+            c->polyline(p, copyArray(points, p, Canvas::kMostPoints), thickness, color, false);
+        }
+        void drawMesh(const TextureRef* t, const CScriptArray* points, const CScriptArray* uvs, const Color& tint, const CScriptArray* triangles, const CScriptArray* colors, Canvas* c)
+        {
+            constexpr u32 kMost = 4096;
+            const u32 count = points ? points->GetSize() : 0;
+            if ((uvs && uvs->GetSize() < count) || (colors && colors->GetSize() < count) || count > kMost)
+            {
+                scriptError(count > kMost ? "a mesh has up to 4096 points" : "a mesh needs as many uvs and colours as points");
+                return;
+            }
+            // One block for the points, uvs and colours, for this draw only.
+            const size_t bytes = count * (2 * sizeof(Vec2) + sizeof(Color));
+            u8* block = count ? static_cast<u8*>(memAlloc(bytes, MemTag::Frame)) : nullptr;
+            if (block == nullptr)
+            {
+                return;
+            }
+            Vec2* p = reinterpret_cast<Vec2*>(block);
+            Vec2* uv = p + count;
+            Color* k = reinterpret_cast<Color*>(uv + count);
+            copyArray(points, p, count);
+            copyArray(uvs, uv, count);
+            copyArray(colors, k, count);
+            const u32 indexCount = triangles ? triangles->GetSize() : 0;
+            c->mesh(t ? assetOf(t) : nullptr, p, uvs ? uv : nullptr, colors ? k : nullptr, count, indexCount ? static_cast<const u32*>(triangles->At(0)) : nullptr, indexCount, tint);
+            memFree(block);
+        }
         void endPicture(Canvas* c) { c->endTarget(); }
         void drawImage(const TextureRef* t, float x, float y, const Color& tint, Canvas* c)
         {
@@ -882,6 +925,15 @@ namespace nx
             b.method("void arc(float x, float y, float radius, float thickness, float from, float to, const Color &in color)", NX_METHOD(Canvas, arc), "Part of a ring, or a slice of a circle, between two angles in degrees.");
             b.method("void glow(float x, float y, float radius, const Color &in color)", NX_METHOD(Canvas, glow), "A round glow, fading to nothing at its edge. With BlendAdd it is light.");
             b.method("void triangle(const Vec2 &in a, const Vec2 &in b, const Vec2 &in c, const Color &in ca, const Color &in cb, const Color &in cc)", NX_METHOD(Canvas, triangle), "A triangle with a colour at each corner.");
+            b.method("void polygon(const array<Vec2> &in corners, const Color &in color)", NX_OBJ_LAST(drawPolygon), "A filled polygon of up to 256 corners, either way round: concave ones too, as long as their sides don't cross.");
+            b.method("void polygonLine(const array<Vec2> &in corners, float thickness, const Color &in color)", NX_OBJ_LAST(drawPolygonLine), "A polygon's outline, with mitred corners.");
+            b.method("void polyline(const array<Vec2> &in points, float thickness, const Color &in color)", NX_OBJ_LAST(drawPolyline), "Lines through up to 256 points, joined with mitres where they meet (bevelled where that would be sharp): a path, a graph, a trail.");
+            b.method("void ellipse(float x, float y, float rx, float ry, const Color &in color)", NX_METHOD(Canvas, ellipse), "A filled ellipse, so far across to each side and up and down.");
+            b.method("void ellipseLine(float x, float y, float rx, float ry, float thickness, const Color &in color)", NX_METHOD(Canvas, ellipseLine), "An ellipse's outline.");
+            b.method("void mesh(const Texture@+ texture, const array<Vec2> &in points, const array<Vec2> &in uvs, const Color &in tint = White, const array<uint>@+ triangles = null, const array<Color>@+ colors = null)", NX_OBJ_LAST(drawMesh), "Triangles of a picture, each corner a point and where in the picture it comes from (uvs, 0 to 1 across it): bent, stretched, torn. Three indices to a triangle, or a fan from the first point without them. A colour for each point, if given, tints it; null texture is plain colour. For a water surface, cloth, a picture wrapped round a shape.");
+            b.method("void mask()", NX_METHOD(Canvas, mask), "What is drawn after this is not seen but marks out a mask: shapes, lines, text, images (all of each image's square). Each mask() starts a new mask.");
+            b.method("void masked(bool inside = true)", NX_METHOD(Canvas, masked), "Then what is drawn is seen only inside the mask, or only outside it: a spotlight, a torn edge, a window into another scene. A mask doesn't last into or out of a picture, or into the next frame.");
+            b.method("void unmask()", NX_METHOD(Canvas, unmask), "Everything is seen again.");
             b.method("bool effect(Effect@+ effect)", NX_OBJ_LAST(canvasEffect), "Puts all that has been drawn so far through a shader. False where there are none.");
             b.method("bool blur(float pixels = 8)", NX_METHOD(Canvas, blur), "Blurs all that has been drawn so far, about so many pixels across on a screen 720 high: only inside the clip, if there is one, for frosted glass behind a panel. Draw the panel after. On every GPU; false where it can't be done.");
             b.method("bool bloom(float strength = 0.8, float threshold = 0.7, float spread = 1)", NX_METHOD(Canvas, bloom), "Lets light spill from what is bright, of all that has been drawn so far. False where it can't be done.");
@@ -1062,6 +1114,7 @@ namespace nx
             b.function("float get_time() property", NX_FN(appTime), "Seconds since the app started.");
             b.function("double get_now() property", NX_FN(appNow), "Seconds from some moment, to a millionth or so: for timing how long something takes. Unlike `time`, it goes on during a frame.");
             b.function("float get_fps() property", NX_FN(appFps), "Frames a second, averaged.");
+            b.function("Pixels@ screenshot()", NX_FN(takeScreenshot), "The last frame shown, as pixels to look at, draw or save: from update(), not draw(). Null where the GPU can't read it back (the Xbox 360).");
             b.function("uint get_draws() property", NX_FN(appDraws), "Draw calls in the last frame.");
             b.function("string get_platform() property", NX_FN(appPlatform), "What it is running on.");
             b.function("string get_gpu() property", NX_FN(appGpu), "What is drawing.");
@@ -1175,6 +1228,7 @@ namespace nx
         bindCoroutines(binder);
         bindSave(binder);
         bindJson(binder);
+        bindData(binder);
         bindPath(binder);
         bindScene(binder);
         bindSpace(binder);

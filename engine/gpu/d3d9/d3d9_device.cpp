@@ -372,7 +372,13 @@ namespace nx::gpu
                 m_device->SetRenderState(D3DRS_ZFUNC, p.depthTest ? D3DCMP_LESSEQUAL : D3DCMP_ALWAYS);
                 m_device->SetTexture(0, texture->texture);
                 setSampler(0, draw.filter == Filter::Nearest ? D3DTEXF_POINT : D3DTEXF_LINEAR, D3DTADDRESS_CLAMP, false);
+                if (draw.clearStencil)
+                {
+                    m_device->SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
+                    m_device->Clear(0, nullptr, D3DCLEAR_STENCIL, 0, 1.0f, 0);
+                }
                 setScissor(draw.scissor);
+                stencil(draw.stencil, draw.stencilRef);
                 m_device->SetVertexShaderConstantF(0, draw.transform.m, 4);
                 const bool lines = p.topology == Topology::Lines;
                 const D3DPRIMITIVETYPE type = lines ? D3DPT_LINELIST : D3DPT_TRIANGLELIST;
@@ -389,6 +395,7 @@ namespace nx::gpu
                         m_device->DrawPrimitiveUP(type, primitives, m_stream + draw.first, sizeof(Vertex));
                     }
                 }
+                stencil(Stencil::None, 0);
                 m_current.draws++;
                 m_current.vertices += draw.count;
             }
@@ -1194,6 +1201,36 @@ namespace nx::gpu
                 const D3DVIEWPORT9 viewport = { 0, 0, m_width, m_height, 0, 1 };
                 m_device->SetViewport(&viewport);
             }
+
+            void stencil(Stencil mode, u8 ref)
+            {
+                if (mode == Stencil::None && !m_stencilOn)
+                {
+                    return;
+                }
+                m_stencilOn = mode != Stencil::None;
+                m_device->SetRenderState(D3DRS_STENCILENABLE, m_stencilOn ? TRUE : FALSE);
+                m_device->SetRenderState(D3DRS_COLORWRITEENABLE, mode == Stencil::Write ? 0 : 0xF);
+                if (m_stencilOn)
+                {
+                    const bool write = mode == Stencil::Write;
+                    m_device->SetRenderState(D3DRS_STENCILFUNC, write ? D3DCMP_ALWAYS : mode == Stencil::Inside ? D3DCMP_EQUAL : D3DCMP_NOTEQUAL);
+                    m_device->SetRenderState(D3DRS_STENCILREF, ref);
+                    m_device->SetRenderState(D3DRS_STENCILMASK, 0xFF);
+                    m_device->SetRenderState(D3DRS_STENCILWRITEMASK, write ? 0xFF : 0);
+                    m_device->SetRenderState(D3DRS_STENCILFAIL, D3DSTENCILOP_KEEP);
+                    m_device->SetRenderState(D3DRS_STENCILZFAIL, D3DSTENCILOP_KEEP);
+                    m_device->SetRenderState(D3DRS_STENCILPASS, write ? D3DSTENCILOP_REPLACE : D3DSTENCILOP_KEEP);
+                }
+                // Marking a mask: only where it is more opaque than not, so text and pictures mark their shapes.
+                m_device->SetRenderState(D3DRS_ALPHATESTENABLE, mode == Stencil::Write ? TRUE : FALSE);
+                if (mode == Stencil::Write)
+                {
+                    m_device->SetRenderState(D3DRS_ALPHAREF, 128);
+                    m_device->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATEREQUAL);
+                }
+            }
+            bool m_stencilOn = false;
 
             void setBlend(Blend blend)
             {

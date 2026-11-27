@@ -28,6 +28,7 @@
 #define MBEDTLS_CIPHER_C
 #define MBEDTLS_MD_C
 #define MBEDTLS_HKDF_C
+#define MBEDTLS_MD5_C  // for scripts' Data::md5
 #define MBEDTLS_SHA1_C
 #define MBEDTLS_SHA224_C
 #define MBEDTLS_SHA256_C

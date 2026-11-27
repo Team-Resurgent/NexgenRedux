@@ -141,6 +141,11 @@ namespace nx::gpu
                 {
                     release(state);
                 }
+                for (ID3D11DepthStencilState*& state : m_stencil)
+                {
+                    release(state);
+                }
+                release(m_noColor);
                 for (ID3D11RasterizerState*& state : m_meshRaster)
                 {
                     release(state);
@@ -184,6 +189,7 @@ namespace nx::gpu
                 release(m_layout);
                 release(m_vertexShader);
                 release(m_pixelShader);
+                release(m_maskShader);
                 release(m_swapchain);
                 if (m_context)
                 {
@@ -580,6 +586,25 @@ namespace nx::gpu
                 }
                 m_context->PSSetSamplers(0, 1, draw.filter == Filter::Nearest ? &m_nearest : &m_linear);
                 setScissor(draw.scissor);
+                if (draw.clearStencil)
+                {
+                    m_context->ClearDepthStencilView(m_depthView, D3D11_CLEAR_STENCIL, 1.0f, 0);
+                }
+                if (draw.stencil != Stencil::None)
+                {
+                    if (!stencilStates())
+                    {
+                        m_current.rejected++;
+                        return;
+                    }
+                    m_context->OMSetDepthStencilState(m_stencil[static_cast<u32>(draw.stencil) - 1], draw.stencilRef);
+                    if (draw.stencil == Stencil::Write)
+                    {
+                        m_context->OMSetBlendState(m_noColor, nullptr, 0xFFFFFFFF);
+                        m_context->PSSetShader(m_maskShader, nullptr, 0);
+                    }
+                    m_bound = {};  // the pipeline's own states again next time
+                }
 
                 D3D11_MAPPED_SUBRESOURCE mapped;
                 if (SUCCEEDED(m_context->Map(m_uniforms, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped)))
@@ -592,6 +617,10 @@ namespace nx::gpu
                 const UINT offset = 0;
                 m_context->IASetVertexBuffers(0, 1, &source, &stride, &offset);
                 m_context->Draw(draw.count, draw.first);
+                if (draw.stencil == Stencil::Write)
+                {
+                    m_context->PSSetShader(m_pixelShader, nullptr, 0);
+                }
 
                 m_current.draws++;
                 m_current.vertices += draw.count;
@@ -1500,6 +1529,7 @@ namespace nx::gpu
                 nearest.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
                 return ok(m_device->CreateVertexShader(basicVs, sizeof(basicVs), nullptr, &m_vertexShader), "vertex shader") &&
                        ok(m_device->CreatePixelShader(basicPs, sizeof(basicPs), nullptr, &m_pixelShader), "pixel shader") &&
+                       ok(m_device->CreatePixelShader(maskPs, sizeof(maskPs), nullptr, &m_maskShader), "pixel shader") &&
                        ok(m_device->CreateInputLayout(layout, ARRAYSIZE(layout), basicVs, sizeof(basicVs), &m_layout), "input layout") &&
                        ok(m_device->CreateBuffer(&uniforms, nullptr, &m_uniforms), "uniform buffer") &&
                        ok(m_device->CreateBuffer(&stream, nullptr, &m_stream), "stream buffer") &&
@@ -1590,6 +1620,7 @@ namespace nx::gpu
             IDXGISwapChain1* m_swapchain = nullptr;
             ID3D11VertexShader* m_vertexShader = nullptr;
             ID3D11PixelShader* m_pixelShader = nullptr;
+            ID3D11PixelShader* m_maskShader = nullptr;
             ID3D11InputLayout* m_layout = nullptr;
             ID3D11Buffer* m_uniforms = nullptr;
             ID3D11Buffer* m_stream = nullptr;
@@ -1637,6 +1668,34 @@ namespace nx::gpu
             ID3D11Buffer* m_fieldUniforms = nullptr;
             ID3D11BlendState* m_meshBlend[static_cast<u32>(Blend::Count)] = {};
             ID3D11DepthStencilState* m_meshDepth[2] = {};
+            ID3D11DepthStencilState* m_stencil[3] = {};  // write, inside, outside
+            ID3D11BlendState* m_noColor = nullptr;
+
+            bool stencilStates()
+            {
+                if (m_noColor)
+                {
+                    return true;
+                }
+                bool fine = true;
+                for (u32 i = 0; i < 3; i++)
+                {
+                    D3D11_DEPTH_STENCIL_DESC d = {};
+                    d.DepthFunc = D3D11_COMPARISON_ALWAYS;
+                    d.StencilEnable = TRUE;
+                    d.StencilReadMask = d.StencilWriteMask = 0xFF;
+                    D3D11_DEPTH_STENCILOP_DESC& f = d.FrontFace;
+                    f.StencilFailOp = f.StencilDepthFailOp = D3D11_STENCIL_OP_KEEP;
+                    f.StencilPassOp = i == 0 ? D3D11_STENCIL_OP_REPLACE : D3D11_STENCIL_OP_KEEP;
+                    f.StencilFunc = i == 0 ? D3D11_COMPARISON_ALWAYS : i == 1 ? D3D11_COMPARISON_EQUAL : D3D11_COMPARISON_NOT_EQUAL;
+                    d.BackFace = f;
+                    fine = fine && ok(m_device->CreateDepthStencilState(&d, &m_stencil[i]), "stencil state");
+                }
+                D3D11_BLEND_DESC b = {};
+                b.RenderTarget[0].RenderTargetWriteMask = 0;
+                fine = fine && ok(m_device->CreateBlendState(&b, &m_noColor), "blend state");
+                return fine;
+            }
             ID3D11DepthStencilState* m_skyDepth = nullptr;
             ID3D11RasterizerState* m_meshRaster[3] = {};  // the last, of lines
             ID3D11RasterizerState* m_shadowRaster = nullptr;

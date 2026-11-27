@@ -853,14 +853,21 @@ namespace nx::gpu
                 const DWORD filter = draw.filter == Filter::Nearest ? D3DTEXF_POINT : D3DTEXF_LINEAR;
                 m_device->SetTextureStageState(0, D3DTSS_MINFILTER, filter);
                 m_device->SetTextureStageState(0, D3DTSS_MAGFILTER, filter);
+                if (draw.clearStencil)
+                {
+                    m_device->SetScissors(0, FALSE, nullptr);
+                    m_device->Clear(0, nullptr, D3DCLEAR_STENCIL, 0, 1.0f, 0);
+                }
                 if (!setScissor(draw.scissor))
                 {
                     return;  // clipped away entirely
                 }
+                stencil(draw.stencil, draw.stencilRef);
                 m_device->SetTransform(D3DTS_PROJECTION, reinterpret_cast<const D3DMATRIX*>(draw.transform.m));
                 m_device->SetStreamSource(0, buffer ? buffer->buffer : m_streams[m_streamIndex], sizeof(Vertex));
                 const bool lines = pipeline->desc.topology == Topology::Lines;
                 m_device->DrawPrimitive(lines ? D3DPT_LINELIST : D3DPT_TRIANGLELIST, draw.first, draw.count / (lines ? 2 : 3));
+                stencil(Stencil::None, 0);
 
                 m_current.draws++;
                 m_current.vertices += draw.count;
@@ -2347,6 +2354,36 @@ namespace nx::gpu
                     m.indices = nullptr;
                 }
             }
+
+            void stencil(Stencil mode, u8 ref)
+            {
+                if (mode == Stencil::None && !m_stencilOn)
+                {
+                    return;
+                }
+                m_stencilOn = mode != Stencil::None;
+                m_device->SetRenderState(D3DRS_STENCILENABLE, m_stencilOn ? TRUE : FALSE);
+                m_device->SetRenderState(D3DRS_COLORWRITEENABLE, mode == Stencil::Write ? 0 : D3DCOLORWRITEENABLE_ALL);
+                if (m_stencilOn)
+                {
+                    const bool write = mode == Stencil::Write;
+                    m_device->SetRenderState(D3DRS_STENCILFUNC, write ? D3DCMP_ALWAYS : mode == Stencil::Inside ? D3DCMP_EQUAL : D3DCMP_NOTEQUAL);
+                    m_device->SetRenderState(D3DRS_STENCILREF, ref);
+                    m_device->SetRenderState(D3DRS_STENCILMASK, 0xFF);
+                    m_device->SetRenderState(D3DRS_STENCILWRITEMASK, write ? 0xFF : 0);
+                    m_device->SetRenderState(D3DRS_STENCILFAIL, D3DSTENCILOP_KEEP);
+                    m_device->SetRenderState(D3DRS_STENCILZFAIL, D3DSTENCILOP_KEEP);
+                    m_device->SetRenderState(D3DRS_STENCILPASS, write ? D3DSTENCILOP_REPLACE : D3DSTENCILOP_KEEP);
+                }
+                // Marking a mask: only where it is more opaque than not, so text and pictures mark their shapes.
+                m_device->SetRenderState(D3DRS_ALPHATESTENABLE, mode == Stencil::Write ? TRUE : FALSE);
+                if (mode == Stencil::Write)
+                {
+                    m_device->SetRenderState(D3DRS_ALPHAREF, 128);
+                    m_device->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATEREQUAL);
+                }
+            }
+            bool m_stencilOn = false;
 
             void bind(const PipelineDesc& desc)
             {

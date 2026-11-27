@@ -210,3 +210,82 @@ NX_TEST(screensIncludeOtherFiles)
     NX_EXPECT(bad.screens.failed() && strstr(bad.screens.error(), "none.as"));
 }
 
+
+NX_TEST(scriptsHavePixelsDataAndRandom)
+{
+    Rig r;
+    open(r, R"(
+        class A : Screen
+        {
+            // A mistake stops the screen, which the test sees.
+            void check(bool good) { if (!good) { array<int> nope; nope[1] = 0; } }
+            bool near(float a, float b) { return abs(a - b) < 0.01f; }
+            void onEnter()
+            {
+                // Pixels: made, changed, read, pasted, kept as a PNG and read back.
+                Pixels p(4, 3, Color(1, 0, 0));
+                check(p.width == 4 && p.height == 3 && near(p.get(3, 2).r, 1) && near(p.get(9, 9).a, 0));
+                p.set(1, 1, Color(0, 0.5f, 1, 0.5f));
+                Color c = p.get(1, 1);
+                check(near(c.g, 0.5f) && near(c.b, 1) && near(c.a, 0.5f));
+                Pixels small(2, 2, Color(0, 1, 0));
+                p.paste(small, 3, -1);
+                check(near(p.get(3, 0).g, 1) && near(p.get(2, 0).r, 1) && near(p.get(3, 1).r, 1));
+                check(p.texture !is null && p.png().substr(1, 3) == "PNG");
+                check(p.save("saved:shot.png"));
+                Pixels@ back = Assets::pixels("saved:shot.png");
+                check(back !is null && back.width == 4 && near(back.get(1, 1).b, 1) && near(back.get(3, 0).g, 1));
+                check(Assets::pixels("saved:none.png") is null);
+                Pixels@ bricks = Assets::pixels("global:picture/bricks.png");
+                check(bricks !is null && bricks.width > 0 && bricks.copy().width == bricks.width);
+
+                // Bytes.
+                string text = "the same words over and over, the same words over and over, the same words";
+                string squeezed = Data::compress(text);
+                check(squeezed.length() < text.length() && Data::uncompress(squeezed) == text);
+                check(Data::md5("abc") == "900150983cd24fb0d6963f7d28e17f72");
+                check(Data::sha1("abc") == "a9993e364706816aba3e25717850c26c9cd0d89d");
+                check(Data::sha256("abc") == "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
+                check(Data::base64("hello") == "aGVsbG8=" && Data::unbase64("aGVsbG8=") == "hello" && Data::unbase64(Data::base64(squeezed)) == squeezed);
+                check(Data::hex("\x01\xff") == "01ff" && Data::unhex("01FF") == "\x01\xff");
+
+                // Random numbers from a seed: the same each time.
+                Random a(42), b(42);
+                for (int i = 0; i < 50; i++)
+                    check(a.randomInt(0, 1000) == b.randomInt(0, 1000));
+                string kept = a.state;
+                float next = a.random();
+                b.state = kept;
+                check(b.random() == next && a.seed == 42);
+                float total = 0, spread = 0;
+                for (int i = 0; i < 4000; i++)
+                {
+                    float v = a.normal(10, 2);
+                    total += v;
+                    spread += (v - 10) * (v - 10);
+                }
+                check(abs(total / 4000 - 10) < 0.2f && abs(sqrt(spread / 4000) - 2) < 0.2f);
+                int low = 99, high = -99;
+                for (int i = 0; i < 500; i++)
+                {
+                    int v = a.randomInt(-2, 2);
+                    if (v < low) low = v;
+                    if (v > high) high = v;
+                }
+                check(low == -2 && high == 2);
+                Save::set("done", "y");
+            }
+        }
+    )");
+    NX_EXPECT(!r.screens.failed() && strcmp(r.save.get("done", ""), "y") == 0);
+    NX_EXPECT(r.platform.kept.count("shapes.shot.png") == 1);
+
+    // What can't be.
+    for (const char* code : { "Data::uncompress(\"not that\");", "Data::unbase64(\"*\");", "Data::unhex(\"0g\");", "Pixels p(0, 4);", "Pixels p(4, 4); p.save(\"own:a.png\");",
+             "Pixels p(4, 4); p.save(\"saved:../a.png\");" })
+    {
+        Rig bad;
+        open(bad, (std::string("class A : Screen { void onEnter() { ") + code + " } }").c_str());
+        NX_EXPECT(bad.screens.failed());
+    }
+}

@@ -34,6 +34,31 @@ unsigned char* nx_stbi_load(const unsigned char* data, int size, int* width, int
     return stbi_load_from_memory(data, size, width, height, channels, wanted);
 }
 
+/* --- stb_image_write: PNGs, and the deflate it makes them with --- */
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#define STBI_WRITE_NO_STDIO
+#define STBIW_ASSERT(x) ((void)0)
+#define STBIW_MALLOC(size) nxDecodeRealloc(NULL, 0, size)
+#define STBIW_REALLOC_SIZED(p, old, size) nxDecodeRealloc(p, old, size)
+#define STBIW_FREE(p) nxDecodeFree(p)
+#include "third_party/stb/stb_image_write.h"
+
+unsigned char* nx_png_write(const unsigned char* rgba, int width, int height, int* size)
+{
+    return stbi_write_png_to_mem(rgba, width * 4, width, height, 4, size);
+}
+
+unsigned char* nx_zlib_compress(const unsigned char* data, int size, int* outSize, int level)
+{
+    return stbi_zlib_compress((unsigned char*)data, size, outSize, level);
+}
+
+unsigned char* nx_zlib_uncompress(const unsigned char* data, int size, int* outSize)
+{
+    return (unsigned char*)stbi_zlib_decode_malloc((const char*)data, size, outSize);
+}
+
 /* --- SSFN --- */
 
 /* SSFN resizes blocks without saying how big they were, so each remembers its own size. */

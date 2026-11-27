@@ -25,6 +25,8 @@ namespace nx
         static Key translateKey(u32 code);
 
         bool takeDropped(std::string& name) override;
+        std::string locale() override;
+        u32 processors() override;
 
     protected:
         static constexpr int kMaxPath = 1024;

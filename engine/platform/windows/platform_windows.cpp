@@ -223,6 +223,24 @@ namespace nx
         m_dropped.push_back(name);
     }
 
+    std::string PlatformWindows::locale()
+    {
+        wchar_t name[LOCALE_NAME_MAX_LENGTH] = L"";
+        char out[LOCALE_NAME_MAX_LENGTH * 3] = "";
+        if (GetUserDefaultLocaleName(name, LOCALE_NAME_MAX_LENGTH) > 0)
+        {
+            WideCharToMultiByte(CP_UTF8, 0, name, -1, out, sizeof(out), nullptr, nullptr);
+        }
+        return out;
+    }
+
+    u32 PlatformWindows::processors()
+    {
+        SYSTEM_INFO info = {};
+        GetNativeSystemInfo(&info);
+        return info.dwNumberOfProcessors ? info.dwNumberOfProcessors : 1;
+    }
+
     bool PlatformWindows::takeDropped(std::string& name)
     {
         if (m_dropped.empty())

@@ -113,6 +113,7 @@ a compiler and the platform's SDK, downloads nothing, and uses no SDL or GLFW.
 - **Video** — MPEG-1 films with their sound, decoded as they play, shown as an image like any other.
 - **Assets** — loaded in the background, shared, kept warm and unloaded only when a budget needs the room.
 - **Input** — keyboard, mouse and four gamepads as actions that players can rebind.
+- **Window and system** — full-screen, size, title, vsync and the pointer on a computer; the clipboard (on consoles too), the system's own message boxes, opening links, the language and region, processors and battery.
 - **Saving** — settings and scores, kept between runs; JSON, zlib compression, MD5, SHA-1 and SHA-256, base64, and random
   numbers from a seed that are the same on every machine.
 - **Cook tool** — turns images into compressed textures, sounds into ADPCM, Ogg or WAV (MP3 and FLAC too) and every kind of model into one, under the same names; a

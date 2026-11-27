@@ -1,5 +1,6 @@
 #include "platform/windows/platform_windows.h"
 #include "base/log.h"
+#include "platform/machines.h"
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -107,6 +108,101 @@ namespace nx
             u64 totalMemory() override { return memory().ullTotalPhys; }
             u64 freeMemory() override { return memory().ullAvailPhys; }
             const char* name() const override { return "Windows"; }
+
+            bool setFullscreen(bool on) override
+            {
+                if (m_window == nullptr || on == m_fullscreen)
+                {
+                    return m_window != nullptr;
+                }
+                if (on)
+                {
+                    // Without a border, over the whole of the monitor it is on: nothing changes mode, so it is quick to go in and out.
+                    m_placement.length = sizeof(m_placement);
+                    GetWindowPlacement(m_window, &m_placement);
+                    MONITORINFO monitor = {};
+                    monitor.cbSize = sizeof(monitor);
+                    GetMonitorInfoW(MonitorFromWindow(m_window, MONITOR_DEFAULTTONEAREST), &monitor);
+                    SetWindowLongPtrW(m_window, GWL_STYLE, WS_POPUP | WS_VISIBLE);
+                    const RECT& r = monitor.rcMonitor;
+                    SetWindowPos(m_window, HWND_TOP, r.left, r.top, r.right - r.left, r.bottom - r.top, SWP_FRAMECHANGED | SWP_NOOWNERZORDER);
+                }
+                else
+                {
+                    SetWindowLongPtrW(m_window, GWL_STYLE, WS_OVERLAPPEDWINDOW | WS_VISIBLE);
+                    SetWindowPlacement(m_window, &m_placement);
+                    SetWindowPos(m_window, nullptr, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+                }
+                m_fullscreen = on;
+                return true;
+            }
+
+            bool fullscreen() const override { return m_fullscreen; }
+
+            void setTitle(const char* text) override
+            {
+                wchar_t title[256] = L"";
+                MultiByteToWideChar(CP_UTF8, 0, text, -1, title, 256);
+                if (m_window)
+                {
+                    SetWindowTextW(m_window, title);
+                }
+            }
+
+            bool setWindowSize(u32 width, u32 height) override
+            {
+                if (m_window == nullptr || m_fullscreen || width < 64 || height < 64)
+                {
+                    return false;
+                }
+                RECT rect = { 0, 0, static_cast<LONG>(width), static_cast<LONG>(height) };
+                AdjustWindowRectExForDpi(&rect, WS_OVERLAPPEDWINDOW, FALSE, 0, GetDpiForWindow(m_window));
+                ShowWindow(m_window, SW_RESTORE);
+                return SetWindowPos(m_window, nullptr, 0, 0, rect.right - rect.left, rect.bottom - rect.top, SWP_NOMOVE | SWP_NOZORDER | SWP_NOOWNERZORDER) != 0;
+            }
+
+            void setPointer(PointerShape shape) override
+            {
+                static const WORD kShapes[] = { 32512, 32649, 32513, 32515, 32514, 32646, 32644, 32645, 32648 };   // IDC_ARROW and the rest
+                m_pointer = LoadCursorW(nullptr, MAKEINTRESOURCEW(kShapes[static_cast<u32>(shape) < 9 ? static_cast<u32>(shape) : 0]));
+                POINT at;
+                RECT inside;
+                if (m_window && GetCursorPos(&at) && ScreenToClient(m_window, &at) && GetClientRect(m_window, &inside) && PtInRect(&inside, at) && !m_locked)
+                {
+                    SetCursor(m_pointer);
+                }
+            }
+
+            bool focused() const override { return m_focused; }
+
+            // A window that isn't shown, as for tests and pictures taken unattended, leaves the desktop alone.
+            bool shown() const { return m_window && IsWindowVisible(m_window); }
+
+            bool showMessage(const char* title, const char* text, bool question) override
+            {
+                if (!shown())
+                {
+                    return false;
+                }
+                wchar_t caption[256] = L"";
+                wchar_t body[2048] = L"";
+                MultiByteToWideChar(CP_UTF8, 0, title, -1, caption, 256);
+                MultiByteToWideChar(CP_UTF8, 0, text, -1, body, 2048);
+                const int answer = MessageBoxW(m_window, body, caption, question ? MB_YESNO | MB_ICONQUESTION : MB_OK | MB_ICONINFORMATION);
+                return answer == IDYES || answer == IDOK;
+            }
+
+            bool clipboard(std::string& text) override
+            {
+                if (!shown())
+                {
+                    return false;
+                }
+                text = windows::clipboard();
+                return true;
+            }
+
+            bool setClipboard(const char* text) override { return shown() && windows::setClipboard(text); }
 
         private:
             static MEMORYSTATUSEX memory()
@@ -240,6 +336,22 @@ namespace nx
                     memset(m_input.keys, 0, sizeof(m_input.keys));
                     memset(m_input.mouseButtons, 0, sizeof(m_input.mouseButtons));
                     return 0;
+                case WM_SETCURSOR:
+                    // Its own pointer over the inside of the window, as a script chose.
+                    if (LOWORD(lParam) == HTCLIENT && m_pointer)
+                    {
+                        SetCursor(m_locked ? nullptr : m_pointer);
+                        return TRUE;
+                    }
+                    break;
+                case WM_SYSKEYDOWN:
+                    // Alt and Enter: full-screen, or back.
+                    if (wParam == VK_RETURN && (HIWORD(lParam) & KF_ALTDOWN) && !(HIWORD(lParam) & KF_REPEAT))
+                    {
+                        setFullscreen(!m_fullscreen);
+                        return 0;
+                    }
+                    break;
                 case WM_KEYDOWN:
                 case WM_KEYUP:
                     m_input.keys[static_cast<size_t>(translateKey(static_cast<u32>(wParam)))] = message == WM_KEYDOWN;
@@ -294,8 +406,9 @@ namespace nx
                 case WM_MBUTTONDOWN: mouse(2, true); return 0;
                 case WM_MBUTTONUP: mouse(2, false); return 0;
                 default:
-                    return DefWindowProcW(window, message, wParam, lParam);
+                    break;
                 }
+                return DefWindowProcW(window, message, wParam, lParam);
             }
 
             static LRESULT CALLBACK windowProc(HWND window, UINT message, WPARAM wParam, LPARAM lParam)
@@ -310,6 +423,9 @@ namespace nx
             }
 
             HWND m_window = nullptr;
+            HCURSOR m_pointer = nullptr;
+            WINDOWPLACEMENT m_placement = {};
+            bool m_fullscreen = false;
             InputState m_input;
             double m_nextPadSearch = 0;
             bool m_focused = false;

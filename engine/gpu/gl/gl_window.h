@@ -12,5 +12,6 @@ namespace nx
         void* (*load)(const char* function) = nullptr;
         void (*size)(void* user, u32& width, u32& height) = nullptr;  // in pixels; 0 when minimised
         void (*swap)(void* user) = nullptr;
+        void (*wait)(void* user, bool on) = nullptr;  // for the screen's refresh before swapping, or not; may be missing
     };
 }

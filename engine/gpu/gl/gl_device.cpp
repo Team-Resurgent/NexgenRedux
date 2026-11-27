@@ -1808,6 +1808,14 @@ void main()
                 return ok("resize");
             }
 
+            void setWait(bool wait) override
+            {
+                if (m_window && m_window->wait)
+                {
+                    m_window->wait(m_window->user, wait);
+                }
+            }
+
             Gl gl;
             GlWindow* m_window;
             GLuint m_program = 0;

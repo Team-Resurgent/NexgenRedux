@@ -1386,6 +1386,59 @@ What only the original Xbox has. Elsewhere `available` is false, readings are -1
 | `int Xbox::busRead(uint address, uint command, bool word = false)` | Reads from something on the SMBus, or -1. 0x20 is the system controller. The console's settings at 0xA8 are refused, as there are calls for what is in them. |
 | `bool Xbox::busWrite(uint address, uint command, uint value, bool word = false)` | Writes to something on the SMBus. The console's settings are refused: a mistake there can't be undone. |
 
+## Pointer
+
+How the mouse pointer looks over the window.
+
+| | |
+|---|---|
+| `PointerArrow` | The usual arrow. |
+| `PointerHand` | A hand, over what can be clicked. |
+| `PointerText` | A bar, over text to type in. |
+| `PointerCrosshair` | A cross, for aiming or picking a point. |
+| `PointerWait` | Busy. |
+| `PointerMove` | Arrows four ways, for dragging something about. |
+| `PointerResizeAcross` | Left and right, for resizing across. |
+| `PointerResizeUpDown` | Up and down. |
+| `PointerNotAllowed` | Can't be done here. |
+
+## Window
+
+The window, on a computer: full-screen or not, its size, title and pointer, and messages. On a console there is only the screen: `available` is false, and changing it does nothing.
+
+| | |
+|---|---|
+| `bool Window::get_available() property` | Whether there is a window to change: on Windows, Linux and macOS. |
+| `bool Window::get_fullscreen() property` | Whether it fills the screen. |
+| `void Window::set_fullscreen(bool) property` | Fills the screen without a border, or goes back to a window. Alt and Enter does the same on Windows. |
+| `string Window::get_title() property` | What its title bar says. |
+| `void Window::set_title(const string &in) property` | Changes it. |
+| `uint Window::get_width() property` | Pixels across what is drawn: the window's inside, or the screen. |
+| `uint Window::get_height() property` | Pixels down. |
+| `bool Window::resize(uint width, uint height)` | Makes its inside so many pixels, while it isn't full-screen. False where it can't be. |
+| `bool Window::get_vsync() property` | Whether each frame waits for the screen's refresh: true to begin with. |
+| `void Window::set_vsync(bool) property` | Waits for the refresh, smooth and without tearing, or doesn't, for as many frames as it can make. Consoles always wait. |
+| `Pointer Window::get_pointer() property` | How the pointer looks. |
+| `void Window::set_pointer(Pointer) property` | Changes how it looks over the window, until changed again: a hand over a button, a bar over a field. |
+| `bool Window::get_focused() property` | Whether it is the window being used: false while the player is in another, which is a time to pause. |
+| `bool Window::message(const string &in title, const string &in text)` | The system's own box with a message and OK, waited for. False where there is none: on a console, or Linux with no zenity, kdialog or xmessage. |
+| `bool Window::ask(const string &in title, const string &in question)` | The same with Yes and No: true for yes. |
+
+## System
+
+What every machine can say about itself, and do, in the same way.
+
+| | |
+|---|---|
+| `string System::get_clipboard() property` | The text that was copied. Where the system has no clipboard, as on a console, the game keeps its own. |
+| `void System::set_clipboard(const string &in) property` | Copies text, to paste elsewhere or here. On Linux it needs wl-copy, xclip or xsel. |
+| `string System::get_locale() property` | The language and region it is set to, as "en-GB" or "pt-BR"; a console says the language only, as "ja". "en" if it can't be told. |
+| `string System::get_language() property` | The language alone, as "en": for choosing which words to show. |
+| `uint System::get_processors() property` | Threads it can run at once: 1 on the original Xbox, 6 on the 360. |
+| `bool System::open(const string &in address)` | A web page, file or folder, in what the system opens it with. False where it can't: the consoles but the Xbox One. |
+| `int System::get_battery() property` | How full the battery is, 0 to 100, or -1 without one. |
+| `bool System::get_charging() property` | Whether it is plugged in. |
+
 ## Xbox360
 
 What only the Xbox 360 has. Elsewhere `available` is false, readings are -1 or empty, and the rest do nothing.

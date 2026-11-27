@@ -1,4 +1,5 @@
 #include "bindings/script_refs.h"
+#include "gpu/gpu.h"
 #include "platform/machines.h"
 
 // What each kind of machine can do that others can't, beside the original Xbox's in bind_xbox.cpp. Each is a
@@ -75,8 +76,118 @@ namespace nx
         bool linuxCharging() { return linux_::charging(); }
     }
 
+    namespace
+    {
+        // --- The window and the system, the same on every machine ---
+        Platform& platform() { return *services().platform; }
+        bool windowAvailable() { const std::string n = platform().name(); return n == "Windows" || n == "Linux" || n == "macOS"; }
+        bool windowFullscreen() { return platform().fullscreen(); }
+        void windowSetFullscreen(bool on) { platform().setFullscreen(on); }
+        std::string g_title = "Nexgen";
+        std::string windowTitle() { return g_title; }
+        void windowSetTitle(const std::string& title) { g_title = title; platform().setTitle(title.c_str()); }
+        u32 windowWidth() { u32 w = 0, h = 0; services().device->size(w, h); return w; }
+        u32 windowHeight() { u32 w = 0, h = 0; services().device->size(w, h); return h; }
+        bool windowResize(u32 width, u32 height) { return platform().setWindowSize(width, height); }
+        bool g_vsync = true;
+        bool windowVsync() { return g_vsync; }
+        void windowSetVsync(bool on) { g_vsync = on; services().device->setWait(on); }
+        PointerShape g_pointer = PointerShape::Arrow;
+        PointerShape windowPointer() { return g_pointer; }
+        void windowSetPointer(PointerShape shape)
+        {
+            if (static_cast<u32>(shape) < static_cast<u32>(PointerShape::Count))
+            {
+                g_pointer = shape;
+                platform().setPointer(shape);
+            }
+        }
+        bool windowFocused() { return platform().focused(); }
+        bool windowMessage(const std::string& title, const std::string& text) { return platform().showMessage(title.c_str(), text.c_str(), false); }
+        bool windowAsk(const std::string& title, const std::string& text) { return platform().showMessage(title.c_str(), text.c_str(), true); }
+
+        // Where the system has no clipboard, or it can't be reached, the engine keeps one of its own, so copying and
+        // pasting still works within the game.
+        std::string g_clipboard;
+        std::string systemClipboard()
+        {
+            std::string text;
+            return platform().clipboard(text) ? text : g_clipboard;
+        }
+        void systemSetClipboard(const std::string& text)
+        {
+            g_clipboard = text.size() > (1u << 20) ? text.substr(0, 1u << 20) : text;
+            platform().setClipboard(g_clipboard.c_str());
+        }
+        std::string systemLocale()
+        {
+            const std::string l = platform().locale();
+            return l.empty() ? "en" : l;
+        }
+        std::string systemLanguage()
+        {
+            const std::string l = systemLocale();
+            const size_t dash = l.find('-');
+            return dash == std::string::npos ? l : l.substr(0, dash);
+        }
+        u32 systemProcessors() { return platform().processors(); }
+        bool systemOpen(const std::string& what)
+        {
+            if (what.empty())
+            {
+                return false;
+            }
+            return windows::available() ? windows::open(what.c_str()) : mac::available() ? mac::open(what.c_str()) : linux_::available() ? linux_::open(what.c_str())
+                                                                                     : xboxone::available() ? xboxone::openUri(what.c_str())
+                                                                                                             : false;
+        }
+        int systemBattery() { return windows::available() ? windows::battery() : mac::available() ? mac::battery() : linux_::available() ? linux_::battery() : -1; }
+        bool systemCharging() { return windows::available() ? windows::charging() : mac::available() ? mac::charging() : linux_::available() ? linux_::charging() : false; }
+    }
+
     void bindMachines(Binder& b)
     {
+        b.enumType("Pointer", "How the mouse pointer looks over the window.");
+        const char* const shapes[] = { "PointerArrow", "PointerHand", "PointerText", "PointerCrosshair", "PointerWait", "PointerMove", "PointerResizeAcross", "PointerResizeUpDown",
+                                       "PointerNotAllowed" };
+        const char* const meanings[] = { "The usual arrow.", "A hand, over what can be clicked.", "A bar, over text to type in.", "A cross, for aiming or picking a point.",
+                                         "Busy.", "Arrows four ways, for dragging something about.", "Left and right, for resizing across.", "Up and down.", "Can't be done here." };
+        for (u32 i = 0; i < 9; i++)
+        {
+            b.enumValue(shapes[i], static_cast<int>(i), meanings[i]);
+        }
+
+        b.section("Window", "The window, on a computer: full-screen or not, its size, title and pointer, and messages. On a console there is only the screen: `available` is false, and changing it does nothing.");
+        b.names("Window");
+        b.function("bool get_available() property", NX_FN(windowAvailable), "Whether there is a window to change: on Windows, Linux and macOS.");
+        b.function("bool get_fullscreen() property", NX_FN(windowFullscreen), "Whether it fills the screen.");
+        b.function("void set_fullscreen(bool) property", NX_FN(windowSetFullscreen), "Fills the screen without a border, or goes back to a window. Alt and Enter does the same on Windows.");
+        b.function("string get_title() property", NX_FN(windowTitle), "What its title bar says.");
+        b.function("void set_title(const string &in) property", NX_FN(windowSetTitle), "Changes it.");
+        b.function("uint get_width() property", NX_FN(windowWidth), "Pixels across what is drawn: the window's inside, or the screen.");
+        b.function("uint get_height() property", NX_FN(windowHeight), "Pixels down.");
+        b.function("bool resize(uint width, uint height)", NX_FN(windowResize), "Makes its inside so many pixels, while it isn't full-screen. False where it can't be.");
+        b.function("bool get_vsync() property", NX_FN(windowVsync), "Whether each frame waits for the screen's refresh: true to begin with.");
+        b.function("void set_vsync(bool) property", NX_FN(windowSetVsync), "Waits for the refresh, smooth and without tearing, or doesn't, for as many frames as it can make. Consoles always wait.");
+        b.function("Pointer get_pointer() property", NX_FN(windowPointer), "How the pointer looks.");
+        b.function("void set_pointer(Pointer) property", NX_FN(windowSetPointer), "Changes how it looks over the window, until changed again: a hand over a button, a bar over a field.");
+        b.function("bool get_focused() property", NX_FN(windowFocused), "Whether it is the window being used: false while the player is in another, which is a time to pause.");
+        b.function("bool message(const string &in title, const string &in text)", NX_FN(windowMessage), "The system's own box with a message and OK, waited for. False where there is none: on a console, or Linux with no zenity, kdialog or xmessage.");
+        b.function("bool ask(const string &in title, const string &in question)", NX_FN(windowAsk), "The same with Yes and No: true for yes.");
+        b.names("");
+
+        b.section("System", "What every machine can say about itself, and do, in the same way.");
+        b.names("System");
+        b.function("string get_clipboard() property", NX_FN(systemClipboard), "The text that was copied. Where the system has no clipboard, as on a console, the game keeps its own.");
+        b.function("void set_clipboard(const string &in) property", NX_FN(systemSetClipboard), "Copies text, to paste elsewhere or here. On Linux it needs wl-copy, xclip or xsel.");
+        b.function("string get_locale() property", NX_FN(systemLocale), "The language and region it is set to, as \"en-GB\" or \"pt-BR\"; a console says the language only, as \"ja\". \"en\" if it can't be told.");
+        b.function("string get_language() property", NX_FN(systemLanguage), "The language alone, as \"en\": for choosing which words to show.");
+        b.function("uint get_processors() property", NX_FN(systemProcessors), "Threads it can run at once: 1 on the original Xbox, 6 on the 360.");
+        b.function("bool open(const string &in address)", NX_FN(systemOpen), "A web page, file or folder, in what the system opens it with. False where it can't: the consoles but the Xbox One.");
+        b.function("int get_battery() property", NX_FN(systemBattery), "How full the battery is, 0 to 100, or -1 without one.");
+        b.function("bool get_charging() property", NX_FN(systemCharging), "Whether it is plugged in.");
+        b.names("");
+
         b.section("Xbox360", "What only the Xbox 360 has. Elsewhere `available` is false, readings are -1 or empty, and the rest do nothing.");
         b.names("Xbox360");
         b.function("bool get_available() property", NX_FN(x360Available), "Whether this is one.");

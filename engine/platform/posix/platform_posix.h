@@ -23,6 +23,8 @@ namespace nx
         bool takeDropped(std::string& name) override;
         u64 totalMemory() override;
         u64 freeMemory() override;
+        std::string locale() override;
+        u32 processors() override;
 
     protected:
         static constexpr size_t kMaxPath = 1024;

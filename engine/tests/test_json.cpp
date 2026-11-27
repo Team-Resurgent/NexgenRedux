@@ -346,3 +346,37 @@ NX_TEST(scriptsMakeSound)
         NX_EXPECT(bad.screens.failed());
     }
 }
+
+NX_TEST(scriptsAskTheWindowAndSystem)
+{
+    Rig r;
+    open(r, R"(
+        class A : Screen
+        {
+            void check(bool good) { if (!good) { array<int> nope; nope[1] = 0; } }
+            void onEnter()
+            {
+                // No window to change here, and nothing goes wrong asking.
+                check(!Window::available);
+                Window::fullscreen = true;
+                Window::title = "Changed";
+                check(Window::title == "Changed" && !Window::resize(800, 600));
+                Window::vsync = false;
+                check(!Window::vsync);
+                Window::vsync = true;
+                Window::pointer = PointerHand;
+                check(Window::pointer == PointerHand && Window::focused);
+                check(!Window::message("Hello", "there") && !Window::ask("Well?", "Yes or no"));
+
+                // A clipboard of the game's own, where the system has none.
+                System::clipboard = "copied text";
+                check(System::clipboard == "copied text");
+                check(System::processors >= 1 && System::locale.length() >= 2 && System::language.findFirst("-") < 0);
+                check(!System::open(""));
+                check(System::battery >= -1);
+                Save::set("done", "y");
+            }
+        }
+    )");
+    NX_EXPECT(!r.screens.failed() && strcmp(r.save.get("done", ""), "y") == 0);
+}

@@ -6,6 +6,7 @@
 
 #include "base/log.h"
 #include "gpu/gl/gl_window.h"
+#include "platform/machines.h"
 #include "platform/posix/platform_posix.h"
 
 #include <dlfcn.h>
@@ -232,6 +233,10 @@ namespace nx
                             memset(m_input.keys, 0, sizeof(m_input.keys));
                             memset(m_input.mouseButtons, 0, sizeof(m_input.mouseButtons));
                         }
+                        if (m_pointer != nil && m_delegate->focused && !m_locked)
+                        {
+                            [m_pointer set];
+                        }
                         if (m_delegate->resized)
                         {
                             m_delegate->resized = false;
@@ -245,6 +250,98 @@ namespace nx
 
             const InputState& input() const override { return m_input; }
             const char* name() const override { return "macOS"; }
+
+            bool setFullscreen(bool on) override
+            {
+                if (m_window == nil || m_hidden)
+                {
+                    return false;
+                }
+                if (on != fullscreen())
+                {
+                    [m_window toggleFullScreen:nil];
+                }
+                return true;
+            }
+
+            bool fullscreen() const override { return m_window != nil && ([m_window styleMask] & NSWindowStyleMaskFullScreen) != 0; }
+
+            void setTitle(const char* text) override
+            {
+                if (m_window != nil)
+                {
+                    [m_window setTitle:[NSString stringWithUTF8String:text]];
+                }
+            }
+
+            bool setWindowSize(u32 width, u32 height) override
+            {
+                if (m_window == nil || fullscreen() || width < 64 || height < 64)
+                {
+                    return false;
+                }
+                // In points: what the backing scale makes pixels of.
+                const CGFloat scale = [m_window backingScaleFactor] > 0 ? [m_window backingScaleFactor] : 1;
+                [m_window setContentSize:NSMakeSize(width / scale, height / scale)];
+                return true;
+            }
+
+            void setPointer(PointerShape shape) override
+            {
+                NSCursor* const shapes[] = { [NSCursor arrowCursor], [NSCursor pointingHandCursor], [NSCursor IBeamCursor], [NSCursor crosshairCursor], [NSCursor arrowCursor],
+                                             [NSCursor openHandCursor], [NSCursor resizeLeftRightCursor], [NSCursor resizeUpDownCursor], [NSCursor operationNotAllowedCursor] };
+                m_pointer = shapes[static_cast<u32>(shape) < 9 ? static_cast<u32>(shape) : 0];
+                [m_pointer set];
+            }
+
+            bool focused() const override { return m_window != nil && [m_window isKeyWindow]; }
+
+            bool showMessage(const char* title, const char* text, bool question) override
+            {
+                if (m_hidden)
+                {
+                    return false;
+                }
+                @autoreleasepool
+                {
+                    NSAlert* alert = [[[NSAlert alloc] init] autorelease];
+                    [alert setMessageText:[NSString stringWithUTF8String:title]];
+                    [alert setInformativeText:[NSString stringWithUTF8String:text]];
+                    [alert addButtonWithTitle:question ? @"Yes" : @"OK"];
+                    if (question)
+                    {
+                        [alert addButtonWithTitle:@"No"];
+                    }
+                    return [alert runModal] == NSAlertFirstButtonReturn;
+                }
+            }
+
+            bool clipboard(std::string& text) override
+            {
+                if (m_hidden)
+                {
+                    return false;
+                }
+                text = mac::clipboard();
+                return true;
+            }
+
+            bool setClipboard(const char* text) override { return !m_hidden && mac::setClipboard(text); }
+
+            std::string locale() override
+            {
+                @autoreleasepool
+                {
+                    NSString* name = [[NSLocale currentLocale] localeIdentifier];
+                    std::string out = name ? [name UTF8String] : "";
+                    for (char& c : out)
+                    {
+                        c = c == '_' ? '-' : c;
+                    }
+                    const size_t at = out.find('@');
+                    return at == std::string::npos ? out : out.substr(0, at);
+                }
+            }
 
         private:
             static void makeMenu()
@@ -279,6 +376,12 @@ namespace nx
                 [m_context makeCurrentContext];
                 const GLint interval = m_hidden ? 0 : 1;
                 [m_context setValues:&interval forParameter:NSOpenGLContextParameterSwapInterval];
+                m_gl.wait = [](void* self, bool on)
+                {
+                    PlatformMacOS* p = static_cast<PlatformMacOS*>(self);
+                    const GLint every = on && !p->m_hidden ? 1 : 0;
+                    [p->m_context setValues:&every forParameter:NSOpenGLContextParameterSwapInterval];
+                };
                 m_gl.user = this;
                 m_gl.load = [](const char* function) { return dlsym(RTLD_DEFAULT, function); };
                 m_gl.size = [](void* self, u32& width, u32& height) { static_cast<PlatformMacOS*>(self)->pixelSize(width, height); };
@@ -551,6 +654,7 @@ namespace nx
             }
             NSWindow* m_window = nil;
             NSOpenGLContext* m_context = nil;
+            NSCursor* m_pointer = nil;
             void* m_library = nullptr;
             GlWindow m_gl;
             InputState m_input;

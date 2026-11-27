@@ -4,6 +4,7 @@
 #include <dirent.h>
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <time.h>
@@ -248,6 +249,37 @@ namespace nx
     u64 PlatformPosix::totalMemory()
     {
         return static_cast<u64>(sysconf(_SC_PHYS_PAGES)) * static_cast<u64>(sysconf(_SC_PAGESIZE));
+    }
+
+    // From LC_ALL, LC_MESSAGES or LANG, as "en_GB.UTF-8": "en-GB".
+    std::string PlatformPosix::locale()
+    {
+        const char* names[] = { "LC_ALL", "LC_MESSAGES", "LANG" };
+        for (const char* name : names)
+        {
+            const char* value = getenv(name);
+            if (value == nullptr || value[0] == 0)
+            {
+                continue;
+            }
+            std::string out;
+            for (const char* c = value; *c && *c != '.' && *c != '@'; c++)
+            {
+                out += *c == '_' ? '-' : *c;
+            }
+            // C and POSIX, as "C.UTF-8", aren't a language: as if unset.
+            if (out != "C" && out != "POSIX" && !out.empty())
+            {
+                return out;
+            }
+        }
+        return std::string();
+    }
+
+    u32 PlatformPosix::processors()
+    {
+        const long count = sysconf(_SC_NPROCESSORS_ONLN);
+        return count > 0 ? static_cast<u32>(count) : 1;
     }
 
     u64 PlatformPosix::freeMemory()

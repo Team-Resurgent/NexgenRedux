@@ -1155,6 +1155,33 @@ Messages may be up to 4 MB, and pings are answered for you.
 
 `Connection` is a stream of text over TCP, to a server or from those who connect to you; `Datagrams` sends short texts over UDP.
 
+## The window and the system
+
+On a computer, `Window` changes the window; on a console there is only the screen, `Window::available` is false, and changing it
+does nothing:
+
+```cpp
+Window::fullscreen = true;                 // over the whole screen, without a border; Alt and Enter too, on Windows
+Window::title = "Level 3";
+Window::resize(1600, 900);                 // its inside, in pixels, while it isn't full-screen
+Window::vsync = false;                     // as many frames as it can make; consoles always wait for the refresh
+Window::pointer = PointerHand;             // over a button; PointerText over a field, PointerCrosshair to aim
+if (!Window::focused) pause();             // the player is in another window
+if (Window::ask("Quit", "Leave without saving?")) Screens::home();   // the system's own box, waited for
+```
+
+`System` is the same on every machine:
+
+```cpp
+System::clipboard = code;                  // copied, to paste elsewhere; a console keeps one of the game's own
+string words = System::language;           // "en", "ja": which words to show; System::locale is "en-GB"
+uint threads = System::processors;
+System::open("https://example.com");       // in the browser, or a file in what opens it
+int left = System::battery;                // 0 to 100, or -1 without one; System::charging
+```
+
+On Linux the clipboard needs wl-copy, xclip or xsel, and messages zenity, kdialog or xmessage. The System demo has them all.
+
 ## What only an Xbox can do
 
 `Xbox::available` is true on an original Xbox. Its temperatures, fan, light, tray, drives and files are there, as are ways out:

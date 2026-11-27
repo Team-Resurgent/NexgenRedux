@@ -10,14 +10,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <spawn.h>
 #include <sys/ioctl.h>
+#include <sys/wait.h>
 #include <unistd.h>
+
+extern char** environ;
 
 // Last, because they define a great many plain words.
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/keysym.h>
+#include <X11/cursorfont.h>
 #include <GL/glx.h>
 #undef None
 
@@ -283,6 +288,7 @@ namespace nx
                 set.event_mask = KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask | StructureNotifyMask | FocusChangeMask;
                 m_width = desc.width;
                 m_height = desc.height;
+                m_unseen = desc.hidden;
                 m_window = XCreateWindow(m_display, root, 0, 0, desc.width, desc.height, 0, visual->depth, InputOutput, visual->visual, CWColormap | CWEventMask, &set);
                 XFree(visual);
                 XFree(configs);
@@ -355,7 +361,16 @@ namespace nx
                 if (interval && extensions && strstr(extensions, "GLX_EXT_swap_control"))
                 {
                     interval(m_display, m_window, 1);
+                    m_interval = reinterpret_cast<void*>(interval);
                 }
+                m_gl.wait = [](void* self, bool on)
+                {
+                    PlatformLinux* p = static_cast<PlatformLinux*>(self);
+                    if (p->m_interval)
+                    {
+                        reinterpret_cast<void (*)(Display*, GLXDrawable, int)>(p->m_interval)(p->m_display, p->m_window, on ? 1 : 0);
+                    }
+                };
                 m_gl.user = this;
                 m_gl.load = [](const char* function) { return reinterpret_cast<void*>(glXGetProcAddressARB(reinterpret_cast<const GLubyte*>(function))); };
                 m_gl.size = [](void* self, u32& width, u32& height)
@@ -567,6 +582,164 @@ namespace nx
                 }
             }
 
+            bool setFullscreen(bool on) override
+            {
+                if (m_display == nullptr)
+                {
+                    return false;
+                }
+                // Asked of the window manager, which every desktop has: _NET_WM_STATE_FULLSCREEN.
+                XEvent event = {};
+                event.xclient.type = ClientMessage;
+                event.xclient.window = m_window;
+                event.xclient.message_type = XInternAtom(m_display, "_NET_WM_STATE", False);
+                event.xclient.format = 32;
+                event.xclient.data.l[0] = on ? 1 : 0;
+                event.xclient.data.l[1] = static_cast<long>(XInternAtom(m_display, "_NET_WM_STATE_FULLSCREEN", False));
+                event.xclient.data.l[3] = 1;
+                XSendEvent(m_display, DefaultRootWindow(m_display), False, SubstructureRedirectMask | SubstructureNotifyMask, &event);
+                XFlush(m_display);
+                m_fullscreen = on;
+                return true;
+            }
+
+            bool fullscreen() const override { return m_fullscreen; }
+
+            void setTitle(const char* text) override
+            {
+                if (m_display)
+                {
+                    XStoreName(m_display, m_window, text);
+                    XChangeProperty(m_display, m_window, XInternAtom(m_display, "_NET_WM_NAME", False), XInternAtom(m_display, "UTF8_STRING", False), 8, PropModeReplace,
+                        reinterpret_cast<const unsigned char*>(text), static_cast<int>(strlen(text)));
+                    XFlush(m_display);
+                }
+            }
+
+            bool setWindowSize(u32 width, u32 height) override
+            {
+                if (m_display == nullptr || m_fullscreen || width < 64 || height < 64)
+                {
+                    return false;
+                }
+                XResizeWindow(m_display, m_window, width, height);
+                XFlush(m_display);
+                return true;
+            }
+
+            void setPointer(PointerShape shape) override
+            {
+                static const unsigned int kShapes[] = { XC_left_ptr, XC_hand2, XC_xterm, XC_crosshair, XC_watch, XC_fleur, XC_sb_h_double_arrow, XC_sb_v_double_arrow, XC_X_cursor };
+                if (m_display == nullptr)
+                {
+                    return;
+                }
+                if (m_pointer)
+                {
+                    XFreeCursor(m_display, m_pointer);
+                }
+                m_pointer = XCreateFontCursor(m_display, kShapes[static_cast<u32>(shape) < 9 ? static_cast<u32>(shape) : 0]);
+                if (!m_locked)
+                {
+                    XDefineCursor(m_display, m_window, m_pointer);
+                    XFlush(m_display);
+                }
+            }
+
+            bool focused() const override { return m_focused; }
+
+            // With whichever of zenity, kdialog or xmessage there is, waited for.
+            bool showMessage(const char* title, const char* text, bool question) override
+            {
+                if (m_unseen)
+                {
+                    return false;   // unattended: nobody to answer
+                }
+                const std::string t = std::string("--title=") + title;
+                const char* zenity[] = { "zenity", question ? "--question" : "--info", t.c_str(), "--text", text, nullptr };
+                const char* kdialog[] = { "kdialog", "--title", title, question ? "--yesno" : "--msgbox", text, nullptr };
+                const char* xmessage[] = { "xmessage", "-center", "-buttons", question ? "Yes:0,No:1" : "OK:0", text, nullptr };
+                for (const char* const* command : { zenity, kdialog, xmessage })
+                {
+                    const int result = runAndWait(command);
+                    if (result >= 0 && result != 127)
+                    {
+                        return result == 0;
+                    }
+                }
+                return false;
+            }
+
+            // With wl-paste or wl-copy on Wayland, xclip or xsel on X11. None of them: the engine keeps its own.
+            bool clipboard(std::string& text) override
+            {
+                if (m_unseen)
+                {
+                    return false;
+                }
+                const bool wayland = getenv("WAYLAND_DISPLAY") != nullptr;
+                for (const char* command : { wayland ? "wl-paste --no-newline 2>/dev/null" : "", "xclip -selection clipboard -o 2>/dev/null", "xsel --clipboard --output 2>/dev/null" })
+                {
+                    FILE* pipe = command[0] ? popen(command, "r") : nullptr;
+                    if (pipe == nullptr)
+                    {
+                        continue;
+                    }
+                    std::string got;
+                    char chunk[1024];
+                    size_t n;
+                    while ((n = fread(chunk, 1, sizeof(chunk), pipe)) > 0 && got.size() < (1u << 20))
+                    {
+                        got.append(chunk, n);
+                    }
+                    const int status = pclose(pipe);
+                    if (status == 0 || !got.empty())
+                    {
+                        text = got;
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            bool setClipboard(const char* text) override
+            {
+                if (m_unseen)
+                {
+                    return false;
+                }
+                const bool wayland = getenv("WAYLAND_DISPLAY") != nullptr;
+                for (const char* command : { wayland ? "wl-copy 2>/dev/null" : "", "xclip -selection clipboard -i 2>/dev/null", "xsel --clipboard --input 2>/dev/null" })
+                {
+                    FILE* pipe = command[0] ? popen(command, "w") : nullptr;
+                    if (pipe == nullptr)
+                    {
+                        continue;
+                    }
+                    fwrite(text, 1, strlen(text), pipe);
+                    if (pclose(pipe) == 0)
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            static int runAndWait(const char* const* command)
+            {
+                pid_t child = 0;
+                if (posix_spawnp(&child, command[0], nullptr, nullptr, const_cast<char* const*>(command), environ) != 0)
+                {
+                    return -1;
+                }
+                int status = 0;
+                if (waitpid(child, &status, 0) != child || !WIFEXITED(status))
+                {
+                    return -1;
+                }
+                return WEXITSTATUS(status);
+            }
+
             void lockMouse(bool on) override
             {
                 if (m_display == nullptr || on == m_locked)
@@ -588,7 +761,14 @@ namespace nx
                 else
                 {
                     XUngrabPointer(m_display, CurrentTime);
-                    XUndefineCursor(m_display, m_window);
+                    if (m_pointer)
+                    {
+                        XDefineCursor(m_display, m_window, m_pointer);
+                    }
+                    else
+                    {
+                        XUndefineCursor(m_display, m_window);
+                    }
                     if (m_hidden)
                     {
                         XFreeCursor(m_display, m_hidden);
@@ -659,6 +839,10 @@ namespace nx
             Atom m_closeMessage = 0;
             bool m_locked = false, m_seenMouse = false;
             Cursor m_hidden = 0;
+            Cursor m_pointer = 0;
+            void* m_interval = nullptr;   // glXSwapIntervalEXT
+            bool m_fullscreen = false;
+            bool m_unseen = false;   // opened hidden
             Atom m_drop[kDropAtoms] = {};
             Window m_dropFrom = 0;
             GlWindow m_gl;

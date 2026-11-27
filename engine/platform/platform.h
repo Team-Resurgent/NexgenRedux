@@ -112,6 +112,9 @@ namespace nx
         return c >= 'A' && c <= 'Z' ? static_cast<char>(c - 'A' + 'a') : (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '.' || c == '-' ? c : '_';
     }
 
+    // The pointer's look over the window.
+    enum class PointerShape : u8 { Arrow, Hand, Text, Crosshair, Wait, Move, ResizeAcross, ResizeUpDown, NotAllowed, Count };
+
     class Platform
     {
     public:
@@ -165,6 +168,24 @@ namespace nx
         virtual u64 freeMemory() = 0;
 
         virtual const char* name() const = 0;
+
+        // The window, on a desktop. Elsewhere there is only the one screen: false, and nothing happens.
+        virtual bool setFullscreen(bool) { return false; }
+        virtual bool fullscreen() const { return false; }
+        virtual void setTitle(const char*) {}
+        // Its inside, in pixels, while it isn't full-screen.
+        virtual bool setWindowSize(u32, u32) { return false; }
+        virtual void setPointer(PointerShape) {}
+        virtual bool focused() const { return true; }
+        // Waits for it to be answered: true for OK or yes. False at once where there are none.
+        virtual bool showMessage(const char*, const char*, bool) { return false; }
+        // The system's own clipboard; false where there is none, and the engine keeps one of its own.
+        virtual bool clipboard(std::string&) { return false; }
+        virtual bool setClipboard(const char*) { return false; }
+        // Language and region as the system is set: "en-GB", or "en" where there is no region. Empty if unknown.
+        virtual std::string locale() { return std::string(); }
+        // Threads that can run at once.
+        virtual u32 processors() { return 1; }
     };
 
     // nullptr on failure, after logging why. Release with nx::destroy.

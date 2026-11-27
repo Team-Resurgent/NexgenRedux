@@ -48,6 +48,15 @@ namespace nx
         char name[24];
         float length;
         u32 first, count;   // channels
+        int root;           // the highest bone it moves from place to place, or -1
+    };
+
+    // Where one bone is from its parent.
+    struct BonePose
+    {
+        Vec3 place;
+        Quat turn;
+        Vec3 size;
     };
 
     // Which bones move a vertex, and how much.
@@ -96,6 +105,14 @@ namespace nx
         void pose(int animation, float time, Mat4* out) const;
         // Between two animations: how much of the second.
         void pose(int from, float fromTime, int to, float toTime, float part, Mat4* out) const;
+        // The pieces of those. Every bone at a time of an animation, or at rest for -1; room for kModelBones.
+        void sample(int animation, float time, BonePose* out) const;
+        // Moves `out` part of the way to `to`: where `only` isn't null, just the bones it marks.
+        void mix(BonePose* out, const BonePose* to, float part, const bool* only = nullptr) const;
+        // Where each bone is in the model's own space.
+        void place(const BonePose* bones, Mat4* out) const;
+        // From those, what the vertices are given.
+        void finish(const BonePose* bones, Mat4* out) const;
         // Every vertex of the first level, moved by the bones.
         void bend(const Mat4* bones, gpu::MeshVertex* out) const;
     };

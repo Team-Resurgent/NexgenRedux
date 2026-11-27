@@ -841,6 +841,30 @@ NX_TEST(thingsAreHeldByBones)
                 }
                 if (frames == 72)
                     check(abs(held.worldPlace.y - 3) < 0.01f && abs(held.worldPlace.x - 3) < 0.01f);
+                if (frames == 74)
+                {
+                    array<string> names = { "idle", "walk", "run" };
+                    array<float> at = { 0, 1.5f, 4 };
+                    check(robot.animateBlend(names, at));
+                    array<string> wrong = { "idle", "fly" };
+                    array<float> two = { 0, 1 };
+                    check(!robot.animateBlend(wrong, two) && !robot.animateBlend(names, two));
+                    robot.blendBy = 2;
+                    check(robot.blendBy == 2 && !robot.animated);
+                    check(robot.animateLayer("wave", "chest") && !robot.layerPlayed);
+                    check(!robot.animateLayer("wave", "tail") && !robot.animateLayer("fly", "chest"));
+                    check(robot.lookAt("head", Vec3(10, 1, 0)) && !robot.lookAt("tail", Vec3()));
+                    robot.rootMotion = true;
+                    check(robot.rootMotion);
+                }
+                if (frames == 84)
+                {
+                    robot.stopLayer(0.1f);
+                    robot.lookAway();
+                    robot.rootMotion = false;
+                }
+                if (frames == 96)
+                    check(robot.layerPlayed);
             }
             void draw(Canvas@ c) { Space::draw(c); }
         }
@@ -848,10 +872,123 @@ NX_TEST(thingsAreHeldByBones)
     NX_EXPECT(r.screens.init(r.services, "showcase", "main"));
     r.step(2);
     r.screens.push("shapes");
-    r.step(80);
+    r.step(100);
     NX_EXPECT(!r.screens.failed());
     r.screens.home();
     r.step(3);
+}
+
+NX_TEST(animationsBlendLayerTravelAndLook)
+{
+    Place p;
+    Asset* asset = p.rig.assets.model("global/model/robot.glb");
+    p.rig.assets.finish();
+    NX_EXPECT(asset->ready && asset->model);
+    auto robot = [&](const Vec3& at) {
+        const u32 id = p.world.spawn({});
+        p.space.spatial(id)->place = at;
+        p.space.setModel(id, asset);
+        p.space.transform(id & 0xFFFF);
+        return id;
+    };
+    auto holder = [&](u32 parent, const char* bone) {
+        const u32 id = p.world.spawn({});
+        NX_EXPECT(p.space.attachToBone(id, parent, bone));
+        return id;
+    };
+    auto where = [&](u32 id) {
+        p.space.transform(id & 0xFFFF);
+        const Mat4& w = p.space.getSpatial(id)->world;
+        return Vec3(w.m[12], w.m[13], w.m[14]);
+    };
+    auto facing = [&](u32 id) {
+        p.space.transform(id & 0xFFFF);
+        const Mat4& w = p.space.getSpatial(id)->world;
+        return Vec3(w.m[8], w.m[9], w.m[10]).normalized();
+    };
+    const Vec3 apart(5, 0, 0);
+
+    // All the way along a blend is the last animation, in step with it.
+    const char* names[] = { "idle", "walk", "run" };
+    const float points[] = { 0, 1.5f, 4 };
+    const char* wrong[] = { "idle", "fly" };
+    const u32 mixed = robot({ 0, 0, 0 }), ran = robot(apart);
+    NX_EXPECT(!p.space.blend(mixed, wrong, points, 2, 0));
+    NX_EXPECT(p.space.blend(mixed, names, points, 3, 0));
+    p.space.moves(mixed)->blendBy = 4;
+    NX_EXPECT(p.space.play(ran, "run", true, 0));
+    const u32 mixedHand = holder(mixed, "hand.r"), ranHand = holder(ran, "hand.r");
+    p.step(20);
+    NX_EXPECT(close(where(mixedHand) + apart, where(ranHand), 0.01f));
+    NX_EXPECT(!p.space.played(mixed));
+    // Between two it is neither, and still moves.
+    p.space.moves(mixed)->blendBy = 2.75f;
+    const Vec3 between = where(mixedHand);
+    p.step(7);
+    NX_EXPECT(!close(where(mixedHand) + apart, where(ranHand), 0.01f) && !close(where(mixedHand), between, 0.01f));
+
+    // A layer moves only the bones under it.
+    const u32 waving = robot({ 10, 0, 0 }), walking = robot(Vec3(10, 0, 0) + apart);
+    NX_EXPECT(p.space.play(waving, "walk", true, 0) && p.space.play(walking, "walk", true, 0));
+    NX_EXPECT(p.space.playLayer(waving, "wave", "chest", true, 0.25f));
+    NX_EXPECT(!p.space.playLayer(waving, "wave", "tail", true, 0.25f));
+    const u32 hands[] = { holder(waving, "hand.r"), holder(walking, "hand.r") };
+    const u32 feet[] = { holder(waving, "foot.l"), holder(walking, "foot.l") };
+    p.step(30);
+    NX_EXPECT(where(hands[0]).y > where(hands[1]).y + 0.3f);
+    NX_EXPECT(close(where(feet[0]) + apart, where(feet[1]), 0.001f));
+    NX_EXPECT(!p.space.layerPlayed(waving));
+    p.space.stopLayer(waving, 0.25f);
+    p.step(30);
+    NX_EXPECT(p.space.layerPlayed(waving));
+    NX_EXPECT(close(where(hands[0]) + apart, where(hands[1]), 0.001f));
+
+    // Root motion: the stride carries it 1.3 metres a step, round the loop, its hips staying over it.
+    const u32 striding = robot({ 0, 0, 10 }), still = robot({ 20, 0, 10 }), turned = robot({ 40, 0, 10 });
+    p.space.spatial(turned)->turn = Quat::axisAngle({ 0, 1, 0 }, 1.5707963f);
+    p.space.moves(striding)->root = p.space.moves(turned)->root = true;
+    for (const u32 id : { striding, still, turned })
+    {
+        NX_EXPECT(p.space.play(id, "stride", true, 0));
+    }
+    const u32 hips = holder(striding, "hips");
+    p.step(60);
+    const float expected = 1.3f / 0.86f;
+    NX_EXPECT(fabsf(p.at(striding).z - 10 - expected) < 0.05f && fabsf(p.at(striding).x) < 0.001f);
+    NX_EXPECT(close(p.at(still), { 20, 0, 10 }));
+    NX_EXPECT(fabsf(p.at(turned).x - 40 - expected) < 0.05f && fabsf(p.at(turned).z - 10) < 0.01f);
+    const Vec3 h = where(hips);
+    NX_EXPECT(fabsf(h.x - p.at(striding).x) < 0.05f && fabsf(h.z - p.at(striding).z) < 0.05f);
+
+    // A walker so carried stops at a wall.
+    p.thing({ 0, -0.5f, 30 }, Shape3::Box, { 20, 0.5f, 20 }, 0);
+    p.thing({ 0, 1, 33.5f }, Shape3::Box, { 3, 1, 0.5f }, 0);
+    const u32 walker = p.walker({ 0, 0, 30 });
+    p.space.setModel(walker, asset);
+    p.space.moves(walker)->root = true;
+    NX_EXPECT(p.space.play(walker, "stride", true, 0));
+    p.step(240);
+    NX_EXPECT(p.at(walker).z > 32 && p.at(walker).z < 32.65f);
+
+    // Looking: the head turns toward a place to its left, and back.
+    const u32 looker = robot({ 0, 0, -20 });
+    NX_EXPECT(p.space.play(looker, "idle", true, 0));
+    const u32 head = holder(looker, "head");
+    p.step(2);
+    NX_EXPECT(fabsf(facing(head).x) < 0.3f);
+    NX_EXPECT(p.space.lookAt(looker, "head", { 10, 1.5f, -20 }, 1));
+    NX_EXPECT(!p.space.lookAt(looker, "tail", { 10, 1.5f, -20 }, 1));
+    p.step(60);
+    NX_EXPECT(facing(head).x > 0.85f);
+    p.space.getAppearance(looker)->moves->lookWanted = 0;
+    p.step(60);
+    NX_EXPECT(fabsf(facing(head).x) < 0.3f);
+
+    p.space.setCamera({ 0, 2, 8 }, { 0, 1, 0 }, 60);
+    p.draw(2);
+    NX_EXPECT(p.rig.device->stats().rejected == 0);
+    p.world.clear();
+    p.rig.assets.release(asset);
 }
 
 NX_TEST(scriptsDrawIntoPictures)
@@ -1250,7 +1387,7 @@ NX_TEST(everyModelCanBeUsed)
         p.space.setModel(id, asset);
         if (strcmp(name, "robot") == 0)
         {
-            NX_EXPECT(asset->model->animations.count() == 6 && asset->model->weights.count() > 0);
+            NX_EXPECT(asset->model->animations.count() == 7 && asset->model->weights.count() > 0);
             NX_EXPECT(p.space.play(id, "walk", true, 0.2f));
             p.step(10);
             NX_EXPECT(p.space.play(id, "jump", false, 0.2f));

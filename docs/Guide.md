@@ -280,6 +280,30 @@ and draws those when it is small on the screen. What can't be seen isn't drawn.
 `Space::sun`, `ambient`, `sky`, `fog` and `shadows` set the scene. Shadows are the shape of what casts them, on the original Xbox too,
 where the land casts none.
 
+### Mixing animations
+
+`animate` plays one animation at a time. A model can do more:
+
+```cpp
+robot.animateBlend(array<string> = { "idle", "walk", "run" }, array<float> = { 0, 1.5f, 4 });  // each at a point
+robot.blendBy = speed;                                            // between two points, some of each, in step
+robot.animateLayer("wave", "chest");                              // over the top half, on top of the rest
+robot.stopLayer();
+robot.rootMotion = true;                                          // the animation moves it, so its feet don't slide
+robot.lookAt("head", ball.place);                                 // the head turns toward a place, up to 75 degrees
+robot.lookAway();
+```
+
+- **Blends** mix animations by a number, usually speed: idle at 0, walk at 1.5 metres a second, run at 4. Between two points the
+  robot is some of each, and both are kept at the same point of their steps, so the feet don't stumble. `animate` changes back.
+- **A layer** plays an animation over one bone and every bone that hangs from it: waving with `"chest"` while the legs keep
+  walking. It comes in and goes over a quarter of a second; `layerPlayed` says when one that doesn't loop has finished.
+- **Root motion** moves the whole thing as far as the animation carries its highest moving bone along the ground, which way it faces,
+  so a stride made in a modelling program covers exactly the ground its feet do. A walker so moved still stops at walls.
+- **Looking** turns a bone after the animation, smoothly, and can be asked every update as the place moves.
+
+The Moves demo has one of each, and the robot's "stride" is a walk that goes forward, for root motion.
+
 ### Holding things, and joints
 
 `attach(parent)` makes one thing move with another. `attach(parent, "hand.r")` makes it move with one of the parent's bones instead,

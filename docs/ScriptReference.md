@@ -662,6 +662,16 @@ Entities that move, collide and are drawn by the engine. Each screen has its own
 | `bool get_animated() const property` | Whether an animation that doesn't loop has finished. |
 | `float get_animationSpeed() const property` | How fast its animation plays. |
 | `void set_animationSpeed(float) property` | 1 is normal. |
+| `bool animateBlend(array<string>@+ names, array<float>@+ at, float change = 0.25)` | Plays several of its model's animations at once, mixed by `blendBy`: each is at a point along a line, as idle at 0, walk at 1.5 and run at 4 for its speed, and between two points it is some of each, their steps kept together. Changes to it over some seconds; asking again only changes the points. Up to 8. False if any isn't there, or the model hasn't arrived. |
+| `float get_blendBy() const property` | Where along the line of `animateBlend` it is. |
+| `void set_blendBy(float) property` | Where along the line of `animateBlend` it is: its speed, say. |
+| `bool animateLayer(const string &in name, const string &in bone, bool loop = true, float change = 0.25)` | Plays an animation over one bone and those that hang from it, on top of the rest, as waving while walking: "chest" for the top half. Comes in over some seconds. Asking again for what is playing does nothing. False if either isn't there. |
+| `void stopLayer(float change = 0.25)` | Lets the layer go over some seconds. |
+| `bool get_layerPlayed() const property` | Whether there is no layer, or one that doesn't loop has finished, or it is going. |
+| `bool get_rootMotion() const property` | Whether its animations move it. |
+| `void set_rootMotion(bool) property` | Where its animations carry the model's highest bone along the ground, the whole thing goes instead, so its feet don't slide: a walker so moved still stops at walls. |
+| `bool lookAt(const string &in bone, const Vec3 &in place, float amount = 1)` | Turns a bone of its model, as a head, toward a place, up to 75 degrees, over whatever its animation does; amount is how much. It turns there smoothly, and can be asked every update as the place moves. False if the bone isn't there. |
+| `void lookAway()` | Turns the bone back to what its animation does. |
 | `Vec3 get_motion() const property` | Metres a second. |
 | `void set_motion(const Vec3 &in) property` | Sets it going. |
 | `Vec3 get_turning() const property` | Degrees a second about each axis. |

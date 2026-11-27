@@ -553,8 +553,11 @@ def robot():
            'leg.l': still(0.6, x=-45), 'foot.l': still(0.6, x=60), 'leg.r': still(0.6, x=12), 'foot.r': still(0.6, x=38), 'aerial': still(0.6, x=20)}
     wave = rest(1.6, {'arm.r': {'rotation': cycle(1.6, 16, lambda a: dict(x=-8, z=-150 - 8 * math.sin(2 * a)))}, 'hand.r': {'rotation': cycle(1.6, 16, lambda a: dict(z=-18 * math.sin(2 * a) - 10))}, 'head': {'rotation': cycle(1.6, 16, lambda a: dict(z=6 * math.sin(a), y=-8))}})
     dance = gait(0.96, 12, 35, 50, 60, 0, 0.1, 16)
+    # A walk that goes somewhere: the hips travel forward, for root motion.
+    stride = gait(0.86, 32, 50, 28, 16, 3, 0.05, 7)
+    stride['hips']['translation'] = [(t, (x, y, 1.3 * t / 0.86)) for t, (x, y, _) in stride['hips']['translation']]
     save('robot', [(body, matter()), (glow, matter(glow=True))], bones, {
-        'idle': rest(2.6), 'walk': gait(0.86, 32, 50, 28, 16, 3, 0.05, 7), 'run': gait(0.56, 50, 82, 52, 42, 12, 0.08, 10), 'jump': air, 'wave': wave, 'dance': dance})
+        'idle': rest(2.6), 'walk': gait(0.86, 32, 50, 28, 16, 3, 0.05, 7), 'run': gait(0.56, 50, 82, 52, 42, 12, 0.08, 10), 'jump': air, 'wave': wave, 'dance': dance, 'stride': stride})
 
 
 def main():

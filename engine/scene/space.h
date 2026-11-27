@@ -108,6 +108,8 @@ namespace nx
         int bone;              // which that is, once the model has come; -1 until then
     };
 
+    struct Moves;
+
     // What it looks like.
     struct Appearance
     {
@@ -137,6 +139,29 @@ namespace nx
         gpu::Mesh bent;
         bool bentReady;
         float bentAt;
+        struct Moves* moves;     // owned; what more it does, once it is asked for
+    };
+
+    // Animation of a model beyond one animation at a time, made only for those that use it.
+    struct Moves
+    {
+        static constexpr u32 kBlends = 8;
+        // Animations at points along a line, mixed by where `blendBy` is between them, their steps kept together.
+        u8 blend[kBlends];
+        float blendAt[kBlends];
+        u32 blendCount;
+        float blendBy;
+        // One played over some bones, and what hangs from them, on top of the rest.
+        int layer, layerBone;
+        float layerTime, layerWeight, layerRate;   // how much of it there is, and how fast that changes a second
+        bool layerLoop;
+        bool only[kModelBones];
+        // A bone turned toward a place in the world.
+        int lookBone;
+        Vec3 lookAt;
+        float lookAmount, lookWanted;
+        // The highest moving bone's travel moves the whole thing instead.
+        bool root;
     };
 
     struct Light3
@@ -178,6 +203,7 @@ namespace nx
         Vec3 ground;           // which way the ground faces
         float still;           // seconds it has hardly moved
         u32 touched;           // how many things, last step
+        Vec3 carried;          // for a walker: how far its animation takes it this step
     };
 
     struct Emitter3
@@ -237,6 +263,15 @@ namespace nx
         // Nothing if it is already playing.
         bool play(u32 id, const char* animation, bool loop, float change);
         bool played(u32 id) const;
+        // Several animations mixed by a number, as idle, walk and run by speed. False if any isn't there.
+        bool blend(u32 id, const char* const* names, const float* at, u32 count, float change);
+        // One over a bone and those under it, as a wave while walking. False if either isn't there.
+        bool playLayer(u32 id, const char* animation, const char* bone, bool loop, float change);
+        void stopLayer(u32 id, float change);
+        bool layerPlayed(u32 id) const;
+        // Turns a bone, as a head, toward a place; amount 0 turns it back.
+        bool lookAt(u32 id, const char* bone, const Vec3& place, float amount);
+        Moves* moves(u32 id);   // made if it isn't there
         void pendingAnimation(u32 id, const char* name);
         Vec3 worldPlace(u32 id) const;
         // Makes it move with one of the parent's model's bones, by name: a sword in a hand, a hat on a head. Its place,
@@ -596,6 +631,13 @@ namespace nx
         // space.cpp
         void animate(float dt);
         bool bend(Appearance& a);
+        // Every bone of its model now, ready for the vertices.
+        void poseOf(const Appearance& a, Mat4* out) const;
+        void sampleTrack(const Appearance& a, int animation, float time, BonePose* out) const;
+        float trackLength(const Appearance& a, int animation) const;
+        int rootOf(const Appearance& a, int animation) const;
+        Vec3 travelled(const Appearance& a, int animation, float from, float to, bool wrapped) const;
+        void advance(const Appearance& a, int animation, float& time, float dt, bool loop) const;
         void drawAppearance(const Appearance& a, u32 detail, const gpu::View& view, bool shadow, bool see);
         void pickLights(const gpu::View& view, const Vec3& middle, float radius, gpu::MeshDraw& draw) const;
         void boundsOf(const Appearance& a, const Mat4& world, Vec3& middle, float& radius) const;

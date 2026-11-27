@@ -8,6 +8,9 @@
 
 namespace nx
 {
+    // An animation that is several mixed by a number: its time then is how far through a step it is.
+    constexpr int kBlended = -2;
+
     namespace
     {
         constexpr float kDegrees = 3.14159265f / 180.0f;
@@ -297,6 +300,8 @@ namespace nx
         {
             a.effect->release();
         }
+        memFree(a.moves);
+        a.moves = nullptr;
         a.model = a.texture = nullptr;
         a.custom = nullptr;
         a.effect = nullptr;
@@ -390,6 +395,11 @@ namespace nx
             }
             a->model = model;
             a->animation = a->before = -1;
+            if (a->moves)
+            {
+                a->moves->blendCount = 0;
+                a->moves->layer = a->moves->lookBone = -1;
+            }
         }
     }
 
@@ -482,6 +492,10 @@ namespace nx
     bool Space::played(u32 id) const
     {
         const Appearance* a = const_cast<Space*>(this)->getAppearance(id);
+        if (a && a->animation == kBlended)
+        {
+            return false;
+        }
         return a == nullptr || a->model == nullptr || a->model->model == nullptr || a->animation < 0 || (!a->loop && a->time >= a->model->model->animations[static_cast<u32>(a->animation)].length);
     }
 
@@ -535,14 +549,7 @@ namespace nx
             }
         }
         Mat4 bones[kModelBones];
-        if (a->change > 0)
-        {
-            model->pose(a->before, a->beforeTime, a->animation, a->time, 1 - a->change / a->changeFor, bones);
-        }
-        else
-        {
-            model->pose(a->animation, a->time, bones);
-        }
+        poseOf(*a, bones);
         // What the vertices are given is the bone's pose undoing where it was at rest: put back, that is the bone.
         out = bones[s.bone] * model->bones[static_cast<u32>(s.bone)].inverseBind.inverse();
         return true;
@@ -629,31 +636,461 @@ namespace nx
                 a.time = 0;
                 a.loop = true;
             }
-            if (a.animation < 0 || a.model == nullptr || a.model->model == nullptr)
+            if (a.model == nullptr || a.model->model == nullptr)
             {
                 continue;
             }
-            const ModelData& model = *a.model->model;
-            const float length = model.animations[static_cast<u32>(a.animation)].length;
-            a.time += dt * a.speed;
-            if (a.loop && length > 0)
+            Moves* m = a.moves;
+            if (m)
             {
-                a.time = fmodf(a.time, length);
-                a.time = a.time < 0 ? a.time + length : a.time;
+                // The layer and the look come and go smoothly.
+                if (m->layer >= 0)
+                {
+                    advance(a, m->layer, m->layerTime, dt, m->layerLoop);
+                    m->layerWeight += m->layerRate * dt;
+                    m->layerWeight = m->layerWeight > 1 ? 1 : m->layerWeight;
+                    if (m->layerWeight <= 0)
+                    {
+                        m->layer = -1;
+                        m->layerWeight = 0;
+                    }
+                }
+                const float step = dt * 4;
+                m->lookAmount += m->lookWanted > m->lookAmount ? fminf(step, m->lookWanted - m->lookAmount) : -fminf(step, m->lookAmount - m->lookWanted);
             }
-            else
+            if (a.animation == -1)
             {
-                a.time = a.time > length ? length : a.time;
+                continue;
             }
+            const float was = a.time, wasBefore = a.beforeTime;
+            advance(a, a.animation, a.time, dt, a.loop);
             if (a.change > 0)
             {
                 a.change -= dt;
-                a.beforeTime += dt * a.speed;
+                advance(a, a.before, a.beforeTime, dt, true);
+            }
+            if (m && m->root)
+            {
+                // How far the animation carried its highest bone, along the ground, moves the whole thing.
+                Vec3 by = travelled(a, a.animation, was, a.time, a.loop && a.time < was);
+                if (a.change > 0 && a.changeFor > 0 && a.before != -1)
+                {
+                    const float part = 1 - a.change / a.changeFor;
+                    by = by * part + travelled(a, a.before, wasBefore, a.beforeTime, a.beforeTime < wasBefore) * (1 - part);
+                }
+                const World::Entity& e = m_world.m_entities[a.owner];
+                if (e.parts3[0] != kNone && (by.x != 0 || by.z != 0))
+                {
+                    Spatial& s = m_spatials[e.parts3[0]];
+                    const Vec3 moved = s.turn.rotate({ by.x * s.size.x, by.y * s.size.y, by.z * s.size.z });
+                    Body3* body = e.parts3[4] != kNone ? &m_bodies[e.parts3[4]] : nullptr;
+                    if (body && body->walker)
+                    {
+                        body->carried = body->carried + moved;
+                    }
+                    else
+                    {
+                        s.place = s.place + moved;
+                    }
+                }
             }
             // Bent again every frame when near; further away, every second or fourth, a few at a time.
             const u32 every = a.detail == 0 ? 1 : a.detail == 1 ? 2 : 4;
             a.bentReady = a.bentReady && (m_animFrame + a.owner) % every != 0;
         }
+    }
+
+    void Space::advance(const Appearance& a, int animation, float& time, float dt, bool loop) const
+    {
+        const float length = trackLength(a, animation);
+        if (animation == kBlended)
+        {
+            // Its time is how far through a step it is, 0 to 1.
+            time += length > 0 ? dt * a.speed / length : 0;
+            time -= floorf(time);
+            return;
+        }
+        time += dt * a.speed;
+        if (loop && length > 0)
+        {
+            time = fmodf(time, length);
+            time = time < 0 ? time + length : time;
+        }
+        else
+        {
+            time = time > length ? length : time;
+        }
+    }
+
+    namespace
+    {
+        // Where `blendBy` falls among the points of a blend: which two, and how far from the first.
+        void between(const Moves& m, u32& low, u32& high, float& part)
+        {
+            low = high = 0;
+            part = 0;
+            if (m.blendCount < 2 || m.blendBy <= m.blendAt[0])
+            {
+                return;
+            }
+            low = high = m.blendCount - 1;
+            for (u32 i = 0; i + 1 < m.blendCount; i++)
+            {
+                if (m.blendBy < m.blendAt[i + 1])
+                {
+                    low = i;
+                    high = i + 1;
+                    const float span = m.blendAt[high] - m.blendAt[low];
+                    part = span > 0 ? (m.blendBy - m.blendAt[low]) / span : 0;
+                    return;
+                }
+            }
+        }
+    }
+
+    float Space::trackLength(const Appearance& a, int animation) const
+    {
+        const ModelData& model = *a.model->model;
+        if (animation == kBlended)
+        {
+            if (a.moves == nullptr || a.moves->blendCount == 0)
+            {
+                return 0;
+            }
+            u32 low, high;
+            float part;
+            between(*a.moves, low, high, part);
+            const float x = model.animations[static_cast<u32>(a.moves->blend[low])].length;
+            const float y = model.animations[static_cast<u32>(a.moves->blend[high])].length;
+            return x + (y - x) * part;
+        }
+        return animation >= 0 && static_cast<u32>(animation) < model.animations.count() ? model.animations[static_cast<u32>(animation)].length : 0;
+    }
+
+    void Space::sampleTrack(const Appearance& a, int animation, float time, BonePose* out) const
+    {
+        const ModelData& model = *a.model->model;
+        if (animation != kBlended)
+        {
+            model.sample(animation, time, out);
+            return;
+        }
+        if (a.moves == nullptr || a.moves->blendCount == 0)
+        {
+            model.sample(-1, 0, out);
+            return;
+        }
+        // Both at the same point of their steps.
+        u32 low, high;
+        float part;
+        between(*a.moves, low, high, part);
+        const int x = a.moves->blend[low], y = a.moves->blend[high];
+        model.sample(x, time * model.animations[static_cast<u32>(x)].length, out);
+        if (high != low && part > 0)
+        {
+            BonePose other[kModelBones];
+            model.sample(y, time * model.animations[static_cast<u32>(y)].length, other);
+            model.mix(out, other, part);
+        }
+    }
+
+    int Space::rootOf(const Appearance& a, int animation) const
+    {
+        const ModelData& model = *a.model->model;
+        if (animation == kBlended)
+        {
+            animation = a.moves && a.moves->blendCount ? a.moves->blend[0] : -1;
+        }
+        return animation >= 0 && static_cast<u32>(animation) < model.animations.count() ? model.animations[static_cast<u32>(animation)].root : -1;
+    }
+
+    Vec3 Space::travelled(const Appearance& a, int animation, float from, float to, bool wrapped) const
+    {
+        const ModelData& model = *a.model->model;
+        const int root = rootOf(a, animation);
+        if (root < 0)
+        {
+            return {};
+        }
+        BonePose pose[kModelBones];
+        auto at = [&](float t) { sampleTrack(a, animation, t, pose); return pose[root].place; };
+        Vec3 by = at(to) - at(from);
+        if (wrapped)
+        {
+            // Round the end of the loop: to the end, then on from the start.
+            const float end = animation == kBlended ? 1 : trackLength(a, animation);
+            by = by + at(end) - at(0);
+        }
+        // Into the model's space, along the ground only.
+        const int parent = model.bones[static_cast<u32>(root)].parent;
+        if (parent >= 0)
+        {
+            Mat4 rest[kModelBones];
+            model.sample(-1, 0, pose);
+            model.place(pose, rest);
+            by = rest[parent].transformDirection(by);
+        }
+        return { by.x, 0, by.z };
+    }
+
+    void Space::poseOf(const Appearance& a, Mat4* out) const
+    {
+        const ModelData& model = *a.model->model;
+        BonePose bones[kModelBones];
+        sampleTrack(a, a.animation, a.time, bones);
+        if (a.change > 0 && a.changeFor > 0)
+        {
+            BonePose was[kModelBones];
+            sampleTrack(a, a.before, a.beforeTime, was);
+            model.mix(was, bones, 1 - a.change / a.changeFor);
+            memcpy(bones, was, sizeof(BonePose) * model.bones.count());
+        }
+        const Moves* m = a.moves;
+        if (m && m->root)
+        {
+            // Where the animation has carried it, the whole thing now is: the bone stays over the middle.
+            int done = -1;
+            for (const int track : { a.animation, a.before })
+            {
+                const int root = track != -1 ? rootOf(a, track) : -1;
+                if (root < 0 || root == done)
+                {
+                    continue;
+                }
+                done = root;
+                const ModelBone& bone = model.bones[static_cast<u32>(root)];
+                Vec3 off = bones[root].place - bone.place;
+                if (bone.parent >= 0)
+                {
+                    BonePose still[kModelBones];
+                    Mat4 rest[kModelBones];
+                    model.sample(-1, 0, still);
+                    model.place(still, rest);
+                    Vec3 flat = rest[bone.parent].transformDirection(off);
+                    flat.y = 0;
+                    off = rest[bone.parent].inverse().transformDirection(flat);
+                }
+                else
+                {
+                    off.y = 0;
+                }
+                bones[root].place = bones[root].place - off;
+            }
+        }
+        if (m && m->layer >= 0 && m->layerWeight > 0)
+        {
+            BonePose over[kModelBones];
+            model.sample(m->layer, m->layerTime, over);
+            model.mix(bones, over, m->layerWeight, m->only);
+        }
+        if (m && m->lookBone >= 0 && m->lookAmount > 0 && static_cast<u32>(m->lookBone) < model.bones.count())
+        {
+            const World::Entity& e = m_world.m_entities[a.owner];
+            if (e.parts3[0] != kNone)
+            {
+                // Its turn in the model's space, and at rest, from those above it.
+                const u32 b = static_cast<u32>(m->lookBone);
+                Quat now, rest, above;
+                int chain[kModelBones];
+                u32 count = 0;
+                for (int at = static_cast<int>(b); at >= 0 && count < kModelBones; at = model.bones[static_cast<u32>(at)].parent)
+                {
+                    chain[count++] = at;
+                }
+                while (count)
+                {
+                    const u32 at = static_cast<u32>(chain[--count]);
+                    if (at == b)
+                    {
+                        above = now;
+                    }
+                    now = now * bones[at].turn;
+                    rest = rest * model.bones[at].turn;
+                }
+                Mat4 worlds[kModelBones];
+                model.place(bones, worlds);
+                const Vec3 head(worlds[b].m[12], worlds[b].m[13], worlds[b].m[14]);
+                const Vec3 target = m_spatials[e.parts3[0]].world.inverse().transformPoint(m->lookAt);
+                // The way it faces, which at rest is the model's front.
+                const Vec3 facing = (now * rest.conjugate()).rotate({ 0, 0, 1 }).normalized();
+                const Vec3 want = (target - head).normalized();
+                const Vec3 axis = facing.cross(want);
+                const float sine = axis.length();
+                if (sine > 1e-4f)
+                {
+                    float angle = atan2f(sine, facing.dot(want));
+                    const float most = 1.309f;   // 75 degrees
+                    angle = (angle > most ? most : angle) * m->lookAmount;
+                    const Quat turn = Quat::axisAngle(axis * (1 / sine), angle);
+                    bones[b].turn = (above.conjugate() * turn * above * bones[b].turn).normalized();
+                }
+            }
+        }
+        model.finish(bones, out);
+    }
+
+    Moves* Space::moves(u32 id)
+    {
+        Appearance* a = getAppearance(id);
+        if (a == nullptr)
+        {
+            return nullptr;
+        }
+        if (a->moves == nullptr)
+        {
+            a->moves = static_cast<Moves*>(memAlloc(sizeof(Moves), MemTag::General));
+            if (a->moves)
+            {
+                *a->moves = Moves{};
+                a->moves->layer = a->moves->layerBone = a->moves->lookBone = -1;
+            }
+        }
+        return a->moves;
+    }
+
+    bool Space::blend(u32 id, const char* const* names, const float* at, u32 count, float change)
+    {
+        Appearance* a = getAppearance(id);
+        if (a == nullptr || a->model == nullptr || a->model->model == nullptr || count == 0 || count > Moves::kBlends)
+        {
+            return false;
+        }
+        u8 found[Moves::kBlends];
+        for (u32 i = 0; i < count; i++)
+        {
+            const int index = a->model->model->findAnimation(names[i]);
+            if (index < 0 || index > 255)
+            {
+                return false;
+            }
+            found[i] = static_cast<u8>(index);
+        }
+        Moves* m = moves(id);
+        if (m == nullptr)
+        {
+            return false;
+        }
+        // Kept in order of where they are.
+        for (u32 i = 0; i < count; i++)
+        {
+            m->blend[i] = found[i];
+            m->blendAt[i] = at[i];
+            for (u32 j = i; j > 0 && m->blendAt[j] < m->blendAt[j - 1]; j--)
+            {
+                const u8 x = m->blend[j];
+                m->blend[j] = m->blend[j - 1];
+                m->blend[j - 1] = x;
+                const float y = m->blendAt[j];
+                m->blendAt[j] = m->blendAt[j - 1];
+                m->blendAt[j - 1] = y;
+            }
+        }
+        m->blendCount = count;
+        if (a->animation != kBlended)
+        {
+            a->before = a->animation;
+            a->beforeTime = a->time;
+            a->change = a->changeFor = a->animation != -1 ? change : 0;
+            a->animation = kBlended;
+            a->time = 0;
+            a->loop = true;
+        }
+        return true;
+    }
+
+    bool Space::playLayer(u32 id, const char* name, const char* bone, bool loop, float change)
+    {
+        Appearance* a = getAppearance(id);
+        if (a == nullptr || a->model == nullptr || a->model->model == nullptr)
+        {
+            return false;
+        }
+        const ModelData& model = *a->model->model;
+        const int animation = model.findAnimation(name);
+        int top = -1;
+        for (u32 i = 0; i < model.bones.count(); i++)
+        {
+            top = strcmp(model.bones[i].name, bone) == 0 ? static_cast<int>(i) : top;
+        }
+        Moves* m = animation >= 0 && top >= 0 ? moves(id) : nullptr;
+        if (m == nullptr)
+        {
+            return false;
+        }
+        // Asking again for what is playing does nothing.
+        if (m->layer == animation && m->layerBone == top && m->layerRate >= 0 && (loop || m->layerTime < model.animations[static_cast<u32>(animation)].length))
+        {
+            m->layerLoop = loop;
+            return true;
+        }
+        if (m->layer != animation || m->layerBone != top)
+        {
+            m->layerWeight = 0;
+        }
+        m->layer = animation;
+        m->layerBone = top;
+        m->layerTime = 0;
+        m->layerLoop = loop;
+        m->layerRate = change > 0 ? 1 / change : 1000;
+        // The bone and every one that hangs from it.
+        for (u32 i = 0; i < model.bones.count(); i++)
+        {
+            bool under = false;
+            for (int at = static_cast<int>(i); at >= 0 && !under; at = model.bones[static_cast<u32>(at)].parent)
+            {
+                under = at == top;
+            }
+            m->only[i] = under;
+        }
+        return true;
+    }
+
+    void Space::stopLayer(u32 id, float change)
+    {
+        Appearance* a = getAppearance(id);
+        if (a && a->moves && a->moves->layer >= 0)
+        {
+            a->moves->layerRate = change > 0 ? -1 / change : -1000;
+        }
+    }
+
+    bool Space::layerPlayed(u32 id) const
+    {
+        const Appearance* a = const_cast<Space*>(this)->getAppearance(id);
+        if (a == nullptr || a->moves == nullptr || a->moves->layer < 0 || a->model == nullptr || a->model->model == nullptr)
+        {
+            return true;
+        }
+        const Moves& m = *a->moves;
+        return m.layerRate < 0 || (!m.layerLoop && m.layerTime >= a->model->model->animations[static_cast<u32>(m.layer)].length);
+    }
+
+    bool Space::lookAt(u32 id, const char* bone, const Vec3& place, float amount)
+    {
+        Appearance* a = getAppearance(id);
+        if (a == nullptr || a->model == nullptr || a->model->model == nullptr)
+        {
+            return false;
+        }
+        const ModelData& model = *a->model->model;
+        int found = -1;
+        for (u32 i = 0; i < model.bones.count(); i++)
+        {
+            found = strcmp(model.bones[i].name, bone) == 0 ? static_cast<int>(i) : found;
+        }
+        Moves* m = found >= 0 ? moves(id) : nullptr;
+        if (m == nullptr)
+        {
+            return false;
+        }
+        if (m->lookBone != found)
+        {
+            m->lookAmount = 0;
+        }
+        m->lookBone = found;
+        m->lookAt = place;
+        m->lookWanted = amount < 0 ? 0 : amount > 1 ? 1 : amount;
+        return true;
     }
 
     // --- Seeing ---
@@ -724,14 +1161,7 @@ namespace nx
             return static_cast<bool>(a.bent);
         }
         Mat4 bones[kModelBones];
-        if (a.change > 0)
-        {
-            model.pose(a.before, a.beforeTime, a.animation, a.time, 1 - a.change / a.changeFor, bones);
-        }
-        else
-        {
-            model.pose(a.animation, a.time, bones);
-        }
+        poseOf(a, bones);
         model.bend(bones, moved);
         if (a.bent)
         {

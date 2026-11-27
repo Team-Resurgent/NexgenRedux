@@ -323,6 +323,44 @@ namespace nx
         u32 entityBones(EntityRef* e) { return e->world ? e->world->space().boneCount(e->id) : 0; }
         std::string entityBone(u32 index, EntityRef* e) { return e->world ? e->world->space().boneName(e->id, index) : ""; }
         bool getAnimated(const EntityRef* e) { return e->world == nullptr || e->world->space().played(e->id); }
+        bool entityBlend(CScriptArray* names, CScriptArray* at, float change, EntityRef* e)
+        {
+            if (e->world == nullptr || names == nullptr || at == nullptr || names->GetSize() != at->GetSize() || names->GetSize() > Moves::kBlends)
+            {
+                return false;
+            }
+            const char* list[Moves::kBlends];
+            float points[Moves::kBlends];
+            for (u32 i = 0; i < names->GetSize(); i++)
+            {
+                list[i] = static_cast<const std::string*>(names->At(i))->c_str();
+                points[i] = *static_cast<const float*>(at->At(i));
+            }
+            return e->world->space().blend(e->id, list, points, names->GetSize(), change);
+        }
+        Moves* movesOf(const EntityRef* e) { return e->world ? e->world->space().moves(e->id) : nullptr; }
+        float getBlendBy(const EntityRef* e) { const Appearance* a = someLook(e); return a && a->moves ? a->moves->blendBy : 0; }
+        void setBlendBy(float v, EntityRef* e) { if (Moves* m = movesOf(e)) m->blendBy = v; }
+        bool getRootMotion(const EntityRef* e) { const Appearance* a = someLook(e); return a && a->moves && a->moves->root; }
+        void setRootMotion(bool v, EntityRef* e) { if (Moves* m = movesOf(e)) m->root = v; }
+        bool entityAnimateLayer(const std::string& name, const std::string& bone, bool loop, float change, EntityRef* e)
+        {
+            return e->world && e->world->space().playLayer(e->id, name.c_str(), bone.c_str(), loop, change);
+        }
+        void entityStopLayer(float change, EntityRef* e) { if (e->world) e->world->space().stopLayer(e->id, change); }
+        bool getLayerPlayed(const EntityRef* e) { return e->world == nullptr || e->world->space().layerPlayed(e->id); }
+        bool entityLookAt(const std::string& bone, const Vec3& place, float amount, EntityRef* e)
+        {
+            return e->world && e->world->space().lookAt(e->id, bone.c_str(), place, amount);
+        }
+        void entityLookAway(EntityRef* e)
+        {
+            const Appearance* a = someLook(e);
+            if (a && a->moves)
+            {
+                a->moves->lookWanted = 0;
+            }
+        }
         void setAnimationSpeed(float v, EntityRef* e) { if (Appearance* a = lookOf(e)) a->speed = v; }
 
         void collide(EntityRef* e, Shape3 shape, const Vec3& half, u32 group, u32 hits)
@@ -690,6 +728,16 @@ namespace nx
         b.method("bool get_animated() const property", NX_OBJ_LAST(getAnimated), "Whether an animation that doesn't loop has finished.");
         b.method("float get_animationSpeed() const property", NX_OBJ_LAST(getAnimationSpeed), "How fast its animation plays.");
         b.method("void set_animationSpeed(float) property", NX_OBJ_LAST(setAnimationSpeed), "1 is normal.");
+        b.method("bool animateBlend(array<string>@+ names, array<float>@+ at, float change = 0.25)", NX_OBJ_LAST(entityBlend), "Plays several of its model's animations at once, mixed by `blendBy`: each is at a point along a line, as idle at 0, walk at 1.5 and run at 4 for its speed, and between two points it is some of each, their steps kept together. Changes to it over some seconds; asking again only changes the points. Up to 8. False if any isn't there, or the model hasn't arrived.");
+        b.method("float get_blendBy() const property", NX_OBJ_LAST(getBlendBy), "Where along the line of `animateBlend` it is.");
+        b.method("void set_blendBy(float) property", NX_OBJ_LAST(setBlendBy), "Where along the line of `animateBlend` it is: its speed, say.");
+        b.method("bool animateLayer(const string &in name, const string &in bone, bool loop = true, float change = 0.25)", NX_OBJ_LAST(entityAnimateLayer), "Plays an animation over one bone and those that hang from it, on top of the rest, as waving while walking: \"chest\" for the top half. Comes in over some seconds. Asking again for what is playing does nothing. False if either isn't there.");
+        b.method("void stopLayer(float change = 0.25)", NX_OBJ_LAST(entityStopLayer), "Lets the layer go over some seconds.");
+        b.method("bool get_layerPlayed() const property", NX_OBJ_LAST(getLayerPlayed), "Whether there is no layer, or one that doesn't loop has finished, or it is going.");
+        b.method("bool get_rootMotion() const property", NX_OBJ_LAST(getRootMotion), "Whether its animations move it.");
+        b.method("void set_rootMotion(bool) property", NX_OBJ_LAST(setRootMotion), "Where its animations carry the model's highest bone along the ground, the whole thing goes instead, so its feet don't slide: a walker so moved still stops at walls.");
+        b.method("bool lookAt(const string &in bone, const Vec3 &in place, float amount = 1)", NX_OBJ_LAST(entityLookAt), "Turns a bone of its model, as a head, toward a place, up to 75 degrees, over whatever its animation does; amount is how much. It turns there smoothly, and can be asked every update as the place moves. False if the bone isn't there.");
+        b.method("void lookAway()", NX_OBJ_LAST(entityLookAway), "Turns the bone back to what its animation does.");
 
         b.method("Vec3 get_motion() const property", NX_OBJ_LAST(getMotion), "Metres a second.");
         b.method("void set_motion(const Vec3 &in) property", NX_OBJ_LAST(setMotion), "Sets it going.");

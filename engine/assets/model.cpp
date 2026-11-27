@@ -310,6 +310,23 @@ namespace nx
                     a.length = fmaxf(a.length, c.times[c.count - 1]);
                 }
                 a.count = model.channels.count() - a.first;
+                // What carries the rest along, for root motion: the highest bone it moves.
+                a.root = -1;
+                u32 rootDepth = kModelBones;
+                for (u32 k = a.first; k < a.first + a.count; k++)
+                {
+                    const ModelChannel& c = model.channels[k];
+                    u32 depth = 0;
+                    for (int at = static_cast<int>(c.bone); at >= 0 && depth < kModelBones && static_cast<u32>(at) < model.bones.count(); at = model.bones[static_cast<u32>(at)].parent)
+                    {
+                        depth++;
+                    }
+                    if (c.path == ModelPath::Place && depth < rootDepth)
+                    {
+                        rootDepth = depth;
+                        a.root = static_cast<int>(c.bone);
+                    }
+                }
                 model.animations.push(a);
             }
             return true;
@@ -578,114 +595,117 @@ namespace nx
         return -1;
     }
 
-    namespace
+    void ModelData::sample(int animation, float time, BonePose* out) const
     {
-        struct Local
+        for (u32 i = 0; i < bones.count(); i++)
         {
-            Vec3 place;
-            Quat turn;
-            Vec3 size;
-        };
-
-        void sample(const ModelData& model, int animation, float time, Local* out)
+            out[i] = { bones[i].place, bones[i].turn, bones[i].size };
+        }
+        if (animation < 0 || static_cast<u32>(animation) >= animations.count())
         {
-            for (u32 i = 0; i < model.bones.count(); i++)
+            return;
+        }
+        const ModelAnimation& a = animations[static_cast<u32>(animation)];
+        for (u32 i = 0; i < a.count; i++)
+        {
+            const ModelChannel& c = channels[a.first + i];
+            if (c.bone >= bones.count())
             {
-                out[i] = { model.bones[i].place, model.bones[i].turn, model.bones[i].size };
+                continue;
             }
-            if (animation < 0 || static_cast<u32>(animation) >= model.animations.count())
+            u32 lo = 0, hi = c.count - 1;
+            while (lo < hi)
             {
-                return;
-            }
-            const ModelAnimation& a = model.animations[static_cast<u32>(animation)];
-            for (u32 i = 0; i < a.count; i++)
-            {
-                const ModelChannel& c = model.channels[a.first + i];
-                if (c.bone >= model.bones.count())
+                const u32 mid = (lo + hi + 1) / 2;
+                if (c.times[mid] <= time)
                 {
-                    continue;
-                }
-                u32 low = 0, high = c.count - 1;
-                while (low < high)
-                {
-                    const u32 middle = (low + high + 1) / 2;
-                    if (c.times[middle] <= time)
-                    {
-                        low = middle;
-                    }
-                    else
-                    {
-                        high = middle - 1;
-                    }
-                }
-                const u32 next = low + 1 < c.count ? low + 1 : low;
-                const float span = c.times[next] - c.times[low];
-                float part = span > 0 && !c.stepped ? (time - c.times[low]) / span : 0;
-                part = part < 0 ? 0 : part > 1 ? 1 : part;
-                if (c.path == ModelPath::Turn)
-                {
-                    const float* x = c.values + low * 4;
-                    const float* y = c.values + next * 4;
-                    out[c.bone].turn = Quat::slerp({ x[0], x[1], x[2], x[3] }, { y[0], y[1], y[2], y[3] }, part);
+                    lo = mid;
                 }
                 else
                 {
-                    const float* x = c.values + low * 3;
-                    const float* y = c.values + next * 3;
-                    const Vec3 v(x[0] + (y[0] - x[0]) * part, x[1] + (y[1] - x[1]) * part, x[2] + (y[2] - x[2]) * part);
-                    (c.path == ModelPath::Place ? out[c.bone].place : out[c.bone].size) = v;
+                    hi = mid - 1;
                 }
+            }
+            const u32 next = lo + 1 < c.count ? lo + 1 : lo;
+            const float span = c.times[next] - c.times[lo];
+            float part = span > 0 && !c.stepped ? (time - c.times[lo]) / span : 0;
+            part = part < 0 ? 0 : part > 1 ? 1 : part;
+            if (c.path == ModelPath::Turn)
+            {
+                const float* x = c.values + lo * 4;
+                const float* y = c.values + next * 4;
+                out[c.bone].turn = Quat::slerp({ x[0], x[1], x[2], x[3] }, { y[0], y[1], y[2], y[3] }, part);
+            }
+            else
+            {
+                const float* x = c.values + lo * 3;
+                const float* y = c.values + next * 3;
+                const Vec3 v(x[0] + (y[0] - x[0]) * part, x[1] + (y[1] - x[1]) * part, x[2] + (y[2] - x[2]) * part);
+                (c.path == ModelPath::Place ? out[c.bone].place : out[c.bone].size) = v;
             }
         }
+    }
 
-        void chain(const ModelData& model, const Local* locals, Mat4* out)
+    void ModelData::mix(BonePose* out, const BonePose* to, float part, const bool* only) const
+    {
+        for (u32 i = 0; i < bones.count(); i++)
         {
-            // A parent may come after its child in the file, so each is worked out when first needed.
-            bool done[kModelBones] = {};
-            Mat4 worlds[kModelBones];
-            for (u32 i = 0; i < model.bones.count(); i++)
+            if (only && !only[i])
             {
-                u32 waiting[kModelBones];
-                u32 count = 0;
-                for (int at = static_cast<int>(i); at >= 0 && !done[at] && count < kModelBones; at = model.bones[static_cast<u32>(at)].parent)
-                {
-                    waiting[count++] = static_cast<u32>(at);
-                }
-                while (count)
-                {
-                    const u32 b = waiting[--count];
-                    const Mat4 local = compose(locals[b].place, locals[b].turn, locals[b].size);
-                    const int parent = model.bones[b].parent;
-                    worlds[b] = parent >= 0 ? worlds[parent] * local : local;
-                    done[b] = true;
-                }
+                continue;
             }
-            for (u32 i = 0; i < model.bones.count(); i++)
+            out[i].place = out[i].place + (to[i].place - out[i].place) * part;
+            out[i].turn = Quat::slerp(out[i].turn, to[i].turn, part);
+            out[i].size = out[i].size + (to[i].size - out[i].size) * part;
+        }
+    }
+
+    void ModelData::place(const BonePose* locals, Mat4* worlds) const
+    {
+        // A parent may come after its child in the file, so each is worked out when first needed.
+        bool done[kModelBones] = {};
+        for (u32 i = 0; i < bones.count(); i++)
+        {
+            u32 waiting[kModelBones];
+            u32 count = 0;
+            for (int at = static_cast<int>(i); at >= 0 && !done[at] && count < kModelBones; at = bones[static_cast<u32>(at)].parent)
             {
-                out[i] = worlds[i] * model.bones[i].inverseBind;
+                waiting[count++] = static_cast<u32>(at);
             }
+            while (count)
+            {
+                const u32 b = waiting[--count];
+                const Mat4 local = compose(locals[b].place, locals[b].turn, locals[b].size);
+                const int parent = bones[b].parent;
+                worlds[b] = parent >= 0 ? worlds[parent] * local : local;
+                done[b] = true;
+            }
+        }
+    }
+
+    void ModelData::finish(const BonePose* locals, Mat4* out) const
+    {
+        place(locals, out);
+        for (u32 i = 0; i < bones.count(); i++)
+        {
+            out[i] = out[i] * bones[i].inverseBind;
         }
     }
 
     void ModelData::pose(int animation, float time, Mat4* out) const
     {
-        Local locals[kModelBones];
-        sample(*this, animation, time, locals);
-        chain(*this, locals, out);
+        BonePose locals[kModelBones];
+        sample(animation, time, locals);
+        finish(locals, out);
     }
 
     void ModelData::pose(int from, float fromTime, int to, float toTime, float part, Mat4* out) const
     {
-        Local a[kModelBones], b[kModelBones];
-        sample(*this, from, fromTime, a);
-        sample(*this, to, toTime, b);
-        for (u32 i = 0; i < bones.count(); i++)
-        {
-            a[i].place = a[i].place + (b[i].place - a[i].place) * part;
-            a[i].turn = Quat::slerp(a[i].turn, b[i].turn, part);
-            a[i].size = a[i].size + (b[i].size - a[i].size) * part;
-        }
-        chain(*this, a, out);
+        BonePose a[kModelBones], b[kModelBones];
+        sample(from, fromTime, a);
+        sample(to, toTime, b);
+        mix(a, b, part);
+        finish(a, out);
     }
 
     void ModelData::bend(const Mat4* matrices, gpu::MeshVertex* out) const

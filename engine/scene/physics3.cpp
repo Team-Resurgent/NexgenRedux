@@ -844,12 +844,15 @@ namespace nx
             b.velocity = b.velocity * fmaxf(0, 1 - b.drag * dt);
         }
         const Vec3 wanted = b.velocity;
-        const float far = wanted.length() * dt;
+        // Where its animation carries it, it walks, against walls like the rest.
+        const Vec3 carried = b.carried;
+        b.carried = {};
+        const float far = wanted.length() * dt + carried.length();
         const u32 steps = far > 0 ? static_cast<u32>(clampFloat(far / (r.half.x * 0.4f), 0, 15)) + 1 : 1;
         u32 met = 0;
         for (u32 s = 0; s < steps; s++)
         {
-            r.place = r.place + b.velocity * (dt / static_cast<float>(steps));
+            r.place = r.place + (b.velocity * dt + carried) * (1 / static_cast<float>(steps));
             met |= pushOut(r, &b);
         }
         if (stood && !(met & 1) && b.velocity.y <= 0.5f)

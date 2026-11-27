@@ -99,7 +99,7 @@ a compiler and the platform's SDK, downloads nothing, and uses no SDL or GLFW.
 - **2D drawing** — shapes, images, sprite sheets, nine-slice, tiling, scalable text, clipping and blending, batched, on any
   shape of screen.
 - **Scenes** — entities with behaviours, prefabs, tile maps, particles, collision and 2D physics, described in plain text files.
-- **3D** — glTF, FBX, OBJ, STL and PLY models, with animation, lights, shadows, fog, sky, water and mist; hills and endless land that streams as you go; worlds of blocks to dig and build in; rigid
+- **3D** — glTF, FBX, OBJ, STL and PLY models, with animation (crossfades, blends by speed, layers, root motion and heads that look), lights, shadows, fog, sky, water and mist; hills and endless land that streams as you go; worlds of blocks to dig and build in; rigid
   bodies and characters that walk; culling and levels of detail; ray-marched shapes; particles; split screen.
 - **Shaders** — bloom, colour grading with looks and .cube tables (on the original Xbox too), and effects of your own over the picture or on things: one file for every GPU that has shaders.
 - **Interfaces** — widgets with layout, gamepad focus, themes, lists of any length, dialogs and a keyboard on the screen; from

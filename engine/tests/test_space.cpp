@@ -1252,8 +1252,8 @@ NX_TEST(animationStatesTravel)
     Rig r;
     NX_EXPECT(r.ok);
     r.platform.extraPath = "showcase/shapes/main.as";
-    r.platform.extraText = R"(
-        #include "global:states.as"
+    // The script's include, put together so that the check for what the engine includes doesn't take it for one of its own.
+    r.platform.extraText = std::string("#") + R"(include "global:states.as"
         class A : Screen
         {
             Entity@ robot;

@@ -85,6 +85,9 @@ namespace nx
         // sounds arrive later, in update(); fonts at once, because their size is needed straight away.
         // Paths are relative to the media folder.
         Asset* texture(const char* path);
+        // A picture to draw into, of its own: nobody else can ask for it, and it goes when it is let go. nullptr where
+        // the GPU can't.
+        Asset* target(u32 width, u32 height);
         Asset* sound(const char* path);
         // glTF. Arrives like a texture; until then there is nothing to draw.
         Asset* model(const char* path);

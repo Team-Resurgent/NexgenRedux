@@ -306,6 +306,12 @@ float4 blurPs(float2 at : TEXCOORD0) : COLOR0
     return float4(sum, 1.0);
 }
 
+// Just what it was, to put the screen back after a picture was drawn in its place.
+float4 copyPs(float2 at : TEXCOORD0) : COLOR0
+{
+    return float4(tex2D(source, uvOf(at)).rgb, 1.0);
+}
+
 // Added to what is there, post[0].x of it.
 float4 addPs(float2 at : TEXCOORD0) : COLOR0
 {

@@ -854,6 +854,50 @@ NX_TEST(thingsAreHeldByBones)
     r.step(3);
 }
 
+NX_TEST(scriptsDrawIntoPictures)
+{
+    Rig r;
+    NX_EXPECT(r.ok);
+    r.platform.extraPath = "showcase/shapes/main.as";
+    r.platform.extraText = R"(
+        class A : Screen
+        {
+            Texture@ map = Assets::picture(128, 96);
+            int drawn = 0;
+            void check(bool good) { if (!good) { array<int> nope; nope[1] = 0; } }
+            void onEnter()
+            {
+                check(map !is null && map.width == 128 && map.height == 96 && map.ready);
+                check(Assets::picture(0, 5) is null && Assets::picture(5000, 5) is null);
+                Space::ground(0);
+                Space::spawn(Vec3(0, 1, 0)).shape(SolidBox, Red);
+            }
+            void draw(Canvas@ c)
+            {
+                c.designHeight(720);
+                check(c.beginPicture(map, Color(0, 0, 0, 1)));
+                check(c.width == 128 && c.height == 96);
+                Space::camera(Vec3(0, 10, 0.1f), Vec3(0, 0, 0));
+                Space::draw(c);
+                c.endPicture();
+                check(abs(c.height - 720) < 0.01f);
+                Space::camera(Vec3(0, 3, 6), Vec3(0, 1, 0));
+                Space::draw(c);
+                c.image(map, 10, 10, 128, 96);
+                drawn++;
+            }
+        }
+    )";
+    NX_EXPECT(r.screens.init(r.services, "showcase", "main"));
+    r.step(2);
+    r.screens.push("shapes");
+    r.step(10);
+    NX_EXPECT(!r.screens.failed());
+    NX_EXPECT(r.device->stats().rejected == 0);
+    r.screens.home();
+    r.step(3);
+}
+
 NX_TEST(scriptsUseSpace)
 {
     Rig r;

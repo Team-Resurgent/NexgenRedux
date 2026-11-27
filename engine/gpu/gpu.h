@@ -244,6 +244,13 @@ namespace nx::gpu
         // texture. None where colours can't be graded.
         virtual Texture createGrade(const u8* pixels, u32 size) { return createVolume(pixels, size); }
         virtual void destroyTexture(Texture texture) = 0;
+        // A picture that can be drawn into, Rgba8 and see-through until something is drawn, then drawn like any other.
+        // None where there are none.
+        virtual Texture createTarget(u32 width, u32 height) { (void)width; (void)height; return {}; }
+        // Within a frame: everything drawn until endTarget goes into it, cleared first, 2D and 3D alike, and size() is its
+        // size meanwhile. Effects, bloom and grading are for the screen, and do nothing here. False if it can't be.
+        virtual bool beginTarget(Texture target, const Color& clear) { (void)target; (void)clear; return false; }
+        virtual void endTarget() {}
         virtual TextureInfo textureInfo(Texture texture) = 0;
 
         // False when there is nothing to draw to this frame (a minimised window); skip the frame.

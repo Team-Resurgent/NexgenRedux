@@ -81,6 +81,31 @@ one blend mode goes to the GPU together, so sort by image where you can.
 `[/u]` or `[/s]`, and `[[` for a bracket itself. Colours are names (white, black, red, green, blue, yellow, orange, pink, purple,
 cyan, gray) or `#rrggbb`. It wraps as `paragraph` does, and `richHeight` says how tall it will be.
 
+### Pictures to draw into
+
+`Assets::picture(width, height)` makes a blank picture of its own. Between `c.beginPicture(picture)` and `c.endPicture()`,
+everything drawn goes into it rather than onto the screen, 3D included; then it is drawn like any other picture:
+
+```cpp
+Texture@ map = Assets::picture(320, 320);
+
+void draw(Canvas@ c)
+{
+    if (c.beginPicture(map, Color(0, 0, 0, 1)))     // cleared to a colour first, and its own pixels are the design
+    {
+        Space::camera(Vec3(0, 20, 0.01f), Vec3(0, 0, 0));
+        Space::draw(c);                              // the world from above
+        c.endPicture();
+    }
+    Space::camera(eye, look);
+    Space::draw(c);
+    c.image(map, c.width - 340, 20, 320, 320);       // a minimap
+}
+```
+
+A minimap, a screen in a room, a mirror, or something drawn once and shown many times. One is drawn into at a time; effects,
+bloom and grading are for the screen. Up to 2048 pixels a side, and 1024 on the original Xbox; the Pictures demo has one.
+
 ## Scenes
 
 `Canvas` draws whatever you tell it to each frame. For things that move, collide and come and go, let the engine keep them:

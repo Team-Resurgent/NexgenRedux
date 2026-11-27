@@ -220,6 +220,31 @@ namespace nx
         return request(path, AssetType::Texture);
     }
 
+    Asset* Assets::target(u32 width, u32 height)
+    {
+        const gpu::Texture texture = m_device->createTarget(width, height);
+        if (!texture)
+        {
+            return nullptr;
+        }
+        char key[32];
+        static u32 made = 0;
+        snprintf(key, sizeof(key), "target!%u", ++made);
+        Asset* asset = add(key, hashText(key), AssetType::Texture);
+        if (asset == nullptr)
+        {
+            m_device->destroyTexture(texture);
+            return nullptr;
+        }
+        asset->texture = texture;
+        asset->width = width;
+        asset->height = height;
+        asset->ready = true;
+        asset->bytes = m_device->textureInfo(texture).bytes;
+        m_bytes[budgetIndex(AssetType::Texture)] += asset->bytes;
+        return asset;
+    }
+
     Asset* Assets::sound(const char* path)
     {
         return request(path, AssetType::Sound);
@@ -621,6 +646,12 @@ namespace nx
         NX_ASSERT(asset && asset->live() && asset->refs > 0);
         asset->refs--;
         asset->lastUsed = ++m_clock;
+        // A picture drawn into can't be asked for again, so it isn't kept warm.
+        if (asset->refs == 0 && strncmp(asset->key, "target!", 7) == 0)
+        {
+            unload(*asset);
+            return;
+        }
         if (asset->refs == 0)
         {
             makeRoom(asset->type, 0);

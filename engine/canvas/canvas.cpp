@@ -1,4 +1,5 @@
 #include "canvas/canvas.h"
+#include "base/memory.h"
 
 #include <math.h>
 #include <string.h>
@@ -85,6 +86,8 @@ namespace nx
 
     void Canvas::shutdown()
     {
+        destroy(m_saved);
+        m_saved = nullptr;
         if (m_device)
         {
             for (gpu::Pipeline p : m_pipelines)
@@ -114,7 +117,67 @@ namespace nx
 
     void Canvas::end()
     {
+        endTarget();
         flush();
+    }
+
+    bool Canvas::beginTarget(const Asset& target, const Color& clear)
+    {
+        if (m_inTarget || !target.texture)
+        {
+            return false;
+        }
+        flush();
+        if (m_saved == nullptr && (m_saved = create<Saved>(MemTag::General)) == nullptr)
+        {
+            return false;
+        }
+        if (!m_device->beginTarget(target.texture, clear))
+        {
+            return false;
+        }
+        Saved& s = *m_saved;
+        s.state = m_state;
+        memcpy(s.states, m_states, sizeof(m_states));
+        s.depth = m_depth;
+        s.pixelWidth = m_pixelWidth;
+        s.pixelHeight = m_pixelHeight;
+        s.width = m_width;
+        s.height = m_height;
+        s.scale = m_scale;
+        s.offsetX = m_offsetX;
+        s.offsetY = m_offsetY;
+        m_inTarget = true;
+        const gpu::TextureInfo info = m_device->textureInfo(target.texture);
+        m_pixelWidth = static_cast<float>(info.width);
+        m_pixelHeight = static_cast<float>(info.height);
+        m_texture = {};
+        design(m_pixelWidth, m_pixelHeight);
+        return true;
+    }
+
+    void Canvas::endTarget()
+    {
+        if (!m_inTarget)
+        {
+            return;
+        }
+        flush();
+        m_device->endTarget();
+        m_inTarget = false;
+        const Saved& s = *m_saved;
+        m_state = s.state;
+        memcpy(m_states, s.states, sizeof(m_states));
+        m_depth = s.depth;
+        m_pixelWidth = s.pixelWidth;
+        m_pixelHeight = s.pixelHeight;
+        m_width = s.width;
+        m_height = s.height;
+        m_scale = s.scale;
+        m_offsetX = s.offsetX;
+        m_offsetY = s.offsetY;
+        m_texture = {};
+        m_assets->setFontScale(m_scale);
     }
 
     void Canvas::design(float width, float height)
@@ -147,12 +210,20 @@ namespace nx
 
     bool Canvas::effect(const Asset& effect, const float (&values)[16], float time)
     {
+        if (m_inTarget)
+        {
+            return false;
+        }
         flush();
         return effect.effect && m_device->applyEffect(effect.effect, values, time, {});
     }
 
     bool Canvas::bloom(float strength, float threshold, float spread)
     {
+        if (m_inTarget)
+        {
+            return false;
+        }
         flush();
         gpu::Bloom b;
         b.strength = strength;
@@ -163,6 +234,10 @@ namespace nx
 
     bool Canvas::grade(ColorLook& look, float strength)
     {
+        if (m_inTarget)
+        {
+            return false;
+        }
         flush();
         if (strength <= 0)
         {

@@ -62,6 +62,13 @@ namespace nx
             return wrap<TextureRef>(s.assets->texture(path), *s.assets);
         }
 
+        TextureRef* makePicture(u32 width, u32 height)
+        {
+            Services& s = services();
+            Asset* a = width && height && width <= 2048 && height <= 2048 ? s.assets->target(width, height) : nullptr;
+            return a ? wrap<TextureRef>(a, *s.assets) : nullptr;
+        }
+
         ModelRef* loadModelAsset(const std::string& name)
         {
             Services& s = services();
@@ -222,6 +229,8 @@ namespace nx
             return handle->asset;
         }
 
+        bool beginPicture(const TextureRef* t, const Color& clear, Canvas* c) { return t && t->asset && c->beginTarget(*t->asset, clear); }
+        void endPicture(Canvas* c) { c->endTarget(); }
         void drawImage(const TextureRef* t, float x, float y, const Color& tint, Canvas* c)
         {
             if (const Asset* a = assetOf(t)) c->image(*a, x, y, t->width(), t->height(), tint);
@@ -705,6 +714,7 @@ namespace nx
 
             b.section("Assets", "Loading. Names start with `asset:` for the screen's own files, `global:` for shared ones or `own:` for those that the player brought.");
             b.names("Assets");
+            b.function("Texture@ picture(uint width, uint height)", NX_FN(makePicture), "A blank picture of its own to draw into, with Canvas.beginPicture, and then to draw like any other: a minimap, a screen in a room, a mirror, something drawn once and shown many times. Up to 2048 pixels a side; null where the machine can't.");
             b.function("Texture@ texture(const string &in name)", NX_FN(loadTexture), "An image: PNG, JPEG, TGA, BMP or GIF, up to 2048 pixels a side; from the web too, by its https:// address. What a screen asks for as it is made is ready by onEnter(); later ones arrive in the background.");
             b.function("Sound@ sound(const string &in name)", NX_FN(loadSoundAsset), "A sound. Arrives like an image.");
             b.function("Effect@ effect(const string &in name)", NX_FN(loadEffectAsset), "A shader of your own: a .fx file. Each time gives one whose values are its own.");
@@ -791,6 +801,8 @@ namespace nx
             b.method("bool effect(Effect@+ effect)", NX_OBJ_LAST(canvasEffect), "Puts all that has been drawn so far through a shader. False where there are none.");
             b.method("bool bloom(float strength = 0.8, float threshold = 0.7, float spread = 1)", NX_METHOD(Canvas, bloom), "Lets light spill from what is bright, of all that has been drawn so far. False where it can't be done.");
             b.method("bool grade(Look@+ look, float strength = 1)", NX_OBJ_LAST(canvasGrade), "Turns each colour of all that has been drawn so far into what a look makes of it, mixed with what it was by strength (0 to 1). Only inside the clip, if there is one, so a part can be shown before and after. One pass over the screen, on every GPU; the look is worked out again only when it changes. Usually last, before text that should stay as it is. False where it can't be done.");
+            b.method("bool beginPicture(Texture@+ picture, const Color &in clear = Color(0, 0, 0, 0))", NX_OBJ_LAST(beginPicture), "Draws into a picture from Assets::picture instead of the screen, 2D and 3D alike, until endPicture: cleared to a colour first, and with a design of its own pixels until it is changed. One at a time; effects, bloom and grading are for the screen and do nothing in it. False if it can't be, and drawing goes on to the screen.");
+            b.method("void endPicture()", NX_OBJ_LAST(endPicture), "Back to the screen, as it was.");
             b.method("void image(const Texture@+ texture, float x, float y, const Color &in tint = White)", NX_OBJ_LAST(drawImage), "An image at its own size.");
             b.method("void image(const Texture@+ texture, float x, float y, float w, float h, const Color &in tint = White)", NX_OBJ_LAST(drawImageSized), "An image at any size.");
             b.method("void imagePart(const Texture@+ texture, float x, float y, float w, float h, float sx, float sy, float sw, float sh, const Color &in tint = White)", NX_OBJ_LAST(drawImagePart), "Part of an image, given in its own pixels.");

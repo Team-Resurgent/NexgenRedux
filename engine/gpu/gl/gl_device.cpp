@@ -206,6 +206,9 @@ void main()
         {
             GLuint texture;
             TextureInfo info;
+            // A picture to draw into: drawn into one of its own, then copied upside down into the texture, as what a
+            // framebuffer holds is bottom row first and pictures here are top row first.
+            GLuint drawn, depth, drawTarget, finalTarget;
         };
 
         class GlDevice final : public Device
@@ -220,7 +223,7 @@ void main()
                     return;
                 }
                 m_buffers.forEach([&](BufferSlot& b) { releaseBuffer(b); });
-                m_textures.forEach([&](TextureSlot& t) { gl.DeleteTextures(1, &t.texture); });
+                m_textures.forEach([&](TextureSlot& t) { releaseTexture(t); });
                 releaseTargets();
                 releaseBuffer(m_stream);
                 gl.DeleteSamplers(3, m_samplers);
@@ -403,10 +406,125 @@ void main()
                 if (TextureSlot* t = m_textures.get(handle))
                 {
                     m_textureBytes -= t->info.bytes;
-                    gl.DeleteTextures(1, &t->texture);  // the driver keeps it until the GPU has finished with it
+                    releaseTexture(*t);  // the driver keeps it until the GPU has finished with it
                     m_textures.remove(handle);
                     m_boundTexture = {};
                 }
+            }
+
+            void releaseTexture(TextureSlot& t)
+            {
+                gl.DeleteTextures(1, &t.texture);
+                if (t.drawTarget)
+                {
+                    gl.DeleteTextures(1, &t.drawn);
+                    gl.DeleteRenderbuffers(1, &t.depth);
+                    gl.DeleteFramebuffers(1, &t.drawTarget);
+                    gl.DeleteFramebuffers(1, &t.finalTarget);
+                }
+            }
+
+            Texture createTarget(u32 width, u32 height) override
+            {
+                if (width == 0 || height == 0 || width > 4096 || height > 4096)
+                {
+                    return {};
+                }
+                const GLsizei w = static_cast<GLsizei>(width), h = static_cast<GLsizei>(height);
+                TextureSlot t = {};
+                t.info.width = width;
+                t.info.height = height;
+                t.info.bytes = static_cast<size_t>(width) * height * 12;
+                const auto colour = [&](GLuint& texture)
+                {
+                    gl.GenTextures(1, &texture);
+                    gl.BindTexture(GL_TEXTURE_2D, texture);
+                    gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+                    gl.TexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+                };
+                colour(t.texture);
+                colour(t.drawn);
+                gl.GenRenderbuffers(1, &t.depth);
+                gl.BindRenderbuffer(GL_RENDERBUFFER, t.depth);
+                gl.RenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, w, h);
+                gl.GenFramebuffers(1, &t.drawTarget);
+                gl.BindFramebuffer(GL_FRAMEBUFFER, t.drawTarget);
+                gl.FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, t.drawn, 0);
+                gl.FramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, t.depth);
+                bool fine = gl.CheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
+                gl.GenFramebuffers(1, &t.finalTarget);
+                gl.BindFramebuffer(GL_FRAMEBUFFER, t.finalTarget);
+                gl.FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, t.texture, 0);
+                fine = fine && gl.CheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
+                if (fine)
+                {
+                    // See-through until something is drawn.
+                    gl.Disable(GL_SCISSOR_TEST);
+                    gl.ClearColor(0, 0, 0, 0);
+                    gl.Clear(GL_COLOR_BUFFER_BIT);
+                }
+                gl.BindFramebuffer(GL_FRAMEBUFFER, m_target);
+                m_boundTexture = {};
+                const Texture handle = fine && ok("target") ? m_textures.add(t) : Texture();
+                if (!handle)
+                {
+                    releaseTexture(t);
+                    return {};
+                }
+                m_textureBytes += t.info.bytes;
+                return handle;
+            }
+
+            bool beginTarget(Texture handle, const Color& clear) override
+            {
+                TextureSlot* t = m_textures.get(handle);
+                if (!m_inFrame || m_screenTarget || t == nullptr || t->drawTarget == 0)
+                {
+                    return false;
+                }
+                m_screenTarget = m_target;
+                m_screenWidth = m_width;
+                m_screenHeight = m_height;
+                m_drawing = handle;
+                m_target = t->drawTarget;
+                m_width = t->info.width;
+                m_height = t->info.height;
+                gl.BindFramebuffer(GL_FRAMEBUFFER, m_target);
+                gl.Viewport(0, 0, static_cast<GLsizei>(m_width), static_cast<GLsizei>(m_height));
+                gl.Disable(GL_SCISSOR_TEST);
+                gl.DepthMask(1);
+                gl.ClearColor(clear.r, clear.g, clear.b, clear.a);
+                gl.Clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                m_mode = Mode::None;
+                m_bound = {};
+                m_boundTexture = {};
+                return true;
+            }
+
+            void endTarget() override
+            {
+                if (m_screenTarget == 0)
+                {
+                    return;
+                }
+                if (TextureSlot* t = m_textures.get(m_drawing))
+                {
+                    const GLint w = static_cast<GLint>(t->info.width), h = static_cast<GLint>(t->info.height);
+                    gl.Disable(GL_SCISSOR_TEST);
+                    gl.BindFramebuffer(GL_READ_FRAMEBUFFER, t->drawTarget);
+                    gl.BindFramebuffer(GL_DRAW_FRAMEBUFFER, t->finalTarget);
+                    gl.BlitFramebuffer(0, 0, w, h, 0, h, w, 0, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+                }
+                m_target = m_screenTarget;
+                m_width = m_screenWidth;
+                m_height = m_screenHeight;
+                m_screenTarget = 0;
+                m_drawing = {};
+                gl.BindFramebuffer(GL_FRAMEBUFFER, m_target);
+                gl.Viewport(0, 0, static_cast<GLsizei>(m_width), static_cast<GLsizei>(m_height));
+                m_mode = Mode::None;
+                m_bound = {};
+                m_boundTexture = {};
             }
 
             TextureInfo textureInfo(Texture handle) override
@@ -726,6 +844,10 @@ void main()
 
             bool applyEffect(Effect handle, const float (&values)[16], float time, const Scissor& area) override
             {
+                if (m_screenTarget)
+                {
+                    return false;   // for the screen only
+                }
                 const EffectSlot* slot = m_effects.get(handle);
                 if (!m_inFrame || slot == nullptr || slot->kind != EffectKind::Picture || !copyTargets())
                 {
@@ -739,6 +861,10 @@ void main()
 
             bool bloom(const Bloom& bloom, const Scissor& area) override
             {
+                if (m_screenTarget)
+                {
+                    return false;   // for the screen only
+                }
                 if (!m_inFrame || bloom.strength <= 0 || !copyTargets())
                 {
                     return false;
@@ -767,6 +893,10 @@ void main()
 
             bool grade(Texture table, float strength, const Scissor& area) override
             {
+                if (m_screenTarget)
+                {
+                    return false;   // for the screen only
+                }
                 const TextureSlot* t = m_textures.get(table);
                 if (!m_inFrame || t == nullptr || !copyTargets())
                 {
@@ -798,6 +928,7 @@ void main()
             void endFrame() override
             {
                 NX_ASSERT(m_inFrame);
+                endTarget();
                 m_inFrame = false;
                 gl.Disable(GL_SCISSOR_TEST);
                 gl.BindFramebuffer(GL_READ_FRAMEBUFFER, m_target);
@@ -1395,6 +1526,10 @@ void main()
             GLuint m_empty = 0;
             GLuint m_shadowMap = 0, m_shadowTarget = 0;
             Scissor m_area;
+            // The screen's, while a picture is drawn into.
+            GLuint m_screenTarget = 0;
+            u32 m_screenWidth = 0, m_screenHeight = 0;
+            Texture m_drawing;
             Mode m_mode = Mode::None;
             bool m_shadowing = false;
             Texture m_white;

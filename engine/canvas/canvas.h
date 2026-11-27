@@ -99,6 +99,12 @@ namespace nx
         float rich(const Asset& font, const char* text, float x, float y, float width, const Color& color, Align align = Align::Left);
         float richHeight(const Asset& font, const char* text, float width) const;
 
+        // Draws into a picture made with Assets::target until endTarget, cleared to a colour first, at its size: the design is
+        // its pixels until it is changed. One at a time. False if it can't be, and then drawing goes on to the screen.
+        bool beginTarget(const Asset& target, const Color& clear);
+        void endTarget();
+        bool inTarget() const { return m_inTarget; }
+
         // Before something else draws: everything so far goes first.
         void finish() { flush(); }
         // Where an area of the design is on the real screen.
@@ -167,5 +173,16 @@ namespace nx
         float m_width = 1, m_height = 1;
         float m_scale = 1, m_offsetX = 0, m_offsetY = 0;
         bool m_overflowed = false;
+
+        // The screen's, while a picture is drawn into.
+        struct Saved
+        {
+            State state;
+            State states[kMaxStates];
+            u32 depth;
+            float pixelWidth, pixelHeight, width, height, scale, offsetX, offsetY;
+        };
+        Saved* m_saved = nullptr;
+        bool m_inTarget = false;
     };
 }

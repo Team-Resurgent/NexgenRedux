@@ -56,6 +56,9 @@ namespace nx::gpu
             IDirect3DTexture9* texture;
             IDirect3DVolumeTexture9* volume;
             TextureInfo info;
+            // A picture to draw into: where in the GPU's memory it is drawn, which is the screen's while it is.
+            IDirect3DSurface9* color;
+            IDirect3DSurface9* depth;
         };
 
         struct MeshSlot
@@ -171,8 +174,8 @@ namespace nx::gpu
 
             void size(u32& width, u32& height) const override
             {
-                width = kWidth;
-                height = kHeight;
+                width = m_width;
+                height = m_height;
             }
 
             // --- 2D ---
@@ -279,6 +282,8 @@ namespace nx::gpu
                     m_textureBytes -= t->info.bytes;
                     release(t->texture);
                     release(t->volume);
+                    release(t->color);
+                    release(t->depth);
                     m_textures.remove(handle);
                 }
             }
@@ -364,6 +369,7 @@ namespace nx::gpu
 
             void endFrame() override
             {
+                endTarget();
                 NX_ASSERT(m_inFrame);
                 m_inFrame = false;
                 m_device->SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
@@ -587,10 +593,114 @@ namespace nx::gpu
                 return handle;
             }
 
+            // --- Pictures to draw into ---
+
+            // A texture to copy into, and a place in the GPU's memory to draw it: the screen's own, which is copied out first
+            // and drawn back after, so it may be as large as the screen.
+            Texture createTarget(u32 width, u32 height) override
+            {
+                if (width == 0 || height == 0 || width > kWidth * 2 || height > kHeight * 2 || tilesOf(width, height) * 2 > kScreenTiles)
+                {
+                    return {};
+                }
+                TextureSlot t = {};
+                D3DSURFACE_PARAMETERS color = {};
+                color.Base = 0;
+                D3DSURFACE_PARAMETERS depth = {};
+                depth.Base = tilesOf(width, height);
+                if (FAILED(m_device->CreateTexture(width, height, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &t.texture, nullptr)) ||
+                    FAILED(m_device->CreateRenderTarget(width, height, D3DFMT_A8R8G8B8, D3DMULTISAMPLE_NONE, 0, FALSE, &t.color, &color)) ||
+                    FAILED(m_device->CreateDepthStencilSurface(width, height, D3DFMT_D24S8, D3DMULTISAMPLE_NONE, 0, FALSE, &t.depth, &depth)))
+                {
+                    release(t.texture);
+                    release(t.color);
+                    release(t.depth);
+                    return {};
+                }
+                // See-through until something is drawn.
+                D3DLOCKED_RECT locked;
+                if (SUCCEEDED(t.texture->LockRect(0, &locked, nullptr, 0)))
+                {
+                    memset(locked.pBits, 0, static_cast<size_t>(locked.Pitch) * height);
+                    t.texture->UnlockRect(0);
+                }
+                t.info.width = width;
+                t.info.height = height;
+                t.info.bytes = static_cast<size_t>(width) * height * 4;
+                const Texture handle = m_textures.add(t);
+                if (!handle)
+                {
+                    release(t.texture);
+                    release(t.color);
+                    release(t.depth);
+                    return {};
+                }
+                m_textureBytes += t.info.bytes;
+                return handle;
+            }
+
+            bool beginTarget(Texture handle, const Color& clear) override
+            {
+                const TextureSlot* t = m_textures.get(handle);
+                if (!m_inFrame || m_drawing || m_shadowing || t == nullptr || t->color == nullptr || !makePost())
+                {
+                    return false;
+                }
+                // The screen, out of the way.
+                copyScreen();
+                m_device->GetRenderTarget(0, &m_screenColor);
+                m_device->GetDepthStencilSurface(&m_screenDepth);
+                for (DWORD i = 0; i < 4; i++)
+                {
+                    m_device->SetTexture(i, nullptr);
+                }
+                m_device->SetRenderTarget(0, t->color);
+                m_device->SetDepthStencilSurface(t->depth);
+                m_drawing = handle;
+                m_width = t->info.width;
+                m_height = t->info.height;
+                m_mode = Mode::None;
+                wholeViewport();
+                m_device->SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
+                m_device->Clear(0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER | D3DCLEAR_STENCIL, D3DCOLOR_COLORVALUE(clear.r, clear.g, clear.b, clear.a), 1.0f, 0);
+                return true;
+            }
+
+            void endTarget() override
+            {
+                if (!m_drawing)
+                {
+                    return;
+                }
+                if (const TextureSlot* t = m_textures.get(m_drawing))
+                {
+                    m_device->Resolve(D3DRESOLVE_RENDERTARGET0, nullptr, t->texture, nullptr, 0, 0, nullptr, 1.0f, 0, nullptr);
+                }
+                m_drawing = {};
+                m_width = kWidth;
+                m_height = kHeight;
+                m_device->SetRenderTarget(0, m_screenColor);
+                m_device->SetDepthStencilSurface(m_screenDepth);
+                release(m_screenColor);
+                release(m_screenDepth);
+                // And the screen back where it was.
+                postState({});
+                m_device->SetTexture(0, m_screenCopy);
+                setSampler(0, D3DTEXF_POINT, D3DTADDRESS_CLAMP, false);
+                m_device->SetPixelShader(m_postPs[Post::Copy]);
+                cover();
+                endPost();
+                m_device->Clear(0, nullptr, D3DCLEAR_ZBUFFER | D3DCLEAR_STENCIL, 0, 1.0f, 0);
+            }
+
             // --- Over the picture: what has been drawn is copied out, and drawn back through a shader ---
 
             bool grade(Texture table, float strength, const Scissor& area) override
             {
+                if (m_drawing)
+                {
+                    return false;   // for the screen only
+                }
                 const TextureSlot* t = m_textures.get(table);
                 if (!m_inFrame || t == nullptr || t->volume == nullptr || !makePost())
                 {
@@ -612,6 +722,10 @@ namespace nx::gpu
 
             bool bloom(const Bloom& b, const Scissor& area) override
             {
+                if (m_drawing)
+                {
+                    return false;   // for the screen only
+                }
                 if (!m_inFrame || b.strength <= 0 || !makePost())
                 {
                     return false;
@@ -701,6 +815,10 @@ namespace nx::gpu
 
             bool applyEffect(Effect handle, const float (&values)[16], float time, const Scissor& area) override
             {
+                if (m_drawing)
+                {
+                    return false;   // for the screen only
+                }
                 const EffectSlot* e = m_effects.get(handle);
                 if (!m_inFrame || e == nullptr || e->kind != EffectKind::Picture || !makePost())
                 {
@@ -802,7 +920,7 @@ namespace nx::gpu
                     return;
                 }
                 // The picture's own part of the screen, and what the view says about it.
-                D3DVIEWPORT9 viewport = { 0, 0, kWidth, kHeight, 0, 1 };
+                D3DVIEWPORT9 viewport = { 0, 0, m_width, m_height, 0, 1 };
                 if (m_area.enabled)
                 {
                     viewport = { static_cast<DWORD>(m_area.x), static_cast<DWORD>(m_area.y), static_cast<DWORD>(m_area.width), static_cast<DWORD>(m_area.height), 0, 1 };
@@ -826,7 +944,7 @@ namespace nx::gpu
 
             void wholeViewport()
             {
-                const D3DVIEWPORT9 viewport = { 0, 0, kWidth, kHeight, 0, 1 };
+                const D3DVIEWPORT9 viewport = { 0, 0, m_width, m_height, 0, 1 };
                 m_device->SetViewport(&viewport);
             }
 
@@ -928,7 +1046,7 @@ namespace nx::gpu
 
             // --- Over the picture ---
 
-            enum Post { Bright, Blur, Add, Grade, PostCount };
+            enum Post { Bright, Blur, Add, Grade, Copy, PostCount };
 
             // A copy of what is on the screen to read, a smaller place to draw in the GPU's memory after the screen and
             // the shadows, and two pictures that size. Made when they are first wanted.
@@ -1100,7 +1218,7 @@ namespace nx::gpu
                 memFree(mesh);
                 return fine && vertexShader(kPost, sizeof(kPost) - 1, "postVs", m_postVs) && pixelShader(kPost, sizeof(kPost) - 1, "brightPs", m_postPs[Post::Bright]) &&
                        pixelShader(kPost, sizeof(kPost) - 1, "blurPs", m_postPs[Post::Blur]) && pixelShader(kPost, sizeof(kPost) - 1, "addPs", m_postPs[Post::Add]) &&
-                       pixelShader(kPost, sizeof(kPost) - 1, "gradePs", m_postPs[Post::Grade]);
+                       pixelShader(kPost, sizeof(kPost) - 1, "gradePs", m_postPs[Post::Grade]) && pixelShader(kPost, sizeof(kPost) - 1, "copyPs", m_postPs[Post::Copy]);
             }
 
             bool createShadowMap()
@@ -1174,6 +1292,11 @@ namespace nx::gpu
             IDirect3DVertexShader9* m_postVs = nullptr;
             IDirect3DPixelShader9* m_postPs[PostCount] = {};
             IDirect3DTexture9* m_screenCopy = nullptr;
+            // While a picture is drawn into: which, its size, and the screen's surfaces to go back to.
+            Texture m_drawing;
+            u32 m_width = kWidth, m_height = kHeight;
+            IDirect3DSurface9* m_screenColor = nullptr;
+            IDirect3DSurface9* m_screenDepth = nullptr;
             IDirect3DSurface9* m_small = nullptr;
             IDirect3DTexture9* m_bloom[2] = {};
             bool m_postTried = false;

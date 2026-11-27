@@ -87,6 +87,10 @@ namespace nx::gpu
             ID3D11Texture3D* volume;
             ID3D11ShaderResourceView* view;
             TextureInfo info;
+            // A picture to draw into: where to, and its own depth.
+            ID3D11RenderTargetView* target;
+            ID3D11Texture2D* depth;
+            ID3D11DepthStencilView* depthView;
         };
 
         void releasePipeline(PipelineSlot& p)
@@ -104,6 +108,9 @@ namespace nx::gpu
 
         void releaseTexture(TextureSlot& t)
         {
+            release(t.target);
+            release(t.depthView);
+            release(t.depth);
             release(t.view);
             release(t.texture);
             release(t.volume);
@@ -382,6 +389,89 @@ namespace nx::gpu
                     m_textures.remove(handle);
                     m_boundTexture = {};
                 }
+            }
+
+            Texture createTarget(u32 width, u32 height) override
+            {
+                if (width == 0 || height == 0 || width > 4096 || height > 4096)
+                {
+                    return {};
+                }
+                D3D11_TEXTURE2D_DESC desc = {};
+                desc.Width = width;
+                desc.Height = height;
+                desc.MipLevels = 1;
+                desc.ArraySize = 1;
+                desc.SampleDesc.Count = 1;
+                desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+                desc.Usage = D3D11_USAGE_DEFAULT;
+                desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+                D3D11_TEXTURE2D_DESC depth = desc;
+                depth.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+                depth.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+                TextureSlot t = {};
+                t.info.width = width;
+                t.info.height = height;
+                t.info.bytes = static_cast<size_t>(width) * height * 8;
+                if (!ok(m_device->CreateTexture2D(&desc, nullptr, &t.texture), "target") || !ok(m_device->CreateShaderResourceView(t.texture, nullptr, &t.view), "target view") ||
+                    !ok(m_device->CreateRenderTargetView(t.texture, nullptr, &t.target), "target colour") || !ok(m_device->CreateTexture2D(&depth, nullptr, &t.depth), "target depth") ||
+                    !ok(m_device->CreateDepthStencilView(t.depth, nullptr, &t.depthView), "target depth view"))
+                {
+                    releaseTexture(t);
+                    return {};
+                }
+                const float clear[4] = {};
+                m_context->ClearRenderTargetView(t.target, clear);
+                const Texture handle = m_textures.add(t);
+                if (!handle)
+                {
+                    releaseTexture(t);
+                    return {};
+                }
+                m_textureBytes += t.info.bytes;
+                return handle;
+            }
+
+            bool beginTarget(Texture handle, const Color& clear) override
+            {
+                TextureSlot* t = m_textures.get(handle);
+                if (!m_inFrame || m_screen.colorView || t == nullptr || t->target == nullptr)
+                {
+                    return false;
+                }
+                m_screen = { m_colorView, m_depthView, m_width, m_height };
+                m_colorView = t->target;
+                m_depthView = t->depthView;
+                m_width = t->info.width;
+                m_height = t->info.height;
+                // It can't be read from while it is drawn into.
+                ID3D11ShaderResourceView* none[2] = {};
+                m_context->PSSetShaderResources(0, 2, none);
+                const float color[4] = { clear.r, clear.g, clear.b, clear.a };
+                m_context->ClearRenderTargetView(m_colorView, color);
+                m_context->ClearDepthStencilView(m_depthView, D3D11_CLEAR_DEPTH, 1.0f, 0);
+                m_context->OMSetRenderTargets(1, &m_colorView, m_depthView);
+                m_mode = Mode::None;
+                m_bound = {};
+                m_boundTexture = {};
+                return true;
+            }
+
+            void endTarget() override
+            {
+                if (m_screen.colorView == nullptr)
+                {
+                    return;
+                }
+                m_colorView = m_screen.colorView;
+                m_depthView = m_screen.depthView;
+                m_width = m_screen.width;
+                m_height = m_screen.height;
+                m_screen = {};
+                m_context->OMSetRenderTargets(1, &m_colorView, m_depthView);
+                m_mode = Mode::None;
+                m_bound = {};
+                m_boundTexture = {};
             }
 
             TextureInfo textureInfo(Texture handle) override
@@ -710,6 +800,10 @@ namespace nx::gpu
 
             bool applyEffect(Effect handle, const float (&values)[16], float time, const Scissor& area) override
             {
+                if (m_screen.colorView)
+                {
+                    return false;   // for the screen only
+                }
                 const EffectSlot* slot = m_effects.get(handle);
                 if (!m_inFrame || slot == nullptr || slot->kind != EffectKind::Picture || !copyTargets())
                 {
@@ -724,6 +818,10 @@ namespace nx::gpu
 
             bool bloom(const Bloom& bloom, const Scissor& area) override
             {
+                if (m_screen.colorView)
+                {
+                    return false;   // for the screen only
+                }
                 if (!m_inFrame || bloom.strength <= 0 || !copyTargets())
                 {
                     return false;
@@ -753,6 +851,10 @@ namespace nx::gpu
 
             bool grade(Texture table, float strength, const Scissor& area) override
             {
+                if (m_screen.colorView)
+                {
+                    return false;   // for the screen only
+                }
                 const TextureSlot* t = m_textures.get(table);
                 if (!m_inFrame || t == nullptr || t->volume == nullptr || m_gradePs == nullptr || !copyTargets())
                 {
@@ -771,6 +873,7 @@ namespace nx::gpu
 
             void endFrame() override
             {
+                endTarget();
                 NX_ASSERT(m_inFrame);
                 m_inFrame = false;
                 ID3D11Texture2D* backBuffer = nullptr;
@@ -1307,6 +1410,14 @@ namespace nx::gpu
             ID3D11SamplerState* m_shadowSampler = nullptr;
             ID3D11SamplerState* m_wrap = nullptr;
             Scissor m_area;
+            // The screen's, while a picture is drawn into instead.
+            struct Screen
+            {
+                ID3D11RenderTargetView* colorView;
+                ID3D11DepthStencilView* depthView;
+                u32 width, height;
+            };
+            Screen m_screen = {};
             Mode m_mode = Mode::None;
             bool m_shadowing = false;
             Texture m_white;

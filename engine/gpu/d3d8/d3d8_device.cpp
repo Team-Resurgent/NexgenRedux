@@ -48,6 +48,9 @@ namespace nx::gpu
             IDirect3DTexture8* texture;
             IDirect3DVolumeTexture8* volume;
             TextureInfo info;
+            // A picture to draw into. It is linear, as anything drawn into must be here, and so is read in pixels rather
+            // than 0 to 1: its uMax and vMax are its size.
+            IDirect3DTexture8* depth;
         };
 
         // D3DCOLOR is b, g, r, a in memory.
@@ -385,7 +388,7 @@ namespace nx::gpu
                     info.uMax = static_cast<float>(data.width) / static_cast<float>(fullWidth);
                     info.vMax = static_cast<float>(data.height) / static_cast<float>(fullHeight);
                     info.bytes = levels > 1 ? bytes + bytes / 3 : bytes;
-                    handle = m_textures.add({ texture, nullptr, info });
+                    handle = m_textures.add({ texture, nullptr, info, nullptr });
                 }
                 if (!handle && texture)
                 {
@@ -516,8 +519,124 @@ namespace nx::gpu
                     {
                         t->volume->Release();
                     }
+                    if (t->depth)
+                    {
+                        t->depth->Release();
+                    }
                     m_textures.remove(handle);
                     m_boundTexture = {};
+                }
+            }
+
+            Texture createTarget(u32 width, u32 height) override
+            {
+                if (width == 0 || height == 0 || width > 1024 || height > 1024)
+                {
+                    return {};
+                }
+                TextureSlot t = {};
+                if (FAILED(m_device->CreateTexture(width, height, 1, D3DUSAGE_RENDERTARGET, D3DFMT_LIN_A8R8G8B8, D3DPOOL_DEFAULT, &t.texture)) ||
+                    FAILED(m_device->CreateTexture(width, height, 1, D3DUSAGE_DEPTHSTENCIL, D3DFMT_LIN_D24S8, D3DPOOL_DEFAULT, &t.depth)))
+                {
+                    if (t.texture)
+                    {
+                        t.texture->Release();
+                    }
+                    return {};
+                }
+                // See-through until something is drawn.
+                D3DLOCKED_RECT locked;
+                if (SUCCEEDED(t.texture->LockRect(0, &locked, nullptr, 0)))
+                {
+                    memset(locked.pBits, 0, static_cast<size_t>(locked.Pitch) * height);
+                    t.texture->UnlockRect(0);
+                }
+                t.info.width = width;
+                t.info.height = height;
+                t.info.uMax = static_cast<float>(width);
+                t.info.vMax = static_cast<float>(height);
+                t.info.bytes = static_cast<size_t>(width) * height * 8;
+                const Texture handle = m_textures.add(t);
+                if (!handle)
+                {
+                    t.texture->Release();
+                    t.depth->Release();
+                    return {};
+                }
+                m_textureBytes += t.info.bytes;
+                return handle;
+            }
+
+            bool beginTarget(Texture handle, const Color& clear) override
+            {
+                const TextureSlot* t = m_textures.get(handle);
+                if (!m_inFrame || m_drawing || m_inShadows || t == nullptr || t->depth == nullptr)
+                {
+                    return false;
+                }
+                IDirect3DSurface8* color = nullptr;
+                IDirect3DSurface8* depth = nullptr;
+                t->texture->GetSurfaceLevel(0, &color);
+                t->depth->GetSurfaceLevel(0, &depth);
+                m_device->GetRenderTarget(&m_screenColor);
+                m_device->GetDepthStencilSurface(&m_screenDepth);
+                for (DWORD i = 0; i < 4; i++)
+                {
+                    m_device->SetTexture(i, nullptr);
+                }
+                m_boundTexture = {};
+                const bool fine = SUCCEEDED(m_device->SetRenderTarget(color, depth));
+                color->Release();
+                depth->Release();
+                if (!fine)
+                {
+                    m_device->SetRenderTarget(m_screenColor, m_screenDepth);
+                    releaseScreen();
+                    return false;
+                }
+                m_drawing = handle;
+                m_screenWidth = m_width;
+                m_screenHeight = m_height;
+                m_width = t->info.width;
+                m_height = t->info.height;
+                m_mode = Mode::None;
+                const D3DVIEWPORT8 viewport = { 0, 0, m_width, m_height, 0.0f, 1.0f };
+                m_device->SetViewport(&viewport);
+                m_device->SetScissors(0, FALSE, nullptr);
+                m_device->Clear(0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER | D3DCLEAR_STENCIL, D3DCOLOR_COLORVALUE(clear.r, clear.g, clear.b, clear.a), 1.0f, 0);
+                return true;
+            }
+
+            void endTarget() override
+            {
+                if (!m_drawing)
+                {
+                    return;
+                }
+                for (DWORD i = 0; i < 4; i++)
+                {
+                    m_device->SetTexture(i, nullptr);
+                }
+                m_boundTexture = {};
+                m_device->SetRenderTarget(m_screenColor, m_screenDepth);
+                releaseScreen();
+                m_drawing = {};
+                m_width = m_screenWidth;
+                m_height = m_screenHeight;
+                m_mode = Mode::None;
+                const D3DVIEWPORT8 viewport = { 0, 0, m_width, m_height, 0.0f, 1.0f };
+                m_device->SetViewport(&viewport);
+            }
+
+            void releaseScreen()
+            {
+                for (IDirect3DSurface8** surface : { &m_screenColor, &m_screenDepth })
+                {
+                    if (*surface)
+                    {
+                        (*surface)->Release();
+                        *surface = nullptr;
+                    }
                 }
             }
 
@@ -731,6 +850,10 @@ namespace nx::gpu
 
             bool applyEffect(Effect effect, const float (&values)[16], float time, const Scissor& area) override
             {
+                if (m_drawing)
+                {
+                    return false;   // for the screen only
+                }
                 const EffectSlot* e = m_effects.get(effect);
                 if (!m_inFrame || e == nullptr || !makeCopy())
                 {
@@ -1061,7 +1184,20 @@ namespace nx::gpu
                     m_device->SetTextureStageState(0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT3);
                     m_device->SetTransform(D3DTS_TEXTURE0, reinterpret_cast<const D3DMATRIX*>(uvw.m));
                 }
+                const bool inPixels = !(volume && volume->volume) && texture && texture->depth;
+                if (inPixels)
+                {
+                    Mat4 scale;
+                    scale.m[0] = texture->info.uMax;
+                    scale.m[5] = texture->info.vMax;
+                    m_device->SetTextureStageState(0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT2);
+                    m_device->SetTransform(D3DTS_TEXTURE0, reinterpret_cast<const D3DMATRIX*>(scale.m));
+                }
                 m_device->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, m->vertexCount, draw.first, count / 3);
+                if (inPixels)
+                {
+                    m_device->SetTextureStageState(0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_DISABLE);
+                }
                 if (volume && volume->volume)
                 {
                     m_device->SetTextureStageState(0, D3DTSS_TEXCOORDINDEX, 0);
@@ -1075,6 +1211,10 @@ namespace nx::gpu
             // What is bright, smaller; spread, with four looks at a time; and added.
             bool bloom(const Bloom& b, const Scissor& area) override
             {
+                if (m_drawing)
+                {
+                    return false;   // for the screen only
+                }
                 if (!m_inFrame || !makeBloom())
                 {
                     return false;
@@ -1174,6 +1314,10 @@ namespace nx::gpu
             // texture stages, and looked up there.
             bool grade(Texture table, float strength, const Scissor& area) override
             {
+                if (m_drawing)
+                {
+                    return false;   // for the screen only
+                }
                 const TextureSlot* t = m_textures.get(table);
                 if (!m_inFrame || t == nullptr || t->volume == nullptr || !makeCopy() || !makeGradeShader())
                 {
@@ -1349,6 +1493,7 @@ namespace nx::gpu
 
             void endFrame() override
             {
+                endTarget();
                 NX_ASSERT(m_inFrame);
                 m_inFrame = false;
                 m_device->EndScene();
@@ -2075,6 +2220,11 @@ namespace nx::gpu
             u32 m_streamIndex = 0;
             u32 m_width = 0;
             u32 m_height = 0;
+            // While a picture is drawn into: which, and the screen's to go back to.
+            Texture m_drawing;
+            u32 m_screenWidth = 0, m_screenHeight = 0;
+            IDirect3DSurface8* m_screenColor = nullptr;
+            IDirect3DSurface8* m_screenDepth = nullptr;
             bool m_inFrame = false;
         };
     }

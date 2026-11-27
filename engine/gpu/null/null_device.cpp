@@ -23,6 +23,7 @@ namespace nx::gpu
         struct NullTexture
         {
             TextureInfo info;
+            bool target;
         };
 
         // Draws nothing but checks everything, so logic can be tested on any machine.
@@ -81,12 +82,55 @@ namespace nx::gpu
                 info.uMax = static_cast<float>(data.width) / static_cast<float>(data.fullWidth);
                 info.vMax = static_cast<float>(data.height) / static_cast<float>(data.fullHeight);
                 info.bytes = pixelBytes(data.format, data.fullWidth, data.fullHeight);
-                const Texture texture = m_textures.add({ info });
+                const Texture texture = m_textures.add({ info, false });
                 if (texture)
                 {
                     m_textureBytes += info.bytes;
                 }
                 return texture;
+            }
+
+            // Pictures to draw into, which hold nothing, so that what draws into them can be tried.
+            Texture createTarget(u32 width, u32 height) override
+            {
+                if (width == 0 || height == 0 || width > 4096 || height > 4096)
+                {
+                    return {};
+                }
+                TextureInfo info;
+                info.width = width;
+                info.height = height;
+                info.bytes = static_cast<size_t>(width) * height * 4;
+                const Texture texture = m_textures.add({ info, true });
+                if (texture)
+                {
+                    m_textureBytes += info.bytes;
+                }
+                return texture;
+            }
+
+            bool beginTarget(Texture texture, const Color&) override
+            {
+                const NullTexture* t = m_textures.get(texture);
+                if (!m_inFrame || m_screenWidth || t == nullptr || !t->target)
+                {
+                    return false;
+                }
+                m_screenWidth = m_width;
+                m_screenHeight = m_height;
+                m_width = t->info.width;
+                m_height = t->info.height;
+                return true;
+            }
+
+            void endTarget() override
+            {
+                if (m_screenWidth)
+                {
+                    m_width = m_screenWidth;
+                    m_height = m_screenHeight;
+                    m_screenWidth = m_screenHeight = 0;
+                }
             }
 
             void destroyTexture(Texture texture) override
@@ -211,6 +255,7 @@ namespace nx::gpu
 
             void endFrame() override
             {
+                endTarget();
                 NX_ASSERT(m_inFrame);
                 m_inFrame = m_viewing = false;
                 m_last = m_current;
@@ -239,6 +284,7 @@ namespace nx::gpu
             u32 m_width;
             u32 m_height;
             bool m_inFrame = false;
+            u32 m_screenWidth = 0, m_screenHeight = 0;
             bool m_ready = false;
             bool m_viewing = false;
             bool m_shadows = false;

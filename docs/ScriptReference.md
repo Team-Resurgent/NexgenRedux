@@ -123,6 +123,7 @@ Loading. Names start with `asset:` for the screen's own files, `global:` for sha
 
 | | |
 |---|---|
+| `Texture@ Assets::picture(uint width, uint height)` | A blank picture of its own to draw into, with Canvas.beginPicture, and then to draw like any other: a minimap, a screen in a room, a mirror, something drawn once and shown many times. Up to 2048 pixels a side; null where the machine can't. |
 | `Texture@ Assets::texture(const string &in name)` | An image: PNG, JPEG, TGA, BMP or GIF, up to 2048 pixels a side; from the web too, by its https:// address. What a screen asks for as it is made is ready by onEnter(); later ones arrive in the background. |
 | `Sound@ Assets::sound(const string &in name)` | A sound. Arrives like an image. |
 | `Effect@ Assets::effect(const string &in name)` | A shader of your own: a .fx file. Each time gives one whose values are its own. |
@@ -227,6 +228,8 @@ What each colour of a picture becomes: warmer, colder, faded, harder. Settings, 
 | `bool effect(Effect@+ effect)` | Puts all that has been drawn so far through a shader. False where there are none. |
 | `bool bloom(float strength = 0.8, float threshold = 0.7, float spread = 1)` | Lets light spill from what is bright, of all that has been drawn so far. False where it can't be done. |
 | `bool grade(Look@+ look, float strength = 1)` | Turns each colour of all that has been drawn so far into what a look makes of it, mixed with what it was by strength (0 to 1). Only inside the clip, if there is one, so a part can be shown before and after. One pass over the screen, on every GPU; the look is worked out again only when it changes. Usually last, before text that should stay as it is. False where it can't be done. |
+| `bool beginPicture(Texture@+ picture, const Color &in clear = Color(0, 0, 0, 0))` | Draws into a picture from Assets::picture instead of the screen, 2D and 3D alike, until endPicture: cleared to a colour first, and with a design of its own pixels until it is changed. One at a time; effects, bloom and grading are for the screen and do nothing in it. False if it can't be, and drawing goes on to the screen. |
+| `void endPicture()` | Back to the screen, as it was. |
 | `void image(const Texture@+ texture, float x, float y, const Color &in tint = White)` | An image at its own size. |
 | `void image(const Texture@+ texture, float x, float y, float w, float h, const Color &in tint = White)` | An image at any size. |
 | `void imagePart(const Texture@+ texture, float x, float y, float w, float h, float sx, float sy, float sw, float sh, const Color &in tint = White)` | Part of an image, given in its own pixels. |

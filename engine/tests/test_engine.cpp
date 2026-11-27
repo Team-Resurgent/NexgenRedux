@@ -161,6 +161,48 @@ NX_TEST(richTextWrapsAsItsWordsDo)
     w.assets.release(font);
 }
 
+NX_TEST(picturesAreDrawnInto)
+{
+    Rig w;
+    const size_t before = w.device->stats().textureBytes;
+    Asset* picture = w.assets.target(64, 32);
+    NX_EXPECT(picture && picture->ready && picture->width == 64 && w.device->stats().textureBytes > before);
+    if (picture)
+    {
+        w.device->beginFrame({});
+        w.canvas.begin();
+        w.canvas.design(1280, 720);
+        w.canvas.push();
+        w.canvas.translate(100, 50);
+        const Vec2 at = w.canvas.toDesign(500, 300);
+        NX_EXPECT(w.canvas.beginTarget(*picture, { 0, 0, 0, 0 }));
+        // Its own pixels, and nothing of the screen's.
+        NX_EXPECT(w.canvas.width() == 64 && w.canvas.height() == 32 && w.canvas.inTarget());
+        u32 width = 0, height = 0;
+        w.device->size(width, height);
+        NX_EXPECT(width == 64 && height == 32);
+        w.canvas.rect(0, 0, 64, 32, { 1, 0, 0, 1 });
+        NX_EXPECT(!w.canvas.beginTarget(*picture, { 0, 0, 0, 0 }));   // one at a time
+        NX_EXPECT(!w.canvas.bloom(1, 0.5f, 1));                          // the screen's only
+        w.canvas.endTarget();
+        // Back as it was.
+        const Vec2 again = w.canvas.toDesign(500, 300);
+        NX_EXPECT(!w.canvas.inTarget() && w.canvas.width() == 1280 && w.canvas.height() == 720 && again.x == at.x && again.y == at.y);
+        w.device->size(width, height);
+        NX_EXPECT(width == 1280 && height == 720);
+        w.canvas.image(*picture, 10, 10, 64, 32, { 1, 1, 1, 1 });
+        w.canvas.pop();
+        // One left open is closed at the end.
+        NX_EXPECT(w.canvas.beginTarget(*picture, { 0, 0, 0, 1 }));
+        w.canvas.end();
+        NX_EXPECT(!w.canvas.inTarget());
+        w.device->endFrame();
+        w.assets.release(picture);
+        NX_EXPECT(w.device->stats().textureBytes == before);           // gone when let go: nobody else can ask for it
+    }
+    NX_EXPECT(w.assets.target(0, 10) == nullptr);
+}
+
 NX_TEST(thinLettersAreNeverLost)
 {
     // Drawn smaller than it was made, anything narrower than a pixel could fall between two.

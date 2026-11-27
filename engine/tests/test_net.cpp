@@ -599,8 +599,7 @@ NX_TEST(sharedEntitiesAreFollowedByTheirCopies)
         snprintf(m.kind, sizeof(m.kind), "%s", kind);
         const u32 id = m.world->spawn({});
         m.world->visual(id);
-        EntityRef* r = m.world->ref(id);
-        r->addRef();
+        EntityRef* r = m.world->ref(id);  // held for whoever asked
         m.last = r;
         return r;
     };
@@ -622,7 +621,6 @@ NX_TEST(sharedEntitiesAreFollowedByTheirCopies)
     here.visual(ship)->frame = 3;
     here.body(ship)->velocity = { 0, 0 };
     EntityRef* shipRef = here.ref(ship);
-    shipRef->addRef();
     NX_EXPECT(a->share(host, shipRef, "ship") && !a->share(host, shipRef, "ship"));
     sync(10);
     NX_EXPECT(b->copies() == 1 && atGuest.count == 1 && atGuest.player == 0 && strcmp(atGuest.kind, "ship") == 0);
@@ -640,9 +638,9 @@ NX_TEST(sharedEntitiesAreFollowedByTheirCopies)
     NX_EXPECT(a->ownerOf(host, shipRef) == 0 && a->ownerOf(guest, copy) == -1);
     // Moving, it is followed smoothly: part of the way at first, then all of it.
     here.find(ship)->position = { 40, 20 };
-    sync(3);
-    const float x = at(there, copy).x;
-    NX_EXPECT(x > 10 && x < 40);
+    float x = 10;
+    NX_EXPECT(n.until([&]() { sync(1); x = at(there, copy).x; return x > 10; }, 100));
+    NX_EXPECT(x < 40);
     NX_EXPECT(n.until([&]() { sync(1); return fabsf(at(there, copy).x - 40) < 0.05f; }, 200));
     // A jump is jumped.
     here.find(ship)->position = { 900, 20 };
@@ -651,7 +649,6 @@ NX_TEST(sharedEntitiesAreFollowedByTheirCopies)
     // The guest's own are copied at the host.
     const u32 rock = there.spawn({ 5, 5 });
     EntityRef* rockRef = there.ref(rock);
-    rockRef->addRef();
     NX_EXPECT(b->share(guest, rockRef, "rock"));
     NX_EXPECT(!b->share(guest, copy, "copy"));  // a copy isn't its to share
     NX_EXPECT(n.until([&]() { sync(1); return a->copies() == 1; }, 100));

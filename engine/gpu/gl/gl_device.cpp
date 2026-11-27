@@ -115,6 +115,7 @@ namespace nx::gpu
         F(void, Scissor, (GLint, GLint, GLsizei, GLsizei)) \
         F(void, ShaderSource, (GLuint, GLsizei, const char* const*, const GLint*)) \
         F(void, TexImage2D, (GLenum, GLint, GLint, GLsizei, GLsizei, GLint, GLenum, GLenum, const void*)) \
+        F(void, TexSubImage2D, (GLenum, GLint, GLint, GLint, GLsizei, GLsizei, GLenum, GLenum, const void*)) \
         F(void, TexImage3D, (GLenum, GLint, GLint, GLsizei, GLsizei, GLsizei, GLint, GLenum, GLenum, const void*)) \
         F(void, TexParameteri, (GLenum, GLenum, GLint)) \
         F(void, Uniform1i, (GLint, GLint)) \
@@ -209,6 +210,7 @@ void main()
             // A picture to draw into: drawn into one of its own, then copied upside down into the texture, as what a
             // framebuffer holds is bottom row first and pictures here are top row first.
             GLuint drawn, depth, drawTarget, finalTarget;
+            bool dynamic;    // changed by updateTexture
         };
 
         class GlDevice final : public Device
@@ -374,7 +376,8 @@ void main()
                 const GLsizei height = static_cast<GLsizei>(source.fullHeight);
                 gl.GenTextures(1, &t.texture);
                 gl.BindTexture(GL_TEXTURE_2D, t.texture);
-                const bool mips = source.mips && source.format == PixelFormat::Rgba8;
+                const bool mips = source.mips && source.format == PixelFormat::Rgba8 && !source.dynamic;
+                t.dynamic = source.dynamic && source.format == PixelFormat::Rgba8;
                 gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, mips ? 12 : 0);
                 if (source.format == PixelFormat::Rgba8)
                 {
@@ -399,6 +402,20 @@ void main()
                 }
                 m_textureBytes += t.info.bytes;
                 return handle;
+            }
+
+            bool updateTexture(Texture handle, const u8* rgba) override
+            {
+                const TextureSlot* t = m_textures.get(handle);
+                if (t == nullptr || !t->dynamic || rgba == nullptr)
+                {
+                    return false;
+                }
+                gl.BindTexture(GL_TEXTURE_2D, t->texture);
+                gl.PixelStorei(GL_UNPACK_ALIGNMENT, 4);
+                gl.TexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, static_cast<GLsizei>(t->info.width), static_cast<GLsizei>(t->info.height), GL_RGBA, GL_UNSIGNED_BYTE, rgba);
+                m_boundTexture = {};
+                return ok("texture update");
             }
 
             void destroyTexture(Texture handle) override

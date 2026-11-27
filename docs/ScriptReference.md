@@ -117,6 +117,29 @@ Something to play: WAV, Ogg Vorbis, MP3 or cooked. Short effects are kept ready;
 | | |
 |---|---|
 
+## Video
+
+A film: MPEG-1 with MP2 sound, in a .mpg. Its picture is drawn like any other image, its sound comes with it, and it plays by itself while its screen is on top.
+
+| | |
+|---|---|
+| `void play()` | Plays it, from where it was, or from the start once it is done. |
+| `void pause()` | Stops it where it is. |
+| `void stop()` | Back to the start, and paused. |
+| `bool get_playing() const property` | Whether it is playing. |
+| `bool get_done() const property` | Whether it has come to the end. |
+| `bool get_loop() const property` | Whether it starts again at the end. |
+| `void set_loop(bool) property` | Starts it again at the end, or not. |
+| `float get_volume() const property` | How loud its sound is: 1 as it is. |
+| `void set_volume(float) property` | Makes its sound louder or softer. |
+| `float get_time() const property` | Seconds into it. |
+| `float get_duration() const property` | Seconds long. |
+| `float get_framerate() const property` | Pictures a second. |
+| `uint get_width() const property` | Its width in pixels. |
+| `uint get_height() const property` | Its height in pixels. |
+| `uint get_frames() const property` | Pictures shown so far. |
+| `Texture@ get_picture() const property` | What it shows now: draw it with Canvas.image, or put it on an entity or a model like any other image. |
+
 ## Assets
 
 Loading. Names start with `asset:` for the screen's own files, `global:` for shared ones or `own:` for those that the player brought.
@@ -126,6 +149,7 @@ Loading. Names start with `asset:` for the screen's own files, `global:` for sha
 | `Texture@ Assets::picture(uint width, uint height)` | A blank picture of its own to draw into, with Canvas.beginPicture, and then to draw like any other: a minimap, a screen in a room, a mirror, something drawn once and shown many times. Up to 2048 pixels a side; null where the machine can't. |
 | `Texture@ Assets::texture(const string &in name)` | An image: PNG, JPEG, TGA, BMP or GIF, up to 2048 pixels a side; from the web too, by its https:// address. What a screen asks for as it is made is ready by onEnter(); later ones arrive in the background. |
 | `Sound@ Assets::sound(const string &in name)` | A sound. Arrives like an image. |
+| `Video@ Assets::video(const string &in name)` | A film, read at once: MPEG-1 with MP2 sound in a .mpg, up to 1024 pixels a side; `ffmpeg -i in.mp4 -c:v mpeg1video -q:v 4 -c:a mp2 -format mpeg out.mpg` makes one. Paused at its first picture until it is played. |
 | `Effect@ Assets::effect(const string &in name)` | A shader of your own: a .fx file. Each time gives one whose values are its own. |
 | `Model@ Assets::model(const string &in name)` | A 3D model: glTF (.glb or .gltf), FBX, OBJ, STL or PLY. Arrives like an image. On the original Xbox an FBX has to be cooked. |
 | `uint Assets::get_pending() property` | Files still on their way. |

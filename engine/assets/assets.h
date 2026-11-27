@@ -88,6 +88,9 @@ namespace nx
         // A picture to draw into, of its own: nobody else can ask for it, and it goes when it is let go. nullptr where
         // the GPU can't.
         Asset* target(u32 width, u32 height);
+        // The same, for pixels that change often, given to the device's updateTexture: a video's. Black to begin with.
+        Asset* dynamicTexture(u32 width, u32 height);
+        gpu::Device& device() { return *m_device; }
         Asset* sound(const char* path);
         // glTF. Arrives like a texture; until then there is nothing to draw.
         Asset* model(const char* path);

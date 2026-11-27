@@ -126,6 +126,19 @@ namespace nx
         }
     }
 
+    u32 SoundStream::write(const i16* frames, u32 count)
+    {
+        const u32 space = room();
+        count = count < space ? count : space;
+        const u32 at = written.load(std::memory_order_relaxed);
+        for (u32 i = 0; i < count; i++)
+        {
+            memcpy(samples + static_cast<size_t>((at + i) % capacity) * channels, frames + static_cast<size_t>(i) * channels, channels * sizeof(i16));
+        }
+        written.store(at + count, std::memory_order_release);
+        return count;
+    }
+
     SoundDecoder* openDecoder(const SoundData& sound)
     {
         SoundDecoder* d = create<SoundDecoder>(MemTag::Audio);
@@ -203,6 +216,30 @@ namespace nx
             }
             return got;
         }
+        case SoundKind::Stream:
+        {
+            SoundStream& s = *reinterpret_cast<SoundStream*>(sound.data);
+            u32 at = s.read.load(std::memory_order_relaxed);
+            const u32 skip = s.skip.load(std::memory_order_acquire);
+            if (static_cast<i32>(skip - at) > 0)
+            {
+                at = skip;
+            }
+            const u32 have = s.written.load(std::memory_order_acquire) - at;
+            const u32 count = have < frames ? have : frames;
+            for (u32 i = 0; i < count; i++)
+            {
+                memcpy(samples + static_cast<size_t>(i) * sound.channels, s.samples + static_cast<size_t>((at + i) % s.capacity) * s.channels, sound.channels * sizeof(i16));
+            }
+            s.read.store(at + count, std::memory_order_release);
+            if (count < frames && !(count == 0 && s.over.load(std::memory_order_acquire)))
+            {
+                // Waiting for more: silence, so it goes on.
+                memset(samples + static_cast<size_t>(count) * sound.channels, 0, static_cast<size_t>(frames - count) * sound.channels * sizeof(i16));
+                return frames;
+            }
+            return count;
+        }
         case SoundKind::Pcm:
         {
             const u32 left = sound.frames - d.frame;
@@ -217,6 +254,10 @@ namespace nx
 
     bool rewindDecoder(SoundDecoder& d)
     {
+        if (d.sound->kind == SoundKind::Stream)
+        {
+            return false;
+        }
         d.frame = 0;
         d.block = 0xFFFFFFFF;
         if (d.ogg)

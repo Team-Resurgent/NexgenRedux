@@ -93,6 +93,7 @@ namespace nx::gpu
         PixelFormat format = PixelFormat::Rgba8;
         const u8* pixels = nullptr;  // top row first
         bool mips = false;           // smaller copies for when it is far away; Rgba8 only
+        bool dynamic = false;        // changed often, by updateTexture: Rgba8, without mips, its full size its own
     };
 
     struct TextureInfo
@@ -245,6 +246,8 @@ namespace nx::gpu
         // texture. None where colours can't be graded.
         virtual Texture createGrade(const u8* pixels, u32 size) { return createVolume(pixels, size); }
         virtual void destroyTexture(Texture texture) = 0;
+        // New pixels for a dynamic texture, all of them, top row first. False for one that isn't.
+        virtual bool updateTexture(Texture texture, const u8* rgba) { (void)texture; (void)rgba; return false; }
         // A picture that can be drawn into, Rgba8 and see-through until something is drawn, then drawn like any other.
         // None where there are none.
         virtual Texture createTarget(u32 width, u32 height) { (void)width; (void)height; return {}; }

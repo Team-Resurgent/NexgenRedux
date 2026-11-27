@@ -107,6 +107,7 @@ a compiler and the platform's SDK, downloads nothing, and uses no SDL or GLFW.
 - **Networking** — rooms to play in on the local network or over the internet, by way of a meeting place that any build runs with `--meeting`; entities shared in a room, kept alike in every player's game and followed smoothly; TCP, UDP, and HTTPS with certificates that are checked.
 - **Console calls** — on the original Xbox: temperatures, fan, light, tray, drives, launching titles, and back to the dashboard.
 - **Sound** — 32 voices with volume, pan, pitch and fades, or from a place in space; WAV, Ogg Vorbis and MP3; spectrum and waveform for visualisers.
+- **Video** — MPEG-1 films with their sound, decoded as they play, shown as an image like any other.
 - **Assets** — loaded in the background, shared, kept warm and unloaded only when a budget needs the room.
 - **Input** — keyboard, mouse and four gamepads as actions that players can rebind.
 - **Saving** — settings and scores, kept between runs.
@@ -210,6 +211,6 @@ Nexgen Redux is by Team Resurgent: EqUiNoX, HoRnEyDvL and RetroMura.
 
 The engine includes unmodified copies of [AngelScript](https://www.angelcode.com/angelscript/),
 [SSFN](https://gitlab.com/bztsrc/scalable-font2), [cgltf](https://github.com/jkuhlmann/cgltf), [ufbx](https://github.com/ufbx/ufbx), [stb](https://github.com/nothings/stb),
-[miniaudio](https://miniaud.io), [dr_libs](https://github.com/mackron/dr_libs) and
+[miniaudio](https://miniaud.io), [dr_libs](https://github.com/mackron/dr_libs), [pl_mpeg](https://github.com/phoboslab/pl_mpeg) and
 [Mbed TLS](https://github.com/Mbed-TLS/mbedtls), under their own licences in
 `engine/third_party`.

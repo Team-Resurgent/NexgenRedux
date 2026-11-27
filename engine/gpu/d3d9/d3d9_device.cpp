@@ -59,6 +59,8 @@ namespace nx::gpu
             // A picture to draw into: where in the GPU's memory it is drawn, which is the screen's while it is.
             IDirect3DSurface9* color;
             IDirect3DSurface9* depth;
+            bool dynamic;    // changed by updateTexture
+            u32 rows;
         };
 
         struct MeshSlot
@@ -227,7 +229,7 @@ namespace nx::gpu
                     return {};
                 }
                 const bool block = source.format != PixelFormat::Rgba8;
-                const bool mips = source.mips && !block;
+                const bool mips = source.mips && !block && !source.dynamic;
                 u32 levels = 1;
                 for (u32 w = source.fullWidth, h = source.fullHeight; mips && (w > 1 || h > 1); w = w > 1 ? w / 2 : 1, h = h > 1 ? h / 2 : 1)
                 {
@@ -261,6 +263,8 @@ namespace nx::gpu
                 t.info.uMax = static_cast<float>(source.width) / static_cast<float>(source.fullWidth);
                 t.info.vMax = static_cast<float>(source.height) / static_cast<float>(source.fullHeight);
                 t.info.bytes = bytes;
+                t.dynamic = source.dynamic && !block;
+                t.rows = source.fullHeight;
                 const Texture handle = m_textures.add(t);
                 if (!handle)
                 {
@@ -269,6 +273,18 @@ namespace nx::gpu
                 }
                 m_textureBytes += bytes;
                 return handle;
+            }
+
+            bool updateTexture(Texture handle, const u8* rgba) override
+            {
+                const TextureSlot* t = m_textures.get(handle);
+                if (t == nullptr || !t->dynamic || rgba == nullptr)
+                {
+                    return false;
+                }
+                D3DSURFACE_DESC desc;
+                t->texture->GetLevelDesc(0, &desc);
+                return fill(t->texture, 0, rgba, desc.Width * 4, t->rows);
             }
 
             void destroyTexture(Texture handle) override

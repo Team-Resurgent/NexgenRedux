@@ -3,6 +3,7 @@
 #include "bindings/script_refs.h"
 #include "screens/screens.h"
 #include "net/net.h"
+#include "video/video.h"
 
 #include <math.h>
 #include <stdio.h>
@@ -60,6 +61,44 @@ namespace nx
                 return nullptr;
             }
             return wrap<TextureRef>(s.assets->texture(path), *s.assets);
+        }
+
+        Video* loadVideo(const std::string& name)
+        {
+            Services& s = services();
+            FileData file;
+            if (!readOwn(s, name.c_str(), file))
+            {
+                scriptError("there is no video " + name);
+                return nullptr;
+            }
+            Video* v = create<Video>(MemTag::Script, *s.assets, *s.audio);
+            if (v == nullptr)
+            {
+                return nullptr;
+            }
+            u8* bytes = file.data;
+            const size_t size = file.size;
+            file.data = nullptr;
+            file.size = 0;
+            if (!v->open(bytes, size))
+            {
+                v->release();
+                scriptError(name + " isn't a video that can be played: MPEG-1, with MP2 sound if any, in a .mpg");
+                return nullptr;
+            }
+            return v;
+        }
+
+        TextureRef* videoPicture(const Video* v)
+        {
+            Asset* a = v->picture();
+            if (a == nullptr)
+            {
+                return nullptr;
+            }
+            services().assets->addRef(a);
+            return wrap<TextureRef>(a, *services().assets);
         }
 
         TextureRef* makePicture(u32 width, u32 height)
@@ -712,11 +751,32 @@ namespace nx
             b.behaviour(asBEHAVE_ADDREF, "void f()", NX_METHOD(SoundRef, addRef));
             b.behaviour(asBEHAVE_RELEASE, "void f()", NX_METHOD(SoundRef, release));
 
+            b.refType("Video", 0, "A film: MPEG-1 with MP2 sound, in a .mpg. Its picture is drawn like any other image, its sound comes with it, and it plays by itself while its screen is on top.");
+            b.behaviour(asBEHAVE_ADDREF, "void f()", NX_METHOD(Video, addRef));
+            b.behaviour(asBEHAVE_RELEASE, "void f()", NX_METHOD(Video, release));
+            b.method("void play()", NX_METHOD(Video, play), "Plays it, from where it was, or from the start once it is done.");
+            b.method("void pause()", NX_METHOD(Video, pause), "Stops it where it is.");
+            b.method("void stop()", NX_METHOD(Video, stop), "Back to the start, and paused.");
+            b.method("bool get_playing() const property", NX_METHOD(Video, playing), "Whether it is playing.");
+            b.method("bool get_done() const property", NX_METHOD(Video, done), "Whether it has come to the end.");
+            b.method("bool get_loop() const property", NX_METHOD(Video, loop), "Whether it starts again at the end.");
+            b.method("void set_loop(bool) property", NX_METHOD(Video, setLoop), "Starts it again at the end, or not.");
+            b.method("float get_volume() const property", NX_METHOD(Video, volume), "How loud its sound is: 1 as it is.");
+            b.method("void set_volume(float) property", NX_METHOD(Video, setVolume), "Makes its sound louder or softer.");
+            b.method("float get_time() const property", NX_METHOD(Video, time), "Seconds into it.");
+            b.method("float get_duration() const property", NX_METHOD(Video, duration), "Seconds long.");
+            b.method("float get_framerate() const property", NX_METHOD(Video, framerate), "Pictures a second.");
+            b.method("uint get_width() const property", NX_METHOD(Video, width), "Its width in pixels.");
+            b.method("uint get_height() const property", NX_METHOD(Video, height), "Its height in pixels.");
+            b.method("uint get_frames() const property", NX_METHOD(Video, frames), "Pictures shown so far.");
+            b.method("Texture@ get_picture() const property", NX_OBJ_LAST(videoPicture), "What it shows now: draw it with Canvas.image, or put it on an entity or a model like any other image.");
+
             b.section("Assets", "Loading. Names start with `asset:` for the screen's own files, `global:` for shared ones or `own:` for those that the player brought.");
             b.names("Assets");
             b.function("Texture@ picture(uint width, uint height)", NX_FN(makePicture), "A blank picture of its own to draw into, with Canvas.beginPicture, and then to draw like any other: a minimap, a screen in a room, a mirror, something drawn once and shown many times. Up to 2048 pixels a side; null where the machine can't.");
             b.function("Texture@ texture(const string &in name)", NX_FN(loadTexture), "An image: PNG, JPEG, TGA, BMP or GIF, up to 2048 pixels a side; from the web too, by its https:// address. What a screen asks for as it is made is ready by onEnter(); later ones arrive in the background.");
             b.function("Sound@ sound(const string &in name)", NX_FN(loadSoundAsset), "A sound. Arrives like an image.");
+            b.function("Video@ video(const string &in name)", NX_FN(loadVideo), "A film, read at once: MPEG-1 with MP2 sound in a .mpg, up to 1024 pixels a side; `ffmpeg -i in.mp4 -c:v mpeg1video -q:v 4 -c:a mp2 -format mpeg out.mpg` makes one. Paused at its first picture until it is played.");
             b.function("Effect@ effect(const string &in name)", NX_FN(loadEffectAsset), "A shader of your own: a .fx file. Each time gives one whose values are its own.");
             b.function("Model@ model(const string &in name)", NX_FN(loadModelAsset), "A 3D model: glTF (.glb or .gltf), FBX, OBJ, STL or PLY. Arrives like an image. On the original Xbox an FBX has to be cooked.");
             b.function("uint get_pending() property", NX_FN(cachePending), "Files still on their way.");

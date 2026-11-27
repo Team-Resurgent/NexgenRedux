@@ -24,6 +24,7 @@ namespace nx::gpu
         {
             TextureInfo info;
             bool target;
+            bool dynamic;
         };
 
         // Draws nothing but checks everything, so logic can be tested on any machine.
@@ -82,12 +83,18 @@ namespace nx::gpu
                 info.uMax = static_cast<float>(data.width) / static_cast<float>(data.fullWidth);
                 info.vMax = static_cast<float>(data.height) / static_cast<float>(data.fullHeight);
                 info.bytes = pixelBytes(data.format, data.fullWidth, data.fullHeight);
-                const Texture texture = m_textures.add({ info, false });
+                const Texture texture = m_textures.add({ info, false, data.dynamic && data.format == PixelFormat::Rgba8 && !data.mips });
                 if (texture)
                 {
                     m_textureBytes += info.bytes;
                 }
                 return texture;
+            }
+
+            bool updateTexture(Texture texture, const u8* rgba) override
+            {
+                const NullTexture* t = m_textures.get(texture);
+                return t && t->dynamic && rgba;
             }
 
             // Pictures to draw into, which hold nothing, so that what draws into them can be tried.
@@ -101,7 +108,7 @@ namespace nx::gpu
                 info.width = width;
                 info.height = height;
                 info.bytes = static_cast<size_t>(width) * height * 4;
-                const Texture texture = m_textures.add({ info, true });
+                const Texture texture = m_textures.add({ info, true, false });
                 if (texture)
                 {
                     m_textureBytes += info.bytes;

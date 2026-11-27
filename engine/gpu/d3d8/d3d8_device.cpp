@@ -51,6 +51,8 @@ namespace nx::gpu
             // A picture to draw into. It is linear, as anything drawn into must be here, and so is read in pixels rather
             // than 0 to 1: its uMax and vMax are its size.
             IDirect3DTexture8* depth;
+            // One that is changed often, by updateTexture: linear too, so it needn't be swizzled each time.
+            bool linear;
         };
 
         // D3DCOLOR is b, g, r, a in memory.
@@ -289,6 +291,30 @@ namespace nx::gpu
                 {
                     return {};
                 }
+                if (data.dynamic && data.format == PixelFormat::Rgba8)
+                {
+                    TextureSlot t = {};
+                    if (FAILED(m_device->CreateTexture(data.fullWidth, data.fullHeight, 1, 0, D3DFMT_LIN_A8R8G8B8, D3DPOOL_DEFAULT, &t.texture)))
+                    {
+                        NX_ERROR("d3d8: no memory for a %ux%u texture", static_cast<unsigned>(data.fullWidth), static_cast<unsigned>(data.fullHeight));
+                        return {};
+                    }
+                    t.linear = true;
+                    t.info.width = data.width;
+                    t.info.height = data.height;
+                    t.info.uMax = static_cast<float>(data.width);
+                    t.info.vMax = static_cast<float>(data.height);
+                    t.info.bytes = static_cast<size_t>(data.fullWidth) * data.fullHeight * 4;
+                    const Texture handle = m_textures.add(t);
+                    if (!handle)
+                    {
+                        t.texture->Release();
+                        return {};
+                    }
+                    m_textureBytes += t.info.bytes;
+                    updateTexture(handle, data.pixels);
+                    return handle;
+                }
                 // Textures must be powers of two here, so an image goes in the corner of a larger one with
                 // its last row and column repeated, which keeps filtering clean at the edge.
                 const u32 fullWidth = powerOfTwo(data.fullWidth);
@@ -388,7 +414,7 @@ namespace nx::gpu
                     info.uMax = static_cast<float>(data.width) / static_cast<float>(fullWidth);
                     info.vMax = static_cast<float>(data.height) / static_cast<float>(fullHeight);
                     info.bytes = levels > 1 ? bytes + bytes / 3 : bytes;
-                    handle = m_textures.add({ texture, nullptr, info, nullptr });
+                    handle = m_textures.add({ texture, nullptr, info, nullptr, false });
                 }
                 if (!handle && texture)
                 {
@@ -526,6 +552,29 @@ namespace nx::gpu
                     m_textures.remove(handle);
                     m_boundTexture = {};
                 }
+            }
+
+            bool updateTexture(Texture handle, const u8* rgba) override
+            {
+                const TextureSlot* t = m_textures.get(handle);
+                D3DLOCKED_RECT locked;
+                if (t == nullptr || !t->linear || rgba == nullptr || FAILED(t->texture->LockRect(0, &locked, nullptr, 0)))
+                {
+                    return false;
+                }
+                // b, g, r, a here.
+                for (u32 y = 0; y < t->info.height; y++)
+                {
+                    const u32* in = reinterpret_cast<const u32*>(rgba + static_cast<size_t>(y) * t->info.width * 4);
+                    u32* out = reinterpret_cast<u32*>(static_cast<u8*>(locked.pBits) + static_cast<size_t>(y) * locked.Pitch);
+                    for (u32 x = 0; x < t->info.width; x++)
+                    {
+                        const u32 p = in[x];
+                        out[x] = (p & 0xFF00FF00u) | ((p & 0xFFu) << 16) | ((p >> 16) & 0xFFu);
+                    }
+                }
+                t->texture->UnlockRect(0);
+                return true;
             }
 
             Texture createTarget(u32 width, u32 height) override
@@ -1184,7 +1233,7 @@ namespace nx::gpu
                     m_device->SetTextureStageState(0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT3);
                     m_device->SetTransform(D3DTS_TEXTURE0, reinterpret_cast<const D3DMATRIX*>(uvw.m));
                 }
-                const bool inPixels = !(volume && volume->volume) && texture && texture->depth;
+                const bool inPixels = !(volume && volume->volume) && texture && (texture->depth || texture->linear);
                 if (inPixels)
                 {
                     Mat4 scale;

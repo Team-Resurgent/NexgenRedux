@@ -14,7 +14,28 @@ namespace nx
         Pcm,    // samples in memory: short effects
         Adpcm,  // cooked: a quarter of the size, decoded while playing
         Ogg,    // compressed in memory, decoded while playing
-        Mp3
+        Mp3,
+        Stream  // made as it plays, by a video: its data is a SoundStream
+    };
+
+    // Samples written as they are made and played as they come, from one thread to the other. Silence while none
+    // have come; the end once it is over and all have been played.
+    struct SoundStream
+    {
+        i16* samples = nullptr;   // capacity frames, interleaved in the sound's channels
+        u32 capacity = 0;
+        u32 channels = 2;
+        std::atomic<u32> written{ 0 };  // frames, ever
+        std::atomic<u32> read{ 0 };
+        std::atomic<bool> over{ false };
+        std::atomic<u32> skip{ 0 };     // played from here at least: what was written before it is left out
+
+        u32 waiting() const { return written.load(std::memory_order_acquire) - read.load(std::memory_order_acquire); }
+        u32 room() const { return capacity - waiting(); }
+        // As many as there is room for.
+        u32 write(const i16* frames, u32 count);
+        // Leaves out what has been written and not played, as the one playing it comes to it.
+        void flush() { skip.store(written.load(std::memory_order_relaxed), std::memory_order_release); }
     };
 
     // A loaded sound. Shared by every voice that plays it, and never changed after loading.
@@ -94,6 +115,9 @@ namespace nx
         // The sound must stay loaded until the finished callback gives back its owner. No voice if
         // all are busy with more important things.
         Voice play(const SoundData& sound, void* owner, const PlayOptions& options);
+        // The same for a sound that is the owner's own, such as a video's: free(owner) is called, from update(), once
+        // nothing plays it any more, instead of the finished callback. No voice leaves it to the caller.
+        Voice playOwn(const SoundData& sound, void* owner, void (*free)(void*), const PlayOptions& options);
         void stop(Voice voice, float fadeOut);
         void setVolume(Voice voice, float volume, float seconds);
         void setPan(Voice voice, float pan);
@@ -116,6 +140,7 @@ namespace nx
 
         // Stops voices that a screen started, when it closes. Pauses them while it is covered.
         void setGroup(u32 group) { m_group = group; }
+        u32 group() const { return m_group; }
         void stopGroup(u32 group, float fadeOut);
         void pauseGroup(u32 group, bool paused);
 
@@ -147,6 +172,7 @@ namespace nx
             float startVolume = 0;
             double started = 0;
             void* owner = nullptr;
+            void (*free)(void*) = nullptr;   // the owner's, for a sound of its own
             std::atomic<u32> finished{ 0 };   // the generation that has finished
             std::atomic<u32> positionMs{ 0 };
             std::atomic<SoundDecoder*> retired{ nullptr };  // closed by the game thread, as it frees memory

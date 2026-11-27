@@ -245,6 +245,50 @@ namespace nx
         return asset;
     }
 
+    Asset* Assets::dynamicTexture(u32 width, u32 height)
+    {
+        if (!gpu::validTextureSize(width, height))
+        {
+            return nullptr;
+        }
+        const size_t bytes = static_cast<size_t>(width) * height * 4;
+        u8* black = static_cast<u8*>(memAlloc(bytes, MemTag::Texture));
+        if (black == nullptr)
+        {
+            return nullptr;
+        }
+        for (size_t i = 0; i < bytes; i += 4)
+        {
+            black[i] = black[i + 1] = black[i + 2] = 0;
+            black[i + 3] = 255;
+        }
+        gpu::TextureData data = gpu::rgbaTexture(black, width, height);
+        data.dynamic = true;
+        const gpu::Texture texture = m_device->createTexture(data);
+        memFree(black);
+        if (!texture)
+        {
+            return nullptr;
+        }
+        // Freed when it is let go, as a picture drawn into is.
+        char key[32];
+        static u32 made = 0;
+        snprintf(key, sizeof(key), "target!d%u", ++made);
+        Asset* asset = add(key, hashText(key), AssetType::Texture);
+        if (asset == nullptr)
+        {
+            m_device->destroyTexture(texture);
+            return nullptr;
+        }
+        asset->texture = texture;
+        asset->width = width;
+        asset->height = height;
+        asset->ready = true;
+        asset->bytes = m_device->textureInfo(texture).bytes;
+        m_bytes[budgetIndex(AssetType::Texture)] += asset->bytes;
+        return asset;
+    }
+
     Asset* Assets::sound(const char* path)
     {
         return request(path, AssetType::Sound);

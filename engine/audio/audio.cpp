@@ -169,11 +169,17 @@ namespace nx
             if (slot.used && slot.finished.load(std::memory_order_acquire) == slot.generation)
             {
                 void* owner = slot.owner;
+                void (*freeOwn)(void*) = slot.free;
                 closeDecoder(slot.retired.exchange(nullptr, std::memory_order_relaxed));
                 slot.used = false;
                 slot.owner = nullptr;
+                slot.free = nullptr;
                 slot.generation = slot.generation >= 0xFFFFFF ? 1 : slot.generation + 1;
-                if (m_finished && owner)
+                if (freeOwn)
+                {
+                    freeOwn(owner);
+                }
+                else if (m_finished && owner)
                 {
                     m_finished(owner, m_finishedUser);
                 }
@@ -256,12 +262,23 @@ namespace nx
             return {};
         }
         chosen->used = true;
+        chosen->free = nullptr;
         chosen->priority = options.priority;
         chosen->group = m_group;
         chosen->owner = owner;
         chosen->started = static_cast<double>(m_clock);
         chosen->positionMs.store(0);
         return { (chosen->generation << 8) | index };
+    }
+
+    Voice Audio::playOwn(const SoundData& sound, void* owner, void (*freeOwn)(void*), const PlayOptions& options)
+    {
+        const Voice voice = play(sound, owner, options);
+        if (Slot* slot = slotOf(voice))
+        {
+            slot->free = freeOwn;
+        }
+        return voice;
     }
 
     void Audio::stop(Voice voice, float fadeOut)

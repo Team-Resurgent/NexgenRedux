@@ -91,6 +91,7 @@ namespace nx::gpu
             ID3D11RenderTargetView* target;
             ID3D11Texture2D* depth;
             ID3D11DepthStencilView* depthView;
+            bool dynamic;    // changed by updateTexture
         };
 
         void releasePipeline(PipelineSlot& p)
@@ -344,7 +345,11 @@ namespace nx::gpu
                 desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
                 const UINT pitch = source.format == PixelFormat::Rgba8 ? source.fullWidth * 4 : source.fullWidth / 4 * (source.format == PixelFormat::Bc1 ? 8 : 16);
                 const D3D11_SUBRESOURCE_DATA data = { source.pixels, pitch, 0 };
-                const bool mips = source.mips && source.format == PixelFormat::Rgba8;
+                const bool mips = source.mips && source.format == PixelFormat::Rgba8 && !source.dynamic;
+                if (source.dynamic)
+                {
+                    desc.Usage = D3D11_USAGE_DEFAULT;
+                }
                 if (mips)
                 {
                     desc.MipLevels = 0;
@@ -370,6 +375,7 @@ namespace nx::gpu
                     m_context->GenerateMips(t.view);
                     t.info.bytes += t.info.bytes / 3;
                 }
+                t.dynamic = source.dynamic && source.format == PixelFormat::Rgba8;
                 const Texture handle = m_textures.add(t);
                 if (!handle)
                 {
@@ -378,6 +384,19 @@ namespace nx::gpu
                 }
                 m_textureBytes += t.info.bytes;
                 return handle;
+            }
+
+            bool updateTexture(Texture handle, const u8* rgba) override
+            {
+                const TextureSlot* t = m_textures.get(handle);
+                if (t == nullptr || !t->dynamic || rgba == nullptr)
+                {
+                    return false;
+                }
+                D3D11_TEXTURE2D_DESC desc;
+                t->texture->GetDesc(&desc);
+                m_context->UpdateSubresource(t->texture, 0, nullptr, rgba, desc.Width * 4, 0);
+                return true;
             }
 
             void destroyTexture(Texture handle) override

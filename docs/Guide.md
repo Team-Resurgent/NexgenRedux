@@ -717,6 +717,31 @@ Audio::clearEffects();
 A screen starts with none, and they go when it closes. The Sounds demo puts its pads in a room, a hall, a canyon, under water and
 on the radio.
 
+### Video
+
+Films are MPEG-1 with MP2 sound, in a `.mpg`, decoded as they play on every machine, the original Xbox included. ffmpeg makes
+one from anything:
+
+```
+ffmpeg -i in.mp4 -c:v mpeg1video -q:v 4 -c:a mp2 -b:a 128k -format mpeg film.mpg
+```
+
+```cpp
+Video@ film = Assets::video("asset:film.mpg");   // paused at its first picture
+film.loop = true;
+film.play();
+
+void draw(Canvas@ c)
+{
+    c.image(film.picture, 0, 0, 1280, 720);      // an image like any other
+}
+```
+
+It plays by itself while its screen is on top, with its sound, and pauses with the screen's other sounds while it is covered.
+`pause()`, `stop()` (back to the start), `time`, `duration`, `done` and `volume` do what they say, and `film.picture` can go on
+an entity or a model as well. Up to 1024 pixels a side; on the original Xbox, 640 by 360 or smaller keeps it smooth. The Video
+demo shows one on the screen and on a card that turns.
+
 ## Input
 
 Scripts ask for actions, not keys: `up`, `down`, `left`, `right`, `accept`, `cancel`, `fire`, `alternate` and `menu`. Players

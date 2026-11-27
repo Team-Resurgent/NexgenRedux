@@ -7,7 +7,7 @@ cmake_minimum_required(VERSION 3.21)
 set(_problems "")
 
 # Small source libraries, each a copy kept here. No frameworks such as SDL or GLFW.
-set(_allowed angelscript ssfn stb miniaudio dr_libs miniz cgltf mbedtls ufbx pl_mpeg)
+set(_allowed angelscript ssfn stb miniaudio dr_libs miniz cgltf mbedtls ufbx pl_mpeg libogg libvorbis)
 file(GLOB _third_party RELATIVE "${ROOT}/third_party" "${ROOT}/third_party/*")
 foreach(_library IN LISTS _third_party)
   if(NOT _library IN_LIST _allowed)

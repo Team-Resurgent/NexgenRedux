@@ -301,11 +301,24 @@ endif()
 # --- Tools and tests, on the machine that builds ---
 
 if(NOT XBOXOG AND NOT XBOX360 AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
+  # Ogg Vorbis written, for the cook tool only: the engine plays Ogg with stb_vorbis.
+  set(_vorbis analysis bitrate block codebook envelope floor0 floor1 info lookup lpc lsp mapping0 mdct psy registry res0 sharedbook smallft
+      synthesis vorbisenc window)
+  list(TRANSFORM _vorbis PREPEND third_party/libvorbis/lib/)
+  list(TRANSFORM _vorbis APPEND .c)
+  add_library(nx_vorbisenc STATIC third_party/libogg/src/bitwise.c third_party/libogg/src/framing.c ${_vorbis})
+  target_include_directories(nx_vorbisenc PUBLIC third_party/libogg/include third_party/libvorbis/include PRIVATE third_party/libvorbis/lib)
+  if(MSVC)
+    target_compile_options(nx_vorbisenc PRIVATE /w)
+    target_compile_definitions(nx_vorbisenc PRIVATE _CRT_SECURE_NO_WARNINGS)
+  else()
+    target_compile_options(nx_vorbisenc PRIVATE -w)
+  endif()
   add_executable(cook tools/cook/cook.cpp tools/cook/third_party.c)
   if(WIN32)
     target_sources(cook PRIVATE tools/cook/cook.manifest tools/cook/cook.rc)  # names of files in every language, and an icon
   endif()
-  target_link_libraries(cook PRIVATE nx_assets)
+  target_link_libraries(cook PRIVATE nx_assets nx_vorbisenc)
   target_compile_definitions(cook PRIVATE NX_VERSION="${PROJECT_VERSION}")
   nx_options(cook)
   nx_no_warnings(tools/cook/third_party.c)

@@ -11,12 +11,6 @@ extern void* nxAudioRealloc(void* old, size_t size);
 #define DR_WAV_NO_STDIO
 #include "third_party/dr_libs/dr_wav.h"
 
-/* --- dr_mp3 --- */
-
-#define DR_MP3_IMPLEMENTATION
-#define DR_MP3_NO_STDIO
-#include "third_party/dr_libs/dr_mp3.h"
-
 /* --- stb_vorbis --- */
 
 #define STB_VORBIS_NO_STDIO
@@ -126,47 +120,5 @@ void nx_ogg_close(NxOgg* ogg)
         stb_vorbis_close(ogg->vorbis);
         nxAudioRealloc(ogg->memory, 0);
         nxAudioRealloc(ogg, 0);
-    }
-}
-
-struct NxMp3
-{
-    drmp3 mp3;
-};
-
-NxMp3* nx_mp3_open(const unsigned char* data, size_t size, unsigned int* channels, unsigned int* rate)
-{
-    drmp3_allocation_callbacks callbacks = { NULL, mallocFor, reallocFor, freeFor };
-    NxMp3* mp3 = (NxMp3*)nxAudioRealloc(NULL, sizeof(NxMp3));
-    if (mp3 == NULL)
-    {
-        return NULL;
-    }
-    if (!drmp3_init_memory(&mp3->mp3, data, size, &callbacks))
-    {
-        nxAudioRealloc(mp3, 0);
-        return NULL;
-    }
-    *channels = mp3->mp3.channels;
-    *rate = mp3->mp3.sampleRate;
-    return mp3;
-}
-
-unsigned int nx_mp3_read(NxMp3* mp3, short* samples, unsigned int frames)
-{
-    return (unsigned int)drmp3_read_pcm_frames_s16(&mp3->mp3, frames, samples);
-}
-
-int nx_mp3_rewind(NxMp3* mp3)
-{
-    return drmp3_seek_to_pcm_frame(&mp3->mp3, 0) ? 1 : 0;
-}
-
-void nx_mp3_close(NxMp3* mp3)
-{
-    if (mp3)
-    {
-        drmp3_uninit(&mp3->mp3);
-        nxAudioRealloc(mp3, 0);
     }
 }

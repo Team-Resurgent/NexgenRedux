@@ -1,7 +1,7 @@
 // Prepares media for a platform, on the machine that builds the game: a folder of it, or one file.
 //
-// Images become compressed textures, sounds become ADPCM and models of every kind become .glb, under the
-// same names, so scripts don't change. Whatever wouldn't get smaller is copied. Only files that have changed
+// Images become compressed textures, sounds become ADPCM, Ogg or WAV (MP3 and FLAC always, as the engine plays
+// neither) and models of every kind become .glb, under the same names, so scripts don't change. Whatever wouldn't get smaller is copied. Only files that have changed
 // are done again, and files whose originals are gone are removed.
 #include "assets/decode.h"
 #include "assets/formats.h"
@@ -12,6 +12,7 @@
 #include "base/memory.h"
 
 #include "third_party/stb/stb_dxt.h"
+#include "tools/cook/third_party.h"
 
 #include <filesystem>
 #include <fstream>
@@ -28,11 +29,13 @@ using namespace nx;
 namespace
 {
     // Goes up when the output changes, so everything is done again.
-    constexpr u32 kVersion = 2;
+    constexpr u32 kVersion = 3;
     // Compression suits photographs and large art. Small images cost little and show every flaw.
     constexpr u32 kSmallestCompressed = 64 * 64;
-    // Longer sounds stay as they are: music is smaller as Ogg or MP3 than as ADPCM.
+    // Longer sounds are Ogg: music is smaller as Ogg than as ADPCM.
     constexpr u32 kLongestAdpcmBytes = 512 * 1024;
+    // Vorbis's quality, 0 to 1: about 160 kilobits a second for stereo, which few can tell from the original.
+    constexpr float kOggQuality = 0.5f;
 
     using Bytes = std::vector<u8>;
 
@@ -83,7 +86,7 @@ namespace
 
     bool isSound(const std::string& extension)
     {
-        return extension == ".wav" || extension == ".ogg" || extension == ".mp3";
+        return extension == ".wav" || extension == ".ogg" || extension == ".mp3" || extension == ".flac";
     }
 
     // False if the file is broken. Leaves out empty if it is better copied.
@@ -134,8 +137,52 @@ namespace
         return true;
     }
 
-    bool cookSound(const Bytes& in, bool alreadyCompressed, Bytes& out)
+    enum class SoundFormat : u8 { Best, Ogg, Wav, Adpcm };
+
+    // Every frame of a sound, 16-bit, one or two channels: what the engine reads itself, or MP3 or FLAC. More channels
+    // than two are mixed down to two.
+    struct Samples
     {
+        std::vector<i16> data;
+        u32 channels = 0, rate = 0, frames = 0;
+    };
+
+    bool readSamples(const Bytes& in, const std::string& extension, Samples& out)
+    {
+        if (extension == ".mp3" || extension == ".flac")
+        {
+            unsigned channels = 0, rate = 0;
+            unsigned long long frames = 0;
+            short* s = extension == ".mp3" ? cook_mp3(in.data(), in.size(), &channels, &rate, &frames) : cook_flac(in.data(), in.size(), &channels, &rate, &frames);
+            if (s == nullptr || channels == 0 || frames == 0 || frames > 0x7FFFFFFF || rate < 1000 || rate > 192000)
+            {
+                cook_free(s);
+                return false;
+            }
+            out.channels = channels > 2 ? 2 : channels;
+            out.rate = rate;
+            out.frames = static_cast<u32>(frames);
+            out.data.resize(static_cast<size_t>(frames) * out.channels);
+            for (size_t f = 0; f < frames; f++)
+            {
+                if (channels <= 2)
+                {
+                    memcpy(&out.data[f * channels], s + f * channels, channels * sizeof(i16));
+                    continue;
+                }
+                // Even channels to the left, odd to the right.
+                int sum[2] = {}, count[2] = {};
+                for (u32 c = 0; c < channels; c++)
+                {
+                    sum[c & 1] += s[f * channels + c];
+                    count[c & 1]++;
+                }
+                out.data[f * 2] = static_cast<i16>(sum[0] / count[0]);
+                out.data[f * 2 + 1] = static_cast<i16>(sum[1] / count[1]);
+            }
+            cook_free(s);
+            return true;
+        }
         SoundData* sound = loadSound(in.data(), in.size());
         if (sound == nullptr)
         {
@@ -143,33 +190,123 @@ namespace
         }
         u32 frames = 0;
         i16* samples = decodeAll(*sound, frames);
-        const u32 channels = sound->channels;
-        const u32 rate = sound->rate;
+        out.channels = sound->channels;
+        out.rate = sound->rate;
         freeSound(sound);
         if (samples == nullptr || frames == 0)
         {
             memFree(samples);
             return false;
         }
-        const size_t blocks = (frames + kAdpcmFrames - 1) / kAdpcmFrames;
-        const size_t size = kAdpcmHeader + blocks * adpcmBlockBytes(channels);
-        // ADPCM costs far less to play than Ogg or MP3, so short ones are worth a little more memory.
-        if (size < in.size() || (alreadyCompressed && size <= kLongestAdpcmBytes))
-        {
-            put32(out, kAdpcmMagic);
-            put32(out, rate);
-            put32(out, frames);
-            put32(out, channels);
-            int steps[2] = {};
-            for (u32 at = 0; at < frames; at += kAdpcmFrames)
-            {
-                u8 block[kAdpcmChannelBytes * 2];
-                adpcmEncodeBlock(samples + static_cast<size_t>(at) * channels, frames - at < kAdpcmFrames ? frames - at : kAdpcmFrames, channels, steps, block);
-                out.insert(out.end(), block, block + adpcmBlockBytes(channels));
-            }
-        }
+        out.frames = frames;
+        out.data.assign(samples, samples + static_cast<size_t>(frames) * out.channels);
         memFree(samples);
         return true;
+    }
+
+    void writeAdpcm(const Samples& s, Bytes& out)
+    {
+        put32(out, kAdpcmMagic);
+        put32(out, s.rate);
+        put32(out, s.frames);
+        put32(out, s.channels);
+        int steps[2] = {};
+        for (u32 at = 0; at < s.frames; at += kAdpcmFrames)
+        {
+            u8 block[kAdpcmChannelBytes * 2];
+            adpcmEncodeBlock(s.data.data() + static_cast<size_t>(at) * s.channels, s.frames - at < kAdpcmFrames ? s.frames - at : kAdpcmFrames, s.channels, steps, block);
+            out.insert(out.end(), block, block + adpcmBlockBytes(s.channels));
+        }
+    }
+
+    void writeWav(const Samples& s, Bytes& out)
+    {
+        const u32 bytes = s.frames * s.channels * 2;
+        out.insert(out.end(), { 'R', 'I', 'F', 'F' });
+        put32(out, 36 + bytes);
+        out.insert(out.end(), { 'W', 'A', 'V', 'E', 'f', 'm', 't', ' ' });
+        put32(out, 16);
+        put16(out, 1);   // PCM
+        put16(out, s.channels);
+        put32(out, s.rate);
+        put32(out, s.rate * s.channels * 2);
+        put16(out, s.channels * 2);
+        put16(out, 16);
+        out.insert(out.end(), { 'd', 'a', 't', 'a' });
+        put32(out, bytes);
+        for (const i16 v : s.data)
+        {
+            put16(out, static_cast<u16>(v));
+        }
+    }
+
+    bool writeOgg(const Samples& s, Bytes& out)
+    {
+        size_t size = 0;
+        unsigned char* ogg = cook_ogg(s.data.data(), s.frames, s.channels, s.rate, kOggQuality, &size);
+        if (ogg == nullptr)
+        {
+            return false;
+        }
+        out.assign(ogg, ogg + size);
+        cook_free(ogg);
+        return true;
+    }
+
+    // Leaves out empty if it is best copied as it is. Best: short sounds ADPCM, which costs far less to play than Ogg and
+    // is worth a little more memory; long ones as they are, or Ogg where the engine can't play them as they are.
+    bool cookSound(const Bytes& in, const std::string& extension, SoundFormat format, Bytes& out)
+    {
+        Samples s;
+        if (!readSamples(in, extension, s))
+        {
+            return false;
+        }
+        const bool playable = extension == ".wav" || extension == ".ogg";
+        const bool isOgg = in.size() >= 4 && memcmp(in.data(), "OggS", 4) == 0, isWav = in.size() >= 4 && memcmp(in.data(), "RIFF", 4) == 0;
+        if ((format == SoundFormat::Ogg && isOgg) || (format == SoundFormat::Wav && isWav))
+        {
+            return true;   // already that
+        }
+        if (format == SoundFormat::Best)
+        {
+            const size_t blocks = (s.frames + kAdpcmFrames - 1) / kAdpcmFrames;
+            const size_t size = kAdpcmHeader + blocks * adpcmBlockBytes(s.channels);
+            const bool compressed = extension != ".wav";
+            if (size < in.size() || (compressed && size <= kLongestAdpcmBytes))
+            {
+                format = SoundFormat::Adpcm;
+            }
+            else if (playable)
+            {
+                return true;
+            }
+            else
+            {
+                format = SoundFormat::Ogg;
+            }
+        }
+        if (format == SoundFormat::Adpcm)
+        {
+            writeAdpcm(s, out);
+            return true;
+        }
+        if (format == SoundFormat::Wav)
+        {
+            writeWav(s, out);
+            return true;
+        }
+        return writeOgg(s, out);
+    }
+
+    // What a sound of its own becomes named, as one file: its kind's own ending, where it has one.
+    const char* soundEnding(SoundFormat format, const std::string& extension)
+    {
+        if (format == SoundFormat::Ogg || (format == SoundFormat::Best && (extension == ".mp3" || extension == ".flac")))
+        {
+            return ".ogg";
+        }
+        return format == SoundFormat::Wav || format == SoundFormat::Adpcm ? ".wav" : nullptr;
     }
 
     // What it names is beside it, as it was, not as it is cooked.
@@ -213,6 +350,7 @@ namespace
         "\n"
         "  -p, --platform NAME   desktop, or xboxog for the original Xbox (desktop if not said)\n"
         "  -s, --skip WHAT       leave images, sounds or models as they are; can be given again\n"
+        "  -a, --sounds-as KIND  best (short ADPCM, long Ogg), ogg, wav or adpcm: what sounds become (best if not said)\n"
         "  -f, --force           do everything again, not only what changed\n"
         "  -n, --dry-run         say what would be done, and write nothing\n"
         "  -q, --quiet           only errors and the last line\n"
@@ -220,13 +358,16 @@ namespace
         "  -h, --help\n"
         "      --version\n"
         "\n"
-        "Models: glTF (.glb, .gltf), FBX, OBJ, STL, PLY. Images: PNG, JPEG, TGA, BMP, GIF. Sounds: WAV, Ogg, MP3.\n"
+        "Models: glTF (.glb, .gltf), FBX, OBJ, STL, PLY. Images: PNG, JPEG, TGA, BMP, GIF. Sounds: WAV, Ogg, MP3, FLAC.\n"
+        "The engine plays WAV, Ogg and ADPCM: MP3 and FLAC always become one of them. In a folder, names stay as they\n"
+        "were; one file on its own is named for what it has become, as house.ogg from house.mp3.\n"
         "0 if all went well, 1 if something failed, 2 if it was asked wrongly.\n";
 
     struct Options
     {
         bool xbox = false, force = false, dry = false, quiet = false, json = false;
         bool images = true, sounds = true, models = true;
+        SoundFormat soundsAs = SoundFormat::Best;
         std::vector<std::string> paths;
     };
 
@@ -286,7 +427,7 @@ namespace
         }
         if (isSound(extension) && g_options.sounds)
         {
-            if (!cookSound(in, extension != ".wav", out))
+            if (!cookSound(in, extension, g_options.soundsAs, out))
             {
                 why = "the sound can't be read";
                 return "failed";
@@ -354,6 +495,11 @@ namespace
         {
             name.replace_extension(".glb");
         }
+        const std::string extension = lower(utf8(from.extension()));
+        if (isSound(extension) && g_options.sounds && soundEnding(g_options.soundsAs, extension))
+        {
+            name.replace_extension(soundEnding(g_options.soundsAs, extension));
+        }
         to = to.empty() ? from.parent_path() / name : fs::is_directory(to, error) ? to / name : to;
         if (fs::exists(to, error) && fs::equivalent(from, to, error))
         {
@@ -396,7 +542,9 @@ namespace
 
         // Never clear out a folder that something else made.
         const fs::path stamp = to / ".cooked";
-        const std::string skips = std::string(g_options.images ? "" : " -images") + (g_options.sounds ? "" : " -sounds") + (g_options.models ? "" : " -models");
+        static const char* const kKinds[] = { "", " ogg", " wav", " adpcm" };
+        const std::string skips = std::string(g_options.images ? "" : " -images") + (g_options.sounds ? "" : " -sounds") + (g_options.models ? "" : " -models") +
+                                  kKinds[static_cast<u32>(g_options.soundsAs)];
         const std::string stampText = "nexgen cook " + std::to_string(kVersion) + (g_options.xbox ? " xboxog" : " desktop") + skips + "\n";
         bool again = true;
         Bytes old;
@@ -530,6 +678,26 @@ int main(int argc, char** argv)
         {
             printf("Nexgen cook %s, format %u\n", NX_VERSION, static_cast<unsigned>(kVersion));
             return 0;
+        }
+        if (is("-a", "--sounds-as"))
+        {
+            const std::string value = i + 1 < argc ? argv[++i] : "";
+            const SoundFormat kinds[] = { SoundFormat::Best, SoundFormat::Ogg, SoundFormat::Wav, SoundFormat::Adpcm };
+            const char* names[] = { "best", "ogg", "wav", "adpcm" };
+            bool known = false;
+            for (u32 k = 0; k < 4; k++)
+            {
+                if (value == names[k])
+                {
+                    o.soundsAs = kinds[k];
+                    known = true;
+                }
+            }
+            if (!known)
+            {
+                return wrong("sounds can be best, ogg, wav or adpcm, not \"" + value + "\"");
+            }
+            continue;
         }
         if (is("-p", "--platform") || is("-s", "--skip"))
         {

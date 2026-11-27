@@ -109,13 +109,13 @@ a compiler and the platform's SDK, downloads nothing, and uses no SDL or GLFW.
   scripts or from files, in any of several languages.
 - **Networking** — rooms to play in on the local network or over the internet, by way of a meeting place that any build runs with `--meeting`; entities shared in a room, kept alike in every player's game and followed smoothly; TCP, UDP, WebSockets, and HTTPS and WSS with certificates that are checked.
 - **Console calls** — on the original Xbox: temperatures, fan, light, tray, drives, launching titles, and back to the dashboard.
-- **Sound** — 32 voices with volume, pan, pitch and fades, or from a place in space with Doppler; playlists that crossfade; WAV, Ogg Vorbis and MP3; spectrum and waveform for visualisers.
+- **Sound** — 32 voices with volume, pan, pitch and fades, or from a place in space with Doppler; playlists that crossfade; WAV and Ogg Vorbis; effects on each bus (filters, reverb, echo, distortion, chorus, flanger, compressor and equaliser); sound that scripts make, all at once or as it plays; spectrum and waveform for visualisers.
 - **Video** — MPEG-1 films with their sound, decoded as they play, shown as an image like any other.
 - **Assets** — loaded in the background, shared, kept warm and unloaded only when a budget needs the room.
 - **Input** — keyboard, mouse and four gamepads as actions that players can rebind.
 - **Saving** — settings and scores, kept between runs; JSON, zlib compression, MD5, SHA-1 and SHA-256, base64, and random
   numbers from a seed that are the same on every machine.
-- **Cook tool** — turns images into compressed textures, sounds into ADPCM and every kind of model into one, under the same names; a
+- **Cook tool** — turns images into compressed textures, sounds into ADPCM, Ogg or WAV (MP3 and FLAC too) and every kind of model into one, under the same names; a
   command and a window, for Windows, Linux and macOS on x64 and arm64.
 
 ## Platforms
@@ -215,6 +215,6 @@ Nexgen Redux is by Team Resurgent: EqUiNoX, HoRnEyDvL and RetroMura.
 
 The engine includes unmodified copies of [AngelScript](https://www.angelcode.com/angelscript/),
 [SSFN](https://gitlab.com/bztsrc/scalable-font2), [cgltf](https://github.com/jkuhlmann/cgltf), [ufbx](https://github.com/ufbx/ufbx), [stb](https://github.com/nothings/stb),
-[miniaudio](https://miniaud.io), [dr_libs](https://github.com/mackron/dr_libs), [pl_mpeg](https://github.com/phoboslab/pl_mpeg) and
-[Mbed TLS](https://github.com/Mbed-TLS/mbedtls), under their own licences in
+[miniaudio](https://miniaud.io), [dr_libs](https://github.com/mackron/dr_libs), [pl_mpeg](https://github.com/phoboslab/pl_mpeg),
+[Mbed TLS](https://github.com/Mbed-TLS/mbedtls), and [libogg](https://github.com/xiph/ogg) and [libvorbis](https://github.com/xiph/vorbis) for the cook tool, under their own licences in
 `engine/third_party`.

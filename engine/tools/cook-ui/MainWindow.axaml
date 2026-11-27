@@ -27,6 +27,12 @@
             <ComboBoxItem Content="Desktop" />
             <ComboBoxItem Content="Original Xbox" />
           </ComboBox>
+          <ComboBox x:Name="SoundsAs" SelectedIndex="0" Width="190" Margin="0,0,22,0" ToolTip.Tip="What sounds become: short ones ADPCM and long ones Ogg, or all one kind">
+            <ComboBoxItem Content="Sounds: best for each" />
+            <ComboBoxItem Content="Sounds as Ogg" />
+            <ComboBoxItem Content="Sounds as WAV" />
+            <ComboBoxItem Content="Sounds as ADPCM" />
+          </ComboBox>
           <CheckBox x:Name="Images" Content="Images" IsChecked="True" Margin="0,0,18,0" />
           <CheckBox x:Name="Sounds" Content="Sounds" IsChecked="True" Margin="0,0,18,0" />
           <CheckBox x:Name="Models" Content="Models" IsChecked="True" Margin="0,0,30,0" />
@@ -51,7 +57,7 @@
           </ListBox.ItemTemplate>
         </ListBox>
         <TextBlock x:Name="Empty" Classes="label" HorizontalAlignment="Center" TextAlignment="Center" IsHitTestVisible="False" FontSize="15"
-                   Text="glTF, FBX, OBJ, STL and PLY become models the engine reads at once.&#10;PNG, JPEG, TGA, BMP and GIF become compressed textures.&#10;WAV, Ogg and MP3 become sounds that cost little to play." />
+                   Text="glTF, FBX, OBJ, STL and PLY become models the engine reads at once.&#10;PNG, JPEG, TGA, BMP and GIF become compressed textures.&#10;WAV, Ogg, MP3 and FLAC become WAV, Ogg or ADPCM, which the engine plays." />
       </Grid>
     </Border>
 

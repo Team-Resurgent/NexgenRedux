@@ -59,7 +59,6 @@ namespace nx
     {
         const SoundData* sound = nullptr;
         NxOgg* ogg = nullptr;
-        NxMp3* mp3 = nullptr;
         // ADPCM
         u32 frame = 0;
         u32 block = 0xFFFFFFFF;
@@ -107,14 +106,7 @@ namespace nx
             nx_wav_free(samples);
             return sound;
         }
-        unsigned int channels = 0, rate = 0;
-        NxMp3* mp3 = nx_mp3_open(file, size, &channels, &rate);
-        if (mp3 == nullptr)
-        {
-            return nullptr;
-        }
-        nx_mp3_close(mp3);
-        return sane(channels, rate) ? keep(SoundKind::Mp3, channels, rate, 0, file, size) : nullptr;
+        return nullptr;
     }
 
     void freeSound(SoundData* sound)
@@ -152,11 +144,7 @@ namespace nx
         {
             d->ogg = nx_ogg_open(sound.data, static_cast<int>(sound.bytes), &channels, &rate, &frames);
         }
-        else if (sound.kind == SoundKind::Mp3)
-        {
-            d->mp3 = nx_mp3_open(sound.data, sound.bytes, &channels, &rate);
-        }
-        if ((sound.kind == SoundKind::Ogg && d->ogg == nullptr) || (sound.kind == SoundKind::Mp3 && d->mp3 == nullptr))
+        if (sound.kind == SoundKind::Ogg && d->ogg == nullptr)
         {
             destroy(d);
             return nullptr;
@@ -169,7 +157,6 @@ namespace nx
         if (d)
         {
             nx_ogg_close(d->ogg);
-            nx_mp3_close(d->mp3);
             destroy(d);
         }
     }
@@ -193,8 +180,6 @@ namespace nx
             }
             return got;
         }
-        case SoundKind::Mp3:
-            return nx_mp3_read(d.mp3, samples, frames);
         case SoundKind::Adpcm:
         {
             u32 got = 0;
@@ -264,7 +249,7 @@ namespace nx
         {
             nx_ogg_rewind(d.ogg);
         }
-        return d.mp3 ? nx_mp3_rewind(d.mp3) != 0 : true;
+        return true;
     }
 
     i16* decodeAll(const SoundData& sound, u32& frames)

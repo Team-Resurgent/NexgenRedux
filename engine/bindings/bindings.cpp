@@ -1,4 +1,5 @@
 #include "bindings/bindings.h"
+#include "audio/decoder.h"
 #include "script/debugger.h"
 #include "bindings/script_refs.h"
 #include "screens/screens.h"
@@ -407,6 +408,280 @@ namespace nx
             return playSound(*sound, o);
         }
 
+        // --- Sound that scripts make ---
+
+        // Samples a script fills, one at a time, and plays: each play has a copy of its own, so they can be changed
+        // while it plays.
+        struct SamplesRef
+        {
+            int refs = 1;
+            u32 frames = 0, rate = 0, channels = 0;
+            i16* data = nullptr;
+            void addRef() { refs++; }
+            void release()
+            {
+                if (--refs == 0)
+                {
+                    memFree(data);
+                    destroy(this);
+                }
+            }
+        };
+
+        constexpr size_t kMostSampleBytes = 32u * 1024 * 1024;
+
+        SamplesRef* adoptSamples(i16* data, u32 frames, u32 rate, u32 channels)
+        {
+            SamplesRef* s = create<SamplesRef>(MemTag::Script);
+            if (s == nullptr)
+            {
+                memFree(data);
+                return nullptr;
+            }
+            s->data = data;
+            s->frames = frames;
+            s->rate = rate;
+            s->channels = channels;
+            return s;
+        }
+
+        SamplesRef* makeSamples(u32 frames, u32 rate, u32 channels)
+        {
+            const size_t bytes = static_cast<size_t>(frames) * channels * sizeof(i16);
+            if (frames == 0 || channels < 1 || channels > 2 || rate < 1000 || rate > 96000 || bytes > kMostSampleBytes)
+            {
+                scriptError("samples are 1 or 2 channels, 1000 to 96000 a second, and up to 32 MB");
+                return nullptr;
+            }
+            i16* data = static_cast<i16*>(memAlloc(bytes, MemTag::Audio));
+            if (data == nullptr)
+            {
+                scriptError("there isn't the memory for so many samples");
+                return nullptr;
+            }
+            memset(data, 0, bytes);
+            return adoptSamples(data, frames, rate, channels);
+        }
+
+        SamplesRef* loadSamples(const std::string& name)
+        {
+            Services& s = services();
+            FileData file;
+            if (!readOwn(s, name.c_str(), file))
+            {
+                return nullptr;
+            }
+            SoundData* sound = loadSound(file.data, file.size);
+            if (sound == nullptr)
+            {
+                scriptError(name + " isn't a sound that can be read: WAV, Ogg or cooked");
+                return nullptr;
+            }
+            u32 frames = 0;
+            i16* data = decodeAll(*sound, frames);
+            const u32 channels = sound->channels, rate = sound->rate;
+            freeSound(sound);
+            if (data == nullptr || frames == 0 || static_cast<size_t>(frames) * channels * sizeof(i16) > kMostSampleBytes)
+            {
+                memFree(data);
+                scriptError(name + " is too long to hold as samples: up to 32 MB");
+                return nullptr;
+            }
+            return adoptSamples(data, frames, rate, channels);
+        }
+
+        i16 toSample(float v) { return static_cast<i16>(v <= -1 ? -32767 : v >= 1 ? 32767 : v * 32767.0f); }
+        float samplesGet(u32 frame, u32 channel, const SamplesRef* s)
+        {
+            return frame < s->frames && channel < s->channels ? s->data[static_cast<size_t>(frame) * s->channels + channel] / 32767.0f : 0;
+        }
+        void samplesSet(u32 frame, float value, SamplesRef* s)
+        {
+            if (frame < s->frames)
+            {
+                for (u32 c = 0; c < s->channels; c++)
+                {
+                    s->data[static_cast<size_t>(frame) * s->channels + c] = toSample(value);
+                }
+            }
+        }
+        void samplesSetBoth(u32 frame, float left, float right, SamplesRef* s)
+        {
+            if (frame < s->frames)
+            {
+                i16* at = s->data + static_cast<size_t>(frame) * s->channels;
+                at[0] = toSample(s->channels == 2 ? left : (left + right) * 0.5f);
+                if (s->channels == 2)
+                {
+                    at[1] = toSample(right);
+                }
+            }
+        }
+        u32 samplesFrames(const SamplesRef* s) { return s->frames; }
+        u32 samplesRate(const SamplesRef* s) { return s->rate; }
+        u32 samplesChannels(const SamplesRef* s) { return s->channels; }
+        float samplesSeconds(const SamplesRef* s) { return static_cast<float>(s->frames) / static_cast<float>(s->rate); }
+
+        struct OwnSound
+        {
+            SoundData data;
+            static void free(void* p)
+            {
+                OwnSound* o = static_cast<OwnSound*>(p);
+                memFree(o->data.data);
+                destroy(o);
+            }
+        };
+
+        PlayingSound samplesPlay(float volume, float pan, float pitch, bool loop, const SamplesRef* s)
+        {
+            Services& services_ = services();
+            PlayingSound playing = { 0 };
+            const size_t bytes = static_cast<size_t>(s->frames) * s->channels * sizeof(i16);
+            OwnSound* own = create<OwnSound>(MemTag::Audio);
+            u8* copy = own ? static_cast<u8*>(memAlloc(bytes, MemTag::Audio)) : nullptr;
+            if (copy == nullptr)
+            {
+                destroy(own);
+                return playing;
+            }
+            memcpy(copy, s->data, bytes);
+            own->data.kind = SoundKind::Pcm;
+            own->data.channels = s->channels;
+            own->data.rate = s->rate;
+            own->data.frames = s->frames;
+            own->data.data = copy;
+            own->data.bytes = bytes;
+            PlayOptions o;
+            o.volume = volume;
+            o.pan = pan;
+            o.pitch = pitch;
+            o.loop = loop;
+            playing.value = services_.audio->playOwn(own->data, own, OwnSound::free, o).value;
+            if (playing.value == 0)
+            {
+                OwnSound::free(own);
+            }
+            return playing;
+        }
+
+        // Sound written as it plays, as a synthesiser or an emulator makes it: shared by the script and the voice
+        // playing it, and freed when both have let go.
+        struct StreamHolder
+        {
+            SoundData data;
+            SoundStream stream;
+            int users = 1;
+            static void letGo(void* p)
+            {
+                StreamHolder* h = static_cast<StreamHolder*>(p);
+                if (--h->users == 0)
+                {
+                    memFree(h->stream.samples);
+                    destroy(h);
+                }
+            }
+        };
+
+        struct StreamRef
+        {
+            int refs = 1;
+            StreamHolder* holder = nullptr;
+            PlayingSound voice = { 0 };
+            void addRef() { refs++; }
+            void release()
+            {
+                if (--refs == 0)
+                {
+                    // What has been written plays to its end.
+                    holder->stream.over.store(true, std::memory_order_release);
+                    StreamHolder::letGo(holder);
+                    destroy(this);
+                }
+            }
+        };
+
+        StreamRef* makeStream(u32 rate, u32 channels, float seconds)
+        {
+            if (channels < 1 || channels > 2 || rate < 1000 || rate > 96000)
+            {
+                scriptError("a stream is 1 or 2 channels, 1000 to 96000 a second");
+                return nullptr;
+            }
+            const float kept = seconds < 0.02f ? 0.02f : seconds > 4 ? 4 : seconds;
+            StreamHolder* h = create<StreamHolder>(MemTag::Audio);
+            StreamRef* r = h ? create<StreamRef>(MemTag::Script) : nullptr;
+            if (r == nullptr)
+            {
+                destroy(h);
+                return nullptr;
+            }
+            h->stream.capacity = static_cast<u32>(static_cast<float>(rate) * kept);
+            h->stream.channels = channels;
+            h->stream.samples = static_cast<i16*>(memAlloc(static_cast<size_t>(h->stream.capacity) * channels * sizeof(i16), MemTag::Audio));
+            if (h->stream.samples == nullptr)
+            {
+                destroy(r);
+                destroy(h);
+                scriptError("there isn't the memory for that stream");
+                return nullptr;
+            }
+            h->data.kind = SoundKind::Stream;
+            h->data.channels = channels;
+            h->data.rate = rate;
+            h->data.data = reinterpret_cast<u8*>(&h->stream);
+            r->holder = h;
+            return r;
+        }
+
+        u32 streamWrite(const CScriptArray& samples, StreamRef* r)
+        {
+            SoundStream& s = r->holder->stream;
+            const u32 channels = s.channels;
+            const u32 frames = samples.GetSize() / channels;
+            i16 chunk[512 * 2];
+            u32 done = 0;
+            while (done < frames)
+            {
+                const u32 count = frames - done < 512 ? frames - done : 512;
+                for (u32 i = 0; i < count * channels; i++)
+                {
+                    chunk[i] = toSample(*static_cast<const float*>(samples.At((done * channels) + i)));
+                }
+                const u32 wrote = s.write(chunk, count);
+                done += wrote;
+                if (wrote < count)
+                {
+                    break;
+                }
+            }
+            return done;
+        }
+        u32 streamRoom(const StreamRef* r) { return r->holder->stream.room(); }
+        u32 streamQueued(const StreamRef* r) { return r->holder->stream.waiting(); }
+        u32 streamRate(const StreamRef* r) { return r->holder->data.rate; }
+        u32 streamChannels(const StreamRef* r) { return r->holder->data.channels; }
+        void streamClear(StreamRef* r) { r->holder->stream.flush(); }
+        PlayingSound streamPlay(float volume, float pan, StreamRef* r)
+        {
+            Services& s = services();
+            if (r->voice.value && s.audio->playing(r->voice.voice()))
+            {
+                return r->voice;
+            }
+            PlayOptions o;
+            o.volume = volume;
+            o.pan = pan;
+            r->holder->users++;
+            r->voice.value = s.audio->playOwn(r->holder->data, r->holder, StreamHolder::letGo, o).value;
+            if (r->voice.value == 0)
+            {
+                r->holder->users--;
+            }
+            return r->voice;
+        }
+        PlayingSound streamVoice(const StreamRef* r) { return r->voice; }
+
         Playlist* makePlaylist()
         {
             Services& s = services();
@@ -490,6 +765,22 @@ namespace nx
         void audioEcho(Bus bus, float amount, float delay, float feedback, float seconds)
         {
             changeEffects(bus, seconds, [&](BusEffectSettings& s) { s.echo = amount; s.echoDelay = delay; s.echoFeedback = feedback; });
+        }
+        void audioBandPass(Bus bus, float hertz, float octaves, float seconds)
+        {
+            const float half = octaves > 0.1f ? powf(2, octaves * 0.5f) : powf(2, 0.05f);
+            changeEffects(bus, seconds, [&](BusEffectSettings& s) { s.lowPass = hertz * half; s.highPass = hertz / half; });
+        }
+        void audioDistortion(Bus bus, float amount, float seconds) { changeEffects(bus, seconds, [&](BusEffectSettings& s) { s.distortion = amount; }); }
+        void audioChorus(Bus bus, float amount, float rate, float seconds) { changeEffects(bus, seconds, [&](BusEffectSettings& s) { s.chorus = amount; s.chorusRate = rate; }); }
+        void audioFlanger(Bus bus, float amount, float rate, float feedback, float seconds)
+        {
+            changeEffects(bus, seconds, [&](BusEffectSettings& s) { s.flanger = amount; s.flangerRate = rate; s.flangerFeedback = feedback; });
+        }
+        void audioCompressor(Bus bus, float threshold, float ratio) { changeEffects(bus, 0, [&](BusEffectSettings& s) { s.threshold = threshold; s.ratio = ratio; }); }
+        void audioEqualizer(Bus bus, float low, float mid, float high, float seconds)
+        {
+            changeEffects(bus, seconds, [&](BusEffectSettings& s) { s.low = low; s.mid = mid; s.high = high; });
         }
         void audioClearEffects(float seconds) { services().audio->clearEffects(seconds); }
         void setMaster(float volume) { services().audio->setMasterVolume(volume); }
@@ -813,7 +1104,7 @@ namespace nx
             b.method("Vec2 measure(const string &in text) const", NX_OBJ_LAST(fontMeasure), "How much room some text takes.");
             b.method("bool get_failed() const property", NX_METHOD(FontRef, failed), "Whether the file could not be loaded.");
 
-            b.refType("Sound", 0, "Something to play: WAV, Ogg Vorbis, MP3 or cooked. Short effects are kept ready; long music is decoded while it plays.");
+            b.refType("Sound", 0, "Something to play: WAV, Ogg Vorbis or cooked; the cook tool makes MP3 and FLAC into these. Short effects are kept ready; long music is decoded while it plays.");
             b.behaviour(asBEHAVE_ADDREF, "void f()", NX_METHOD(SoundRef, addRef));
             b.behaviour(asBEHAVE_RELEASE, "void f()", NX_METHOD(SoundRef, release));
 
@@ -1016,6 +1307,35 @@ namespace nx
             b.method("bool get_ready() const property", NX_METHOD(SoundRef, ready), "Whether it has arrived. Until then it plays as silence.");
             b.method("bool get_failed() const property", NX_METHOD(SoundRef, failed), "Whether the file could not be loaded.");
 
+            b.refType("Samples", 0, "Sound as numbers, -1 to 1, that a script writes and reads one at a time: a laser made from a sine, an explosion from noise, a sound loaded and played backwards. Each play has a copy of its own.");
+            b.behaviour(asBEHAVE_FACTORY, "Samples@ f(uint frames, uint rate = 48000, uint channels = 1)", NX_FN(makeSamples));
+            b.behaviour(asBEHAVE_ADDREF, "void f()", NX_METHOD(SamplesRef, addRef));
+            b.behaviour(asBEHAVE_RELEASE, "void f()", NX_METHOD(SamplesRef, release));
+            b.method("uint get_frames() const property", NX_OBJ_LAST(samplesFrames), "How many: one a channel in each.");
+            b.method("uint get_rate() const property", NX_OBJ_LAST(samplesRate), "How many a second.");
+            b.method("uint get_channels() const property", NX_OBJ_LAST(samplesChannels), "1 or 2.");
+            b.method("float get_seconds() const property", NX_OBJ_LAST(samplesSeconds), "How long it is.");
+            b.method("float get(uint frame, uint channel = 0) const", NX_OBJ_LAST(samplesGet), "One sample, -1 to 1; 0 past the end.");
+            b.method("void set(uint frame, float value)", NX_OBJ_LAST(samplesSet), "Every channel of one frame.");
+            b.method("void set(uint frame, float left, float right)", NX_OBJ_LAST(samplesSetBoth), "The left and right of one frame; their middle if there is only one channel.");
+            b.method("Voice play(float volume = 1, float pan = 0, float pitch = 1, bool loop = false) const", NX_OBJ_LAST(samplesPlay), "Plays them as an effect, as they are now.");
+            b.names("Assets");
+            b.function("Samples@ samples(const string &in name)", NX_FN(loadSamples), "A sound's samples, read now, to look at or change: `asset:`, `global:` or `own:`. Null if there is none.");
+            b.names("");
+
+            b.refType("AudioStream", 0, "Sound written as it plays, by a synthesiser, a tracker or an emulator: write() as much as there is room for each frame, and it plays as it comes, quiet while there is none. It plays out what it has after it is let go.");
+            b.behaviour(asBEHAVE_FACTORY, "AudioStream@ f(uint rate = 48000, uint channels = 1, float seconds = 0.25f)", NX_FN(makeStream));
+            b.behaviour(asBEHAVE_ADDREF, "void f()", NX_METHOD(StreamRef, addRef));
+            b.behaviour(asBEHAVE_RELEASE, "void f()", NX_METHOD(StreamRef, release));
+            b.method("uint write(const array<float> &in samples)", NX_OBJ_LAST(streamWrite), "Samples, -1 to 1, left then right for two channels: as many frames as there is room for. How many were taken.");
+            b.method("uint get_room() const property", NX_OBJ_LAST(streamRoom), "Frames there is room for. It holds so many seconds, as made: more is later, less risks gaps.");
+            b.method("uint get_queued() const property", NX_OBJ_LAST(streamQueued), "Frames written and not yet heard.");
+            b.method("uint get_rate() const property", NX_OBJ_LAST(streamRate), "Frames a second.");
+            b.method("uint get_channels() const property", NX_OBJ_LAST(streamChannels), "1 or 2.");
+            b.method("void clear()", NX_OBJ_LAST(streamClear), "Leaves out what has been written and not yet heard.");
+            b.method("Voice play(float volume = 1, float pan = 0)", NX_OBJ_LAST(streamPlay), "Starts it; the same voice if it is playing already.");
+            b.method("Voice get_voice() const property", NX_OBJ_LAST(streamVoice), "What is playing it, to change its volume, pan or pitch.");
+
             b.refType("Playlist", 0, "Music, one track after another, the next fading in as the last fades out: in order or shuffled, round again or not. It moves on by itself while its screen is on top.");
             b.behaviour(asBEHAVE_FACTORY, "Playlist@ f()", NX_FN(makePlaylist));
             b.behaviour(asBEHAVE_ADDREF, "void f()", NX_METHOD(Playlist, addRef));
@@ -1053,6 +1373,12 @@ namespace nx
             b.function("void highPass(Bus bus, float hertz, float seconds = 0)", NX_FN(audioHighPass), "Takes away what is lower, as a small radio or a telephone does: 1000 is thin, 0 is everything again.");
             b.function("void reverb(Bus bus, float amount, float room = 0.6f, float seconds = 0)", NX_FN(audioReverb), "A room's echoes: amount 0 to 1, how much is heard; room 0 to 1, from a small, dead one to a hall or a cave. 0 for none.");
             b.function("void echo(Bus bus, float amount, float delay = 0.3f, float feedback = 0.4f, float seconds = 0)", NX_FN(audioEcho), "Each sound again, after so many seconds (up to 0.75), and again, quieter each time by feedback (0 to 0.9). 0 for none.");
+            b.function("void bandPass(Bus bus, float hertz, float octaves = 1, float seconds = 0)", NX_FN(audioBandPass), "Only what is near so many hertz, so many octaves wide: a radio, a voice through a pipe. lowPass(20000) and highPass(0) take it away.");
+            b.function("void distortion(Bus bus, float amount, float seconds = 0)", NX_FN(audioDistortion), "Driven too hard, as an amplifier pushed past what it can: amount 0 to 1, from none to fuzz. Glides there over so many seconds.");
+            b.function("void chorus(Bus bus, float amount, float rate = 1.5f, float seconds = 0)", NX_FN(audioChorus), "A copy a little behind, swaying in time, so that one sounds like several: amount 0 to 1, rate in sways a second.");
+            b.function("void flanger(Bus bus, float amount, float rate = 0.25f, float feedback = 0.5f, float seconds = 0)", NX_FN(audioFlanger), "A copy very close behind, sweeping, fed back by feedback (0 to 0.9): the whoosh of a jet, or a robot's voice.");
+            b.function("void compressor(Bus bus, float threshold = -18, float ratio = 4)", NX_FN(audioCompressor), "Presses down what is louder than threshold decibels below full by ratio (1 to 20): quick to press, slow to let go, so loud and soft come closer. 0 for none.");
+            b.function("void equalizer(Bus bus, float low, float mid, float high, float seconds = 0)", NX_FN(audioEqualizer), "Turns the lows (about 250 Hz), middle (1000 Hz) and highs (4000 Hz) up or down, in decibels from -24 to 24: 0, 0, 0 is as it is.");
             b.function("void clearEffects(float seconds = 0)", NX_FN(audioClearEffects), "Every bus back to none. A screen starts with none, and they go when it closes.");
             b.function("float get_level() property", NX_FN(audioLevel), "How loud it has been lately, 0 to 1.");
             b.function("float spectrum(uint band)", NX_FN(audioSpectrum), "How strong one of 32 bands is, low to high, 0 to 1.");

@@ -91,7 +91,7 @@ cook tool that was built. Both are a download of their own, for Windows, Linux a
 | `bindings/`, `screens/` | What scripts can call; the screen stack and the engine's menu | all above |
 | `app/` | The program that runs the showcase | all |
 | `tools/` | `cook`, and `cook-ui`, a window for it; `record`; `make_media.py`, `make_models.py` and `make_pieces.py`, which make the showcase's sounds, music and models; `make_docs.py`, which makes the web site; `stage-rxdk.ps1` | all |
-| `third_party/` | AngelScript, SSFN, stb, cgltf, ufbx, miniaudio, dr_libs and Mbed TLS, unmodified but for cgltf, which reads its numbers the same way on a big-endian machine | |
+| `third_party/` | AngelScript, SSFN, stb, cgltf, ufbx, miniaudio, dr_libs, Mbed TLS, and libogg and libvorbis (only the cook tool, to write Ogg), unmodified but for cgltf, which reads its numbers the same way on a big-endian machine | |
 | `tests/` | The tests | all |
 
 Platform `#if`s belong only in `platform/`, `gpu/`, `base/thread_*`, `audio/output_*` and `net/`.

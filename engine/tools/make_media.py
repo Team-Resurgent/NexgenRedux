@@ -181,7 +181,7 @@ def ambient(path):
         track.add(rng.uniform(0, 24), tone(hz(n), 1.6) * fall(1.6, 3, 0.01), 0.06, rng.uniform(-0.9, 0.9))
     wav = path + '.wav'
     save_wav(wav, track.data, 0.7)
-    compress(wav, path, '-c:a', 'libmp3lame', '-b:a', '96k')
+    compress(wav, path, '-c:a', 'libvorbis', '-q:a', '4')
 
 
 def pulse(freq, length, width=0.5, vibrato=0.0):
@@ -329,7 +329,7 @@ if __name__ == '__main__':
     music = os.path.join(MEDIA, 'showcase', 'music', 'asset')
     os.makedirs(music, exist_ok=True)
     tune(os.path.join(music, 'tune.ogg'))
-    ambient(os.path.join(music, 'ambient.mp3'))
+    ambient(os.path.join(music, 'ambient.ogg'))
     pictures()
     shared = os.path.join(MEDIA, 'global', 'music')
     os.makedirs(shared, exist_ok=True)

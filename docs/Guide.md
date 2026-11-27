@@ -877,7 +877,7 @@ screen is instant, until the budget needs the room. A missing image draws as a c
 | What | Formats |
 |---|---|
 | Images | PNG, JPEG, TGA, BMP and GIF, up to 2048 pixels a side |
-| Sounds | WAV, Ogg Vorbis and MP3 |
+| Sounds | WAV and Ogg Vorbis; the cook tool makes MP3 and FLAC into these, and short sounds into ADPCM |
 | Fonts | SSFN |
 | Models | glTF 2.0 (`.glb`, `.gltf`), FBX, OBJ, STL and PLY. Pictures in them up to 4096 pixels a side, made smaller if need be |
 
@@ -899,6 +899,12 @@ Audio::lowPass(BusEffects, 600, 0.4f);     // muffled, as under water or through
 Audio::highPass(BusEffects, 1000);         // thin, as a small radio
 Audio::reverb(BusEffects, 0.7f, 0.9f);     // how much of the room, and how big it is
 Audio::echo(BusEffects, 0.5f, 0.4f, 0.3f); // how loud, how late, and how much echoes again
+Audio::bandPass(BusEffects, 900, 1);       // only what is near 900 Hz, an octave wide: a voice through a pipe
+Audio::distortion(BusEffects, 0.7f);       // driven too hard, 0 to 1
+Audio::chorus(BusMusic, 0.6f);             // a swaying copy, so that one sounds like several
+Audio::flanger(BusEffects, 0.8f, 0.25f, 0.6f);  // a sweeping copy fed back: a jet's whoosh, a robot's voice
+Audio::compressor(BusMusic, -18, 4);       // what is louder than -18 dB pressed down four times; 0 for none
+Audio::equalizer(BusMusic, 6, -3, 4);      // lows, middle and highs, in dB
 Audio::clearEffects();
 ```
 
@@ -922,6 +928,41 @@ list.next();                        // now, over crossfade; previous(), stop(), 
 ```
 
 It goes on by itself while its screen is on top, round again unless `loop` is false. The Music demo is one.
+
+### Sound a script makes
+
+`Samples` is sound as numbers, -1 to 1, written and read one at a time, and played like a sound: each play has a copy of its own.
+`Assets::samples` reads a sound's own, to look at or change.
+
+```cpp
+Samples@ zap = Samples(12000);                      // a quarter of a second at 48000 a second, one channel
+float p = 0;
+for (uint i = 0; i < zap.frames; i++)
+{
+    float t = float(i) / zap.frames;
+    p += (1800 - 1500 * t) * 6.2831853f / 48000;    // falling in pitch
+    zap.set(i, sin(p) * (1 - t));                    // and fading
+}
+zap.play();
+```
+
+An `AudioStream` plays sound as it is written, for a synthesiser, a tracker or an emulator: write as much as there is `room` for
+each frame. It holds so many seconds, as made; it is quiet while it has none, and plays out what it has after it is let go.
+
+```cpp
+AudioStream@ out = AudioStream(48000, 1, 0.1f);
+array<float> chunk;
+
+void update(float dt)
+{
+    chunk.resize(out.room);
+    for (uint i = 0; i < chunk.length(); i++)
+        chunk[i] = nextSample();
+    out.write(chunk);
+}
+```
+
+The Synth demo plays an arpeggio this way, with a laser made from `Samples`, through every effect.
 
 ### Video
 

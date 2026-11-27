@@ -14,7 +14,6 @@ namespace nx
         Pcm,    // samples in memory: short effects
         Adpcm,  // cooked: a quarter of the size, decoded while playing
         Ogg,    // compressed in memory, decoded while playing
-        Mp3,
         Stream  // made as it plays, by a video: its data is a SoundStream
     };
 
@@ -49,7 +48,7 @@ namespace nx
         size_t bytes = 0;
     };
 
-    // Takes a whole file: WAV, Ogg Vorbis, MP3 or cooked. WAV becomes samples; the others stay as they
+    // Takes a whole file: WAV, Ogg Vorbis or cooked (MP3 and FLAC are made into these by the cook tool). WAV becomes samples; the others stay as they
     // are. nullptr if it can't be read. Free with freeSound.
     SoundData* loadSound(const u8* file, size_t size);
     void freeSound(SoundData* sound);
@@ -209,6 +208,7 @@ namespace nx
         BusEffectSettings m_effectSettings[static_cast<size_t>(Bus::Count)];
         ReverbMemory* m_reverbMemory[static_cast<size_t>(Bus::Count)] = {};
         EchoMemory* m_echoMemory[static_cast<size_t>(Bus::Count)] = {};
+        WaverMemory* m_waverMemory[static_cast<size_t>(Bus::Count)] = {};
 
         std::atomic<i16>* m_history = nullptr;  // mono, for analysis only
         std::atomic<u32> m_historyAt{ 0 };

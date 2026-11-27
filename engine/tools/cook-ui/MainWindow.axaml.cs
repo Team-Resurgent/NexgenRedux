@@ -82,6 +82,8 @@ public partial class MainWindow : Window
     private string Target => (To.Text ?? "").Trim().Trim('"');
 
     // Beside it, unless one was chosen.
+    private static readonly string[] KindsOfSound = ["best", "ogg", "wav", "adpcm"];
+
     private void Suggest()
     {
         if (_ownTo || Source.Length == 0)
@@ -117,7 +119,7 @@ public partial class MainWindow : Window
             Title = "A model, an image or a sound",
             FileTypeFilter =
             [
-                new FilePickerFileType("All that can be cooked") { Patterns = ["*.glb", "*.gltf", "*.fbx", "*.obj", "*.stl", "*.ply", "*.png", "*.jpg", "*.jpeg", "*.tga", "*.bmp", "*.gif", "*.wav", "*.ogg", "*.mp3"] },
+                new FilePickerFileType("All that can be cooked") { Patterns = ["*.glb", "*.gltf", "*.fbx", "*.obj", "*.stl", "*.ply", "*.png", "*.jpg", "*.jpeg", "*.tga", "*.bmp", "*.gif", "*.wav", "*.ogg", "*.mp3", "*.flac"] },
                 FilePickerFileTypes.All,
             ],
         });
@@ -150,6 +152,7 @@ public partial class MainWindow : Window
         {
             arguments.Add("--force");
         }
+        arguments.AddRange(["--sounds-as", KindsOfSound[Math.Clamp(SoundsAs.SelectedIndex, 0, KindsOfSound.Length - 1)]]);
         // Whole, so that a name that begins with a dash isn't an option.
         arguments.AddRange([Path.GetFullPath(Source), Path.GetFullPath(Target)]);
         CancellationTokenSource stop = _stop = new CancellationTokenSource();
@@ -266,6 +269,7 @@ public partial class MainWindow : Window
             using JsonDocument j = JsonDocument.Parse(File.ReadAllText(Kept));
             string Text(string key) => j.RootElement.TryGetProperty(key, out JsonElement v) && v.ValueKind == JsonValueKind.String ? v.GetString()! : "";
             Platform.SelectedIndex = Text("platform") == "xboxog" ? 1 : 0;
+            SoundsAs.SelectedIndex = Math.Max(0, Array.IndexOf(KindsOfSound, Text("sounds")));
             From.Text = Text("from");
             To.Text = Text("to");
             _ownTo = Target.Length > 0;
@@ -289,6 +293,7 @@ public partial class MainWindow : Window
             using Utf8JsonWriter j = new(file);
             j.WriteStartObject();
             j.WriteString("platform", Platform.SelectedIndex == 1 ? "xboxog" : "desktop");
+            j.WriteString("sounds", KindsOfSound[Math.Clamp(SoundsAs.SelectedIndex, 0, KindsOfSound.Length - 1)]);
             j.WriteString("from", Source);
             j.WriteString("to", Target);
             j.WriteEndObject();

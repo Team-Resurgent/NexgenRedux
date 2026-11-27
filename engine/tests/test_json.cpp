@@ -289,3 +289,60 @@ NX_TEST(scriptsHavePixelsDataAndRandom)
         NX_EXPECT(bad.screens.failed());
     }
 }
+
+NX_TEST(scriptsMakeSound)
+{
+    Rig r;
+    open(r, R"(
+        class A : Screen
+        {
+            void check(bool good) { if (!good) { array<int> nope; nope[1] = 0; } }
+            void onEnter()
+            {
+                // A tone made one sample at a time, and read back.
+                Samples beep(4800, 48000, 1);
+                for (uint i = 0; i < beep.frames; i++)
+                    beep.set(i, sin(float(i) * 6.2831853f * 440 / 48000) * 0.5f);
+                check(beep.channels == 1 && abs(beep.seconds - 0.1f) < 0.001f && abs(beep.get(12) - sin(12 * 6.2831853f * 440 / 48000) * 0.5f) < 0.001f);
+                check(beep.get(99999) == 0);
+                beep.play(0.5f);
+                Samples stereo(10, 22050, 2);
+                stereo.set(3, -0.5f, 0.25f);
+                check(abs(stereo.get(3, 0) + 0.5f) < 0.001f && abs(stereo.get(3, 1) - 0.25f) < 0.001f);
+
+                // A sound's own samples.
+                Samples@ coin = Assets::samples("global:sound/coin.wav");
+                check(coin !is null && coin.frames > 1000 && coin.rate > 0);
+                check(Assets::samples("global:sound/none.wav") is null);
+
+                // A stream takes as much as there is room for.
+                AudioStream stream(48000, 2, 0.1f);
+                check(stream.room == 4800 && stream.queued == 0 && stream.channels == 2);
+                array<float> chunk(2000 * 2, 0.1f);
+                check(stream.write(chunk) == 2000 && stream.queued == 2000);
+                stream.write(chunk);
+                check(stream.write(chunk) == 800 && stream.room == 0);
+                stream.clear();
+                stream.play(0.8f);
+
+                // Every effect, and none.
+                Audio::bandPass(BusEffects, 1000, 1);
+                Audio::distortion(BusEffects, 0.5f);
+                Audio::chorus(BusMusic, 0.5f);
+                Audio::flanger(BusMusic, 0.5f, 0.3f, 0.6f, 1);
+                Audio::compressor(BusInterface, -12, 4);
+                Audio::equalizer(BusInterface, 3, -2, 6, 0.5f);
+                Audio::clearEffects(0.2f);
+                Save::set("done", "y");
+            }
+        }
+    )");
+    NX_EXPECT(!r.screens.failed() && strcmp(r.save.get("done", ""), "y") == 0);
+
+    for (const char* code : { "Samples s(0);", "Samples s(10, 48000, 3);", "AudioStream s(48000, 5);", "Samples s(10, 10);" })
+    {
+        Rig bad;
+        open(bad, (std::string("class A : Screen { void onEnter() { ") + code + " } }").c_str());
+        NX_EXPECT(bad.screens.failed());
+    }
+}

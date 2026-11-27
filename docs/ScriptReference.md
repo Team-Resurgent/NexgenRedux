@@ -112,7 +112,7 @@ A scalable SSFN font at one size.
 
 ## Sound
 
-Something to play: WAV, Ogg Vorbis, MP3 or cooked. Short effects are kept ready; long music is decoded while it plays.
+Something to play: WAV, Ogg Vorbis or cooked; the cook tool makes MP3 and FLAC into these. Short effects are kept ready; long music is decoded while it plays.
 
 | | |
 |---|---|
@@ -351,6 +351,37 @@ Something that is playing. Safe to use after it has ended.
 | `bool get_ready() const property` | Whether it has arrived. Until then it plays as silence. |
 | `bool get_failed() const property` | Whether the file could not be loaded. |
 
+## Samples
+
+Sound as numbers, -1 to 1, that a script writes and reads one at a time: a laser made from a sine, an explosion from noise, a sound loaded and played backwards. Each play has a copy of its own.
+
+| | |
+|---|---|
+| `uint get_frames() const property` | How many: one a channel in each. |
+| `uint get_rate() const property` | How many a second. |
+| `uint get_channels() const property` | 1 or 2. |
+| `float get_seconds() const property` | How long it is. |
+| `float get(uint frame, uint channel = 0) const` | One sample, -1 to 1; 0 past the end. |
+| `void set(uint frame, float value)` | Every channel of one frame. |
+| `void set(uint frame, float left, float right)` | The left and right of one frame; their middle if there is only one channel. |
+| `Voice play(float volume = 1, float pan = 0, float pitch = 1, bool loop = false) const` | Plays them as an effect, as they are now. |
+| `Samples@ Assets::samples(const string &in name)` | A sound's samples, read now, to look at or change: `asset:`, `global:` or `own:`. Null if there is none. |
+
+## AudioStream
+
+Sound written as it plays, by a synthesiser, a tracker or an emulator: write() as much as there is room for each frame, and it plays as it comes, quiet while there is none. It plays out what it has after it is let go.
+
+| | |
+|---|---|
+| `uint write(const array<float> &in samples)` | Samples, -1 to 1, left then right for two channels: as many frames as there is room for. How many were taken. |
+| `uint get_room() const property` | Frames there is room for. It holds so many seconds, as made: more is later, less risks gaps. |
+| `uint get_queued() const property` | Frames written and not yet heard. |
+| `uint get_rate() const property` | Frames a second. |
+| `uint get_channels() const property` | 1 or 2. |
+| `void clear()` | Leaves out what has been written and not yet heard. |
+| `Voice play(float volume = 1, float pan = 0)` | Starts it; the same voice if it is playing already. |
+| `Voice get_voice() const property` | What is playing it, to change its volume, pan or pitch. |
+
 ## Playlist
 
 Music, one track after another, the next fading in as the last fades out: in order or shuffled, round again or not. It moves on by itself while its screen is on top.
@@ -394,6 +425,12 @@ Volumes, and what is being heard. A screen's sounds pause while it is covered an
 | `void Audio::highPass(Bus bus, float hertz, float seconds = 0)` | Takes away what is lower, as a small radio or a telephone does: 1000 is thin, 0 is everything again. |
 | `void Audio::reverb(Bus bus, float amount, float room = 0.6f, float seconds = 0)` | A room's echoes: amount 0 to 1, how much is heard; room 0 to 1, from a small, dead one to a hall or a cave. 0 for none. |
 | `void Audio::echo(Bus bus, float amount, float delay = 0.3f, float feedback = 0.4f, float seconds = 0)` | Each sound again, after so many seconds (up to 0.75), and again, quieter each time by feedback (0 to 0.9). 0 for none. |
+| `void Audio::bandPass(Bus bus, float hertz, float octaves = 1, float seconds = 0)` | Only what is near so many hertz, so many octaves wide: a radio, a voice through a pipe. lowPass(20000) and highPass(0) take it away. |
+| `void Audio::distortion(Bus bus, float amount, float seconds = 0)` | Driven too hard, as an amplifier pushed past what it can: amount 0 to 1, from none to fuzz. Glides there over so many seconds. |
+| `void Audio::chorus(Bus bus, float amount, float rate = 1.5f, float seconds = 0)` | A copy a little behind, swaying in time, so that one sounds like several: amount 0 to 1, rate in sways a second. |
+| `void Audio::flanger(Bus bus, float amount, float rate = 0.25f, float feedback = 0.5f, float seconds = 0)` | A copy very close behind, sweeping, fed back by feedback (0 to 0.9): the whoosh of a jet, or a robot's voice. |
+| `void Audio::compressor(Bus bus, float threshold = -18, float ratio = 4)` | Presses down what is louder than threshold decibels below full by ratio (1 to 20): quick to press, slow to let go, so loud and soft come closer. 0 for none. |
+| `void Audio::equalizer(Bus bus, float low, float mid, float high, float seconds = 0)` | Turns the lows (about 250 Hz), middle (1000 Hz) and highs (4000 Hz) up or down, in decibels from -24 to 24: 0, 0, 0 is as it is. |
 | `void Audio::clearEffects(float seconds = 0)` | Every bus back to none. A screen starts with none, and they go when it closes. |
 | `float Audio::get_level() property` | How loud it has been lately, 0 to 1. |
 | `float Audio::spectrum(uint band)` | How strong one of 32 bands is, low to high, 0 to 1. |

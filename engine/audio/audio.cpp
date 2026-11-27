@@ -22,7 +22,7 @@ namespace nx
         }
     }
 
-    enum class Verb : u8 { Play, Stop, Volume, Pan, Pitch, Pause, BusVolume, Master, Effects, GiveReverb, GiveEcho };
+    enum class Verb : u8 { Play, Stop, Volume, Pan, Pitch, Pause, BusVolume, Master, Effects, GiveReverb, GiveEcho, GiveWaver };
 
     struct Audio::Command
     {
@@ -125,8 +125,10 @@ namespace nx
             m_effectSettings[b] = BusEffectSettings();
             destroyReverbMemory(m_reverbMemory[b]);
             destroyEchoMemory(m_echoMemory[b]);
+            destroyWaverMemory(m_waverMemory[b]);
             m_reverbMemory[b] = nullptr;
             m_echoMemory[b] = nullptr;
+            m_waverMemory[b] = nullptr;
         }
     }
 
@@ -382,6 +384,14 @@ namespace nx
             give.memory = m_echoMemory[b];
             send(give);
         }
+        if ((settings.chorus > 0 || settings.flanger > 0) && m_waverMemory[b] == nullptr && (m_waverMemory[b] = createWaverMemory()) != nullptr)
+        {
+            Command give = {};
+            give.verb = Verb::GiveWaver;
+            give.voice = static_cast<u8>(b);
+            give.memory = m_waverMemory[b];
+            send(give);
+        }
         m_effectSettings[b] = settings;
         Command command = {};
         command.verb = Verb::Effects;
@@ -548,6 +558,11 @@ namespace nx
         if (c.verb == Verb::GiveEcho)
         {
             m_busEffects[c.voice].giveEcho(static_cast<EchoMemory*>(c.memory));
+            return;
+        }
+        if (c.verb == Verb::GiveWaver)
+        {
+            m_busEffects[c.voice].giveWaver(static_cast<WaverMemory*>(c.memory));
             return;
         }
         Channel& channel = m_channels[c.voice];

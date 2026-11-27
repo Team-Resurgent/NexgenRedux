@@ -1,5 +1,6 @@
 #include "gpu/gpu.h"
 #include "gpu/d3d9/d3d9_shaders.h"
+#include "gpu/d3d9/space_shaders360.h"
 #include "gpu/mesh_uniforms.h"
 #include "base/handle.h"
 #include "base/log.h"
@@ -128,6 +129,14 @@ namespace nx::gpu
                 release(m_postVs);
                 release(m_screenCopy);
                 release(m_small);
+                for (IDirect3DPixelShader9*& s : m_spacePs)
+                {
+                    release(s);
+                }
+                release(m_depthCopy);
+                release(m_work);
+                release(m_meter[0]);
+                release(m_meter[1]);
                 release(m_bloom[0]);
                 release(m_bloom[1]);
                 release(m_device);
@@ -313,6 +322,7 @@ namespace nx::gpu
             bool beginFrame(const Color& clear) override
             {
                 NX_ASSERT(!m_inFrame);
+                m_viewDrawn = false;
                 m_inFrame = true;
                 m_current = {};
                 m_streamed = 0;
@@ -469,6 +479,8 @@ namespace nx::gpu
                 NX_ASSERT(m_inFrame);
                 m_view = view;
                 fillView(m_viewUniforms, view, false);
+                sceneOf(view, m_scene);
+                m_viewDrawn = m_viewDrawn || !m_drawing;
                 m_area = view.area;
                 m_mode = Mode::None;
                 m_device->Clear(0, nullptr, D3DCLEAR_ZBUFFER | D3DCLEAR_STENCIL, 0, 1.0f, 0);
@@ -850,11 +862,230 @@ namespace nx::gpu
                 setEffectValues(values, time, area, false);
                 m_device->SetTexture(0, m_screenCopy);
                 setSampler(0, D3DTEXF_LINEAR, D3DTADDRESS_CLAMP, false);
+                seeDepth(nullptr);
                 m_device->SetVertexShader(e->vertex);
                 m_device->SetPixelShader(e->pixel);
                 cover();
+                unseeDepth();
                 endPost();
                 return true;
+            }
+
+            // Smaller, spread along and down as far as it is to be blurred, and back over it.
+            bool blur(float pixels, const Scissor& area) override
+            {
+                if (m_drawing)
+                {
+                    return false;   // for the screen only
+                }
+                if (!m_inFrame || pixels <= 0 || !makePost())
+                {
+                    return false;
+                }
+                copyScreen();
+                IDirect3DSurface9* screen = nullptr;
+                IDirect3DSurface9* depth = nullptr;
+                m_device->GetRenderTarget(0, &screen);
+                m_device->GetDepthStencilSurface(&depth);
+                m_device->SetRenderTarget(0, m_small);
+                m_device->SetDepthStencilSurface(nullptr);
+                postState({});
+                const D3DVIEWPORT9 small = { 0, 0, kBloomWidth, kBloomHeight, 0, 1 };
+                m_device->SetViewport(&small);
+                // All of it, not only what is bright.
+                const float all[4] = { 1.0f / kWidth, 1.0f / kHeight, -1, 0 };
+                pass(Post::Bright, m_screenCopy, all, m_bloom[0]);
+                // A pixel there is four here; nine looks reach four pixels each way.
+                const float reach = pixels * static_cast<float>(kBloomHeight) / 720.0f;
+                const u32 rounds = reach > 8 ? 2 : 1;
+                const float wide = fmaxf(0.5f, reach / (8.0f * static_cast<float>(rounds)));
+                for (u32 round = 0; round < rounds; round++)
+                {
+                    const float along[4] = { wide / kBloomWidth, 0, 0, 0 };
+                    const float down[4] = { 0, wide / kBloomHeight, 0, 0 };
+                    pass(Post::Blur, m_bloom[0], along, m_bloom[1]);
+                    pass(Post::Blur, m_bloom[1], down, m_bloom[0]);
+                }
+                m_device->SetRenderTarget(0, screen);
+                m_device->SetDepthStencilSurface(depth);
+                release(screen);
+                release(depth);
+                postState(area);
+                m_device->SetTexture(0, m_bloom[0]);
+                setSampler(0, D3DTEXF_LINEAR, D3DTADDRESS_CLAMP, false);
+                m_device->SetPixelShader(m_postPs[Post::Copy]);
+                cover();
+                endPost();
+                return true;
+            }
+
+            bool seesDepth() const override { return true; }
+
+            bool spaceLook(const SpaceLook& look, const Scissor& area) override
+            {
+                if (m_drawing || !m_inFrame || !m_viewDrawn || !makePost() || !makeSpace())
+                {
+                    return false;
+                }
+                const D3DVIEWPORT9 view = area.enabled ? D3DVIEWPORT9{ static_cast<DWORD>(area.x), static_cast<DWORD>(area.y), static_cast<DWORD>(area.width), static_cast<DWORD>(area.height), 0, 1 }
+                                                       : D3DVIEWPORT9{ 0, 0, kWidth, kHeight, 0, 1 };
+                // Over the view, from the copy of it, how far away each pixel is, and perhaps a picture more.
+                const auto run = [&](IDirect3DPixelShader9* shader, const float (&values)[16], IDirect3DTexture9* extra, bool copy)
+                {
+                    if (copy)
+                    {
+                        copyScreen();
+                    }
+                    postState({});
+                    m_device->SetViewport(&view);
+                    setEffectValues(values, 0, area, false);
+                    m_device->SetTexture(0, m_screenCopy);
+                    setSampler(0, D3DTEXF_LINEAR, D3DTADDRESS_CLAMP, false);
+                    seeDepth(extra);
+                    m_device->SetPixelShader(shader);
+                    cover();
+                    unseeDepth();
+                    endPost();
+                };
+                const float scale = static_cast<float>(kHeight) / 720.0f;
+                if (look.occlusion > 0 && spaceShader(0) && spaceShader(1))
+                {
+                    // Into the screen, kept, and then the screen as it was times that.
+                    const float values[16] = { look.occlusion, look.occlusionRadius };
+                    copyScreen();
+                    run(m_spacePs[0], values, nullptr, false);
+                    m_device->Resolve(D3DRESOLVE_RENDERTARGET0, nullptr, m_work, nullptr, 0, 0, nullptr, 1.0f, 0, nullptr);
+                    run(m_spacePs[1], values, m_work, false);
+                }
+                if (look.reflections > 0 && spaceShader(2))
+                {
+                    const float values[16] = { look.reflections };
+                    run(m_spacePs[2], values, nullptr, true);
+                }
+                if (look.focus > 0 && look.focusBlur > 0 && spaceShader(3))
+                {
+                    const float values[16] = { look.focus, look.focusDepth, look.focusFalloff, look.focusBlur * scale, look.bokeh };
+                    run(m_spacePs[3], values, nullptr, true);
+                }
+                if (look.exposure > 0 && spaceShader(4) && spaceShader(5))
+                {
+                    // How bright it is, a little of the way from last frame's, in the small place.
+                    copyScreen();
+                    IDirect3DSurface9* screen = nullptr;
+                    IDirect3DSurface9* depth = nullptr;
+                    m_device->GetRenderTarget(0, &screen);
+                    m_device->GetDepthStencilSurface(&depth);
+                    m_device->SetRenderTarget(0, m_small);
+                    m_device->SetDepthStencilSurface(nullptr);
+                    postState({});
+                    const D3DVIEWPORT9 small = { 0, 0, kBloomWidth, kBloomHeight, 0, 1 };
+                    m_device->SetViewport(&small);
+                    const float measure[16] = { m_metered ? look.exposureAdapt : 1.0f };
+                    setEffectValues(measure, 0, area, false);
+                    m_device->SetTexture(0, m_screenCopy);
+                    setSampler(0, D3DTEXF_LINEAR, D3DTADDRESS_CLAMP, false);
+                    // Last frame's; no depth here, where there is no depth to copy.
+                    m_device->SetTexture(4, m_meter[m_meterAt]);
+                    setSampler(4, D3DTEXF_POINT, D3DTADDRESS_CLAMP, false);
+                    m_device->SetPixelShader(m_spacePs[4]);
+                    cover();
+                    unseeDepth();
+                    m_meterAt = 1 - m_meterAt;
+                    m_device->Resolve(D3DRESOLVE_RENDERTARGET0, nullptr, m_meter[m_meterAt], nullptr, 0, 0, nullptr, 1.0f, 0, nullptr);
+                    m_device->SetRenderTarget(0, screen);
+                    m_device->SetDepthStencilSurface(depth);
+                    release(screen);
+                    release(depth);
+                    endPost();
+                    m_metered = true;
+                    const float values[16] = { 0, look.exposure, look.exposureRange > 1 ? look.exposureRange : 1 };
+                    run(m_spacePs[5], values, m_meter[m_meterAt], false);
+                }
+                else
+                {
+                    m_metered = false;
+                }
+                return true;
+            }
+
+            // The shaders, how far away each pixel is (out of the GPU's own memory), a picture for occlusion, and two of
+            // how bright it is. Made when first wanted.
+            bool makeSpace()
+            {
+                if (m_spaceTried)
+                {
+                    return m_spaceFine;
+                }
+                m_spaceTried = true;
+                m_spaceFine = SUCCEEDED(m_device->CreateTexture(kWidth, kHeight, 1, 0, D3DFMT_D24S8, D3DPOOL_DEFAULT, &m_depthCopy, nullptr)) &&
+                              SUCCEEDED(m_device->CreateTexture(kWidth, kHeight, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &m_work, nullptr)) &&
+                              SUCCEEDED(m_device->CreateTexture(kBloomWidth, kBloomHeight, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &m_meter[0], nullptr)) &&
+                              SUCCEEDED(m_device->CreateTexture(kBloomWidth, kBloomHeight, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &m_meter[1], nullptr));
+                if (!m_spaceFine)
+                {
+                    NX_WARN("d3d9: no effects that see how far away things are");
+                }
+                return m_spaceFine;
+            }
+
+            // One of the shaders, made the first time it is wanted: compiling them all would hold up the first frame.
+            IDirect3DPixelShader9* spaceShader(u32 which)
+            {
+                if (m_spacePs[which] == nullptr && !m_spaceFailed[which])
+                {
+                    using namespace shaders360;
+                    static const char* const kEntries[] = { "occlusionPs", "occludePs", "reflectPs", "focusPs", "meterKeepPs", "exposePs" };
+                    const std::string text = std::string(kEffectWords) + kSpace;
+                    char error[512];
+                    m_spaceFailed[which] = !pixelFrom(text, kEntries[which], m_spacePs[which], error, sizeof(error));
+                    if (m_spaceFailed[which])
+                    {
+                        NX_ERROR("d3d9: %s: %s", kEntries[which], error);
+                    }
+                }
+                return m_spacePs[which];
+            }
+
+            // How far away each pixel of the screen is, copied out where effects can read it, and a picture more.
+            void seeDepth(IDirect3DTexture9* extra)
+            {
+                IDirect3DTexture9* depth = nullptr;
+                if (m_viewDrawn && (m_depthCopy || makeSpace()) && m_depthCopy)
+                {
+                    m_device->Resolve(D3DRESOLVE_DEPTHSTENCIL, nullptr, m_depthCopy, nullptr, 0, 0, nullptr, 1.0f, 0, nullptr);
+                    depth = m_depthCopy;
+                }
+                m_device->SetTexture(3, depth);
+                setSampler(3, D3DTEXF_POINT, D3DTADDRESS_CLAMP, false);
+                m_device->SetTexture(4, extra);
+                setSampler(4, D3DTEXF_POINT, D3DTADDRESS_CLAMP, false);
+            }
+
+            void unseeDepth()
+            {
+                m_device->SetTexture(3, nullptr);
+                m_device->SetTexture(4, nullptr);
+            }
+
+            // What effects are told of a view: see EffectUniforms.
+            static void sceneOf(const View& view, float (&out)[12])
+            {
+                const Mat4& p = view.projection;
+                out[0] = p.m[0];
+                out[1] = p.m[5];
+                out[2] = p.m[10];
+                out[3] = p.m[14];
+                const Vec3 up = view.view.transformDirection({ 0, 1, 0 });
+                out[4] = up.x;
+                out[5] = up.y;
+                out[6] = -up.z;
+                out[7] = p.m[10] + 1 != 0 ? p.m[14] / (1 + p.m[10]) : 1e6f;
+                const Vec3 sun = view.view.transformDirection(view.sunDirection);
+                const float ahead = -sun.z;
+                out[8] = ahead > 1e-4f ? 0.5f + 0.5f * sun.x * p.m[0] / ahead : 0.5f;
+                out[9] = ahead > 1e-4f ? 0.5f - 0.5f * sun.y * p.m[5] / ahead : 0.5f;
+                out[10] = ahead > 1e-4f ? 1.0f : 0.0f;
+                out[11] = 0;
             }
 
             // What the sun sees, as how far it is: into the GPU's memory after the screen, then copied out.
@@ -1137,7 +1368,14 @@ namespace nx::gpu
             // values[0] to [3], the area of the picture it covers, and its size and the time.
             void setEffectValues(const float (&values)[16], float time, const Scissor& area, bool vertex)
             {
-                float u[24] = {};
+                float u[36] = {};
+                // How a view in space is seen: see EffectUniforms.
+                memcpy(u + 24, m_scene, sizeof(m_scene));
+                if (!m_viewDrawn)
+                {
+                    u[24] = 0;
+                    u[31] = 1e6f;
+                }
                 memcpy(u, values, sizeof(values));
                 u[18] = u[19] = 1;
                 u[20] = static_cast<float>(kWidth);
@@ -1152,10 +1390,10 @@ namespace nx::gpu
                     u[20] = static_cast<float>(area.width);
                     u[21] = static_cast<float>(area.height);
                 }
-                m_device->SetPixelShaderConstantF(80, u, 6);
+                m_device->SetPixelShaderConstantF(80, u, 9);
                 if (vertex)
                 {
-                    m_device->SetVertexShaderConstantF(80, u, 6);
+                    m_device->SetVertexShaderConstantF(80, u, 9);
                 }
             }
 
@@ -1316,6 +1554,14 @@ namespace nx::gpu
             IDirect3DSurface9* m_screenDepth = nullptr;
             IDirect3DSurface9* m_small = nullptr;
             IDirect3DTexture9* m_bloom[2] = {};
+            IDirect3DPixelShader9* m_spacePs[6] = {};
+            IDirect3DTexture9* m_depthCopy = nullptr;
+            IDirect3DTexture9* m_work = nullptr;
+            IDirect3DTexture9* m_meter[2] = {};
+            u32 m_meterAt = 0;
+            bool m_spaceTried = false, m_spaceFine = false, m_metered = false, m_viewDrawn = false;
+            bool m_spaceFailed[6] = {};
+            float m_scene[12] = {};
             bool m_postTried = false;
 
             Vertex m_stream[kStreamVertices];

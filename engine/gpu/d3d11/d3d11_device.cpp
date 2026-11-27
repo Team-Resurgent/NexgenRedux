@@ -790,7 +790,7 @@ namespace nx::gpu
                             "Texture2D effectDepth : register(t2);\nSamplerState effectPoint : register(s1);\n"
                             "float4 picture(float2 uv) { return image.SampleLevel(imageSampler, effectArea.xy + saturate(uv) * effectArea.zw, 0); }\n"
                             "float depthAt(float2 uv) { if (effectScene.x == 0.0) return farthest; float d = effectDepth.SampleLevel(effectPoint, effectArea.xy + saturate(uv) * effectArea.zw, 0).r; "
-                            "return min(effectScene.w / (d + effectScene.z), farthest); }\n#line 1\n" +
+                            "return d > 0.99995 ? farthest : min(effectScene.w / (d + effectScene.z), farthest); }\n#line 1\n" +
                             source +
                             "\nfloat4 effectMain(float2 at : TEXCOORD0) : SV_Target { float2 uv = float2(at.x * 0.5 + 0.5, 0.5 - at.y * 0.5); return float4(effect(uv, picture(uv)).rgb, 1.0); }\n";
                 }

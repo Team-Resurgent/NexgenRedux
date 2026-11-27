@@ -258,7 +258,7 @@ float depthAt(vec2 uv)
     }
     vec2 p = effectArea.xy + clamp(uv, 0.0, 1.0) * effectArea.zw;
     float d = textureLod(effectDepth, vec2(p.x, 1.0 - p.y), 0.0).r;
-    return min(effectScene.w / (d + effectScene.z), farthest);
+    return d > 0.99995 ? farthest : min(effectScene.w / (d + effectScene.z), farthest);
 }
 )";
 

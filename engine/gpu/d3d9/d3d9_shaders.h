@@ -333,13 +333,30 @@ float4 gradePs(float2 at : TEXCOORD0) : COLOR0
 float4 values[4] : register(c80);
 float4 effectArea : register(c84);
 float4 effectInfo : register(c85);
+float4 effectScene : register(c86);
+float4 effectUp : register(c87);
+float4 effectSun : register(c88);
 #define size effectInfo.xy
 #define time effectInfo.z
+#define sunPlace effectSun.xy
+#define sunInFront effectSun.z
+#define upward effectUp.xyz
+#define farthest effectUp.w
 )";
 
     inline const char kPictureStart[] = R"(
 sampler2D image : register(s0);
+sampler2D effectDepth : register(s3);
 float4 picture(float2 uv) { return tex2Dlod(image, float4(effectArea.xy + saturate(uv) * effectArea.zw, 0.0, 0.0)); }
+float depthAt(float2 uv)
+{
+    if (effectScene.x == 0.0)
+    {
+        return farthest;
+    }
+    float d = tex2Dlod(effectDepth, float4(effectArea.xy + saturate(uv) * effectArea.zw, 0.0, 0.0)).r;
+    return d > 0.99995 ? farthest : min(effectScene.w / (d + effectScene.z), farthest);
+}
 )";
 
     inline const char kPictureMain[] = R"(

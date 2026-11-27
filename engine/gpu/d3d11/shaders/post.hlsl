@@ -66,10 +66,11 @@ float2 fullOf(float2 local)
     return effectArea.xy + local * effectArea.zw;
 }
 
+// Where nothing was drawn, as far as it sees: some GPUs give back a hair under 1 there.
 float distanceAt(float2 local)
 {
     float d = depthImage.SampleLevel(pointSampler, fullOf(local), 0).r;
-    return effectScene.w / (d + effectScene.z);
+    return d > 0.99995 ? effectUp.w : min(effectScene.w / (d + effectScene.z), effectUp.w);
 }
 
 // Right, up and away from the camera.
@@ -183,44 +184,47 @@ float4 reflectPs(float2 at : TEXCOORD0) : SV_Target
     float3 ray = reflect(view, n);
     float t = 0.15 + patternAt(at * 0.5 * effectInfo.xy + effectInfo.xy) * 0.1;
     float3 last = p;
+    float3 s = p;
     float found = 0.0;
+    float steps = 0.0;
     float2 hit = local;
     [loop] for (int i = 0; i < 28; i++)
     {
-        float3 s = p + ray * t;
-        if (s.z <= 0.05)
-        {
-            break;
-        }
+        s = p + ray * t;
         float2 there = localOfPlace(s);
-        if (there.x < 0.0 || there.y < 0.0 || there.x > 1.0 || there.y > 1.0)
+        if (s.z <= 0.05 || there.x < 0.0 || there.y < 0.0 || there.x > 1.0 || there.y > 1.0)
         {
             break;
         }
         float scene = distanceAt(there);
         if (s.z > scene && s.z - scene < 0.3 + t * 0.15)
         {
-            // Closer, between the last step and this.
-            float3 a = last, b = s;
-            [unroll] for (int k = 0; k < 5; k++)
-            {
-                float3 m = (a + b) * 0.5;
-                if (m.z > distanceAt(localOfPlace(m)))
-                {
-                    b = m;
-                }
-                else
-                {
-                    a = m;
-                }
-            }
-            hit = localOfPlace(b);
-            float2 edge = min(hit, 1.0 - hit);
-            found = saturate(min(edge.x, edge.y) * 8.0) * (1.0 - float(i) / 28.0);
+            found = 1.0;
             break;
         }
         last = s;
         t *= 1.18;
+        steps += 1.0;
+    }
+    if (found > 0.0)
+    {
+        // Closer, between the last step and the one that went behind; after the walk, which some GPUs need.
+        float3 a = last, b = s;
+        [unroll] for (int k = 0; k < 5; k++)
+        {
+            float3 m = (a + b) * 0.5;
+            if (m.z > distanceAt(localOfPlace(m)))
+            {
+                b = m;
+            }
+            else
+            {
+                a = m;
+            }
+        }
+        hit = localOfPlace(b);
+        float2 edge = min(hit, 1.0 - hit);
+        found = saturate(min(edge.x, edge.y) * 8.0) * (1.0 - steps / 28.0);
     }
     float fresnel = lerp(0.3, 1.0, pow(1.0 - saturate(dot(-view, n)), 3.0));
     float3 seen = image.SampleLevel(imageSampler, fullOf(hit), 0).rgb;
@@ -275,9 +279,9 @@ float4 focusPs(float2 at : TEXCOORD0) : SV_Target
 float4 meterPs(float2 at : TEXCOORD0) : SV_Target
 {
     float sum = 0.0;
-    [unroll] for (int y = 0; y < 8; y++)
+    [loop] for (int y = 0; y < 8; y++)
     {
-        [unroll] for (int x = 0; x < 8; x++)
+        [loop] for (int x = 0; x < 8; x++)
         {
             float2 local = (float2(float(x), float(y)) + 0.5) / 8.0;
             float3 c = image.SampleLevel(imageSampler, fullOf(local), 0).rgb;
@@ -295,8 +299,8 @@ float4 exposePs(float2 at : TEXCOORD0) : SV_Target
     float3 color = image.SampleLevel(imageSampler, fullOf(local), 0).rgb;
     float average = extraImage.SampleLevel(pointSampler, float2(0.5, 0.5), 0).r;
     float gain = clamp(values[0].y / max(average, 0.01), 1.0 / values[0].z, values[0].z);
-    // Brighter without burning out: what is already bright rolls off.
-    float3 lifted = color * gain;
-    lifted = gain > 1.0 ? lifted / (1.0 + max(lifted - 1.0, 0.0)) : lifted;
+    // Brighter without burning out: the darkest lifted the most, white staying white and what is nearly white keeping
+    // its colour.
+    float3 lifted = gain > 1.0 ? color * gain / (1.0 + (gain - 1.0) * color) : color * gain;
     return float4(saturate(lifted), 1.0);
 }

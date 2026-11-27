@@ -683,7 +683,7 @@ float4 paint(float4 color, float2 uv, float3 place, float3 normal, inout float g
 | `sunPlace`, `sunInFront` | Where the sun is, 0 to 1 across the view, and 1 if it is ahead of the camera |
 | `upward`, `farthest` | Which way is up as the camera sees it (right, up, away), and how far it sees |
 
-The last three rows are on GPUs where `Space::depthEffects`: Windows, Linux, macOS and the Xbox One. They are enough for god rays,
+The last three rows are on GPUs where `Space::depthEffects`: Windows, Linux, macOS, the Xbox One and the Xbox 360. They are enough for god rays,
 fog by distance, outlines where things meet and the like: `global:effect/rays.fx` is god rays, written that way.
 
 It is written as HLSL is, and every number with a point in it. `float2` to `float4`, `lerp`, `frac`, `saturate` and `fmod` have their
@@ -693,7 +693,7 @@ of the words in the table.
 ### Blur, and finishing a view
 
 `c.blur(8)` blurs all that has been drawn so far, about 8 pixels across on a screen 720 high, or only inside the clip: frosted glass
-behind a pause menu, or a dream. It works on every GPU but the Xbox 360 for now.
+behind a pause menu, or a dream. It works on every GPU.
 
 Where `Space::depthEffects`, each view in space can be finished from how far away each of its pixels is:
 
@@ -701,7 +701,7 @@ Where `Space::depthEffects`, each view in space can be finished from how far awa
 Space::occlusion(1, 0.6f);          // corners and creases darker, within 0.6 metres
 Space::reflections(0.6f);           // wet floors and still water show what is around
 Space::focus(5, 1, 12);             // sharp at 5 metres, 1 either side; 12 pixels of blur, with bokeh
-Space::autoExposure(0.45f);         // brighter in the dark and darker in the light, gradually
+Space::autoExposure(0.4f);          // brighter in the dark and darker in the light, gradually
 ```
 
 Each takes 0 for none. Reflections show only what is on the screen and in what faces up; the further a pixel is from the focus, the

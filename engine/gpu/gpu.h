@@ -228,7 +228,7 @@ namespace nx::gpu
         float focusBlur = 0;          // pixels across the most blurred, at 720 high
         float bokeh = 1;              // how much the brightest spread into discs
         float exposure = 0;           // brightness that auto exposure aims for, 0 to 1; 0 for none
-        float exposureRange = 4;      // as much brighter or darker as it may make it
+        float exposureRange = 2.5f;   // as much brighter or darker as it may make it
         float exposureAdapt = 0.05f;  // of the way there this frame
     };
 

@@ -1,0 +1,749 @@
+{
+  "output": "build/nexgen-whats-new.mp4",
+  "shots folder": "whats-new-shots",
+  "footage": "build/trailer2/footage",
+  "size": [
+    1920,
+    1080
+  ],
+  "fps": 30,
+  "font": "C:/Windows/Fonts/bahnschrift.ttf",
+  "fontBold": "C:/Windows/Fonts/bahnschrift.ttf",
+  "music": {
+    "file": "C:/Users/eq2k/Downloads/usefulpix-retro-synthwave-background-soundtrack-341853.mp3",
+    "bpm": 140.0,
+    "parts": [
+      [
+        0,
+        150.86
+      ]
+    ],
+    "end": 150.86,
+    "fadeIn": 1,
+    "fadeOut": 6
+  },
+  "look": {
+    "letterbox": 0.11,
+    "grain": 7,
+    "vignette": true,
+    "fadeOut": 2
+  },
+  "shots": [
+    {
+      "to": 5.292857142857143,
+      "logo": "build/trailer/team-resurgent.png",
+      "logoSize": 0.62,
+      "logoY": 0.42,
+      "logoIn": 1,
+      "logoFade": 4,
+      "zoom": [
+        1.0,
+        1.0
+      ],
+      "title": "P  R  E  S  E  N  T  S",
+      "titleSize": 38,
+      "titleY": 0.83,
+      "textIn": 5,
+      "textOut": 11.5,
+      "titleColor": "0xE848DF",
+      "titleDrift": 0
+    },
+    {
+      "clip": "explore.mp4",
+      "from": 3,
+      "beats": 8,
+      "in": "fade",
+      "speed": 0.55,
+      "grade": "dark",
+      "zoom": [
+        1.3,
+        1.15
+      ],
+      "inBeats": 3,
+      "title": "WE SAID",
+      "sub": "constantly evolving",
+      "titleSize": 96,
+      "textIn": 1.5,
+      "textOut": 7.5
+    },
+    {
+      "clip": "lens.mp4",
+      "from": 3,
+      "beats": 8,
+      "in": "dissolve",
+      "speed": 0.5,
+      "grade": "warm",
+      "zoom": [
+        1.66,
+        1.62
+      ],
+      "inBeats": 3,
+      "title": "WE MEANT IT",
+      "titleSize": 96,
+      "textIn": 1.5,
+      "textOut": 7.5,
+      "focus": [
+        1.0,
+        0.35
+      ]
+    },
+    {
+      "clip": "topple.mp4",
+      "from": 8,
+      "beats": 4,
+      "in": "dissolve",
+      "speed": 0.5,
+      "grade": "cold",
+      "zoom": [
+        1.35,
+        1.25
+      ],
+      "focus": [
+        0.55,
+        0.65
+      ]
+    },
+    {
+      "clip": "moves.mp4",
+      "from": 4,
+      "beats": 4,
+      "in": "cut",
+      "speed": 0.6,
+      "zoom": [
+        1.4,
+        1.3
+      ],
+      "focus": [
+        0.5,
+        0.55
+      ]
+    },
+    {
+      "image": "build/trailer/splash.png",
+      "fit": 0.84,
+      "fitY": 0.35,
+      "zoom": [
+        1.1,
+        1.0
+      ],
+      "sweep": true,
+      "sweepAt": 1.5,
+      "sweepBeats": 4,
+      "beats": 6,
+      "in": "flash",
+      "inBeats": 0.5,
+      "mark": "WHAT'S NEW",
+      "markSize": 130,
+      "markY": 0.775,
+      "markIn": 1
+    },
+    {
+      "beats": 6,
+      "in": "flash",
+      "inBeats": 0.5,
+      "title": "IN MOTION",
+      "titleSize": 84,
+      "textIn": 0.3
+    },
+    {
+      "clip": "moves.mp4",
+      "from": 4,
+      "beats": 8,
+      "in": "glitch",
+      "caption": "ANIMATION, MIXED",
+      "captionSub": "Idle, walk and run, blended by speed, with root motion",
+      "zoom": [
+        1.25,
+        1.15
+      ]
+    },
+    {
+      "clip": "moves.mp4",
+      "from": 10,
+      "beats": 6,
+      "in": "glitch",
+      "caption": "LAYERS AND LOOKS",
+      "captionSub": "A wave over walking; heads that turn to look",
+      "zoom": [
+        1.5,
+        1.6
+      ],
+      "focus": [
+        0.6,
+        0.5
+      ]
+    },
+    {
+      "clip": "topple.mp4",
+      "from": 8,
+      "beats": 8,
+      "in": "zoom",
+      "caption": "RAGDOLLS",
+      "captionSub": "Knocked over, thrown about, and up again",
+      "zoom": [
+        1.3,
+        1.15
+      ]
+    },
+    {
+      "clip": "tumble.mp4",
+      "from": 4,
+      "beats": 6,
+      "in": "slide",
+      "caption": "JOINTS IN 3D",
+      "captionSub": "Hinges, limits, and things held by a bone"
+    },
+    {
+      "clip": "lens.mp4",
+      "from": 3,
+      "beats": 6,
+      "in": "glitch",
+      "caption": "GOD RAYS AND BOKEH",
+      "captionSub": "Occlusion, reflections and auto exposure",
+      "zoom": [
+        1.66,
+        1.62
+      ],
+      "focus": [
+        1.0,
+        0.35
+      ]
+    },
+    {
+      "clip": "lens.mp4",
+      "from": 11,
+      "beats": 6,
+      "in": "glitch",
+      "caption": "DECALS",
+      "captionSub": "Paint that lands on whatever it hits",
+      "zoom": [
+        1.62,
+        1.7
+      ],
+      "focus": [
+        1.0,
+        0.6
+      ]
+    },
+    {
+      "clip": "pictures.mp4",
+      "from": 4,
+      "beats": 6,
+      "in": "wipe",
+      "caption": "PICTURES TO DRAW INTO",
+      "captionSub": "The world from above, drawn as a map each frame"
+    },
+    {
+      "clip": "og-topple.mp4",
+      "from": 3,
+      "beats": 6,
+      "in": "flash",
+      "caption": "ON THE ORIGINAL XBOX",
+      "captionSub": "Ragdolls, on 733 MHz and 64 MB",
+      "fit": 1
+    },
+    {
+      "clip": "lights.mp4",
+      "from": 4,
+      "beats": 6,
+      "in": "flash",
+      "caption": "LIGHTS ON THE PLANE",
+      "captionSub": "And the shadows that walls cast"
+    },
+    {
+      "clip": "tiles.mp4",
+      "from": 4,
+      "beats": 6,
+      "in": "glitch",
+      "caption": "TERRAINS",
+      "captionSub": "Tiles that join up as they are painted"
+    },
+    {
+      "clip": "ways.mp4",
+      "from": 4,
+      "beats": 6,
+      "in": "slide",
+      "caption": "PATHS AND NOISE",
+      "captionSub": "Ways to follow, and ways round a maze"
+    },
+    {
+      "clip": "contraptions.mp4",
+      "from": 4,
+      "beats": 6,
+      "in": "zoom",
+      "caption": "2D PHYSICS",
+      "captionSub": "Polygons, hills, one-way platforms and joints",
+      "zoom": [
+        1.3,
+        1.4
+      ],
+      "focus": [
+        0.35,
+        0.75
+      ]
+    },
+    {
+      "clip": "machines.mp4",
+      "from": 6,
+      "beats": 6,
+      "in": "glitch",
+      "caption": "WHEELS, PULLEYS, GEARS",
+      "captionSub": "Sprung wheels, a lift, a train of gears",
+      "zoom": [
+        1.2,
+        1.3
+      ],
+      "focus": [
+        0.6,
+        0.6
+      ]
+    },
+    {
+      "clip": "sketch.mp4",
+      "from": 4,
+      "beats": 6,
+      "in": "wipe",
+      "caption": "PATHS AND MASKS",
+      "captionSub": "Polygons, meshes, ellipses and masks"
+    },
+    {
+      "clip": "curves.mp4",
+      "from": 4,
+      "beats": 8,
+      "in": "glitch",
+      "caption": "CURVES AND BATCHES",
+      "captionSub": "Bezier curves, and sprites by the thousand"
+    },
+    {
+      "clip": "og-curves.mp4",
+      "from": 4,
+      "beats": 8,
+      "in": "flash",
+      "caption": "60 FRAMES A SECOND",
+      "captionSub": "Fifteen hundred sprites, on the original Xbox",
+      "fit": 1
+    },
+    {
+      "clip": "text.mp4",
+      "from": 4,
+      "beats": 2,
+      "in": "glitch"
+    },
+    {
+      "clip": "life.mp4",
+      "from": 6,
+      "beats": 2,
+      "in": "glitch"
+    },
+    {
+      "clip": "video.mp4",
+      "from": 6,
+      "beats": 2,
+      "in": "glitch"
+    },
+    {
+      "clip": "synth.mp4",
+      "from": 8,
+      "beats": 2,
+      "in": "glitch"
+    },
+    {
+      "clip": "sounds.mp4",
+      "from": 6,
+      "beats": 2,
+      "in": "glitch"
+    },
+    {
+      "clip": "threads.mp4",
+      "from": 8,
+      "beats": 2,
+      "in": "glitch"
+    },
+    {
+      "clip": "tiles.mp4",
+      "from": 8,
+      "beats": 2,
+      "in": "glitch"
+    },
+    {
+      "clip": "lights.mp4",
+      "from": 9,
+      "beats": 2,
+      "in": "glitch"
+    },
+    {
+      "clip": "machines.mp4",
+      "from": 9,
+      "beats": 2,
+      "in": "glitch"
+    },
+    {
+      "clip": "home.mp4",
+      "from": 3,
+      "beats": 8,
+      "in": "flash",
+      "inBeats": 0.5,
+      "title": "CONSOLE HOMES",
+      "sub": "Three of them, written in script",
+      "titleSize": 84,
+      "textIn": 1,
+      "textOut": 7.5
+    },
+    {
+      "clip": "hub.mp4",
+      "from": 3,
+      "beats": 6,
+      "in": "slide",
+      "caption": "HUB",
+      "captionSub": "Bands of light, and tiles in a row"
+    },
+    {
+      "clip": "channels.mp4",
+      "from": 3,
+      "beats": 6,
+      "in": "slide",
+      "caption": "CHANNELS",
+      "captionSub": "Cards on a polished floor"
+    },
+    {
+      "clip": "og-channels.mp4",
+      "from": 3,
+      "beats": 8,
+      "in": "flash",
+      "caption": "ON THE ORIGINAL XBOX",
+      "captionSub": "All three, at 60 frames a second",
+      "fit": 1
+    },
+    {
+      "clip": "lens.mp4",
+      "from": 5,
+      "beats": 1,
+      "in": "glitch"
+    },
+    {
+      "clip": "topple.mp4",
+      "from": 11,
+      "beats": 1,
+      "in": "glitch"
+    },
+    {
+      "clip": "curves.mp4",
+      "from": 6,
+      "beats": 1,
+      "in": "glitch"
+    },
+    {
+      "clip": "channels.mp4",
+      "from": 8,
+      "beats": 1,
+      "in": "glitch"
+    },
+    {
+      "clip": "hub.mp4",
+      "from": 8,
+      "beats": 1,
+      "in": "glitch"
+    },
+    {
+      "clip": "machines.mp4",
+      "from": 8,
+      "beats": 1,
+      "in": "glitch"
+    },
+    {
+      "clip": "threads.mp4",
+      "from": 9,
+      "beats": 1,
+      "in": "glitch"
+    },
+    {
+      "clip": "tumble.mp4",
+      "from": 12,
+      "beats": 1,
+      "in": "glitch"
+    },
+    {
+      "clip": "home.mp4",
+      "from": 10,
+      "in": "glitch",
+      "to": 89.15
+    },
+    {
+      "clip": "threads.mp4",
+      "from": 6,
+      "beats": 10,
+      "in": "fade",
+      "caption": "SCRIPT THREADS",
+      "captionSub": "The Mandelbrot set, a row at a time, on threads of its own",
+      "speed": 0.5,
+      "inBeats": 2
+    },
+    {
+      "clip": "synth.mp4",
+      "from": 8,
+      "beats": 10,
+      "in": "dissolve",
+      "caption": "SOUND YOU MAKE",
+      "captionSub": "Written as it plays, through distortion, chorus and echo",
+      "speed": 0.6,
+      "inBeats": 2
+    },
+    {
+      "clip": "video.mp4",
+      "from": 4,
+      "beats": 8,
+      "in": "dissolve",
+      "caption": "VIDEO",
+      "captionSub": "MPEG-1 films with their sound, on every platform"
+    },
+    {
+      "clip": "sounds.mp4",
+      "from": 4,
+      "beats": 8,
+      "in": "dissolve",
+      "caption": "AUDIO EFFECTS",
+      "captionSub": "Reverb, echo, filters and more, on every bus"
+    },
+    {
+      "clip": "text.mp4",
+      "from": 4,
+      "beats": 8,
+      "in": "dissolve",
+      "caption": "RICH TEXT",
+      "captionSub": "Colours, bold and underline, marked in the words"
+    },
+    {
+      "clip": "life.mp4",
+      "from": 6,
+      "beats": 8,
+      "in": "dissolve",
+      "caption": "PIXELS",
+      "captionSub": "Read, written and saved by scripts"
+    },
+    {
+      "clip": "system.mp4",
+      "from": 4,
+      "beats": 8,
+      "in": "dissolve",
+      "caption": "THE WINDOW AND THE SYSTEM",
+      "captionSub": "Full screen, the clipboard, a clock, Windows 11 title bars",
+      "zoom": [
+        1.2,
+        1.3
+      ]
+    },
+    {
+      "clip": "explore.mp4",
+      "from": 10,
+      "beats": 8,
+      "in": "dissolve",
+      "caption": "DEBUG AND PROFILE",
+      "captionSub": "Breakpoints, and where the time goes, in VS Code",
+      "grade": "dark"
+    },
+    {
+      "clip": "og-machines.mp4",
+      "from": 4,
+      "beats": 8,
+      "in": "dissolve",
+      "caption": "AND MORE",
+      "captionSub": "Zip files, gzip, packed bytes, image fonts, justified text",
+      "fit": 1
+    },
+    {
+      "image": "build/trailer2/x360-home.png",
+      "zoom": [
+        1.05,
+        1.15
+      ],
+      "sweep": true,
+      "sweepAt": 1,
+      "sweepBeats": 4,
+      "in": "dissolve",
+      "inBeats": 1,
+      "caption": "XBOX 360",
+      "captionSub": "Every new demo there too",
+      "to": 128.01
+    },
+    {
+      "clip": "lens.mp4",
+      "from": 4,
+      "beats": 1,
+      "in": "flash"
+    },
+    {
+      "clip": "topple.mp4",
+      "from": 10,
+      "beats": 1,
+      "in": "glitch"
+    },
+    {
+      "clip": "curves.mp4",
+      "from": 5,
+      "beats": 1,
+      "in": "glitch"
+    },
+    {
+      "clip": "channels.mp4",
+      "from": 6,
+      "beats": 1,
+      "in": "glitch"
+    },
+    {
+      "clip": "hub.mp4",
+      "from": 6,
+      "beats": 1,
+      "in": "glitch"
+    },
+    {
+      "clip": "moves.mp4",
+      "from": 8,
+      "beats": 1,
+      "in": "glitch"
+    },
+    {
+      "clip": "threads.mp4",
+      "from": 7,
+      "beats": 1,
+      "in": "glitch"
+    },
+    {
+      "clip": "synth.mp4",
+      "from": 9,
+      "beats": 1,
+      "in": "glitch"
+    },
+    {
+      "clip": "home.mp4",
+      "from": 8,
+      "beats": 1,
+      "in": "glitch"
+    },
+    {
+      "clip": "lights.mp4",
+      "from": 7,
+      "beats": 1,
+      "in": "glitch"
+    },
+    {
+      "clip": "tumble.mp4",
+      "from": 11,
+      "beats": 1,
+      "in": "glitch"
+    },
+    {
+      "clip": "machines.mp4",
+      "from": 10,
+      "beats": 1,
+      "in": "glitch"
+    },
+    {
+      "mosaic": [
+        {
+          "file": "moves.mp4",
+          "from": 6
+        },
+        {
+          "file": "topple.mp4",
+          "from": 10
+        },
+        {
+          "file": "lens.mp4",
+          "from": 4
+        },
+        {
+          "file": "curves.mp4",
+          "from": 4
+        },
+        {
+          "file": "machines.mp4",
+          "from": 8
+        },
+        {
+          "file": "home.mp4",
+          "from": 4
+        },
+        {
+          "file": "hub.mp4",
+          "from": 4
+        },
+        {
+          "file": "channels.mp4",
+          "from": 4
+        },
+        {
+          "file": "threads.mp4",
+          "from": 8
+        },
+        {
+          "file": "synth.mp4",
+          "from": 9
+        },
+        {
+          "file": "lights.mp4",
+          "from": 6
+        },
+        {
+          "file": "tiles.mp4",
+          "from": 6
+        }
+      ],
+      "columns": 4,
+      "beats": 12,
+      "in": "flash",
+      "inBeats": 0.5,
+      "counter": 83,
+      "counterSuffix": " DEMOS",
+      "counterBeats": 6,
+      "title": " ",
+      "sub": "Eighteen of them new since the last trailer",
+      "titleY": 0.62,
+      "textIn": 1
+    },
+    {
+      "image": "build/trailer/splash.png",
+      "fit": 0.84,
+      "fitY": 0.35,
+      "zoom": [
+        1.08,
+        1.0
+      ],
+      "sweep": true,
+      "sweepAt": 1,
+      "sweepBeats": 6,
+      "in": "flash",
+      "inBeats": 0.5,
+      "mark": "STILL EVOLVING",
+      "markSize": 120,
+      "markY": 0.775,
+      "markIn": 1,
+      "to": 144.15
+    },
+    {
+      "to": 150.2,
+      "in": "fade",
+      "inBeats": 2,
+      "mark": "NEXGEN  REDUX",
+      "markSize": 120,
+      "markY": 0.42,
+      "markIn": 0.5,
+      "sub": "Windows  ·  macOS  ·  Linux  ·  Original Xbox  ·  Xbox 360  ·  Xbox One / Series",
+      "subSize": 36,
+      "title": " ",
+      "titleSize": 40,
+      "titleY": 0.52,
+      "textIn": 2
+    },
+    {
+      "to": 155.5,
+      "in": "fade",
+      "inBeats": 3,
+      "title": "github.com/Team-Resurgent/NexgenRedux",
+      "titleSize": 60,
+      "titleY": 0.46,
+      "sub": "Open source, made for the community",
+      "subSize": 34,
+      "textIn": 1.5
+    }
+  ]
+}

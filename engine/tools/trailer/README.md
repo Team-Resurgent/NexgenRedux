@@ -24,7 +24,7 @@ shots that changed are made again, and then they are put together with the music
 - **Look**: `grade` per shot (`vivid`, `dark`, `mono`, `night`, `warm`, `cold`); `look` for the letterbox, grain and
   vignette of all of it.
 - **Music**: `parts` are the pieces of the track that are used, one after another; the default is its first 67 seconds,
-  then its ending.
+  then its ending. `fadeIn` and `fadeOut` are seconds for it to come in softly and to go.
 
 The footage is recorded from the engine with `engine/tools/record/record.py`, at 1080p and without the demos'
 captions:
@@ -37,3 +37,10 @@ python engine/tools/record/record.py <nexgen.exe> build/trailer/footage/forest.m
 
 The original Xbox shots come from `build/nexgen-demos-xbox.mp4`, captured from the console; its own counter at the top of
 the picture shows the frame rate.
+
+## The sequel: what's new
+
+`whatsnew.json` is the second trailer, on usefulpix's retro synthwave, showing what was added since the first. It is
+written by `whatsnew.py`, which lays each chapter on a section of the music and checks that it ends on that section's
+edge: change the shots there and run it, then make it as above with `whatsnew.json`. Its footage is in
+`build/trailer2/footage`, recorded the same way; `og-` clips are from the original Xbox, captured with the Elgato.

@@ -74,7 +74,8 @@ class Trailer:
         self.beat = 60.0 / m['bpm']
         out = self.find(self.cfg['output'])
         self.output = out if not preview else os.path.splitext(out)[0] + '-preview.mp4'
-        self.work = os.path.join(os.path.dirname(self.output), 'trailer-shots' + ('-preview' if preview else ''))
+        # Each trailer's shots are kept in a folder of their own: "shots" names it, beside the output.
+        self.work = os.path.join(os.path.dirname(self.output), self.cfg.get('shots folder', 'trailer-shots') + ('-preview' if preview else ''))
         os.makedirs(self.work, exist_ok=True)
         for name, key in (('font.ttf', 'font'), ('bold.ttf', 'fontBold')):
             shutil.copyfile(self.find(self.cfg[key]), os.path.join(self.work, name))
@@ -418,7 +419,9 @@ class Trailer:
             last = 'q%d' % n
         # It may end before the pictures do, which then go on in silence.
         end = min(m.get('end', self.total), self.total)
-        chain.append("[%s]atrim=0:%.3f,afade=t=out:st=%.3f:d=%.3f,apad=whole_dur=%.3f[aout]" % (last, end, end - m.get('fadeOut', 1.5), m.get('fadeOut', 1.5), self.total))
+        # It may come in softly, over so many seconds ("fadeIn"), rather than at full strength.
+        fade_in = "afade=t=in:st=0:d=%.3f," % m['fadeIn'] if m.get('fadeIn') else ''
+        chain.append("[%s]atrim=0:%.3f,%safade=t=out:st=%.3f:d=%.3f,apad=whole_dur=%.3f[aout]" % (last, end, fade_in, end - m.get('fadeOut', 1.5), m.get('fadeOut', 1.5), self.total))
         return chain
 
     def make(self):

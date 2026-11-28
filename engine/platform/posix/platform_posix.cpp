@@ -276,6 +276,20 @@ namespace nx
         return std::string();
     }
 
+    bool PlatformPosix::localTime(u32& hour, u32& minute, u32& second)
+    {
+        const time_t now = time(nullptr);
+        struct tm t;
+        if (localtime_r(&now, &t) == nullptr)
+        {
+            return false;
+        }
+        hour = static_cast<u32>(t.tm_hour);
+        minute = static_cast<u32>(t.tm_min);
+        second = static_cast<u32>(t.tm_sec);
+        return true;
+    }
+
     u32 PlatformPosix::processors()
     {
         const long count = sysconf(_SC_NPROCESSORS_ONLN);

@@ -377,6 +377,17 @@ namespace nx
             u64 totalMemory() override { return memory().dwTotalPhys; }
             u64 freeMemory() override { return memory().dwAvailPhys; }
             const char* name() const override { return "Original Xbox"; }
+            bool localTime(u32& hour, u32& minute, u32& second) override
+            {
+                // As the dashboard's clock and time zone are set.
+                SYSTEMTIME t;
+                GetLocalTime(&t);
+                hour = t.wHour;
+                minute = t.wMinute;
+                second = t.wSecond;
+                return true;
+            }
+
             std::string locale() override
             {
                 static const char* const kLanguages[] = { "", "en", "ja", "de", "fr", "es", "it", "ko", "zh-Hant", "pt" };

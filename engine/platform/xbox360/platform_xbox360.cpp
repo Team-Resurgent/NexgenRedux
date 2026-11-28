@@ -249,6 +249,17 @@ namespace nx
             u64 freeMemory() override { return memory().dwAvailPhys; }
             const char* name() const override { return "Xbox 360"; }
             u32 processors() override { return 6; }   // three cores of two threads
+            bool localTime(u32& hour, u32& minute, u32& second) override
+            {
+                // As the dashboard's clock and time zone are set.
+                SYSTEMTIME t;
+                GetLocalTime(&t);
+                hour = t.wHour;
+                minute = t.wMinute;
+                second = t.wSecond;
+                return true;
+            }
+
 
             std::string locale() override
             {

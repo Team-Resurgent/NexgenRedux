@@ -25,6 +25,7 @@ namespace nx
         u64 freeMemory() override;
         std::string locale() override;
         u32 processors() override;
+        bool localTime(u32& hour, u32& minute, u32& second) override;
 
     protected:
         static constexpr size_t kMaxPath = 1024;

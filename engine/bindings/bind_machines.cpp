@@ -106,6 +106,34 @@ namespace nx
         }
         bool windowFocused() { return platform().focused(); }
 
+        // The time of day; -1, or nothing, where it can't be told.
+        int timePart(int which)
+        {
+            u32 parts[3] = {};
+            return platform().localTime(parts[0], parts[1], parts[2]) ? static_cast<int>(parts[which]) : -1;
+        }
+        int systemHour() { return timePart(0); }
+        int systemMinute() { return timePart(1); }
+        int systemSecond() { return timePart(2); }
+        std::string systemClock(bool twelve)
+        {
+            u32 h = 0, m = 0, s = 0;
+            if (!platform().localTime(h, m, s))
+            {
+                return std::string();
+            }
+            char out[16];
+            if (twelve)
+            {
+                snprintf(out, sizeof(out), "%u:%02u %s", static_cast<unsigned>(h % 12 ? h % 12 : 12), static_cast<unsigned>(m), h < 12 ? "am" : "pm");
+            }
+            else
+            {
+                snprintf(out, sizeof(out), "%02u:%02u", static_cast<unsigned>(h), static_cast<unsigned>(m));
+            }
+            return out;
+        }
+
         // Windows 11's frame, kept here and given to the window whole each time a part of it changes.
         enum class TitleLook : u8 { System, Light, Dark };
         TitleBar g_titleBar;
@@ -245,6 +273,10 @@ namespace nx
         b.function("void set_clipboard(const string &in) property", NX_FN(systemSetClipboard), "Copies text, to paste elsewhere or here. On Linux it needs wl-copy, xclip or xsel.");
         b.function("string get_locale() property", NX_FN(systemLocale), "The language and region it is set to, as \"en-GB\" or \"pt-BR\"; a console says the language only, as \"ja\". \"en\" if it can't be told.");
         b.function("string get_language() property", NX_FN(systemLanguage), "The language alone, as \"en\": for choosing which words to show.");
+        b.function("int get_hour() property", NX_FN(systemHour), "The hour where the machine is, as its clock is set, 0 to 23; -1 if it can't be told.");
+        b.function("int get_minute() property", NX_FN(systemMinute), "The minute, 0 to 59.");
+        b.function("int get_second() property", NX_FN(systemSecond), "The second, 0 to 59.");
+        b.function("string clock(bool twelveHour = false)", NX_FN(systemClock), "The time as a clock shows it: \"16:55\", or \"4:55 pm\". Empty if it can't be told.");
         b.function("uint get_processors() property", NX_FN(systemProcessors), "Threads it can run at once: 1 on the original Xbox, 6 on the 360.");
         b.function("bool open(const string &in address)", NX_FN(systemOpen), "A web page, file or folder, in what the system opens it with. False where it can't: the consoles but the Xbox One.");
         b.function("int get_battery() property", NX_FN(systemBattery), "How full the battery is, 0 to 100, or -1 without one.");

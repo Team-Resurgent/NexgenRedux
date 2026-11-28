@@ -234,6 +234,16 @@ namespace nx
         return out;
     }
 
+    bool PlatformWindows::localTime(u32& hour, u32& minute, u32& second)
+    {
+        SYSTEMTIME t;
+        GetLocalTime(&t);
+        hour = t.wHour;
+        minute = t.wMinute;
+        second = t.wSecond;
+        return true;
+    }
+
     u32 PlatformWindows::processors()
     {
         SYSTEM_INFO info = {};

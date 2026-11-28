@@ -1278,6 +1278,7 @@ string words = System::language;           // "en", "ja": which words to show; S
 uint threads = System::processors;
 System::open("https://example.com");       // in the browser, or a file in what opens it
 int left = System::battery;                // 0 to 100, or -1 without one; System::charging
+string now = System::clock(true);          // "4:55 pm", as the machine's clock is set; System::hour and minute too
 ```
 
 On Linux the clipboard needs wl-copy, xclip or xsel, and messages zenity, kdialog or xmessage. The System demo has them all.

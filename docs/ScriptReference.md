@@ -1587,6 +1587,10 @@ What every machine can say about itself, and do, in the same way.
 | `void System::set_clipboard(const string &in) property` | Copies text, to paste elsewhere or here. On Linux it needs wl-copy, xclip or xsel. |
 | `string System::get_locale() property` | The language and region it is set to, as "en-GB" or "pt-BR"; a console says the language only, as "ja". "en" if it can't be told. |
 | `string System::get_language() property` | The language alone, as "en": for choosing which words to show. |
+| `int System::get_hour() property` | The hour where the machine is, as its clock is set, 0 to 23; -1 if it can't be told. |
+| `int System::get_minute() property` | The minute, 0 to 59. |
+| `int System::get_second() property` | The second, 0 to 59. |
+| `string System::clock(bool twelveHour = false)` | The time as a clock shows it: "16:55", or "4:55 pm". Empty if it can't be told. |
 | `uint System::get_processors() property` | Threads it can run at once: 1 on the original Xbox, 6 on the 360. |
 | `bool System::open(const string &in address)` | A web page, file or folder, in what the system opens it with. False where it can't: the consoles but the Xbox One. |
 | `int System::get_battery() property` | How full the battery is, 0 to 100, or -1 without one. |

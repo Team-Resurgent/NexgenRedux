@@ -203,6 +203,8 @@ namespace nx
         virtual std::string locale() { return std::string(); }
         // Threads that can run at once.
         virtual u32 processors() { return 1; }
+        // The time of day where the machine is, as it is set. False if it can't be told.
+        virtual bool localTime(u32&, u32&, u32&) { return false; }
     };
 
     // nullptr on failure, after logging why. Release with nx::destroy.

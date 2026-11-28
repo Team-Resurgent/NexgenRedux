@@ -27,6 +27,7 @@ namespace nx
         bool takeDropped(std::string& name) override;
         std::string locale() override;
         u32 processors() override;
+        bool localTime(u32& hour, u32& minute, u32& second) override;
 
     protected:
         static constexpr int kMaxPath = 1024;

@@ -11,6 +11,9 @@ namespace nx
 {
     namespace
     {
+        // As a whole int, as scripts' enums are: a smaller one leaves the rest of the register as it was.
+        int roomState(const Room* r) { return static_cast<int>(r->state()); }
+
         Net& net() { return *services().net; }
 
         Message* makeMessage() { return create<Message>(MemTag::Script); }
@@ -263,7 +266,7 @@ namespace nx
         b.method("bool foundFar(uint index) const", NX_OBJ_LAST(roomFoundFar), "Whether one was found at the meeting place, rather than on this network.");
         b.method("bool relayed(int player) const", NX_METHOD(Room, relayed), "Whether what goes to and from a player is passed on by the meeting place, because the routers wouldn't let it through.");
         b.method("void leave()", NX_METHOD(Room, leave), "Leaves, or closes it.");
-        b.method("RoomState get_state() const property", NX_METHOD(Room, state), "How it is getting on.");
+        b.method("RoomState get_state() const property", NX_OBJ_LAST(roomState), "How it is getting on.");
         b.method("bool get_hosting() const property", NX_METHOD(Room, hosting), "Whether it is this player's.");
         b.method("int get_me() const property", NX_METHOD(Room, me), "Which player this is, or -1. The host is 0.");
         b.method("uint get_players() const property", NX_METHOD(Room, players), "How many are in it.");

@@ -8,6 +8,12 @@ namespace nx
 {
     namespace
     {
+        // As a whole int, as scripts' enums are.
+        int trayOfConsole() { return static_cast<int>(consoleTray()); }
+    }
+
+    namespace
+    {
         int cpuTemperature() { return consoleTemperature(true); }
         int boardTemperature() { return consoleTemperature(false); }
         void setFan(int percent) { consoleSetFan(percent); }
@@ -83,7 +89,7 @@ namespace nx
         b.function("int get_fan() property", NX_FN(consoleFan), "How fast it is turning, 0 to 100, or -1.");
         b.function("void set_fan(int) property", NX_FN(setFan), "Sets its speed, to no less than 20; -1 lets the console decide again.");
         b.function("void set_light(uint) property", NX_FN(setLight), "The light on the front: four moments, with a bit for each, red in the high four and green in the low four. 0x0F is green, 0xF0 red, 0xFF orange and 0xA5 blinks between two. 0 lets the console decide.");
-        b.function("Tray get_tray() property", NX_FN(consoleTray), "What it is doing.");
+        b.function("Tray get_tray() property", NX_FN(trayOfConsole), "What it is doing.");
         b.function("bool openTray()", NX_FN(openTray), "Opens it.");
         b.function("bool closeTray()", NX_FN(closeTray), "Closes it.");
         b.function("string text(XboxText what)", NX_FN(text), "Something about the console.");

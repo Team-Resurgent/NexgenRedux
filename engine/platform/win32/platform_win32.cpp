@@ -71,6 +71,7 @@ namespace nx
                     return false;
                 }
                 DragAcceptFiles(m_window, TRUE);
+                applyTitleBar();   // dark, if the system's apps are
                 // How far the mouse moves, as it is told, whatever the pointer does.
                 RAWINPUTDEVICE mouse = {};
                 mouse.usUsagePage = 1;
@@ -147,6 +148,51 @@ namespace nx
                 {
                     SetWindowTextW(m_window, title);
                 }
+            }
+
+            bool setTitleBar(const TitleBar& bar) override
+            {
+                m_titleBar = bar;
+                return applyTitleBar();
+            }
+
+            // Through DWM, found when it is first wanted, so that the program starts where there is none to ask.
+            bool applyTitleBar()
+            {
+                using SetAttribute = HRESULT(WINAPI*)(HWND, DWORD, LPCVOID, DWORD);
+                static SetAttribute set = []
+                {
+                    HMODULE dwm = LoadLibraryW(L"dwmapi.dll");
+                    return dwm ? reinterpret_cast<SetAttribute>(reinterpret_cast<void*>(GetProcAddress(dwm, "DwmSetWindowAttribute"))) : nullptr;
+                }();
+                if (m_window == nullptr || set == nullptr)
+                {
+                    return false;
+                }
+                const TitleBar& t = m_titleBar;
+                const auto put = [&](DWORD what, DWORD value) { return SUCCEEDED(set(m_window, what, &value, sizeof(value))); };
+                const auto colour = [](u32 rgb) -> DWORD { return rgb >= TitleBar::kNone ? rgb : ((rgb & 0xFF) << 16) | (rgb & 0xFF00) | ((rgb >> 16) & 0xFF); };
+                // DWMWA_USE_IMMERSIVE_DARK_MODE, 20, from Windows 10 2004 on; Windows 11 has the rest.
+                bool done = put(20, t.dark < 0 ? windows::darkMode() : t.dark > 0);
+                const bool coloured = t.back != TitleBar::kSystem || t.text != TitleBar::kSystem || t.border != TitleBar::kSystem;
+                if (coloured || m_coloured)
+                {
+                    done = put(35, colour(t.back)) && done;    // DWMWA_CAPTION_COLOR
+                    done = put(36, colour(t.text)) && done;    // DWMWA_TEXT_COLOR
+                    done = put(34, colour(t.border)) && done;  // DWMWA_BORDER_COLOR
+                    m_coloured = coloured;
+                }
+                if (t.corners != TitleBar::Corners::System || m_cornered)
+                {
+                    done = put(33, static_cast<DWORD>(t.corners)) && done;   // DWMWA_WINDOW_CORNER_PREFERENCE: 0 as it is, 1 square, 2 round, 3 small
+                    m_cornered = t.corners != TitleBar::Corners::System;
+                }
+                if (t.backdrop != TitleBar::Backdrop::System || m_backed)
+                {
+                    done = put(38, static_cast<DWORD>(t.backdrop)) && done;  // DWMWA_SYSTEMBACKDROP_TYPE, Windows 11 22H2 on
+                    m_backed = t.backdrop != TitleBar::Backdrop::System;
+                }
+                return done;
             }
 
             bool setWindowSize(u32 width, u32 height) override
@@ -327,6 +373,13 @@ namespace nx
                 case WM_CLOSE:
                     m_quit = true;  // the window stays until the GPU has let go of it
                     return 0;
+                case WM_SETTINGCHANGE:
+                    // Apps were set to look dark or light: a frame that follows the system follows it.
+                    if (lParam && wcscmp(reinterpret_cast<const wchar_t*>(lParam), L"ImmersiveColorSet") == 0 && m_titleBar.dark < 0)
+                    {
+                        applyTitleBar();
+                    }
+                    break;
                 case WM_SETFOCUS:
                     m_focused = true;
                     return 0;
@@ -424,6 +477,8 @@ namespace nx
 
             HWND m_window = nullptr;
             HCURSOR m_pointer = nullptr;
+            TitleBar m_titleBar;
+            bool m_coloured = false, m_cornered = false, m_backed = false;   // set once, so put back when asked
             WINDOWPLACEMENT m_placement = {};
             bool m_fullscreen = false;
             InputState m_input;

@@ -115,6 +115,20 @@ namespace nx
     // The pointer's look over the window.
     enum class PointerShape : u8 { Arrow, Hand, Text, Crosshair, Wait, Move, ResizeAcross, ResizeUpDown, NotAllowed, Count };
 
+    // How Windows 11 draws a window's frame. Colours are 0xRRGGBB, or kSystem for the system's own.
+    struct TitleBar
+    {
+        static constexpr u32 kSystem = 0xFFFFFFFFu;
+        static constexpr u32 kNone = 0xFFFFFFFEu;   // a border that isn't drawn
+        enum class Corners : u8 { System, Square, Round, SmallRound };
+        enum class Backdrop : u8 { System, None, Mica, Acrylic, Tabbed };
+
+        int dark = -1;                 // -1 as the system's apps are, 0 light, 1 dark
+        u32 back = kSystem, text = kSystem, border = kSystem;
+        Corners corners = Corners::System;
+        Backdrop backdrop = Backdrop::System;
+    };
+
     class Platform
     {
     public:
@@ -173,6 +187,9 @@ namespace nx
         virtual bool setFullscreen(bool) { return false; }
         virtual bool fullscreen() const { return false; }
         virtual void setTitle(const char*) {}
+        // Windows 11's frame: dark or light, colours, corners and backdrop. False where it can't be, wholly or in part
+        // (Windows 10 has only dark and light, and other systems none of it).
+        virtual bool setTitleBar(const TitleBar&) { return false; }
         // Its inside, in pixels, while it isn't full-screen.
         virtual bool setWindowSize(u32, u32) { return false; }
         virtual void setPointer(PointerShape) {}

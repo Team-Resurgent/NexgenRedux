@@ -14,7 +14,7 @@ namespace nx
         int x360Gpu() { return xbox360::temperature(1); }
         int x360Memory() { return xbox360::temperature(2); }
         int x360Board() { return xbox360::temperature(3); }
-        Tray x360Tray() { return xbox360::tray(); }
+        int x360Tray() { return static_cast<int>(xbox360::tray()); }
         bool x360OpenTray() { return xbox360::moveTray(true); }
         bool x360CloseTray() { return xbox360::moveTray(false); }
         void x360Lights(u32 pattern) { xbox360::setLights(static_cast<u8>(pattern)); }
@@ -93,16 +93,79 @@ namespace nx
         bool windowVsync() { return g_vsync; }
         void windowSetVsync(bool on) { g_vsync = on; services().device->setWait(on); }
         PointerShape g_pointer = PointerShape::Arrow;
-        PointerShape windowPointer() { return g_pointer; }
-        void windowSetPointer(PointerShape shape)
+        // Enums go to and from scripts as whole ints: a smaller one leaves the rest of the register as it was.
+        int windowPointer() { return static_cast<int>(g_pointer); }
+        void windowSetPointer(int value)
         {
-            if (static_cast<u32>(shape) < static_cast<u32>(PointerShape::Count))
+            const PointerShape shape = static_cast<PointerShape>(value);
+            if (value >= 0 && value < static_cast<int>(PointerShape::Count))
             {
                 g_pointer = shape;
                 platform().setPointer(shape);
             }
         }
         bool windowFocused() { return platform().focused(); }
+
+        // Windows 11's frame, kept here and given to the window whole each time a part of it changes.
+        enum class TitleLook : u8 { System, Light, Dark };
+        TitleBar g_titleBar;
+        void titleBarChanged() { platform().setTitleBar(g_titleBar); }
+        int titleLook() { return g_titleBar.dark + 1; }
+        void setTitleLook(int value)
+        {
+            const TitleLook look = static_cast<TitleLook>(value);
+            g_titleBar.dark = look == TitleLook::Light ? 0 : look == TitleLook::Dark ? 1 : -1;
+            titleBarChanged();
+        }
+        u32 rgbOf(const Color& c)
+        {
+            const auto byte = [](float v) { return static_cast<u32>(v <= 0 ? 0 : v >= 1 ? 255 : v * 255.0f + 0.5f); };
+            return c.a <= 0 ? TitleBar::kSystem : (byte(c.r) << 16) | (byte(c.g) << 8) | byte(c.b);
+        }
+        Color colorOf(u32 rgb)
+        {
+            if (rgb >= TitleBar::kNone)
+            {
+                return Color{ 0, 0, 0, 0 };
+            }
+            return Color{ static_cast<float>((rgb >> 16) & 0xFF) / 255.0f, static_cast<float>((rgb >> 8) & 0xFF) / 255.0f, static_cast<float>(rgb & 0xFF) / 255.0f, 1 };
+        }
+        Color titleColor() { return colorOf(g_titleBar.back); }
+        void setTitleColor(const Color& c) { g_titleBar.back = rgbOf(c); titleBarChanged(); }
+        Color titleTextColor() { return colorOf(g_titleBar.text); }
+        void setTitleTextColor(const Color& c) { g_titleBar.text = rgbOf(c); titleBarChanged(); }
+        Color borderColor() { return colorOf(g_titleBar.border); }
+        void setBorderColor(const Color& c) { g_titleBar.border = rgbOf(c); titleBarChanged(); }
+        bool noBorder() { return g_titleBar.border == TitleBar::kNone; }
+        void setNoBorder(bool none)
+        {
+            g_titleBar.border = none ? TitleBar::kNone : TitleBar::kSystem;
+            titleBarChanged();
+        }
+        // What this Windows can do with its frame: colours, borders and corners from Windows 11 on, backdrops from its
+        // 2022 update (build 22621). The frame's own window, where there is one.
+        bool titleColors() { return windows::build() >= 22000 && platform().nativeWindow() != nullptr; }
+        bool backdrops() { return windows::build() >= 22621 && platform().nativeWindow() != nullptr; }
+        int corners() { return static_cast<int>(g_titleBar.corners); }
+        void setCorners(int value)
+        {
+            const TitleBar::Corners c = static_cast<TitleBar::Corners>(value);
+            if (value >= 0 && value <= static_cast<int>(TitleBar::Corners::SmallRound))
+            {
+                g_titleBar.corners = c;
+                titleBarChanged();
+            }
+        }
+        int backdrop() { return static_cast<int>(g_titleBar.backdrop); }
+        void setBackdrop(int value)
+        {
+            const TitleBar::Backdrop d = static_cast<TitleBar::Backdrop>(value);
+            if (value >= 0 && value <= static_cast<int>(TitleBar::Backdrop::Tabbed))
+            {
+                g_titleBar.backdrop = d;
+                titleBarChanged();
+            }
+        }
         bool windowMessage(const std::string& title, const std::string& text) { return platform().showMessage(title.c_str(), text.c_str(), false); }
         bool windowAsk(const std::string& title, const std::string& text) { return platform().showMessage(title.c_str(), text.c_str(), true); }
 
@@ -233,6 +296,40 @@ namespace nx
         b.function("bool get_darkMode() property", NX_FN(winDark), "Whether apps are set to look dark.");
         b.function("string get_clipboard() property", NX_FN(winClipboard), "The text that was copied.");
         b.function("void set_clipboard(const string &in) property", NX_FN(winSetClipboard), "Copies text, to paste elsewhere.");
+        b.names("");
+
+        b.enumType("TitleLook", "Whether the window's frame is light or dark, on Windows.");
+        b.enumValue("TitleSystem", static_cast<int>(TitleLook::System), "As the system's apps are set to look, and changing when they do. As it starts.");
+        b.enumValue("TitleLight", static_cast<int>(TitleLook::Light), "Light.");
+        b.enumValue("TitleDark", static_cast<int>(TitleLook::Dark), "Dark.");
+        b.enumType("Corners", "How the window's corners are drawn, on Windows 11.");
+        b.enumValue("CornersSystem", static_cast<int>(TitleBar::Corners::System), "As Windows draws them: round. As it starts.");
+        b.enumValue("CornersSquare", static_cast<int>(TitleBar::Corners::Square), "Square.");
+        b.enumValue("CornersRound", static_cast<int>(TitleBar::Corners::Round), "Round.");
+        b.enumValue("CornersSmall", static_cast<int>(TitleBar::Corners::SmallRound), "A little round.");
+        b.enumType("Backdrop", "What shows through the window's frame, on Windows 11.");
+        b.enumValue("BackdropSystem", static_cast<int>(TitleBar::Backdrop::System), "As Windows chooses. As it starts.");
+        b.enumValue("BackdropNone", static_cast<int>(TitleBar::Backdrop::None), "Plain.");
+        b.enumValue("BackdropMica", static_cast<int>(TitleBar::Backdrop::Mica), "Mica: the desktop behind it, blurred far into a tint, as Windows' own apps have.");
+        b.enumValue("BackdropAcrylic", static_cast<int>(TitleBar::Backdrop::Acrylic), "Acrylic: what is behind it, frosted.");
+        b.enumValue("BackdropTabbed", static_cast<int>(TitleBar::Backdrop::Tabbed), "Mica, more strongly tinted, as behind tabs.");
+        b.names("Windows");
+        b.function("bool get_titleColors() property", NX_FN(titleColors), "Whether the frame's colours, border and corners can be changed: on Windows 11. Elsewhere setting them does nothing.");
+        b.function("bool get_backdrops() property", NX_FN(backdrops), "Whether a backdrop can be chosen: on Windows 11 from its 2022 update on.");
+        b.function("TitleLook get_titleLook() property", NX_FN(titleLook), "Whether the window's frame is light or dark.");
+        b.function("void set_titleLook(TitleLook) property", NX_FN(setTitleLook), "Changes it: on Windows 10 too.");
+        b.function("Color get_titleColor() property", NX_FN(titleColor), "The colour of the title bar; see-through where it is the system's.");
+        b.function("void set_titleColor(const Color &in) property", NX_FN(setTitleColor), "Colours the title bar, on Windows 11, to suit the game. Anything see-through puts back the system's.");
+        b.function("Color get_titleTextColor() property", NX_FN(titleTextColor), "The colour of the title's words.");
+        b.function("void set_titleTextColor(const Color &in) property", NX_FN(setTitleTextColor), "Colours them, on Windows 11.");
+        b.function("Color get_borderColor() property", NX_FN(borderColor), "The colour of the line round the window.");
+        b.function("void set_borderColor(const Color &in) property", NX_FN(setBorderColor), "Colours it, on Windows 11.");
+        b.function("bool get_noBorder() property", NX_FN(noBorder), "Whether the line round the window is left out.");
+        b.function("void set_noBorder(bool) property", NX_FN(setNoBorder), "Leaves it out, on Windows 11, or puts back the system's.");
+        b.function("Corners get_corners() property", NX_FN(corners), "How the window's corners are drawn.");
+        b.function("void set_corners(Corners) property", NX_FN(setCorners), "Changes them, on Windows 11.");
+        b.function("Backdrop get_backdrop() property", NX_FN(backdrop), "What shows through the frame.");
+        b.function("void set_backdrop(Backdrop) property", NX_FN(setBackdrop), "Changes it, on Windows 11 from its 2022 update on: it shows in the title bar, the game covering the rest.");
         b.names("");
 
         b.section("Mac", "What only macOS has. Elsewhere `available` is false, readings are -1 or empty, and the rest do nothing.");

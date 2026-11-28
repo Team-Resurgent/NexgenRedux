@@ -1648,6 +1648,55 @@ What only Windows on a desktop has. Elsewhere `available` is false, readings are
 | `string Windows::get_clipboard() property` | The text that was copied. |
 | `void Windows::set_clipboard(const string &in) property` | Copies text, to paste elsewhere. |
 
+## TitleLook
+
+Whether the window's frame is light or dark, on Windows.
+
+| | |
+|---|---|
+| `TitleSystem` | As the system's apps are set to look, and changing when they do. As it starts. |
+| `TitleLight` | Light. |
+| `TitleDark` | Dark. |
+
+## Corners
+
+How the window's corners are drawn, on Windows 11.
+
+| | |
+|---|---|
+| `CornersSystem` | As Windows draws them: round. As it starts. |
+| `CornersSquare` | Square. |
+| `CornersRound` | Round. |
+| `CornersSmall` | A little round. |
+
+## Backdrop
+
+What shows through the window's frame, on Windows 11.
+
+| | |
+|---|---|
+| `BackdropSystem` | As Windows chooses. As it starts. |
+| `BackdropNone` | Plain. |
+| `BackdropMica` | Mica: the desktop behind it, blurred far into a tint, as Windows' own apps have. |
+| `BackdropAcrylic` | Acrylic: what is behind it, frosted. |
+| `BackdropTabbed` | Mica, more strongly tinted, as behind tabs. |
+| `bool Windows::get_titleColors() property` | Whether the frame's colours, border and corners can be changed: on Windows 11. Elsewhere setting them does nothing. |
+| `bool Windows::get_backdrops() property` | Whether a backdrop can be chosen: on Windows 11 from its 2022 update on. |
+| `TitleLook Windows::get_titleLook() property` | Whether the window's frame is light or dark. |
+| `void Windows::set_titleLook(TitleLook) property` | Changes it: on Windows 10 too. |
+| `Color Windows::get_titleColor() property` | The colour of the title bar; see-through where it is the system's. |
+| `void Windows::set_titleColor(const Color &in) property` | Colours the title bar, on Windows 11, to suit the game. Anything see-through puts back the system's. |
+| `Color Windows::get_titleTextColor() property` | The colour of the title's words. |
+| `void Windows::set_titleTextColor(const Color &in) property` | Colours them, on Windows 11. |
+| `Color Windows::get_borderColor() property` | The colour of the line round the window. |
+| `void Windows::set_borderColor(const Color &in) property` | Colours it, on Windows 11. |
+| `bool Windows::get_noBorder() property` | Whether the line round the window is left out. |
+| `void Windows::set_noBorder(bool) property` | Leaves it out, on Windows 11, or puts back the system's. |
+| `Corners Windows::get_corners() property` | How the window's corners are drawn. |
+| `void Windows::set_corners(Corners) property` | Changes them, on Windows 11. |
+| `Backdrop Windows::get_backdrop() property` | What shows through the frame. |
+| `void Windows::set_backdrop(Backdrop) property` | Changes it, on Windows 11 from its 2022 update on: it shows in the title bar, the game covering the rest. |
+
 ## Mac
 
 What only macOS has. Elsewhere `available` is false, readings are -1 or empty, and the rest do nothing.

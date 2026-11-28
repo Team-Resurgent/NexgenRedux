@@ -495,6 +495,18 @@ NX_TEST(scriptsAskTheWindowAndSystem)
                 check(Window::pointer == PointerHand && Window::focused);
                 check(!Window::message("Hello", "there") && !Window::ask("Well?", "Yes or no"));
 
+                // Windows 11's frame: kept as asked, and nothing to it where there is no window of its own.
+                check(!Windows::titleColors && !Windows::backdrops && Windows::titleLook == TitleSystem);
+                Windows::titleLook = TitleDark;
+                Windows::titleColor = Color(1, 0.5f, 0);
+                Windows::titleTextColor = Color(0, 0, 0, 0);
+                Windows::corners = CornersSquare;
+                Windows::backdrop = BackdropMica;
+                check(Windows::titleLook == TitleDark && abs(Windows::titleColor.g - 0.5f) < 0.01f && Windows::titleColor.a == 1);
+                check(Windows::titleTextColor.a == 0 && Windows::corners == CornersSquare && Windows::backdrop == BackdropMica);
+                Windows::noBorder = true;
+                check(Windows::noBorder && Windows::borderColor.a == 0);
+
                 // A clipboard of the game's own, where the system has none.
                 System::clipboard = "copied text";
                 check(System::clipboard == "copied text");

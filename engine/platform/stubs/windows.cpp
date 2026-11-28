@@ -11,6 +11,7 @@ namespace nx::windows
     int battery() { return -1; }
     bool charging() { return false; }
     bool darkMode() { return false; }
+    u32 build() { return 0; }
     std::string clipboard() { return {}; }
     bool setClipboard(const char*) { return false; }
 }

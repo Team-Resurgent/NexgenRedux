@@ -113,7 +113,8 @@ a compiler and the platform's SDK, downloads nothing, and uses no SDL or GLFW.
 - **Video** — MPEG-1 films with their sound, decoded as they play, shown as an image like any other.
 - **Assets** — loaded in the background, shared, kept warm and unloaded only when a budget needs the room.
 - **Input** — keyboard, mouse and four gamepads as actions that players can rebind.
-- **Window and system** — full-screen, size, title, vsync and the pointer on a computer; the clipboard (on consoles too), the system's own message boxes, opening links, the language and region, processors and battery.
+- **Window and system** — full-screen, size, title, vsync and the pointer on a computer, and a frame that follows Windows' dark
+  mode, coloured, squared or with Mica on Windows 11; the clipboard (on consoles too), the system's own message boxes, opening links, the language and region, processors and battery.
 - **Saving** — settings and scores, kept between runs; JSON, zip files read and made, zlib, gzip and deflate, numbers packed
   into bytes as file formats want, MD5, SHA-1, SHA-256 and CRC-32, base64, and random numbers from a seed that are the same on
   every machine.

@@ -1282,6 +1282,24 @@ int left = System::battery;                // 0 to 100, or -1 without one; Syste
 
 On Linux the clipboard needs wl-copy, xclip or xsel, and messages zenity, kdialog or xmessage. The System demo has them all.
 
+On Windows the window's frame is dark when Windows' apps are set to look dark, and changes when they do. Windows 11 lets a game
+dress it to suit its look:
+
+```cpp
+Windows::titleLook = TitleDark;                     // or TitleLight; TitleSystem follows Windows, as it starts
+if (Windows::titleColors)                           // Windows 11: colours, border and corners
+{
+    Windows::titleColor = Color(0.16f, 0.1f, 0.22f);  // the title bar; anything see-through puts back the system's
+    Windows::titleTextColor = Color(1, 0.7f, 0.25f);
+    Windows::borderColor = Color(1, 0.5f, 0.2f);      // or Windows::noBorder = true
+    Windows::corners = CornersSquare;                 // CornersRound, CornersSmall, CornersSystem
+}
+if (Windows::backdrops)                             // Windows 11 from its 2022 update
+    Windows::backdrop = BackdropMica;               // BackdropAcrylic, BackdropTabbed, BackdropNone
+```
+
+What a Windows can't do is left as it is, and nothing goes wrong asking; elsewhere they do nothing.
+
 ## What only an Xbox can do
 
 `Xbox::available` is true on an original Xbox. Its temperatures, fan, light, tray, drives and files are there, as are ways out:

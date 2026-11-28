@@ -47,6 +47,8 @@ namespace nx
         bool available();
         enum class Text : u8 { Version, Computer, User, Count };
         std::string text(Text what);
+        // Its build: 22000 and on is Windows 11. 0 if it can't be told, or this isn't Windows.
+        u32 build();
         // A file, folder or address, in what Windows opens it with.
         bool open(const char* what);
         // A file, selected in Explorer.

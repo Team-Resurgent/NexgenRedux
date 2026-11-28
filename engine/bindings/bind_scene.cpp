@@ -260,11 +260,11 @@ namespace nx
         float getBounce(const EntityRef* e) { return bodyValue(e, &Body3::bounce, &Body::bounce); }
         float getFriction(const EntityRef* e) { return bodyValue(e, &Body3::friction, &Body::friction); }
         bool getSolid(const EntityRef* e) { const Body* b = someBody(e); return b && b->solid; }
-        gpu::Blend getBlend(EntityRef* e)
+        int getBlend(EntityRef* e)   // a whole int, as scripts' enums are
         {
             const Appearance* a = appearanceOf(e);
             const Visual* v = visualOf(e);
-            return a ? a->blend : v ? v->blend : gpu::Blend::Alpha;
+            return static_cast<int>(a ? a->blend : v ? v->blend : gpu::Blend::Alpha);
         }
         void setSolid(bool v, EntityRef* e) { if (Body* b = bodyOf(e)) b->solid = v; }
         bool getOnGround(const EntityRef* e)

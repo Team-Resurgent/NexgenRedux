@@ -332,11 +332,12 @@ namespace nx
             w->padding[3] = bottom;
             w->changed();
         }
-        UiPlace getAlign(const Widget* w) { return w->align; }
+        // Whole ints, as scripts' enums are.
+        int getAlign(const Widget* w) { return static_cast<int>(w->align); }
         void setAlign(UiPlace v, Widget* w) { if (v <= UiPlace::Inherit) { w->align = v; w->changed(); } }
-        UiPlace getJustify(const Widget* w) { return w->justify; }
+        int getJustify(const Widget* w) { return static_cast<int>(w->justify); }
         void setJustify(UiPlace v, Widget* w) { if (v <= UiPlace::Inherit) { w->justify = v; w->changed(); } }
-        UiPlace getSelf(const Widget* w) { return w->self; }
+        int getSelf(const Widget* w) { return static_cast<int>(w->self); }
         void setSelf(UiPlace v, Widget* w) { if (v <= UiPlace::Inherit) { w->self = v; w->changed(); } }
         Color getColor(const Widget* w) { return w->color; }
         void setColor(const Color& v, Widget* w) { w->color = v; }

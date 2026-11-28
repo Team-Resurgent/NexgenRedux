@@ -37,19 +37,34 @@ namespace nx::windows
 
     bool available() { return true; }
 
+    namespace
+    {
+        // What it really is: GetVersionEx says less to programs that don't declare the newest.
+        bool version(OSVERSIONINFOW& info)
+        {
+            using RtlGetVersion = LONG(WINAPI*)(OSVERSIONINFOW*);
+            info = {};
+            info.dwOSVersionInfoSize = sizeof(info);
+            const HMODULE ntdll = GetModuleHandleW(L"ntdll.dll");
+            const auto get = ntdll ? reinterpret_cast<RtlGetVersion>(reinterpret_cast<void*>(GetProcAddress(ntdll, "RtlGetVersion"))) : nullptr;
+            return get != nullptr && get(&info) == 0;
+        }
+    }
+
+    u32 build()
+    {
+        OSVERSIONINFOW info;
+        return version(info) && info.dwMajorVersion >= 10 ? static_cast<u32>(info.dwBuildNumber) : 0;
+    }
+
     std::string text(Text what)
     {
         switch (what)
         {
         case Text::Version:
         {
-            // What it really is: GetVersionEx says less to programs that don't declare the newest.
-            using RtlGetVersion = LONG(WINAPI*)(OSVERSIONINFOW*);
-            OSVERSIONINFOW info = {};
-            info.dwOSVersionInfoSize = sizeof(info);
-            const HMODULE ntdll = GetModuleHandleW(L"ntdll.dll");
-            const auto get = ntdll ? reinterpret_cast<RtlGetVersion>(reinterpret_cast<void*>(GetProcAddress(ntdll, "RtlGetVersion"))) : nullptr;
-            if (get == nullptr || get(&info) != 0)
+            OSVERSIONINFOW info;
+            if (!version(info))
             {
                 return "Windows";
             }

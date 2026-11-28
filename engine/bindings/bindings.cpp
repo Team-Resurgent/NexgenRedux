@@ -332,6 +332,9 @@ namespace nx
             memFree(block);
         }
         void endPicture(Canvas* c) { c->endTarget(); }
+        // Enums go to scripts as whole ints: a smaller one leaves the rest of the register as it was.
+        int canvasBlend(const Canvas* c) { return static_cast<int>(c->blend()); }
+        int canvasFilter(const Canvas* c) { return static_cast<int>(c->filter()); }
 
         // --- Batches: many sprites of one picture, kept, and drawn at once ---
 
@@ -1395,9 +1398,9 @@ namespace nx
             b.method("void scale(float x, float y)", NX_METHOD(Canvas, scale), "Resizes it.");
             b.method("float get_alpha() const property", NX_METHOD(Canvas, alpha), "How opaque what is drawn next will be.");
             b.method("void set_alpha(float) property", NX_METHOD(Canvas, setAlpha), "Fades everything drawn next.");
-            b.method("Blend get_blend() const property", NX_METHOD(Canvas, blend), "How what is drawn next combines with what is behind.");
+            b.method("Blend get_blend() const property", NX_OBJ_LAST(canvasBlend), "How what is drawn next combines with what is behind.");
             b.method("void set_blend(Blend) property", NX_METHOD(Canvas, setBlend), "Chooses how it combines.");
-            b.method("Filter get_filter() const property", NX_METHOD(Canvas, filter), "How images that are drawn larger will look.");
+            b.method("Filter get_filter() const property", NX_OBJ_LAST(canvasFilter), "How images that are drawn larger will look.");
             b.method("void set_filter(Filter) property", NX_METHOD(Canvas, setFilter), "Chooses how images are scaled.");
             b.method("void clip(float x, float y, float w, float h)", NX_METHOD(Canvas, clip), "Draws nothing outside an area. Clips within clips overlap.");
             b.method("void noClip()", NX_METHOD(Canvas, noClip), "Removes all clips.");

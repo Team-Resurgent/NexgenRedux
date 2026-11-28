@@ -1047,6 +1047,45 @@ void intro()
 A `Tween` is a number that moves by itself. There is nothing to update: read `value` when drawing. `go()` starts from wherever
 it is, so changing course never jumps.
 
+## Threads
+
+A coroutine shares the frame; a `Thread` doesn't. It runs a script file of its own, from its `void main()`, on a thread of its
+own, in an engine of its own: strings, arrays, maths, Json, Data and Random, and nothing that draws, plays or loads. It shares
+nothing with the screen but `Channel`s: text passed one way or the other, first in, first out. Channels of the same name are the
+same, in every thread.
+
+```cpp
+// asset:worker.as
+void main()
+{
+    Channel jobs("jobs"), results("results");
+    while (!Worker::stopping)                    // true as the screen closes
+    {
+        string job = jobs.demand(0.5f);          // waits for one, here only
+        if (!job.isEmpty()) results.push(work(job));
+    }
+}
+```
+
+```cpp
+Thread@ worker = Thread("asset:worker.as");
+Channel jobs("jobs"), results("results");
+
+void onEnter() { worker.start(); jobs.push("level 3"); }
+
+void update(float dt)
+{
+    string done;
+    while (results.pop(done)) use(done);         // never waits
+    if (!worker.error.isEmpty()) print(worker.error);
+}
+```
+
+Numbers go as text and anything with parts as Json's. A thread is asked to stop, and waited for, when nothing holds it any more,
+as its screen closes: its `demand` and `Worker::sleep` end at once, and long loops should look at `Worker::stopping`. Up to 8 at
+once. `System::processors` says how many can truly run together: on the original Xbox one, so a thread there gets the time the
+screen leaves. The Threads demo draws the Mandelbrot set this way while the screen turns smoothly.
+
 ## Networking
 
 Nothing here waits: ask, and look each update at what has come. Who sends what is up to you, so never trust what arrives.

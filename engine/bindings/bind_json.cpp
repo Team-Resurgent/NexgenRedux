@@ -320,7 +320,7 @@ namespace nx
         return strncmp(name, "http", 4) != 0 && resolveAsset(s, name, path, sizeof(path)) && s.platform->readFile(path, out, MemTag::General);
     }
 
-    void bindJson(Binder& b)
+    void bindJsonValue(Binder& b)
     {
         b.refType("Json", 0, "Numbers, text and flags, in lists and by name: for files, and for what comes from the web. One that isn't there is null, and can be asked things all the same: `j[\"player\"][\"score\"].number()`.");
         b.behaviour(asBEHAVE_FACTORY, "Json@ f()", NX_FN(makeJson));
@@ -360,6 +360,11 @@ namespace nx
         b.method("void add(Json@+ value)", NX_OBJ_LAST(jsonAddJson), "The same, with a copy of another.");
         b.method("void remove(const string &in key)", NX_OBJ_LAST(jsonRemove), "Takes a part out.");
         b.method("void remove(uint index)", NX_OBJ_LAST(jsonRemoveAt), "The same, by number.");
+    }
+
+    void bindJson(Binder& b)
+    {
+        bindJsonValue(b);
 
         b.names("Assets");
         b.function("string read(const string &in name)", NX_FN(readText), "What is in a text file, at once. If the screen has written one of that name, that is what it is.");

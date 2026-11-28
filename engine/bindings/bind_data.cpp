@@ -3,8 +3,11 @@
 #include "net/digest.h"
 #include "save/save.h"
 
+#include <atomic>
 #include <math.h>
+#include <stdint.h>
 #include <string.h>
+#include <time.h>
 
 // Pixels that scripts read and write, kept as PNGs; bytes squeezed, fingerprinted and written as text; and
 // random numbers of their own, from a seed.
@@ -460,6 +463,13 @@ namespace nx
             }
             return r;
         }
+        // In a thread, which has no shared generator: from the clock and a count.
+        RandomRef* makeRandomOwn()
+        {
+            static std::atomic<u32> made{ 0 };
+            return makeRandom(static_cast<u32>(reinterpret_cast<uintptr_t>(&made)) ^ (++made * 2654435761u) ^ static_cast<u32>(clock()));
+        }
+
         RandomRef* makeRandomAny()
         {
             u32& g = services().random;
@@ -572,6 +582,11 @@ namespace nx
         b.function("Pixels@ pixels(const string &in name)", NX_FN(loadPixels), "A picture's pixels, read now: `asset:`, `global:` or `own:`, or `saved:` for one that Pixels.save kept. Null if there is none.");
         b.names("");
 
+        bindBytes(b, false);
+    }
+
+    void bindBytes(Binder& b, bool thread)
+    {
         b.section("Data", "Bytes in strings: squeezed, fingerprinted, and written as text. A string can hold any bytes.");
         b.names("Data");
         b.function("string compress(const string &in bytes, int level = 6)", NX_FN(compressText), "Smaller, in zlib's format, which most languages can read: level 1 is quickest, 9 smallest.");
@@ -587,7 +602,14 @@ namespace nx
 
         b.section("Random", "Random numbers of a script's own, from a seed: the same seed gives the same numbers, in the same order, on every machine. For worlds made from a number, replays, and dealing the same cards twice.");
         b.refType("Random", 0, "A generator of its own.");
-        b.behaviour(asBEHAVE_FACTORY, "Random@ f()", NX_FN(makeRandomAny));
+        if (thread)
+        {
+            b.behaviour(asBEHAVE_FACTORY, "Random@ f()", NX_FN(makeRandomOwn));
+        }
+        else
+        {
+            b.behaviour(asBEHAVE_FACTORY, "Random@ f()", NX_FN(makeRandomAny));
+        }
         b.behaviour(asBEHAVE_FACTORY, "Random@ f(uint seed)", NX_FN(makeRandom));
         b.behaviour(asBEHAVE_ADDREF, "void f()", NX_METHOD(RandomRef, addRef));
         b.behaviour(asBEHAVE_RELEASE, "void f()", NX_METHOD(RandomRef, release));
@@ -599,6 +621,9 @@ namespace nx
         b.method("void set_seed(uint) property", NX_OBJ_LAST(randomSetSeed), "Starts again from a seed.");
         b.method("string get_state() const property", NX_OBJ_LAST(randomState), "Where it has got to, as text, to keep in a save.");
         b.method("void set_state(const string &in) property", NX_OBJ_LAST(randomSetState), "Goes on from where it had got to.");
-        b.function("float randomNormal(float mean = 0, float deviation = 1)", NX_FN(sharedNormal), "From the shared generator, as Random.normal.");
+        if (!thread)
+        {
+            b.function("float randomNormal(float mean = 0, float deviation = 1)", NX_FN(sharedNormal), "From the shared generator, as Random.normal.");
+        }
     }
 }

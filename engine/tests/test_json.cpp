@@ -1,5 +1,6 @@
 #include "test.h"
 
+#include "base/thread.h"
 #include "base/json_value.h"
 #include "rig.h"
 
@@ -379,4 +380,78 @@ NX_TEST(scriptsAskTheWindowAndSystem)
         }
     )");
     NX_EXPECT(!r.screens.failed() && strcmp(r.save.get("done", ""), "y") == 0);
+}
+
+NX_TEST(scriptsRunOnThreads)
+{
+    Rig r;
+    r.platform.files["showcase/shapes/asset/square.as"] = R"(
+        void main()
+        {
+            Channel jobs("jobs"), results("results");
+            Json totals;
+            while (!Worker::stopping)
+            {
+                string job = jobs.demand(5);
+                if (job == "end" || job.isEmpty()) break;
+                double n = parseFloat(job);
+                results.push(formatFloat(n * n, "", 0, 0));
+            }
+            results.push("done " + Data::sha1("abc").substr(0, 6));
+        }
+    )";
+    r.platform.files["showcase/shapes/asset/broken.as"] = "void main() { array<int> a; a[3] = 1; }";
+    r.platform.files["showcase/shapes/asset/forever.as"] = "void main() { uint n = 0; while (true) { n++; if (n % 1000 == 0) Worker::sleep(0); } }";
+    open(r, R"(
+        class A : Screen
+        {
+            Thread@ squares = Thread("asset:square.as");
+            Thread@ broken = Thread("asset:broken.as");
+            Thread@ forever = Thread("asset:forever.as");
+            Channel jobs("jobs"), results("results");
+            array<string> got;
+            void check(bool good) { if (!good) { array<int> nope; nope[1] = 0; } }
+            void onEnter()
+            {
+                check(!squares.started && squares.start() && squares.started);
+                for (int i = 1; i <= 5; i++) jobs.push("" + i);
+                jobs.push("end");
+                broken.start();
+                forever.start();
+                check(!Worker::inThread);
+            }
+            void update(float dt)
+            {
+                string value;
+                while (results.pop(value)) got.insertLast(value);
+                if (got.length() == 6 && !squares.running && !broken.running)
+                {
+                    check(got[0] == "1" && got[1] == "4" && got[4] == "25" && got[5] == "done a9993e");
+                    check(broken.error.findFirst("Index out of bounds") >= 0 && squares.error.isEmpty());
+                    check(forever.running);
+                    forever.stop();
+                    forever.wait();
+                    check(!forever.running && forever.error.isEmpty());
+                    Save::set("done", "y");
+                }
+            }
+        }
+    )");
+    for (int i = 0; i < 3000 && strcmp(r.save.get("done", ""), "y") != 0 && !r.screens.failed(); i++)
+    {
+        r.step();
+        sleepMilliseconds(1);
+    }
+    NX_EXPECT(!r.screens.failed() && strcmp(r.save.get("done", ""), "y") == 0);
+
+    // What can't be: no such file, no main(), a mistake in it, and the screen sleeping or waiting.
+    r.platform.files["showcase/shapes/asset/nomain.as"] = "void other() {}";
+    r.platform.files["showcase/shapes/asset/wrong.as"] = "void main() { nonsense(); }";
+    for (const char* code : { "Thread t(\"asset:none.as\");", "Thread t(\"asset:nomain.as\");", "Thread t(\"asset:wrong.as\");", "Worker::sleep(1);", "Channel c(\"x\"); c.demand(1);" })
+    {
+        Rig bad;
+        bad.platform.files = r.platform.files;
+        open(bad, (std::string("class A : Screen { void onEnter() { ") + code + " } }").c_str());
+        NX_EXPECT(bad.screens.failed());
+    }
 }

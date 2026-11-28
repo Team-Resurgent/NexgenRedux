@@ -95,7 +95,7 @@ a compiler and the platform's SDK, downloads nothing, and uses no SDL or GLFW.
 ## Features
 
 - **Scripts** — AngelScript 2.39.0. Each screen is one folder with one script; a mistake in it shows its file and line, and
-  never takes the app down. Coroutines, tweens, live reload while you edit, and a debugger for VS Code that shows the entities as they run and changes them.
+  never takes the app down. Coroutines, tweens, threads with channels, live reload while you edit, and a debugger for VS Code that shows the entities as they run and changes them.
 - **2D drawing** — shapes, polygons, paths, ellipses, meshes of pictures, masks, images, sprite sheets, nine-slice, tiling,
   scalable text, clipping and blending, batched, on any shape of screen; pixels that scripts read and write, kept as PNGs, and
   screenshots.

@@ -5,6 +5,10 @@
 // Windows, Xbox One / Series and the original Xbox, whose SDK has the same calls.
 #if defined(_XBOX)
 #include <xtl.h>
+#if defined(_XBOX_VER) && _XBOX_VER >= 200
+extern "C" void nx360ThreadBegan(void* top);
+extern "C" void nx360ThreadEnded(void);
+#endif
 #else
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -24,7 +28,15 @@ namespace nx
         DWORD WINAPI threadMain(LPVOID data)
         {
             Start* start = static_cast<Start*>(data);
+#if defined(_XBOX_VER) && _XBOX_VER >= 200
+            // So that AngelScript can tell this thread from others (base/thread_as360.cpp).
+            volatile char top = 0;
+            nx360ThreadBegan(const_cast<char*>(&top));
             start->function(start->user);
+            nx360ThreadEnded();
+#else
+            start->function(start->user);
+#endif
             return 0;
         }
     }

@@ -1543,6 +1543,8 @@ namespace nx
         }
     }
 
+    void bindColorType(Binder& binder) { bindColor(binder); }
+
     bool bindEngine(Binder& binder, Services& s)
     {
         s.host->engine()->SetUserData(&s);
@@ -1555,6 +1557,7 @@ namespace nx
         bindSave(binder);
         bindJson(binder);
         bindData(binder);
+        bindThreads(binder);
         bindPath(binder);
         bindScene(binder);
         bindSpace(binder);

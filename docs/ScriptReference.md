@@ -576,6 +576,44 @@ A generator of its own.
 | `void set_state(const string &in) property` | Goes on from where it had got to. |
 | `float randomNormal(float mean = 0, float deviation = 1)` | From the shared generator, as Random.normal. |
 
+## Threads
+
+Scripts of their own, each on a thread of its own, for work that would hold up the screen: making a world, finding a way, squeezing a file. A thread's script has strings, arrays, maths, Json, Data and Random, and nothing that draws, plays or loads; it begins at its `void main()`, and shares nothing with the screen but what goes through channels. On the original Xbox, with one processor, a thread runs in the time the screen leaves.
+
+| | |
+|---|---|
+
+## Channel
+
+Text passed from one thread to another, first in, first out, and safe to use from any of them. Channels of the same name are the same channel, in every thread. Numbers go as text, and anything with parts as Json's text.
+
+| | |
+|---|---|
+| `string get_name() const property` | What it is called. |
+| `void push(const string &in value)` | Puts one at the end. |
+| `bool pop(string &out value)` | Takes the first, if there is one: false if there isn't. Never waits. |
+| `string pop()` | Takes the first, or gives empty text if there is none. |
+| `string peek()` | The first, left where it is. |
+| `string demand(float seconds = -1)` | In a thread: waits for one, for so many seconds or for ever, and takes it; empty if none came, or the thread is asked to stop. |
+| `uint get_count() property` | How many are waiting. |
+| `void clear()` | Takes them all away. |
+
+## Thread
+
+A script file run on a thread of its own. It is asked to stop, and waited for, when nothing holds it any more: as its screen closes.
+
+| | |
+|---|---|
+| `bool start()` | Runs its main(), once. |
+| `bool get_started() const property` | Whether it has been started. |
+| `bool get_running() const property` | Whether its main() is still going. |
+| `string get_error() property` | What went wrong in it, with its line, or empty. |
+| `void stop()` | Asks it to stop: its waits end, and Worker::stopping is true. |
+| `void wait()` | Waits until its main() has returned: for ever, if it never does. stop() first to end it sooner. |
+| `void Worker::sleep(float seconds)` | In a thread: waits so long, waking at once if it is asked to stop. 0 lets others run. |
+| `bool Worker::get_stopping() property` | In a thread: whether it has been asked to stop, as its screen closes. Long loops should look, and return. |
+| `bool Worker::get_inThread() property` | Whether the script running is a thread's. |
+
 ## Paths and noise
 
 Ways for things to follow, and smooth randomness to make worlds with.

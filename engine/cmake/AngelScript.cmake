@@ -11,7 +11,12 @@ set(_as_addons
 
 add_library(nx_angelscript STATIC ${_as_core} ${_as_addons})
 target_include_directories(nx_angelscript SYSTEM PUBLIC ${_as}/angelscript/include ${_as}/add_on)
-target_compile_definitions(nx_angelscript PUBLIC AS_NO_THREADS AS_NO_EXCEPTIONS)
+# Threads on: each script thread has an engine of its own, and AngelScript keeps which context is running per thread.
+target_compile_definitions(nx_angelscript PUBLIC AS_NO_EXCEPTIONS)
+if(XBOXOG)
+  # The original Xbox has only the narrow one; AngelScript gives it no name, so the two are the same.
+  target_compile_definitions(nx_angelscript PRIVATE CreateSemaphoreW=CreateSemaphoreA)
+endif()
 
 # Windows on Arm: AngelScript's calls straight into native code aren't finished for MSVC there (as_config.h says so, and
 # they crash), so scripts call the engine the portable way, as every platform can.
@@ -57,4 +62,10 @@ if(XBOX360)
   # Both are 32 bits here but not the same type (one unsigned int, one unsigned long), and AngelScript
   # takes uintptr_t and size_t to be the same one.
   target_compile_options(nx_angelscript PUBLIC -U__UINTPTR_TYPE__ -D__UINTPTR_TYPE__=__SIZE_TYPE__)
+  # Its compiler isn't one that as_config.h knows the threads of, so it would build without them, and script threads would
+  # share one running context. The console has Windows' threads, given to AngelScript through a small windows.h of ours
+  # (base/as360), since the real one needs the whole console SDK and would change how AngelScript is configured.
+  # AS_XENON gives it the console's atomic counts, through the same; with the portable calls, nothing else changes.
+  target_compile_definitions(nx_angelscript PRIVATE AS_WINDOWS_THREADS AS_XENON)
+  target_include_directories(nx_angelscript BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/base/as360)
 endif()

@@ -88,6 +88,14 @@ namespace nx
     void bindXbox(Binder& binder);
     // bind_data.cpp
     void bindData(Binder& binder);
+    // Data and Random; a thread's own, without what needs the screen.
+    void bindBytes(Binder& binder, bool thread);
+    // bind_json.cpp: the Json type alone.
+    void bindJsonValue(Binder& binder);
+    // bindings.cpp: Color.
+    void bindColorType(Binder& binder);
+    // bind_threads.cpp
+    void bindThreads(Binder& binder);
     struct Pixels;
     // The last frame shown; nullptr where the GPU can't read it back, or in the middle of drawing.
     Pixels* takeScreenshot();

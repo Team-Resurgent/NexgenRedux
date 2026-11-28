@@ -87,7 +87,44 @@ one blend mode goes to the GPU together, so sort by image where you can.
 
 `rich` draws a paragraph with some of it marked: `[color=orange]`, `[b]`, `[u]` and `[s]`, each ended with `[/color]`, `[/b]`,
 `[/u]` or `[/s]`, and `[[` for a bracket itself. Colours are names (white, black, red, green, blue, yellow, orange, pink, purple,
-cyan, gray) or `#rrggbb`. It wraps as `paragraph` does, and `richHeight` says how tall it will be.
+cyan, gray) or `#rrggbb`. It wraps as `paragraph` does, and `richHeight` says how tall it will be. Both take an alignment, and
+`AlignJustify` spreads each line but the last of a paragraph to fill the width, as a book's are.
+
+### Fonts drawn in pixels
+
+`Assets::font` reads SSFN fonts, sharp at any size, and BMFont `.fnt` files too, with their one picture beside them, as BMFont,
+Hiero and Littera write them: the size is a line's height, and 0 is as it was drawn. `Assets::imageFont` reads a picture of
+letters side by side with a column of one colour between each, given in the order they come:
+
+```cpp
+Font@ pixel = Assets::imageFont("global:font/pixel.png", " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?:-+=\'()/%", 21);
+Font@ chunky = Assets::font("global:font/chunky.fnt", 36);
+
+c.filter = FilterNearest;                          // pixels stay square
+c.paragraph(pixel, "SPREAD TO FILL ITS WIDTH.", 50, 500, 560, White, AlignJustify);
+c.filter = FilterLinear;
+```
+
+Their own colours are kept and tinted by the text's, so white shows them as they are. Both are in `global:font`, made by
+`engine/tools/make_pixel_fonts.py`. The cook tool leaves pictures in a folder called `font` or `fonts` as they are, so that they
+stay sharp and image fonts can be read pixel by pixel.
+
+### Sprite batches
+
+A `Batch` keeps many sprites of one picture from frame to frame and draws them all at once: a crowd, bullets, a starfield, a map
+of tiles. Each has a place, a size, a turn about its middle, a part of the picture and a colour, and is changed by its number:
+
+```cpp
+Batch@ stars = Batch(Assets::texture("global:picture/sprite-wisp.png"));
+for (uint i = 0; i < 1500; i++)
+    stars.addFrame(4, 2, i % 8, random(0, 1280), random(0, 720), 16, 16, Color(1, 1, 1, 0.3f));
+
+stars.move(7, x, y, degrees);                      // in update()
+stars.frame(7, 4, 2, frame);
+c.batch(stars);                                    // in draw(): all of them, moved and tinted if asked
+```
+
+The Curves and Batches demo moves fifteen hundred every frame, at 60 frames a second on the original Xbox.
 
 ### Polygons, paths, meshes and masks
 
@@ -301,12 +338,20 @@ Scene::rope(lamp, null, lamp.position, hook, 120);         // no further apart t
 Scene::spring(bob, null, bob.position, hook, 2, 0.2f);     // bounces twice a second, settling slowly
 Scene::slider(lift, null, lift.position, Vec2(0, 1), -200, 0);   // along a line, between two places
 Scene::drag(rock, mouse);                                  // pulled softly, as a hand would; dragTo moves it on
+Scene::wheel(wheel, buggy, Vec2(0, 1), 4, 0.7f);           // turns freely, sprung up and down: four bounces a second
+Scene::pulley(lift, weight, top1, top2, lift.position, weight.position);   // over two fixed places: one up, one down
+Scene::gear(big, small, 2);                                // small turns twice as far, the other way
+Scene::friction(puck, null, 1);                            // the ground seen from above: slows it, as hard as its weight
+Scene::follow(cart, balloon, 3);                           // pushed to where it is now from cart, wherever cart goes
 Scene::unjoin(rock);                                       // every joint it is in
 ```
 
+`Scene::motor` drives wheels as it does hinges. `followTarget` says where from the first the second is pushed to now.
+
 `Scene::contact(a, b, at, normal, impulse)` says whether two touched in the last step, where, which way and how hard: for a knock
 as loud as the hit, or sparks where it was. The Contraptions demo has a car on hills, a lamp on a spring, a weight on a rope,
-a block on a rail, a door, and platforms that balls come up through.
+a block on a rail, a door, and platforms that balls come up through; the Machines demo a buggy on sprung wheels that a balloon
+follows, a lift on a pulley that rocks weigh down, and a train of gears.
 
 ## Three dimensions
 
@@ -878,7 +923,7 @@ screen is instant, until the budget needs the room. A missing image draws as a c
 |---|---|
 | Images | PNG, JPEG, TGA, BMP and GIF, up to 2048 pixels a side |
 | Sounds | WAV and Ogg Vorbis; the cook tool makes MP3 and FLAC into these, and short sounds into ADPCM |
-| Fonts | SSFN |
+| Fonts | SSFN, BMFont (.fnt) and image fonts |
 | Models | glTF 2.0 (`.glb`, `.gltf`), FBX, OBJ, STL and PLY. Pictures in them up to 4096 pixels a side, made smaller if need be |
 
 ## Sound
@@ -1026,6 +1071,22 @@ On the plane, give it `Vec2`s with `add` and ask `at2` and `direction2`. `neares
 `noise(x, y, z)` is smooth randomness, -1 to 1, with hills and dips about a unit apart and the same at the same place every time:
 scale the place for bigger or smaller ones, and move through `z` for noise that changes over time. `fractalNoise` adds finer
 layers, for land, clouds and fire; `noiseSeed` picks another pattern.
+
+A `Curve` is a Bezier curve, as drawing programs make: it starts at its first control point, ends at its last, and is pulled
+towards those between without passing through them. It is asked for by `t`, from 0 to 1:
+
+```cpp
+array<Vec2> controls = { Vec2(80, 400), Vec2(140, 130), Vec2(380, 120), Vec2(580, 380) };
+Curve@ road = Curve(controls);
+c.polyline(road.points(64), 6, Gray);              // 64 places along it, to draw
+Vec2 at = road.at(t), heading = road.slope(t).normalized();
+Curve@ middle = road.part(0.4f, 0.6f);             // a curve of its own
+```
+
+`triangulate` cuts a polygon, concave too, into triangles, three corner indices each, for `Canvas.mesh` or convex pieces for
+physics; `isConvex` says whether it bulges out at every corner. A `Vec2` has `length`, `normalized`, `distance`, `angle`,
+`rotated`, `perpendicular` and `cross`. `toLinear` and `toGamma` turn a colour into the light it stands for and back, to mix lights
+as they really would.
 
 ## Coroutines and tweens
 
@@ -1281,6 +1342,35 @@ A string holds any bytes, and `Data` works on them: `compress` and `uncompress` 
 ```cpp
 string packed = Data::base64(Data::compress(level.write()));   // small enough to share as a code
 string sum = Data::sha256(Assets::read("asset:level.json"));  // has it changed?
+```
+
+`gzip` and `gunzip` make and read `.gz` files; `deflate` and `inflate` are the same with nothing round it, as some servers and
+formats want; `crc32` is the check that zip, gzip and PNG files keep.
+
+`Packed` lays numbers and text out in bytes as a file format or another program wants them, and reads them back in the same
+order: bytes, 16, 32 and 64-bit whole numbers, floats, doubles, text that ends in a zero or fills so many bytes. It is
+little-endian unless `bigEndian` is set. `whole` is false if more was read than there was.
+
+```cpp
+Packed header(Assets::read("asset:level.bin"));
+uint magic = header.readU32();
+int width = header.readI16(), height = header.readI16();
+string name = header.readFixed(16);
+```
+
+A `Zip` reads a zip file's files, or puts some together to make one: a level pack, a player's mod, a save with its pictures.
+`Assets::pixelsFrom` turns a picture's bytes, from a zip or anywhere else, into `Pixels`:
+
+```cpp
+Zip pack(Assets::read("own:mod.zip"));
+for (uint i = 0; i < pack.count; i++)
+    if (pack.name(i).findLast(".png") > 0)
+        pictures.insertLast(Assets::pixelsFrom(pack.read(pack.name(i))));
+
+Zip out;
+out.add("level.json", level.write());
+out.add("shot.png", App::screenshot().png());
+string file = out.bytes;                           // any zip program opens it
 ```
 
 ### Random numbers from a seed

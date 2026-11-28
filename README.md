@@ -96,12 +96,12 @@ a compiler and the platform's SDK, downloads nothing, and uses no SDL or GLFW.
 
 - **Scripts** — AngelScript 2.39.0. Each screen is one folder with one script; a mistake in it shows its file and line, and
   never takes the app down. Coroutines, tweens, threads with channels, live reload while you edit, and a debugger for VS Code that shows the entities as they run and changes them.
-- **2D drawing** — shapes, polygons, paths, ellipses, meshes of pictures, masks, images, sprite sheets, nine-slice, tiling,
-  scalable text, clipping and blending, batched, on any shape of screen; pixels that scripts read and write, kept as PNGs, and
-  screenshots.
+- **2D drawing** — shapes, polygons, paths, Bezier curves, ellipses, meshes of pictures, masks, images, sprite sheets and
+  batches of thousands, nine-slice, tiling, scalable text and fonts drawn in pixels (BMFont and image fonts), justified,
+  clipping and blending, batched, on any shape of screen; pixels that scripts read and write, kept as PNGs, and screenshots.
 - **Scenes** — entities with behaviours, prefabs, tile maps, particles, collision and 2D physics (circles, boxes, polygons,
-  hills of chains, platforms solid from above, and hinges with motors, welds, ropes, springs, rails and dragging), described in
-  plain text files.
+  hills of chains, platforms solid from above, and hinges with motors, welds, ropes, springs, rails, sprung wheels, pulleys,
+  gears, friction from above, following and dragging), described in plain text files.
 - **3D** — glTF, FBX, OBJ, STL and PLY models, with animation (crossfades, blends by speed, layers, root motion, heads that look, limbs that reach, states and ragdolls), lights, shadows, fog, sky, water and mist; hills and endless land that streams as you go; worlds of blocks to dig and build in; rigid
   bodies and characters that walk; culling and levels of detail; ray-marched shapes; particles; split screen.
 - **Shaders** — bloom, blur, decals, ambient occlusion, screen-space reflections, depth of field with bokeh and auto exposure where the GPU can, colour grading with looks and .cube tables (on the original Xbox too), and effects of your own over the picture (with depth and the sun, for god rays) or on things: one file for every GPU that has shaders.
@@ -114,8 +114,9 @@ a compiler and the platform's SDK, downloads nothing, and uses no SDL or GLFW.
 - **Assets** — loaded in the background, shared, kept warm and unloaded only when a budget needs the room.
 - **Input** — keyboard, mouse and four gamepads as actions that players can rebind.
 - **Window and system** — full-screen, size, title, vsync and the pointer on a computer; the clipboard (on consoles too), the system's own message boxes, opening links, the language and region, processors and battery.
-- **Saving** — settings and scores, kept between runs; JSON, zlib compression, MD5, SHA-1 and SHA-256, base64, and random
-  numbers from a seed that are the same on every machine.
+- **Saving** — settings and scores, kept between runs; JSON, zip files read and made, zlib, gzip and deflate, numbers packed
+  into bytes as file formats want, MD5, SHA-1, SHA-256 and CRC-32, base64, and random numbers from a seed that are the same on
+  every machine.
 - **Cook tool** — turns images into compressed textures, sounds into ADPCM, Ogg or WAV (MP3 and FLAC too) and every kind of model into one, under the same names; a
   command and a window, for Windows, Linux and macOS on x64 and arm64.
 

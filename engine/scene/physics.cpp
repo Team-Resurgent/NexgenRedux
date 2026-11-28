@@ -504,6 +504,11 @@ namespace nx
         {
             return;
         }
+        if (j.kind >= JointKind::Wheel)
+        {
+            prepareMore(j, dt);
+            return;
+        }
         Rigid& a = m_rigid[j.rigidA];
         j.fromA = { j.localA.x * a.c - j.localA.y * a.s, j.localA.x * a.s + j.localA.y * a.c };
         Vec2 otherEnd = j.localB;
@@ -646,6 +651,11 @@ namespace nx
     {
         if (!j.active)
         {
+            return;
+        }
+        if (j.kind >= JointKind::Wheel)
+        {
+            solveMore(j);
             return;
         }
         Rigid& a = m_rigid[j.rigidA];
@@ -881,6 +891,345 @@ namespace nx
         return m_joints.push(j);
     }
 
+    bool World::wheel(u32 a, u32 b, Vec2 axis, float frequency, float damping, float motorSpeed, float motorTorque)
+    {
+        const Entity* ea = find(a);
+        const Entity* eb = b ? find(b) : nullptr;
+        if (ea == nullptr || axis.dot(axis) < 1e-8f || !join(a, b, ea->position, 0))
+        {
+            return false;
+        }
+        Joint& j = m_joints[m_joints.count() - 1];
+        j.kind = JointKind::Wheel;
+        axis = axis / sqrtf(axis.dot(axis));
+        const float c = eb ? cosf(eb->rotation * kDegrees) : 1, s = eb ? sinf(eb->rotation * kDegrees) : 0;
+        j.localAxis = { axis.x * c + axis.y * s, -axis.x * s + axis.y * c };
+        j.frequency = frequency > 0 ? frequency : 0;
+        j.damping = damping > 0 ? damping : 0;
+        j.motor = motorTorque > 0;
+        j.motorSpeed = -motorSpeed * kDegrees;
+        j.motorTorque = motorTorque;
+        return true;
+    }
+
+    bool World::pulley(u32 a, u32 b, Vec2 groundA, Vec2 groundB, Vec2 atA, Vec2 atB, float ratio)
+    {
+        const Entity* ea = find(a);
+        const Entity* eb = find(b);
+        if (ea == nullptr || eb == nullptr || a == b || ratio <= 0.01f)
+        {
+            return false;
+        }
+        Joint j = {};
+        j.kind = JointKind::Pulley;
+        j.a = a;
+        j.b = b;
+        j.localA = localOf(*ea, atA);
+        j.localB = localOf(*eb, atB);
+        j.groundA = groundA;
+        j.groundB = groundB;
+        j.ratio = ratio;
+        const Vec2 da = atA - groundA, db = atB - groundB;
+        j.length = sqrtf(da.dot(da)) + ratio * sqrtf(db.dot(db));
+        return m_joints.push(j);
+    }
+
+    bool World::gear(u32 a, u32 b, float ratio)
+    {
+        const Entity* ea = find(a);
+        const Entity* eb = find(b);
+        if (ea == nullptr || eb == nullptr || a == b || ratio == 0)
+        {
+            return false;
+        }
+        Joint j = {};
+        j.kind = JointKind::Gear;
+        j.a = a;
+        j.b = b;
+        j.ratio = ratio;
+        j.reference = (ratio * ea->rotation + eb->rotation) * kDegrees;
+        return m_joints.push(j);
+    }
+
+    bool World::friction(u32 a, u32 b, float strength)
+    {
+        const Entity* ea = find(a);
+        if (ea == nullptr || (b && find(b) == nullptr) || a == b)
+        {
+            return false;
+        }
+        Joint j = {};
+        j.kind = JointKind::Friction;
+        j.a = a;
+        j.b = b;
+        j.strength = strength > 0 ? strength : 0;
+        return m_joints.push(j);
+    }
+
+    bool World::follow(u32 a, u32 b, float strength, float correction)
+    {
+        const Entity* ea = find(a);
+        const Entity* eb = find(b);
+        if (ea == nullptr || eb == nullptr || a == b)
+        {
+            return false;
+        }
+        Joint j = {};
+        j.kind = JointKind::Follow;
+        j.a = a;
+        j.b = b;
+        j.localA = localOf(*ea, eb->position);
+        j.reference = (eb->rotation - ea->rotation) * kDegrees;
+        j.strength = strength > 0 ? strength : 0;
+        j.correction = correction < 0 ? 0 : correction > 1 ? 1 : correction;
+        return m_joints.push(j);
+    }
+
+    void World::followTarget(u32 a, u32 b, Vec2 offset, float degrees)
+    {
+        for (Joint& j : m_joints)
+        {
+            if (j.a == a && j.b == b && j.kind == JointKind::Follow)
+            {
+                j.localA = offset;
+                j.reference = degrees * kDegrees;
+            }
+        }
+    }
+
+    void World::prepareMore(Joint& j, float dt)
+    {
+        Rigid& a = m_rigid[j.rigidA];
+        Rigid* b = j.b ? &m_rigid[j.rigidB] : nullptr;
+        const float ima = a.inverseMass, iia = a.inverseInertia;
+        const float imb = b ? b->inverseMass : 0, iib = b ? b->inverseInertia : 0;
+        const auto rotate = [](Vec2 v, float c, float s) { return Vec2(v.x * c - v.y * s, v.x * s + v.y * c); };
+        j.fromA = rotate(j.localA, a.c, a.s);
+        j.fromB = b ? rotate(j.localB, b->c, b->s) : Vec2();
+        const Vec2 pa = a.position + j.fromA, pb = b ? b->position + j.fromB : j.localB;
+        // How strong it may be: so many times the weight of what it moves, as a drag is.
+        const float pairMass = ima + imb > 0 ? 1 / (ima + imb) : 0;
+        const float most = j.strength * pairMass * fmaxf(sqrtf(m_gravity.dot(m_gravity)), 500.0f) * dt;
+        // What is followed is pushed back, but not turned by where on it the place is: it leads.
+        const Vec2 leverA = j.kind == JointKind::Follow ? Vec2() : j.fromA;
+        const auto applyLinear = [&](Vec2 impulse)  // to b, and against a
+        {
+            a.velocity = a.velocity - impulse * ima;
+            a.turning -= iia * cross(leverA, impulse);
+            if (b)
+            {
+                b->velocity = b->velocity + impulse * imb;
+                b->turning += iib * cross(j.fromB, impulse);
+            }
+        };
+        const auto applyTurn = [&](float impulse)
+        {
+            a.turning -= iia * impulse;
+            if (b)
+            {
+                b->turning += iib * impulse;
+            }
+        };
+        const auto pointMass = [&]()
+        {
+            const float k11 = ima + imb + iia * leverA.y * leverA.y + iib * j.fromB.y * j.fromB.y;
+            const float k12 = -iia * leverA.x * leverA.y - iib * j.fromB.x * j.fromB.y;
+            const float k22 = ima + imb + iia * leverA.x * leverA.x + iib * j.fromB.x * j.fromB.x;
+            const float determinant = k11 * k22 - k12 * k12;
+            const float inverse = fabsf(determinant) > 1e-12f ? 1 / determinant : 0;
+            j.m[0] = k22 * inverse;
+            j.m[1] = -k12 * inverse;
+            j.m[2] = -k12 * inverse;
+            j.m[3] = k11 * inverse;
+        };
+        const float turnMass = iia + iib;
+        j.angularMass = turnMass > 0 ? 1 / turnMass : 0;
+        if (!j.motor)
+        {
+            j.motorImpulse = 0;
+        }
+
+        if (j.kind == JointKind::Wheel)
+        {
+            // Held on its line, sprung along it, free to turn.
+            j.axis = b ? rotate(j.localAxis, b->c, b->s) : j.localAxis;
+            const Vec2 across(-j.axis.y, j.axis.x);
+            const Vec2 d = pa - pb;
+            const float ra = cross(j.fromA, across), rb = cross(j.fromB, across);
+            const float k = ima + imb + iia * ra * ra + iib * rb * rb;
+            j.axialMass = k > 0 ? 1 / k : 0;
+            j.axialBias = -kCorrection / dt * across.dot(d);
+            j.along = j.axis.dot(d);
+            const float ra2 = cross(j.fromA, j.axis), rb2 = cross(j.fromB, j.axis);
+            const float k2 = ima + imb + iia * ra2 * ra2 + iib * rb2 * rb2;
+            j.springSoftness = 0;
+            j.springBias = 0;
+            j.springMass = 0;
+            if (j.frequency > 0 && k2 > 0)
+            {
+                const float mass = 1 / k2, omega = 6.2831853f * j.frequency;
+                const float stiffness = mass * omega * omega, damper = 2 * mass * j.damping * omega;
+                const float gamma = dt * (damper + dt * stiffness);
+                j.springSoftness = gamma > 0 ? 1 / gamma : 0;
+                j.springBias = j.along * dt * stiffness * j.springSoftness;
+                j.springMass = 1 / (k2 + j.springSoftness);
+            }
+            else
+            {
+                j.springImpulse = 0;
+            }
+            applyLinear(-(across * j.axialImpulse + j.axis * j.springImpulse));
+            applyTurn(j.motorImpulse);
+            return;
+        }
+        if (j.kind == JointKind::Pulley)
+        {
+            Vec2 ua = pa - j.groundA, ub = pb - j.groundB;
+            const float la = sqrtf(ua.dot(ua)), lb = sqrtf(ub.dot(ub));
+            ua = la > 1e-3f ? ua / la : Vec2();
+            ub = lb > 1e-3f ? ub / lb : Vec2();
+            j.axis = ua;
+            j.axisB = ub;
+            const float ra = cross(j.fromA, ua), rb = cross(j.fromB, ub);
+            const float k = ima + iia * ra * ra + j.ratio * j.ratio * (imb + iib * rb * rb);
+            j.axialMass = k > 0 ? 1 / k : 0;
+            // Positive while the rope is longer than it was.
+            j.axialBias = kCorrection / dt * (la + j.ratio * lb - j.length);
+            const float p = j.axialImpulse;
+            a.velocity = a.velocity - ua * (p * ima);
+            a.turning -= iia * cross(j.fromA, ua * p);
+            b->velocity = b->velocity - ub * (p * j.ratio * imb);
+            b->turning -= iib * cross(j.fromB, ub * (p * j.ratio));
+            return;
+        }
+        if (j.kind == JointKind::Gear)
+        {
+            // ratio times a's turn and b's add up to what they were: b turns ratio times as far, the other way.
+            const float k = j.ratio * j.ratio * iia + iib;
+            j.angularMass = k > 0 ? 1 / k : 0;
+            j.angle = j.ratio * a.angle + b->angle - j.reference;
+            j.angularBias = -kCorrection / dt * j.angle;
+            a.turning += iia * j.ratio * j.angularImpulse;
+            b->turning += iib * j.angularImpulse;
+            return;
+        }
+        if (j.kind == JointKind::Friction)
+        {
+            j.fromA = j.fromB = Vec2();
+            pointMass();
+            j.length = most;
+            // Turning is held as hard as its weight at the size of the body.
+            j.low = ima > 0 && iia > 0 ? most * sqrtf(ima / iia) : most;
+            applyLinear(j.impulse);
+            applyTurn(j.angularImpulse);
+            return;
+        }
+        // Follow: b's middle towards a place on a, and its turn towards a's and an angle.
+        j.fromB = Vec2();
+        pointMass();
+        j.length = most;
+        j.low = imb > 0 && iib > 0 ? most * sqrtf(imb / iib) : most;
+        const Vec2 gap = b->position - pa;
+        j.bias = gap * (-j.correction / dt);
+        float angle = b->angle - a.angle - j.reference;
+        angle = atan2f(sinf(angle), cosf(angle));
+        j.angularBias = -j.correction / dt * angle;
+        applyLinear(j.impulse);
+        applyTurn(j.angularImpulse);
+    }
+
+    void World::solveMore(Joint& j)
+    {
+        Rigid& a = m_rigid[j.rigidA];
+        Rigid* b = j.b ? &m_rigid[j.rigidB] : nullptr;
+        const float ima = a.inverseMass, iia = a.inverseInertia;
+        const float imb = b ? b->inverseMass : 0, iib = b ? b->inverseInertia : 0;
+        const auto spinApart = [&] { return (b ? b->turning : 0) - a.turning; };
+        const auto speedAt = [&] { return (b ? b->velocity + cross(b->turning, j.fromB) : Vec2()) - a.velocity - cross(a.turning, j.fromA); };
+        const Vec2 leverA = j.kind == JointKind::Follow ? Vec2() : j.fromA;
+        const auto applyLinear = [&](Vec2 impulse)
+        {
+            a.velocity = a.velocity - impulse * ima;
+            a.turning -= iia * cross(leverA, impulse);
+            if (b)
+            {
+                b->velocity = b->velocity + impulse * imb;
+                b->turning += iib * cross(j.fromB, impulse);
+            }
+        };
+        const auto applyTurn = [&](float impulse)
+        {
+            a.turning -= iia * impulse;
+            if (b)
+            {
+                b->turning += iib * impulse;
+            }
+        };
+
+        if (j.kind == JointKind::Wheel)
+        {
+            if (j.motor)
+            {
+                const float most = j.motorTorque / 60.0f;
+                const float before = j.motorImpulse;
+                j.motorImpulse = clampFloat(before - (spinApart() - j.motorSpeed) * j.angularMass, -most, most);
+                applyTurn(j.motorImpulse - before);
+            }
+            if (j.springMass > 0)
+            {
+                const float moving = -speedAt().dot(j.axis);
+                const float more = -j.springMass * (moving + j.springBias + j.springSoftness * j.springImpulse);
+                j.springImpulse += more;
+                applyLinear(-j.axis * more);
+            }
+            const Vec2 across(-j.axis.y, j.axis.x);
+            const float drift = -speedAt().dot(across);
+            const float m1 = (j.axialBias - drift) * j.axialMass;
+            j.axialImpulse += m1;
+            applyLinear(-across * m1);
+            return;
+        }
+        if (j.kind == JointKind::Pulley)
+        {
+            const Vec2 va = a.velocity + cross(a.turning, j.fromA), vb = b->velocity + cross(b->turning, j.fromB);
+            const float lengthening = j.axis.dot(va) + j.ratio * j.axisB.dot(vb);
+            const float p = (lengthening + j.axialBias) * j.axialMass;
+            j.axialImpulse += p;
+            a.velocity = a.velocity - j.axis * (p * ima);
+            a.turning -= iia * cross(j.fromA, j.axis * p);
+            b->velocity = b->velocity - j.axisB * (p * j.ratio * imb);
+            b->turning -= iib * cross(j.fromB, j.axisB * (p * j.ratio));
+            return;
+        }
+        if (j.kind == JointKind::Gear)
+        {
+            const float turning = j.ratio * a.turning + b->turning;
+            const float p = -(turning - j.angularBias) * j.angularMass;
+            j.angularImpulse += p;
+            a.turning += iia * j.ratio * p;
+            b->turning += iib * p;
+            return;
+        }
+        // Friction and Follow: turning first, then moving, each no harder than it may be.
+        {
+            const float before = j.angularImpulse;
+            const float bias = j.kind == JointKind::Follow ? j.angularBias : 0;
+            j.angularImpulse = clampFloat(before + (bias - spinApart()) * j.angularMass, -j.low, j.low);
+            applyTurn(j.angularImpulse - before);
+        }
+        const Vec2 bias = j.kind == JointKind::Follow ? j.bias : Vec2();
+        const Vec2 wanted = bias - speedAt();
+        const Vec2 more(j.m[0] * wanted.x + j.m[2] * wanted.y, j.m[1] * wanted.x + j.m[3] * wanted.y);
+        const Vec2 before = j.impulse;
+        j.impulse = j.impulse + more;
+        const float size = sqrtf(j.impulse.dot(j.impulse));
+        if (size > j.length)
+        {
+            j.impulse = size > 0 ? j.impulse * (j.length / size) : Vec2();
+        }
+        applyLinear(j.impulse - before);
+    }
+
     void World::dragTo(u32 a, Vec2 target)
     {
         for (Joint& j : m_joints)
@@ -909,7 +1258,7 @@ namespace nx
     {
         for (Joint& j : m_joints)
         {
-            if (j.a == a && j.kind == JointKind::Pin)
+            if (j.a == a && (j.kind == JointKind::Pin || j.kind == JointKind::Wheel))
             {
                 j.motor = torque > 0;
                 j.motorSpeed = -speed * kDegrees;

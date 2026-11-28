@@ -26,6 +26,8 @@ Red, green, blue and alpha, each 0 to 1.
 | `Color hsv(float hue, float saturation, float value)` | A colour from its hue (0 to 1 around the wheel), saturation and brightness. |
 | `Color lerp(const Color &in a, const Color &in b, float t)` | From a to b as t goes from 0 to 1. |
 | `Color fade(const Color &in color, float alpha)` | The same colour, more transparent. |
+| `Color toLinear(const Color &in color)` | A colour as screens show it (sRGB) as the light it stands for: for mixing, adding and fading lights as they really would. Alpha is kept. |
+| `Color toGamma(const Color &in color)` | Back again, to draw. |
 
 ## Texture
 
@@ -103,7 +105,7 @@ Triangles made by a script. Shared by every entity that shows it.
 
 ## Font
 
-A scalable SSFN font at one size.
+A font at one size: a scalable SSFN one, or one drawn beforehand in a picture.
 
 | | |
 |---|---|
@@ -156,7 +158,8 @@ Loading. Names start with `asset:` for the screen's own files, `global:` for sha
 | `uint Assets::get_textureKilobytes() property` | Memory that images and fonts take. |
 | `uint Assets::get_soundKilobytes() property` | Memory that sounds take. |
 | `uint Assets::get_soundBudgetKilobytes() property` | Memory that sounds may take. |
-| `Font@ Assets::font(const string &in name, uint size)` | A font at a size in design units. |
+| `Font@ Assets::font(const string &in name, uint size)` | A font at a size in design units: an SSFN font, drawn sharp at any size; or a BMFont .fnt, with its one picture beside it, as BMFont, Hiero and Littera make them, its line that many units high (0 as it was drawn). |
+| `Font@ Assets::imageFont(const string &in name, const string &in glyphs, uint size = 0, uint spacing = 1)` | A font drawn in a picture, as pixel art often is: its glyphs side by side in the order given, with a column of the top left pixel's colour between each. Its letters as tall as the picture, or size units, with a quarter of that between lines; spacing is the pixels between letters. Draw it with FilterNearest to keep it sharp. Its own colours are kept, tinted by the text's colour, so white shows them as they are. |
 | `uint Assets::get_inUse() property` | Assets that something is holding. |
 | `uint Assets::get_warm() property` | Assets kept ready though nothing holds them. |
 | `uint Assets::get_hits() property` | Requests served without reading a file. |
@@ -195,6 +198,7 @@ Which part of some text sits at its position.
 | `AlignLeft` | Its left edge. |
 | `AlignCenter` | Its middle. |
 | `AlignRight` | Its right edge. |
+| `AlignJustify` | In a paragraph, each line but the last of it spread to fill the width, as a book's are. Elsewhere, its left edge. |
 
 ## Look
 
@@ -216,6 +220,26 @@ What each colour of a picture becomes: warmer, colder, faded, harder. Settings, 
 | `void unload()` | Forgets the table. |
 | `bool get_loaded() const property` | Whether it has a table. |
 | `Color apply(const Color &in color)` | What it makes of one colour, worked out here rather than on the GPU. |
+
+## Batch
+
+Many sprites of one picture, kept from frame to frame and drawn at once with Canvas.batch: a crowd, a starfield, a map of tiles, bullets. Each has a place, a size, a turn about its middle, a part of the picture and a colour, and is changed by its number, from 0 in the order they were added. Up to 65536.
+
+| | |
+|---|---|
+| `uint add(float x, float y, float w, float h, const Color &in color = White, float rotation = 0)` | The whole picture, or a plain rectangle if there is none, turned by degrees about its middle. Returns its number. |
+| `uint addPart(float x, float y, float w, float h, float sx, float sy, float sw, float sh, const Color &in color = White, float rotation = 0)` | Part of the picture, given in its own pixels. |
+| `uint addFrame(uint columns, uint rows, uint frame, float x, float y, float w, float h, const Color &in color = White, float rotation = 0)` | One frame from a sheet of equal frames, counting along each row. |
+| `void move(uint index, float x, float y, float rotation = 0)` | Puts one somewhere else. |
+| `void resize(uint index, float w, float h)` | Changes one's size. |
+| `void color(uint index, const Color &in color)` | Changes one's colour; see-through ones aren't drawn. |
+| `void frame(uint index, uint columns, uint rows, uint frame)` | Shows another frame of the sheet: to animate one. |
+| `void part(uint index, float sx, float sy, float sw, float sh)` | Shows another part of the picture, in its pixels. |
+| `Vec2 place(uint index)` | Where one is. |
+| `void removeLast()` | Takes away the one added last. To hide another, make it see-through. |
+| `void clear()` | Takes them all away. |
+| `uint get_count() const property` | How many there are. |
+| `Texture@ get_texture() const property` | The picture they are of. |
 
 ## Canvas
 
@@ -256,6 +280,7 @@ What each colour of a picture becomes: warmer, colder, faded, harder. Settings, 
 | `void ellipse(float x, float y, float rx, float ry, const Color &in color)` | A filled ellipse, so far across to each side and up and down. |
 | `void ellipseLine(float x, float y, float rx, float ry, float thickness, const Color &in color)` | An ellipse's outline. |
 | `void mesh(const Texture@+ texture, const array<Vec2> &in points, const array<Vec2> &in uvs, const Color &in tint = White, const array<uint>@+ triangles = null, const array<Color>@+ colors = null)` | Triangles of a picture, each corner a point and where in the picture it comes from (uvs, 0 to 1 across it): bent, stretched, torn. Three indices to a triangle, or a fan from the first point without them. A colour for each point, if given, tints it; null texture is plain colour. For a water surface, cloth, a picture wrapped round a shape. |
+| `void batch(const Batch@+ batch, float x = 0, float y = 0, const Color &in tint = White)` | Draws all a batch's sprites at once, moved by x and y and tinted: thousands cost little more than one, and nothing until the picture has arrived. |
 | `void mask()` | What is drawn after this is not seen but marks out a mask: shapes, lines, text, images (all of each image's square). Each mask() starts a new mask. |
 | `void masked(bool inside = true)` | Then what is drawn is seen only inside the mask, or only outside it: a spotlight, a torn edge, a window into another scene. A mask doesn't last into or out of a picture, or into the next frame. |
 | `void unmask()` | Everything is seen again. |
@@ -272,7 +297,7 @@ What each colour of a picture becomes: warmer, colder, faded, harder. Settings, 
 | `void nineSlice(const Texture@+ texture, float x, float y, float w, float h, float corner, const Color &in tint = White)` | A stretchy panel whose corners keep their size. |
 | `void tile(const Texture@+ texture, float x, float y, float w, float h, float tileW, float tileH, float offsetX, float offsetY, const Color &in tint = White)` | An image repeated over an area. |
 | `float text(const Font@+ font, const string &in text, float x, float y, const Color &in color = White, Align align = AlignLeft)` | Text from its top. Returns its width. |
-| `float paragraph(const Font@+ font, const string &in text, float x, float y, float width, const Color &in color = White)` | Text broken into lines to fit a width. Returns its height. |
+| `float paragraph(const Font@+ font, const string &in text, float x, float y, float width, const Color &in color = White, Align align = AlignLeft)` | Text broken into lines to fit a width, each line from the left, centred, from the right, or justified to fill it. Returns its height. |
 | `float rich(const Font@+ font, const string &in text, float x, float y, float width, const Color &in color = White, Align align = AlignLeft)` | A paragraph with parts of it marked: `[color=#ff8000]` or `[color=orange]` ... `[/color]`, `[b]` bold `[/b]`, `[u]` underlined `[/u]`, `[s]` struck through `[/s]`; `[[` is a [ itself. The colours are white, black, red, green, blue, yellow, orange, pink, purple, cyan and gray, or #rrggbb and #rrggbbaa. Returns its height. |
 | `float richHeight(const Font@+ font, const string &in text, float width)` | How tall that would be, with nothing drawn. |
 
@@ -535,6 +560,7 @@ A picture held as its pixels, from the top left, up to 2048 a side.
 | `Texture@ get_texture() property` | To draw them: the same texture each time, sent to the GPU again if a pixel has changed since it was last asked for. Change many, then draw. Null where the GPU can't. |
 | `string png() const` | As a PNG file, in a string: to send, or to keep in a save. |
 | `bool save(const string &in name)` | Keeps them as a PNG with the saves: `saved:` and a short, plain name that ends in .png. Assets::pixels reads it back. On a computer it is a file in the saves' folder. False if it couldn't be. |
+| `Pixels@ Assets::pixelsFrom(const string &in file)` | A picture's pixels from the bytes of a PNG, JPEG, TGA, BMP or GIF: from a Zip, the web or a save. Null if they aren't one, of up to 2048 pixels a side. |
 | `Pixels@ Assets::pixels(const string &in name)` | A picture's pixels, read now: `asset:`, `global:` or `own:`, or `saved:` for one that Pixels.save kept. Null if there is none. |
 
 ## Data
@@ -552,6 +578,67 @@ Bytes in strings: squeezed, fingerprinted, and written as text. A string can hol
 | `string Data::unbase64(const string &in text)` | The bytes again; the web's kind, with - and _, too. |
 | `string Data::hex(const string &in bytes)` | Each byte as two hex digits. |
 | `string Data::unhex(const string &in text)` | The bytes again. |
+| `string Data::deflate(const string &in bytes, int level = 6)` | Smaller, as bare deflate with nothing round it: what zip files, PNGs and some web servers hold. |
+| `string Data::inflate(const string &in bytes)` | As it was before deflate(). |
+| `string Data::gzip(const string &in bytes, int level = 6)` | Smaller, as a .gz file: what gzip and web servers make. |
+| `string Data::gunzip(const string &in bytes)` | As it was before gzip(), or what gzip made, checked. |
+| `uint Data::crc32(const string &in bytes)` | The check that zip, gzip and PNG files keep: the same bytes give the same number. |
+
+## Packed
+
+Numbers and text laid out in bytes, as a file format or another program wants them, and read back in the same order. Little-endian, as most machines are, unless told otherwise.
+
+| | |
+|---|---|
+| `bool get_bigEndian() const property` | Whether the largest byte of a number comes first, as networks and some old formats want. |
+| `void set_bigEndian(bool) property` | Changes it, for what is written or read next. |
+| `void writeU8(uint value)` | A byte, 0 to 255. |
+| `void writeU16(uint value)` | Two bytes, 0 to 65535. |
+| `void writeU32(uint value)` | Four bytes. |
+| `void writeI8(int value)` | A byte, -128 to 127. |
+| `void writeI16(int value)` | Two bytes, -32768 to 32767. |
+| `void writeI32(int value)` | Four bytes. |
+| `void writeI64(int64 value)` | Eight bytes. |
+| `void writeFloat(float value)` | Four bytes. |
+| `void writeDouble(double value)` | Eight bytes. |
+| `void writeText(const string &in text)` | Text and a zero byte after it. |
+| `void writeFixed(const string &in text, uint count)` | Text in so many bytes: cut short, or made up with zeros. |
+| `void write(const string &in bytes)` | Bytes as they are. |
+| `uint readU8()` | The next byte. |
+| `uint readU16()` | The next two. |
+| `uint readU32()` | The next four. |
+| `int readI8()` | The next byte, below 0 too. |
+| `int readI16()` | The next two, below 0 too. |
+| `int readI32()` | The next four, below 0 too. |
+| `int64 readI64()` | The next eight. |
+| `float readFloat()` | The next four, as a number. |
+| `double readDouble()` | The next eight, as a number. |
+| `string readText()` | Text, up to a zero byte, which is passed over. |
+| `string readFixed(uint count)` | Text in so many bytes, up to a zero if there is one. |
+| `string read(uint count)` | So many bytes as they are. |
+| `string get_bytes() const property` | All of them, to keep, send or put in a file. |
+| `uint get_size() const property` | How many bytes. |
+| `uint get_position() const property` | Where the next read starts. |
+| `void set_position(uint) property` | Reads from somewhere else: to skip, or go back. |
+| `bool get_more() const property` | Whether there is anything left to read. |
+| `bool get_whole() const property` | False if more was read than there was, or written than 64 MB. |
+| `void clear()` | No bytes, to start again. |
+
+## Zip
+
+A zip file's files, read from its bytes or put together to make one: a level pack, a player's mod, a save with its pictures.
+
+| | |
+|---|---|
+| `bool get_failed() const property` | Whether what it was made from isn't a zip file it can read: one kept as it is or deflated, as nearly all are, and under 4 GB. |
+| `uint get_count() const property` | How many files are in it; folders aren't counted. |
+| `string name(uint index) const` | One's name, with / between folders: `levels/first.json`. |
+| `bool has(const string &in name) const` | Whether a file of that name is in it. |
+| `uint size(const string &in name) const` | How large one is, as it is. |
+| `string read(const string &in name) const` | What is in one, checked: text, or bytes for Assets::pixelsFrom, Json or Packed. |
+| `void add(const string &in name, const string &in bytes, int level = 6)` | Puts a file in, or replaces one of that name: deflated, unless level is 0 or that makes it no smaller. |
+| `void remove(const string &in name)` | Takes one out. |
+| `string get_bytes() const property` | The whole zip file, for any program to open. |
 
 ## Random
 
@@ -642,6 +729,28 @@ A smooth way through points, passing through each one. Places on it are asked fo
 | `Vec2 at2(float distance)` | at(), on the plane. |
 | `Vec2 direction2(float distance)` | direction(), on the plane. |
 | `float nearest(const Vec2 &in place)` | nearest(), on the plane. |
+
+## Curve
+
+A Bezier curve on the plane: it starts at its first control point and ends at its last, and is pulled towards those between without passing through them, as drawing programs' curves are. Places on it are asked for by t, 0 at the start to 1 at the end. Up to 32 control points: 3 make it quadratic, 4 cubic.
+
+| | |
+|---|---|
+| `void add(const Vec2 &in point)` | Another control point at the end. |
+| `void insert(uint index, const Vec2 &in point)` | One before another, or at the end. |
+| `void remove(uint index)` | Takes one out. |
+| `void clear()` | No control points. |
+| `uint get_count() const property` | How many control points. |
+| `uint get_degree() const property` | One less than that. |
+| `Vec2 point(uint index) const` | One of them. |
+| `void setPoint(uint index, const Vec2 &in point)` | Moves one. |
+| `Vec2 at(float t) const` | The place on it at t. |
+| `Vec2 slope(float t) const` | Which way it goes at t, and how fast as t goes up: its normalized() is the direction, for turning what follows it. |
+| `array<Vec2>@ points(uint count = 32) const` | So many places along it, from start to end, evenly in t: for Canvas.polyline, a road, a path to follow. |
+| `float length(uint pieces = 64) const` | How long it is, measured along so many straight pieces. |
+| `Curve@ part(float from, float to) const` | The part between two values of t, as a curve of its own: to split one, or draw it bit by bit. |
+| `array<uint>@ triangulate(const array<Vec2> &in corners)` | Cuts a polygon, either way round and concave too, into triangles that fill it: three corner indices for each. For Canvas.mesh, or shapes for physics, which want convex pieces. As long as its sides don't cross. |
+| `bool isConvex(const array<Vec2> &in corners)` | Whether a polygon bulges out at every corner, so a line between any two places inside stays inside. |
 | `float noise(float x, float y = 0, float z = 0)` | Smooth noise, -1 to 1, with hills and dips about 1 apart: the same for the same place every time. Scale the place for bigger or smaller ones; move through z for noise that changes with time. |
 | `float noise(const Vec2 &in place)` | The same, on the plane. |
 | `float noise(const Vec3 &in place)` | The same, in space. |
@@ -796,7 +905,13 @@ Entities that move, collide and are drawn by the engine. Each screen has its own
 | `bool Scene::slider(Entity@+ a, Entity@+ b, const Vec2 &in at, const Vec2 &in axis, float low = 0, float high = 0)` | Lets a move only along a line through a place on b, which turns with b, without turning itself: a lift, a piston, a drawer. Between low and high along it, from where it is now, if low is less than high. |
 | `bool Scene::drag(Entity@+ a, const Vec2 &in at, float strength = 5)` | Pulls a place on a body towards a place in the scene, softly, as a hand would: for picking things up with the mouse. No harder than strength times its weight. Move it on with dragTo; let go with unjoin. |
 | `void Scene::dragTo(Entity@+ a, const Vec2 &in place)` | Where a body's drag pulls towards now. |
-| `void Scene::motor(Entity@+ a, float speed, float torque)` | Changes the motor of a's hinges: degrees a second, and how strongly; 0 torque for none. |
+| `void Scene::motor(Entity@+ a, float speed, float torque)` | Changes the motor of a's hinges and wheels: degrees a second, and how strongly; 0 torque for none. |
+| `bool Scene::wheel(Entity@+ wheel, Entity@+ body, const Vec2 &in axis = Vec2(0, 1), float frequency = 4, float damping = 0.7, float motorSpeed = 0, float motorTorque = 0)` | A wheel on a car: it turns freely about its middle, and moves only along a line through where it is now, which turns with the body, sprung towards where it is: frequency is how many times a second it would bounce, damping how soon it settles. With a motor, as a hinge has, that motor() changes. Null for body puts it on the scene. |
+| `bool Scene::pulley(Entity@+ a, Entity@+ b, const Vec2 &in groundA, const Vec2 &in groundB, const Vec2 &in atA, const Vec2 &in atB, float ratio = 1)` | A rope from a place on a up over a fixed place, across to another and down to a place on b: as one goes down the other goes up, b ratio times as far as a. A lift and its weight, a block and tackle. |
+| `bool Scene::gear(Entity@+ a, Entity@+ b, float ratio = 1)` | As a turns one way, b turns the other, ratio times as far: two gears that mesh, each on its hinge. Below 0, the same way, as wheels joined by a chain. |
+| `bool Scene::friction(Entity@+ a, Entity@+ b = null, float strength = 1)` | Slows a's moving and turning against b's, or the scene's, no harder than strength times its weight: the ground under what is seen from above, with no gravity, such as pucks, cars and crates. |
+| `bool Scene::follow(Entity@+ a, Entity@+ b, float strength = 5, float correction = 0.3)` | Pushes b, no harder than strength times its weight, towards where it is now from a, as a moves and turns: something carried, a pet that keeps up. correction (0 to 1) is how much of the way it is put right each step. |
+| `void Scene::followTarget(Entity@+ a, Entity@+ b, const Vec2 &in offset, float degrees = 0)` | Where from a that b is pushed towards now, in a's own directions, and how far turned from it. |
 | `void Scene::unjoin(Entity@+ a)` | Every joint that a is in. |
 | `bool Scene::contact(Entity@+ a, Entity@+ b, Vec2 &out at, Vec2 &out normal, float &out impulse)` | Whether two rigid bodies, or a body and a wall, touched in the last step: where, which way from a to b, and how hard they pressed. For a sound as loud as a knock, or sparks where it was. |
 | `bool Scene::path(const Vec2 &in from, const Vec2 &in to, array<Vec2>@+ way, bool diagonal = true)` | The way from one place to another round the solid tiles of the maps, on the grid of the last: its corners, made as straight as it can be, ending at `to`. Diagonally too unless told not to, but never across a corner. False if there is none. |
@@ -1639,6 +1754,13 @@ A place or a direction, across and down. Vec3 is the same with z.
 | `Vec2 + Vec2, Vec2 - Vec2, -Vec2` | Added, taken away, turned round. += and -= too. |
 | `Vec2 * float, Vec2 / float` | Longer or shorter. *= too. |
 | `float dot(const Vec2 &in other) const` | How far one goes along the other. |
+| `float cross(const Vec2 &in other) const` | Above 0 if the other turns clockwise from this one, on a screen whose y goes down; 0 if they are in line. |
+| `float length() const` | How long it is. |
+| `Vec2 normalized() const` | The same direction, 1 long; zero stays zero. |
+| `float distance(const Vec2 &in other) const` | How far apart two places are. |
+| `float angle() const` | Its direction in degrees: 0 is right, 90 down. |
+| `Vec2 rotated(float degrees) const` | Turned clockwise on the screen. |
+| `Vec2 perpendicular() const` | Turned a quarter clockwise on the screen: across a line, for its normal. |
 
 ## Vec3
 

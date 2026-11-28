@@ -90,6 +90,8 @@ namespace nx
     void bindData(Binder& binder);
     // Data and Random; a thread's own, without what needs the screen.
     void bindBytes(Binder& binder, bool thread);
+    // bind_pack.cpp: gzip, deflate, Packed and Zip, which threads have too.
+    void bindPacking(Binder& binder);
     // bind_json.cpp: the Json type alone.
     void bindJsonValue(Binder& binder);
     // bindings.cpp: Color.

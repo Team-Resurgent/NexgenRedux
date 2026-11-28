@@ -231,6 +231,23 @@ namespace nx
             return wrap<FontRef>(s.assets->font(path, size), *s.assets);
         }
 
+        FontRef* loadImageFont(const std::string& name, const std::string& glyphs, u32 size, u32 spacing)
+        {
+            Services& s = services();
+            char path[192];
+            if (!resolveAsset(s, name.c_str(), path, sizeof(path)))
+            {
+                scriptError("asset names start with asset: or global: (" + name + ")");
+                return nullptr;
+            }
+            if (glyphs.empty())
+            {
+                scriptError("an image font needs the glyphs it shows, in order");
+                return nullptr;
+            }
+            return wrap<FontRef>(s.assets->imageFont(path, glyphs.c_str(), spacing, size), *s.assets);
+        }
+
         SoundRef* loadSoundAsset(const std::string& name)
         {
             Services& s = services();
@@ -315,6 +332,157 @@ namespace nx
             memFree(block);
         }
         void endPicture(Canvas* c) { c->endTarget(); }
+
+        // --- Batches: many sprites of one picture, kept, and drawn at once ---
+
+        struct BatchRef
+        {
+            int refs = 1;
+            TextureRef* texture = nullptr;
+            GrowArray<BatchSprite, MemTag::Script> sprites;
+
+            void addRef() { refs++; }
+            void release()
+            {
+                if (--refs == 0)
+                {
+                    if (texture)
+                    {
+                        texture->release();
+                    }
+                    destroy(this);
+                }
+            }
+        };
+
+        constexpr u32 kMostInBatch = 65536;
+
+        BatchRef* makeBatch(TextureRef* texture)
+        {
+            BatchRef* b = create<BatchRef>(MemTag::Script);
+            if (b && texture)
+            {
+                texture->addRef();
+                b->texture = texture;
+            }
+            return b;
+        }
+        u32 batchPush(BatchRef* b, const BatchSprite& sprite)
+        {
+            if (b->sprites.count() >= kMostInBatch || !b->sprites.push(sprite))
+            {
+                scriptError("a batch holds up to 65536 sprites");
+                return 0;
+            }
+            return b->sprites.count() - 1;
+        }
+        u32 batchAdd(float x, float y, float w, float h, const Color& color, float rotation, BatchRef* b)
+        {
+            return batchPush(b, { x, y, w, h, rotation, 0, 0, 1, 1, color, false });
+        }
+        u32 batchAddPart(float x, float y, float w, float h, float sx, float sy, float sw, float sh, const Color& color, float rotation, BatchRef* b)
+        {
+            return batchPush(b, { x, y, w, h, rotation, sx, sy, sx + sw, sy + sh, color, true });
+        }
+        BatchSprite frameOf(u32 columns, u32 rows, u32 frame, float x, float y, float w, float h, const Color& color, float rotation)
+        {
+            columns = columns ? columns : 1;
+            rows = rows ? rows : 1;
+            frame %= columns * rows;
+            const float fw = 1.0f / static_cast<float>(columns), fh = 1.0f / static_cast<float>(rows);
+            const float u = static_cast<float>(frame % columns) * fw, v = static_cast<float>(frame / columns) * fh;
+            return { x, y, w, h, rotation, u, v, u + fw, v + fh, color, false };
+        }
+        u32 batchAddFrame(u32 columns, u32 rows, u32 frame, float x, float y, float w, float h, const Color& color, float rotation, BatchRef* b)
+        {
+            return batchPush(b, frameOf(columns, rows, frame, x, y, w, h, color, rotation));
+        }
+        BatchSprite* batchAt(BatchRef* b, u32 index)
+        {
+            if (index >= b->sprites.count())
+            {
+                scriptError("there is no sprite " + std::to_string(index) + " in the batch");
+                return nullptr;
+            }
+            return &b->sprites[index];
+        }
+        void batchMove(u32 index, float x, float y, float rotation, BatchRef* b)
+        {
+            if (BatchSprite* p = batchAt(b, index))
+            {
+                p->x = x;
+                p->y = y;
+                p->rotation = rotation;
+            }
+        }
+        void batchResize(u32 index, float w, float h, BatchRef* b)
+        {
+            if (BatchSprite* p = batchAt(b, index))
+            {
+                p->w = w;
+                p->h = h;
+            }
+        }
+        void batchColor(u32 index, const Color& color, BatchRef* b)
+        {
+            if (BatchSprite* p = batchAt(b, index))
+            {
+                p->color = color;
+            }
+        }
+        void batchFrame(u32 index, u32 columns, u32 rows, u32 frame, BatchRef* b)
+        {
+            if (BatchSprite* p = batchAt(b, index))
+            {
+                *p = frameOf(columns, rows, frame, p->x, p->y, p->w, p->h, p->color, p->rotation);
+            }
+        }
+        void batchPart(u32 index, float sx, float sy, float sw, float sh, BatchRef* b)
+        {
+            if (BatchSprite* p = batchAt(b, index))
+            {
+                p->u0 = sx;
+                p->v0 = sy;
+                p->u1 = sx + sw;
+                p->v1 = sy + sh;
+                p->pixels = true;
+            }
+        }
+        Vec2 batchPlace(u32 index, BatchRef* b)
+        {
+            const BatchSprite* p = batchAt(b, index);
+            return p ? Vec2(p->x, p->y) : Vec2();
+        }
+        void batchRemoveLast(BatchRef* b)
+        {
+            if (b->sprites.count())
+            {
+                b->sprites.resize(b->sprites.count() - 1);
+            }
+        }
+        void batchClear(BatchRef* b) { b->sprites.clear(); }
+        u32 batchCount(const BatchRef* b) { return b->sprites.count(); }
+        TextureRef* batchTexture(const BatchRef* b)
+        {
+            if (b->texture)
+            {
+                b->texture->addRef();
+            }
+            return b->texture;
+        }
+        void drawBatch(const BatchRef* b, float x, float y, const Color& tint, Canvas* c)
+        {
+            if (b == nullptr || b->sprites.count() == 0)
+            {
+                return;
+            }
+            const Asset* a = b->texture ? assetOf(b->texture) : nullptr;
+            if (b->texture && (a == nullptr || !a->ready))
+            {
+                return;  // not here yet: drawn when it is
+            }
+            c->batch(a, &b->sprites[0], b->sprites.count(), x, y, tint);
+        }
         void drawImage(const TextureRef* t, float x, float y, const Color& tint, Canvas* c)
         {
             if (const Asset* a = assetOf(t)) c->image(*a, x, y, t->width(), t->height(), tint);
@@ -344,10 +512,10 @@ namespace nx
             const Asset* a = assetOf(f);
             return a ? c->text(*a, text.c_str(), x, y, color, align) : 0;
         }
-        float drawParagraph(const FontRef* f, const std::string& text, float x, float y, float width, const Color& color, Canvas* c)
+        float drawParagraph(const FontRef* f, const std::string& text, float x, float y, float width, const Color& color, Align align, Canvas* c)
         {
             const Asset* a = assetOf(f);
-            return a ? c->paragraph(*a, text.c_str(), x, y, width, color) : 0;
+            return a ? c->paragraph(*a, text.c_str(), x, y, width, color, align) : 0;
         }
         float drawRich(const FontRef* f, const std::string& text, float x, float y, float width, const Color& color, Align align, Canvas* c)
         {
@@ -1029,6 +1197,11 @@ namespace nx
             t->start = static_cast<float>(services().time);
         }
 
+        float toLinearPart(float c) { return c <= 0.04045f ? c / 12.92f : powf((c + 0.055f) / 1.055f, 2.4f); }
+        float toGammaPart(float c) { return c <= 0.0031308f ? c * 12.92f : 1.055f * powf(c, 1 / 2.4f) - 0.055f; }
+        Color toLinear(const Color& c) { return { toLinearPart(c.r), toLinearPart(c.g), toLinearPart(c.b), c.a }; }
+        Color toGamma(const Color& c) { return { toGammaPart(c.r < 0 ? 0 : c.r), toGammaPart(c.g < 0 ? 0 : c.g), toGammaPart(c.b < 0 ? 0 : c.b), c.a }; }
+
         Color hsv(float hue, float saturation, float value)
         {
             hue -= static_cast<float>(static_cast<int>(hue));
@@ -1084,6 +1257,8 @@ namespace nx
             b.function("Color hsv(float hue, float saturation, float value)", NX_FN(hsv), "A colour from its hue (0 to 1 around the wheel), saturation and brightness.");
             b.function("Color lerp(const Color &in a, const Color &in b, float t)", NX_FN(lerpColor), "From a to b as t goes from 0 to 1.");
             b.function("Color fade(const Color &in color, float alpha)", NX_FN(fade), "The same colour, more transparent.");
+            b.function("Color toLinear(const Color &in color)", NX_FN(toLinear), "A colour as screens show it (sRGB) as the light it stands for: for mixing, adding and fading lights as they really would. Alpha is kept.");
+            b.function("Color toGamma(const Color &in color)", NX_FN(toGamma), "Back again, to draw.");
         }
 
         void bindAssets(Binder& b)
@@ -1098,7 +1273,7 @@ namespace nx
 
             bindSpaceTypes(b);
 
-            b.refType("Font", 0, "A scalable SSFN font at one size.");
+            b.refType("Font", 0, "A font at one size: a scalable SSFN one, or one drawn beforehand in a picture.");
             b.behaviour(asBEHAVE_ADDREF, "void f()", NX_METHOD(FontRef, addRef));
             b.behaviour(asBEHAVE_RELEASE, "void f()", NX_METHOD(FontRef, release));
             b.method("Vec2 measure(const string &in text) const", NX_OBJ_LAST(fontMeasure), "How much room some text takes.");
@@ -1140,7 +1315,8 @@ namespace nx
             b.function("uint get_textureKilobytes() property", NX_FN(cacheTextureKilobytes), "Memory that images and fonts take.");
             b.function("uint get_soundKilobytes() property", NX_FN(cacheSoundKilobytes), "Memory that sounds take.");
             b.function("uint get_soundBudgetKilobytes() property", NX_FN(cacheSoundBudgetKilobytes), "Memory that sounds may take.");
-            b.function("Font@ font(const string &in name, uint size)", NX_FN(loadFont), "A font at a size in design units.");
+            b.function("Font@ font(const string &in name, uint size)", NX_FN(loadFont), "A font at a size in design units: an SSFN font, drawn sharp at any size; or a BMFont .fnt, with its one picture beside it, as BMFont, Hiero and Littera make them, its line that many units high (0 as it was drawn).");
+            b.function("Font@ imageFont(const string &in name, const string &in glyphs, uint size = 0, uint spacing = 1)", NX_FN(loadImageFont), "A font drawn in a picture, as pixel art often is: its glyphs side by side in the order given, with a column of the top left pixel's colour between each. Its letters as tall as the picture, or size units, with a quarter of that between lines; spacing is the pixels between letters. Draw it with FilterNearest to keep it sharp. Its own colours are kept, tinted by the text's colour, so white shows them as they are.");
             b.function("uint get_inUse() property", NX_FN(cacheInUse), "Assets that something is holding.");
             b.function("uint get_warm() property", NX_FN(cacheWarm), "Assets kept ready though nothing holds them.");
             b.function("uint get_hits() property", NX_FN(cacheHits), "Requests served without reading a file.");
@@ -1166,6 +1342,7 @@ namespace nx
             b.enumValue("AlignLeft", static_cast<int>(Align::Left), "Its left edge.");
             b.enumValue("AlignCenter", static_cast<int>(Align::Center), "Its middle.");
             b.enumValue("AlignRight", static_cast<int>(Align::Right), "Its right edge.");
+            b.enumValue("AlignJustify", static_cast<int>(Align::Justify), "In a paragraph, each line but the last of it spread to fill the width, as a book's are. Elsewhere, its left edge.");
 
             b.refType("Look", 0, "What each colour of a picture becomes: warmer, colder, faded, harder. Settings, a preset by name, or a .cube table from a grading program, or all of them: the table first, then the settings. Given to `Canvas.grade`.");
             b.behaviour(asBEHAVE_FACTORY, "Look@ f()", NX_FN(makeLook));
@@ -1187,6 +1364,24 @@ namespace nx
             b.method("void unload()", NX_OBJ_LAST(lookForget), "Forgets the table.");
             b.method("bool get_loaded() const property", NX_OBJ_LAST(lookLoaded), "Whether it has a table.");
             b.method("Color apply(const Color &in color)", NX_OBJ_LAST(lookApply), "What it makes of one colour, worked out here rather than on the GPU.");
+
+            b.refType("Batch", 0, "Many sprites of one picture, kept from frame to frame and drawn at once with Canvas.batch: a crowd, a starfield, a map of tiles, bullets. Each has a place, a size, a turn about its middle, a part of the picture and a colour, and is changed by its number, from 0 in the order they were added. Up to 65536.");
+            b.behaviour(asBEHAVE_FACTORY, "Batch@ f(Texture@+ texture = null)", NX_FN(makeBatch));
+            b.behaviour(asBEHAVE_ADDREF, "void f()", NX_METHOD(BatchRef, addRef));
+            b.behaviour(asBEHAVE_RELEASE, "void f()", NX_METHOD(BatchRef, release));
+            b.method("uint add(float x, float y, float w, float h, const Color &in color = White, float rotation = 0)", NX_OBJ_LAST(batchAdd), "The whole picture, or a plain rectangle if there is none, turned by degrees about its middle. Returns its number.");
+            b.method("uint addPart(float x, float y, float w, float h, float sx, float sy, float sw, float sh, const Color &in color = White, float rotation = 0)", NX_OBJ_LAST(batchAddPart), "Part of the picture, given in its own pixels.");
+            b.method("uint addFrame(uint columns, uint rows, uint frame, float x, float y, float w, float h, const Color &in color = White, float rotation = 0)", NX_OBJ_LAST(batchAddFrame), "One frame from a sheet of equal frames, counting along each row.");
+            b.method("void move(uint index, float x, float y, float rotation = 0)", NX_OBJ_LAST(batchMove), "Puts one somewhere else.");
+            b.method("void resize(uint index, float w, float h)", NX_OBJ_LAST(batchResize), "Changes one's size.");
+            b.method("void color(uint index, const Color &in color)", NX_OBJ_LAST(batchColor), "Changes one's colour; see-through ones aren't drawn.");
+            b.method("void frame(uint index, uint columns, uint rows, uint frame)", NX_OBJ_LAST(batchFrame), "Shows another frame of the sheet: to animate one.");
+            b.method("void part(uint index, float sx, float sy, float sw, float sh)", NX_OBJ_LAST(batchPart), "Shows another part of the picture, in its pixels.");
+            b.method("Vec2 place(uint index)", NX_OBJ_LAST(batchPlace), "Where one is.");
+            b.method("void removeLast()", NX_OBJ_LAST(batchRemoveLast), "Takes away the one added last. To hide another, make it see-through.");
+            b.method("void clear()", NX_OBJ_LAST(batchClear), "Takes them all away.");
+            b.method("uint get_count() const property", NX_OBJ_LAST(batchCount), "How many there are.");
+            b.method("Texture@ get_texture() const property", NX_OBJ_LAST(batchTexture), "The picture they are of.");
 
             b.refType("Canvas", asOBJ_NOCOUNT, "2D drawing, passed to a screen's draw(). Positions are in design units from the top left, y down.");
             b.method("void design(float width, float height)", NX_METHOD(Canvas, design), "Draws on a screen of this size, fitted inside the real one. Call it first.");
@@ -1222,6 +1417,7 @@ namespace nx
             b.method("void ellipse(float x, float y, float rx, float ry, const Color &in color)", NX_METHOD(Canvas, ellipse), "A filled ellipse, so far across to each side and up and down.");
             b.method("void ellipseLine(float x, float y, float rx, float ry, float thickness, const Color &in color)", NX_METHOD(Canvas, ellipseLine), "An ellipse's outline.");
             b.method("void mesh(const Texture@+ texture, const array<Vec2> &in points, const array<Vec2> &in uvs, const Color &in tint = White, const array<uint>@+ triangles = null, const array<Color>@+ colors = null)", NX_OBJ_LAST(drawMesh), "Triangles of a picture, each corner a point and where in the picture it comes from (uvs, 0 to 1 across it): bent, stretched, torn. Three indices to a triangle, or a fan from the first point without them. A colour for each point, if given, tints it; null texture is plain colour. For a water surface, cloth, a picture wrapped round a shape.");
+            b.method("void batch(const Batch@+ batch, float x = 0, float y = 0, const Color &in tint = White)", NX_OBJ_LAST(drawBatch), "Draws all a batch's sprites at once, moved by x and y and tinted: thousands cost little more than one, and nothing until the picture has arrived.");
             b.method("void mask()", NX_METHOD(Canvas, mask), "What is drawn after this is not seen but marks out a mask: shapes, lines, text, images (all of each image's square). Each mask() starts a new mask.");
             b.method("void masked(bool inside = true)", NX_METHOD(Canvas, masked), "Then what is drawn is seen only inside the mask, or only outside it: a spotlight, a torn edge, a window into another scene. A mask doesn't last into or out of a picture, or into the next frame.");
             b.method("void unmask()", NX_METHOD(Canvas, unmask), "Everything is seen again.");
@@ -1238,7 +1434,7 @@ namespace nx
             b.method("void nineSlice(const Texture@+ texture, float x, float y, float w, float h, float corner, const Color &in tint = White)", NX_OBJ_LAST(drawNineSlice), "A stretchy panel whose corners keep their size.");
             b.method("void tile(const Texture@+ texture, float x, float y, float w, float h, float tileW, float tileH, float offsetX, float offsetY, const Color &in tint = White)", NX_OBJ_LAST(drawTile), "An image repeated over an area.");
             b.method("float text(const Font@+ font, const string &in text, float x, float y, const Color &in color = White, Align align = AlignLeft)", NX_OBJ_LAST(drawText), "Text from its top. Returns its width.");
-            b.method("float paragraph(const Font@+ font, const string &in text, float x, float y, float width, const Color &in color = White)", NX_OBJ_LAST(drawParagraph), "Text broken into lines to fit a width. Returns its height.");
+            b.method("float paragraph(const Font@+ font, const string &in text, float x, float y, float width, const Color &in color = White, Align align = AlignLeft)", NX_OBJ_LAST(drawParagraph), "Text broken into lines to fit a width, each line from the left, centred, from the right, or justified to fill it. Returns its height.");
             b.method("float rich(const Font@+ font, const string &in text, float x, float y, float width, const Color &in color = White, Align align = AlignLeft)", NX_OBJ_LAST(drawRich), "A paragraph with parts of it marked: `[color=#ff8000]` or `[color=orange]` ... `[/color]`, `[b]` bold `[/b]`, `[u]` underlined `[/u]`, `[s]` struck through `[/s]`; `[[` is a [ itself. The colours are white, black, red, green, blue, yellow, orange, pink, purple, cyan and gray, or #rrggbb and #rrggbbaa. Returns its height.");
             b.method("float richHeight(const Font@+ font, const string &in text, float width)", NX_OBJ_LAST(richHeight), "How tall that would be, with nothing drawn.");
         }
@@ -1463,6 +1659,13 @@ namespace nx
             b.callback("Vec2 + Vec2, Vec2 - Vec2, -Vec2", "Added, taken away, turned round. += and -= too.");
             b.callback("Vec2 * float, Vec2 / float", "Longer or shorter. *= too.");
             b.callback("float dot(const Vec2 &in other) const", "How far one goes along the other.");
+            b.callback("float cross(const Vec2 &in other) const", "Above 0 if the other turns clockwise from this one, on a screen whose y goes down; 0 if they are in line.");
+            b.callback("float length() const", "How long it is.");
+            b.callback("Vec2 normalized() const", "The same direction, 1 long; zero stays zero.");
+            b.callback("float distance(const Vec2 &in other) const", "How far apart two places are.");
+            b.callback("float angle() const", "Its direction in degrees: 0 is right, 90 down.");
+            b.callback("Vec2 rotated(float degrees) const", "Turned clockwise on the screen.");
+            b.callback("Vec2 perpendicular() const", "Turned a quarter clockwise on the screen: across a line, for its normal.");
             b.section("Vec3", "A place or a direction in space: x right, y up, z towards you, in metres.");
             b.callback("Vec3()", "Zero.");
             b.callback("Vec3(float x, float y, float z)", "From its parts.");

@@ -160,7 +160,9 @@ namespace nx
         {
             const char* next;
             const char* stop = lineEnd(*this, f, l, width, next);
-            const float spare = align == Align::Left ? 0 : width - lineWidth(f, l, stop);
+            const bool justify = align == Align::Justify;
+            const float extra = justify ? justifyGap(f, l, stop, next, width) : 0;
+            const float spare = align == Align::Left || justify ? 0 : width - lineWidth(f, l, stop);
             float at = align == Align::Center ? x + spare * 0.5f : x + spare;
             // The pieces of this line, each in its style.
             for (size_t c = 0; c < changes.size(); c++)
@@ -177,11 +179,11 @@ namespace nx
                 const gpu::TextureInfo info = m_device->textureInfo(font.texture);
                 use(font.texture, info.uMax, info.vMax);
                 const u32 packed = pack(s.color);
-                const float end = textRun(font, from, to, at, y, packed);
+                const float end = spacedRun(font, from, to, at, y, packed, extra);
                 if (s.bold)
                 {
                     // Again, a little to the side: thicker, as the font has no bold of its own.
-                    textRun(font, from, to, at + thick * 0.8f, y, packed);
+                    spacedRun(font, from, to, at + thick * 0.8f, y, packed, extra);
                 }
                 if (s.underline)
                 {

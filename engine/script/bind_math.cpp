@@ -26,6 +26,15 @@ namespace nx
             const float far = sqrtf(v.x * v.x + v.y * v.y);
             return far > 1e-8f ? Vec2(v.x / far, v.y / far) : Vec2();
         }
+        float crossVec2(const Vec2& o, const Vec2& v) { return v.x * o.y - v.y * o.x; }
+        float distanceVec2(const Vec2& o, const Vec2& v) { return lengthVec2(v - o); }
+        float angleVec2(const Vec2& v) { return atan2f(v.y, v.x) * 57.2957795f; }
+        Vec2 rotatedVec2(float degrees, const Vec2& v)
+        {
+            const float c = cosf(degrees * 0.0174532925f), s = sinf(degrees * 0.0174532925f);
+            return Vec2(v.x * c - v.y * s, v.x * s + v.y * c);
+        }
+        Vec2 perpendicularVec2(const Vec2& v) { return Vec2(-v.y, v.x); }
         Vec2& subtractVec2(const Vec2& o, Vec2& v) { return v = v - o; }
         Vec2& multiplyVec2(float s, Vec2& v) { return v = v * s; }
         Vec3& addVec3(const Vec3& o, Vec3& v) { return v = v + o; }
@@ -69,6 +78,11 @@ namespace nx
         method("Vec2", "float dot(const Vec2 &in) const", NX_METHOD(Vec2, dot));
         method("Vec2", "float length() const", NX_OBJ_LAST(lengthVec2));
         method("Vec2", "Vec2 normalized() const", NX_OBJ_LAST(normalizedVec2));
+        method("Vec2", "float cross(const Vec2 &in) const", NX_OBJ_LAST(crossVec2));
+        method("Vec2", "float distance(const Vec2 &in) const", NX_OBJ_LAST(distanceVec2));
+        method("Vec2", "float angle() const", NX_OBJ_LAST(angleVec2));
+        method("Vec2", "Vec2 rotated(float degrees) const", NX_OBJ_LAST(rotatedVec2));
+        method("Vec2", "Vec2 perpendicular() const", NX_OBJ_LAST(perpendicularVec2));
 
         ok = host.check(e->RegisterObjectType("Vec3", sizeof(Vec3), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_ALLFLOATS | asGetTypeTraits<Vec3>()), "Vec3") && ok;
         property("Vec3", "float x", offsetof(Vec3, x));

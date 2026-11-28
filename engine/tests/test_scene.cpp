@@ -583,6 +583,105 @@ NX_TEST(jointsOfEveryKind)
     NX_EXPECT(!s.world.contact(box, weight, at, normal, impulse));
 }
 
+NX_TEST(wheelsPulleysGearsAndFollowing)
+{
+    Scene s;
+    s.world.setGravity({ 0, 1000 });
+    const float pi = 3.14159265f;
+    const auto disc = [&](Vec2 at, float radius, float mass)
+    {
+        const u32 id = s.world.spawn(at);
+        s.world.collider(id)->shape = Shape::Circle;
+        s.world.collider(id)->halfWidth = s.world.collider(id)->halfHeight = radius;
+        s.world.body(id)->mass = mass;
+        s.world.body(id)->gravity = 1;
+        return id;
+    };
+
+    // A wheel on the scene keeps to its upright line, sinks on its spring as far as its frequency says, and its motor
+    // turns it.
+    const u32 wheel = disc({ 0, 0 }, 10, 1);
+    NX_EXPECT(s.world.wheel(wheel, 0, { 0, 1 }, 2, 1, 0, 0));
+    s.world.getBody(wheel)->velocity = { 300, 0 };
+    s.step(240);
+    const float sink = 1000 / ((2 * pi * 2) * (2 * pi * 2));
+    NX_EXPECT(fabsf(s.world.find(wheel)->position.x) < 1 && fabsf(s.world.find(wheel)->position.y - sink) < 1.5f);
+    s.world.setMotor(wheel, 270, 1e6f);
+    s.step(60);
+    NX_EXPECT(fabsf(s.world.getBody(wheel)->spin - 270) < 8);
+
+    // A car on sprung wheels drives along, and its body rides above them.
+    {
+        Scene car;
+        car.world.setGravity({ 0, 1000 });
+        car.ground(100);
+        const u32 body = car.rigid({ 0, 50 }, 100, 20, 4);
+        u32 wheels[2];
+        for (u32 i = 0; i < 2; i++)
+        {
+            wheels[i] = car.world.spawn({ i ? 40.0f : -40.0f, 80 });
+            car.world.collider(wheels[i])->shape = Shape::Circle;
+            car.world.collider(wheels[i])->halfWidth = car.world.collider(wheels[i])->halfHeight = 17;
+            car.world.body(wheels[i])->mass = 1;
+            car.world.body(wheels[i])->gravity = 1;
+            car.world.body(wheels[i])->friction = 1.2f;
+            NX_EXPECT(car.world.wheel(wheels[i], body, { 0, 1 }, 4, 0.7f, 0, 0));
+        }
+        car.step(60);
+        const float riding = car.world.find(body)->position.y;
+        NX_EXPECT(riding < 80 && riding > 40);
+        for (u32 i = 0; i < 2; i++)
+        {
+            car.world.setMotor(wheels[i], 720, 3e5f);
+        }
+        car.step(120);
+        NX_EXPECT(car.world.find(body)->position.x > 200 && fabsf(car.world.find(body)->rotation) < 20);
+    }
+
+    // Over a pulley, the heavier side goes down and the lighter up, and the rope stays as long.
+    const u32 heavy = s.rigid({ 400, 0 }, 10, 10, 2), light = s.rigid({ 500, 0 }, 10, 10, 1);
+    NX_EXPECT(s.world.pulley(heavy, light, { 400, -100 }, { 500, -100 }, { 400, 0 }, { 500, 0 }, 1));
+    s.step(30);
+    const float down = s.world.find(heavy)->position.y, up = s.world.find(light)->position.y;
+    NX_EXPECT(down > 20 && up < -20 && fabsf((down + 100) + (up + 100) - 200) < 2);
+    NX_EXPECT(fabsf(s.world.find(heavy)->position.x - 400) < 2 && fabsf(s.world.find(light)->position.x - 500) < 2);
+
+    // Gears: one driven, the other turns half as fast the other way.
+    const u32 big = disc({ 800, 0 }, 20, 1), small = disc({ 900, 0 }, 10, 1);
+    NX_EXPECT(s.world.hinge(big, 0, { 800, 0 }, 0, 0, 90, 1e6f));
+    NX_EXPECT(s.world.hinge(small, 0, { 900, 0 }, 0, 0, 0, 0));
+    NX_EXPECT(s.world.gear(big, small, 0.5f));
+    s.step(60);
+    NX_EXPECT(fabsf(s.world.getBody(big)->spin - 90) < 5 && fabsf(s.world.getBody(small)->spin + 45) < 5);
+    NX_EXPECT(fabsf(0.5f * s.world.find(big)->rotation + s.world.find(small)->rotation) < 2);
+
+    // Seen from above: friction stops a puck that would slide on; follow keeps one beside another as it moves.
+    {
+        Scene top;
+        const u32 held = top.rigid({ 0, 0 }, 20, 20, 1), slides = top.rigid({ 0, 200 }, 20, 20, 1);
+        NX_EXPECT(top.world.friction(held, 0, 1));
+        top.world.getBody(held)->velocity = top.world.getBody(slides)->velocity = { 400, 0 };
+        top.world.getBody(held)->spin = 360;
+        top.step(60);
+        NX_EXPECT(fabsf(top.world.getBody(held)->velocity.x) < 1 && fabsf(top.world.getBody(held)->spin) < 2);
+        NX_EXPECT(top.world.getBody(slides)->velocity.x > 390);
+
+        const u32 leader = top.rigid({ 0, 400 }, 20, 20, 50), pet = top.rigid({ 40, 400 }, 10, 10, 1);
+        NX_EXPECT(top.world.follow(leader, pet, 5, 0.3f));
+        top.world.getBody(leader)->velocity = { 0, 200 };
+        top.step(60);
+        const Vec2 l = top.world.find(leader)->position, f = top.world.find(pet)->position;
+        NX_EXPECT(l.y > 500 && fabsf(f.x - l.x - 40) < 3 && fabsf(f.y - l.y) < 3);
+        top.world.followTarget(leader, pet, { 0, -40 }, 45);
+        top.step(60);
+        const Vec2 l2 = top.world.find(leader)->position, f2 = top.world.find(pet)->position;
+        NX_EXPECT(fabsf(f2.x - l2.x) < 3 && fabsf(f2.y - l2.y + 40) < 3 && fabsf(top.world.find(pet)->rotation - top.world.find(leader)->rotation - 45) < 3);
+    }
+
+    // Ones that can't be.
+    NX_EXPECT(!s.world.pulley(heavy, 0, {}, {}, {}, {}, 1) && !s.world.gear(big, big, 1) && !s.world.wheel(wheel, 0, {}, 1, 1, 0, 0) && !s.world.follow(big, 0, 1, 0.3f));
+}
+
 NX_TEST(rigidBodiesStackAndRest)
 {
     Scene s;

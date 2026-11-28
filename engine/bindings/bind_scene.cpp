@@ -504,6 +504,24 @@ namespace nx
         {
             return a && world().slider(a->id, idOrZero(b), at, axis, low, high);
         }
+        bool sceneWheel(const EntityRef* a, const EntityRef* b, const Vec2& axis, float frequency, float damping, float speed, float torque)
+        {
+            return a && world().wheel(a->id, idOrZero(b), axis, frequency, damping, speed, torque);
+        }
+        bool scenePulley(const EntityRef* a, const EntityRef* b, const Vec2& groundA, const Vec2& groundB, const Vec2& atA, const Vec2& atB, float ratio)
+        {
+            return a && b && world().pulley(a->id, b->id, groundA, groundB, atA, atB, ratio);
+        }
+        bool sceneGear(const EntityRef* a, const EntityRef* b, float ratio) { return a && b && world().gear(a->id, b->id, ratio); }
+        bool sceneFriction(const EntityRef* a, const EntityRef* b, float strength) { return a && world().friction(a->id, idOrZero(b), strength); }
+        bool sceneFollow(const EntityRef* a, const EntityRef* b, float strength, float correction) { return a && b && world().follow(a->id, b->id, strength, correction); }
+        void sceneFollowTarget(const EntityRef* a, const EntityRef* b, const Vec2& offset, float degrees)
+        {
+            if (a && b)
+            {
+                world().followTarget(a->id, b->id, offset, degrees);
+            }
+        }
         bool sceneDrag(const EntityRef* a, const Vec2& at, float strength) { return a && world().drag(a->id, at, strength); }
         void sceneDragTo(const EntityRef* a, const Vec2& to) { if (a) world().dragTo(a->id, to); }
         void sceneMotor(const EntityRef* a, float speed, float torque) { if (a) world().setMotor(a->id, speed, torque); }
@@ -666,7 +684,13 @@ namespace nx
         b.function("bool slider(Entity@+ a, Entity@+ b, const Vec2 &in at, const Vec2 &in axis, float low = 0, float high = 0)", NX_FN(sceneSlider), "Lets a move only along a line through a place on b, which turns with b, without turning itself: a lift, a piston, a drawer. Between low and high along it, from where it is now, if low is less than high.");
         b.function("bool drag(Entity@+ a, const Vec2 &in at, float strength = 5)", NX_FN(sceneDrag), "Pulls a place on a body towards a place in the scene, softly, as a hand would: for picking things up with the mouse. No harder than strength times its weight. Move it on with dragTo; let go with unjoin.");
         b.function("void dragTo(Entity@+ a, const Vec2 &in place)", NX_FN(sceneDragTo), "Where a body's drag pulls towards now.");
-        b.function("void motor(Entity@+ a, float speed, float torque)", NX_FN(sceneMotor), "Changes the motor of a's hinges: degrees a second, and how strongly; 0 torque for none.");
+        b.function("void motor(Entity@+ a, float speed, float torque)", NX_FN(sceneMotor), "Changes the motor of a's hinges and wheels: degrees a second, and how strongly; 0 torque for none.");
+        b.function("bool wheel(Entity@+ wheel, Entity@+ body, const Vec2 &in axis = Vec2(0, 1), float frequency = 4, float damping = 0.7, float motorSpeed = 0, float motorTorque = 0)", NX_FN(sceneWheel), "A wheel on a car: it turns freely about its middle, and moves only along a line through where it is now, which turns with the body, sprung towards where it is: frequency is how many times a second it would bounce, damping how soon it settles. With a motor, as a hinge has, that motor() changes. Null for body puts it on the scene.");
+        b.function("bool pulley(Entity@+ a, Entity@+ b, const Vec2 &in groundA, const Vec2 &in groundB, const Vec2 &in atA, const Vec2 &in atB, float ratio = 1)", NX_FN(scenePulley), "A rope from a place on a up over a fixed place, across to another and down to a place on b: as one goes down the other goes up, b ratio times as far as a. A lift and its weight, a block and tackle.");
+        b.function("bool gear(Entity@+ a, Entity@+ b, float ratio = 1)", NX_FN(sceneGear), "As a turns one way, b turns the other, ratio times as far: two gears that mesh, each on its hinge. Below 0, the same way, as wheels joined by a chain.");
+        b.function("bool friction(Entity@+ a, Entity@+ b = null, float strength = 1)", NX_FN(sceneFriction), "Slows a's moving and turning against b's, or the scene's, no harder than strength times its weight: the ground under what is seen from above, with no gravity, such as pucks, cars and crates.");
+        b.function("bool follow(Entity@+ a, Entity@+ b, float strength = 5, float correction = 0.3)", NX_FN(sceneFollow), "Pushes b, no harder than strength times its weight, towards where it is now from a, as a moves and turns: something carried, a pet that keeps up. correction (0 to 1) is how much of the way it is put right each step.");
+        b.function("void followTarget(Entity@+ a, Entity@+ b, const Vec2 &in offset, float degrees = 0)", NX_FN(sceneFollowTarget), "Where from a that b is pushed towards now, in a's own directions, and how far turned from it.");
         b.function("void unjoin(Entity@+ a)", NX_FN(sceneUnjoin), "Every joint that a is in.");
         b.function("bool contact(Entity@+ a, Entity@+ b, Vec2 &out at, Vec2 &out normal, float &out impulse)", NX_FN(sceneContact), "Whether two rigid bodies, or a body and a wall, touched in the last step: where, which way from a to b, and how hard they pressed. For a sound as loud as a knock, or sparks where it was."); 
         b.function("bool path(const Vec2 &in from, const Vec2 &in to, array<Vec2>@+ way, bool diagonal = true)", NX_FN(scenePath), "The way from one place to another round the solid tiles of the maps, on the grid of the last: its corners, made as straight as it can be, ending at `to`. Diagonally too unless told not to, but never across a corner. False if there is none.");

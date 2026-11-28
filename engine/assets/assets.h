@@ -101,6 +101,10 @@ namespace nx
         Asset* effect(const char* path);
         // Size is in design units; the glyphs are made at the size they will appear on screen.
         Asset* font(const char* path, u32 size);
+        // A font drawn beforehand: a BMFont .fnt beside its picture, as font() loads too, or a strip of glyphs in a
+        // picture (see bitmap_font.h). size is its line's height in design units; 0 is as it was drawn.
+        Asset* bitmapFont(const char* path, u32 size);
+        Asset* imageFont(const char* path, const char* glyphs, u32 spacing, u32 size);
 
         void addRef(Asset* asset) { asset->refs++; }
         void release(Asset* asset);
@@ -159,6 +163,7 @@ namespace nx
         void finishLoad(Load& load);
         void fail(Asset& asset);
         bool loadFont(Asset& asset, const char* path, u32 size);
+        bool loadBitmapFont(Asset& asset, const char* path, const char* glyphs, u32 spacing);
         void makeRoom(AssetType type, size_t bytes);
         bool evictOne(size_t budget);
         bool evictAny();

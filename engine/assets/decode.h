@@ -17,6 +17,11 @@ namespace nx
     u8* compressBytes(const u8* data, size_t size, size_t& outSize, int level);
     // nullptr if it isn't zlib's format, or is broken.
     u8* uncompressBytes(const u8* data, size_t size, size_t& outSize);
+    // Deflate on its own, with no zlib header or check after it: what gzip and zip files hold.
+    u8* deflateBytes(const u8* data, size_t size, size_t& outSize, int level);
+    u8* inflateBytes(const u8* data, size_t size, size_t& outSize);
+    // The check that gzip, zip and PNG files use.
+    u32 crc32Of(const u8* data, size_t size, u32 crc = 0);
 
     struct FontImage
     {

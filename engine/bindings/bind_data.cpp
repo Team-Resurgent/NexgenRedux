@@ -132,6 +132,18 @@ namespace nx
             return adopt(rgba, w, h);
         }
 
+        Pixels* decodePixels(const std::string& file)
+        {
+            const u8* data = reinterpret_cast<const u8*>(file.data());
+            u32 w = 0, h = 0;
+            if (file.empty() || !imageSize(data, file.size(), w, h) || w > kMostPixels || h > kMostPixels)
+            {
+                return nullptr;
+            }
+            u8* rgba = decodeImage(data, file.size(), w, h);
+            return rgba ? adopt(rgba, w, h) : nullptr;
+        }
+
         u32 pixelWidth(const Pixels* p) { return p->width; }
         u32 pixelHeight(const Pixels* p) { return p->height; }
         bool inside(const Pixels* p, u32 x, u32 y) { return x < p->width && y < p->height; }
@@ -579,6 +591,7 @@ namespace nx
         b.method("string png() const", NX_OBJ_LAST(pixelPng), "As a PNG file, in a string: to send, or to keep in a save.");
         b.method("bool save(const string &in name)", NX_OBJ_LAST(pixelSave), "Keeps them as a PNG with the saves: `saved:` and a short, plain name that ends in .png. Assets::pixels reads it back. On a computer it is a file in the saves' folder. False if it couldn't be.");
         b.names("Assets");
+        b.function("Pixels@ pixelsFrom(const string &in file)", NX_FN(decodePixels), "A picture's pixels from the bytes of a PNG, JPEG, TGA, BMP or GIF: from a Zip, the web or a save. Null if they aren't one, of up to 2048 pixels a side.");
         b.function("Pixels@ pixels(const string &in name)", NX_FN(loadPixels), "A picture's pixels, read now: `asset:`, `global:` or `own:`, or `saved:` for one that Pixels.save kept. Null if there is none.");
         b.names("");
 
@@ -599,6 +612,7 @@ namespace nx
         b.function("string hex(const string &in bytes)", NX_FN(hexText), "Each byte as two hex digits.");
         b.function("string unhex(const string &in text)", NX_FN(unhexText), "The bytes again.");
         b.names("");
+        bindPacking(b);
 
         b.section("Random", "Random numbers of a script's own, from a seed: the same seed gives the same numbers, in the same order, on every machine. For worlds made from a number, replays, and dealing the same cards twice.");
         b.refType("Random", 0, "A generator of its own.");

@@ -1,5 +1,6 @@
 #include "canvas/canvas.h"
 #include "base/memory.h"
+#include "base/shapes2d.h"
 
 #include <math.h>
 #include <string.h>
@@ -656,56 +657,11 @@ namespace nx
         }
         use({}, 1, 1);
         const u32 c = pack(color);
-        float area = 0;
-        for (u32 i = 0; i < count; i++)
+        u16 corners[3 * (kMostPoints - 2)];
+        const u32 made = triangulate(points, count, corners);
+        for (u32 i = 0; i < made; i++)
         {
-            const Vec2 a = points[i], b = points[(i + 1) % count];
-            area += a.x * b.y - a.y * b.x;
-        }
-        // Ears cut off one at a time: a corner that turns the way the whole does, with no other corner inside it.
-        u16 left[kMostPoints];
-        for (u32 i = 0; i < count; i++)
-        {
-            left[i] = static_cast<u16>(i);
-        }
-        const float way = area < 0 ? -1.0f : 1.0f;
-        const auto cross = [](Vec2 o, Vec2 a, Vec2 b) { return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x); };
-        u32 n = count;
-        u32 tries = 0;
-        u32 i = 0;
-        while (n > 3 && tries < n)
-        {
-            const Vec2 a = points[left[(i + n - 1) % n]], b = points[left[i % n]], q = points[left[(i + 1) % n]];
-            bool ear = cross(a, b, q) * way > 0;
-            for (u32 k = 0; ear && k < n; k++)
-            {
-                const Vec2 p = points[left[k]];
-                if (k == (i + n - 1) % n || k == i % n || k == (i + 1) % n)
-                {
-                    continue;
-                }
-                ear = !(cross(a, b, p) * way >= 0 && cross(b, q, p) * way >= 0 && cross(q, a, p) * way >= 0);
-            }
-            if (ear)
-            {
-                addTriangle({ a.x, a.y, 0, 0, c }, { b.x, b.y, 0, 0, c }, { q.x, q.y, 0, 0, c });
-                for (u32 k = i % n; k + 1 < n; k++)
-                {
-                    left[k] = left[k + 1];
-                }
-                n--;
-                tries = 0;
-            }
-            else
-            {
-                i++;
-                tries++;
-            }
-        }
-        // The last, or what is left of one whose sides cross, as a fan.
-        for (u32 k = 1; k + 1 < n; k++)
-        {
-            const Vec2 a = points[left[0]], b = points[left[k]], q = points[left[k + 1]];
+            const Vec2 a = points[corners[i * 3]], b = points[corners[i * 3 + 1]], q = points[corners[i * 3 + 2]];
             addTriangle({ a.x, a.y, 0, 0, c }, { b.x, b.y, 0, 0, c }, { q.x, q.y, 0, 0, c });
         }
     }
@@ -926,6 +882,53 @@ namespace nx
         quad(x, y, w, h, sx * iw, sy * ih, (sx + sw) * iw, (sy + sh) * ih, pack(tint));
     }
 
+    void Canvas::batch(const Asset* texture, const BatchSprite* sprites, u32 count, float x, float y, const Color& tint)
+    {
+        if (sprites == nullptr || count == 0)
+        {
+            return;
+        }
+        float iw = 1, ih = 1;
+        if (texture && texture->texture && texture->width && texture->height)
+        {
+            const gpu::TextureInfo info = m_device->textureInfo(texture->texture);
+            use(texture->texture, info.uMax, info.vMax);
+            iw = 1.0f / static_cast<float>(texture->width);
+            ih = 1.0f / static_cast<float>(texture->height);
+        }
+        else
+        {
+            use({}, 1, 1);
+        }
+        for (u32 i = 0; i < count; i++)
+        {
+            BatchSprite p = sprites[i];
+            if (p.pixels)
+            {
+                p.u0 *= iw;
+                p.u1 *= iw;
+                p.v0 *= ih;
+                p.v1 *= ih;
+            }
+            const Color k = { p.color.r * tint.r, p.color.g * tint.g, p.color.b * tint.b, p.color.a * tint.a };
+            if (k.a <= 0)
+            {
+                continue;
+            }
+            const u32 c = pack(k);
+            const float left = x + p.x, top = y + p.y;
+            if (p.rotation == 0)
+            {
+                quad(left, top, p.w, p.h, p.u0, p.v0, p.u1, p.v1, c);
+                continue;
+            }
+            const float turn = p.rotation * 0.0174532925f, cs = cosf(turn), sn = sinf(turn);
+            const float mx = left + p.w * 0.5f, my = top + p.h * 0.5f, hx = p.w * 0.5f, hy = p.h * 0.5f;
+            const auto at = [&](float ox, float oy, float u, float v) { return Point{ mx + ox * cs - oy * sn, my + ox * sn + oy * cs, u, v, c }; };
+            addQuad(at(-hx, -hy, p.u0, p.v0), at(hx, -hy, p.u1, p.v0), at(hx, hy, p.u1, p.v1), at(-hx, hy, p.u0, p.v1));
+        }
+    }
+
     void Canvas::placed(const Asset* texture, const float (&t)[6], float w, float h, float u0, float v0, float u1, float v1, const Color& color)
     {
         if (texture)
@@ -1053,6 +1056,46 @@ namespace nx
         return x;
     }
 
+    float Canvas::spacedRun(const Asset& font, const char* text, const char* end, float x, float y, u32 color, float extra)
+    {
+        if (extra <= 0)
+        {
+            return textRun(font, text, end, x, y, color);
+        }
+        for (const char* p = text; p < end;)
+        {
+            const char* q = p;
+            while (q < end && *q != ' ')
+            {
+                q++;
+            }
+            x = textRun(font, p, q, x, y, color);
+            if (q < end)
+            {
+                x = textRun(font, q, q + 1, x, y, color) + extra;
+                q++;
+            }
+            p = q;
+        }
+        return x;
+    }
+
+    float Canvas::justifyGap(const FontData& font, const char* line, const char* stop, const char* next, float width) const
+    {
+        // The last line of a paragraph is left as it is: where the text ends, or a new line begins.
+        if (*next == 0 || (next > stop && next[-1] == '\n'))
+        {
+            return 0;
+        }
+        u32 gaps = 0;
+        for (const char* p = line; p < stop; p++)
+        {
+            gaps += *p == ' ';
+        }
+        const float spare = width - lineWidth(font, line, stop);
+        return gaps && spare > 0 ? spare / static_cast<float>(gaps) : 0;
+    }
+
     float Canvas::text(const Asset& font, const char* text, float x, float y, const Color& color, Align align)
     {
         if (font.font == nullptr)
@@ -1068,7 +1111,7 @@ namespace nx
             const char* end = strchr(p, '\n');
             const char* stop = end ? end : p + strlen(p);
             const float width = lineWidth(*font.font, p, stop);
-            const float start = align == Align::Center ? x - width * 0.5f : align == Align::Right ? x - width : x;
+            const float start = align == Align::Center ? x - width * 0.5f : align == Align::Right ? x - width : x;  // a single line has nothing to justify
             textRun(font, p, stop, start, y, c);
             widest = width > widest ? width : widest;
             if (end == nullptr)
@@ -1150,8 +1193,15 @@ namespace nx
         {
             const char* next;
             const char* stop = lineEnd(*this, *font.font, line, width, next);
-            const float spare = align == Align::Left ? 0 : width - lineWidth(*font.font, line, stop);
-            textRun(font, line, stop, align == Align::Center ? x + spare * 0.5f : x + spare, y, c);
+            if (align == Align::Justify)
+            {
+                spacedRun(font, line, stop, x, y, c, justifyGap(*font.font, line, stop, next, width));
+            }
+            else
+            {
+                const float spare = align == Align::Left ? 0 : width - lineWidth(*font.font, line, stop);
+                textRun(font, line, stop, align == Align::Center ? x + spare * 0.5f : x + spare, y, c);
+            }
             y += font.font->lineHeight * font.font->scale;
             line = next;
         }

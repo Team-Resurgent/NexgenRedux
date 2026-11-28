@@ -1,4 +1,5 @@
 #include "assets/assets.h"
+#include "assets/bitmap_font.h"
 #include "assets/decode.h"
 #include "assets/formats.h"
 #include "assets/model.h"
@@ -605,8 +606,144 @@ namespace nx
         asset.width = asset.height = 16;
     }
 
+    Asset* Assets::bitmapFont(const char* path, u32 size)
+    {
+        return imageFont(path, nullptr, 0, size);
+    }
+
+    Asset* Assets::imageFont(const char* path, const char* glyphs, u32 spacing, u32 size)
+    {
+        char clean[128];
+        char lower[128];
+        char key[208];
+        size = size > 400 ? 400 : size;
+        const bool valid = cleanPath(path, clean, sizeof(clean), false) && cleanPath(path, lower, sizeof(lower), true);
+        snprintf(key, sizeof(key), "%s#%08x/%u@%u", valid ? lower : "?", static_cast<unsigned>(glyphs ? hashText(glyphs) : 0), static_cast<unsigned>(spacing), static_cast<unsigned>(size));
+        const u64 hash = hashText(key);
+        if (Asset* found = find(key, hash))
+        {
+            return found;
+        }
+        Asset* asset = add(key, hash, AssetType::Font);
+        m_stats.loads++;
+        if (!valid || !loadBitmapFont(*asset, clean, glyphs, spacing))
+        {
+            NX_ERROR("cannot load font %s", path);
+            fail(*asset);
+            return asset;
+        }
+        // A BMFont's size is its line's height, as it says; an image font's is its letters'.
+        asset->font->scale = size ? static_cast<float>(size) / (glyphs ? asset->font->ascent : asset->font->lineHeight) : 1.0f;
+        asset->ready = true;
+        m_bytes[0] += asset->bytes;
+        return asset;
+    }
+
+    bool Assets::loadBitmapFont(Asset& asset, const char* path, const char* glyphs, u32 spacing)
+    {
+        FileData file;
+        if (!m_platform->readFile(path, file, MemTag::Texture))
+        {
+            return false;
+        }
+        FontData* font = create<FontData>(MemTag::UI);
+        if (font == nullptr)
+        {
+            return false;
+        }
+        u8* rgba = nullptr;
+        u32 width = 0, height = 0;
+        if (glyphs == nullptr)
+        {
+            // The .fnt, then its picture, beside it.
+            char page[96], picture[256];
+            u32 w = 0, h = 0;
+            if (!parseBitmapFont(reinterpret_cast<const char*>(file.data), file.size, *font, page, sizeof(page), w, h) || strstr(page, "..") || page[0] == '/')
+            {
+                destroy(font);
+                return false;
+            }
+            const char* slash = strrchr(path, '/');
+            const int folder = slash ? static_cast<int>(slash - path + 1) : 0;
+            FileData image;
+            if (snprintf(picture, sizeof(picture), "%.*s%s", folder, path, page) >= static_cast<int>(sizeof(picture)) || !m_platform->readFile(picture, image, MemTag::Texture))
+            {
+                destroy(font);
+                return false;
+            }
+            gpu::TextureData cooked;
+            if (readCookedTexture(image.data, image.size, cooked))
+            {
+                // Made ready for this machine by the cook tool: used as it is.
+                makeRoom(AssetType::Font, gpu::pixelBytes(cooked.format, cooked.fullWidth, cooked.fullHeight));
+                const gpu::Texture texture = m_device->createTexture(cooked);
+                if (!texture || cooked.width != w || cooked.height != h)
+                {
+                    if (texture)
+                    {
+                        m_device->destroyTexture(texture);
+                    }
+                    destroy(font);
+                    return false;
+                }
+                asset.texture = texture;
+                asset.width = cooked.width;
+                asset.height = cooked.height;
+                asset.font = font;
+                asset.bytes = m_device->textureInfo(texture).bytes + sizeof(FontData);
+                return true;
+            }
+            rgba = decodeImage(image.data, image.size, width, height);
+            if (rgba && (width != w || height != h))
+            {
+                // Its glyphs were placed by the size the .fnt gives: keep to that.
+                for (Glyph& g : font->glyphs)
+                {
+                    g.u0 *= static_cast<float>(w) / static_cast<float>(width);
+                    g.u1 *= static_cast<float>(w) / static_cast<float>(width);
+                    g.v0 *= static_cast<float>(h) / static_cast<float>(height);
+                    g.v1 *= static_cast<float>(h) / static_cast<float>(height);
+                }
+            }
+        }
+        else
+        {
+            rgba = decodeImage(file.data, file.size, width, height);
+            if (rgba && !cutImageFont(rgba, width, height, glyphs, spacing, *font))
+            {
+                freeImage(rgba);
+                rgba = nullptr;
+            }
+        }
+        if (rgba == nullptr || width > 4096 || height > 4096)
+        {
+            freeImage(rgba);
+            destroy(font);
+            return false;
+        }
+        makeRoom(AssetType::Font, static_cast<size_t>(width) * height * 4);
+        const gpu::Texture texture = m_device->createTexture(gpu::rgbaTexture(rgba, width, height));
+        freeImage(rgba);
+        if (!texture)
+        {
+            destroy(font);
+            return false;
+        }
+        asset.texture = texture;
+        asset.width = width;
+        asset.height = height;
+        asset.font = font;
+        asset.bytes = m_device->textureInfo(texture).bytes + sizeof(FontData);
+        return true;
+    }
+
     Asset* Assets::font(const char* path, u32 size)
     {
+        const size_t length = strlen(path);
+        if (length > 4 && (strcmp(path + length - 4, ".fnt") == 0 || strcmp(path + length - 4, ".FNT") == 0))
+        {
+            return bitmapFont(path, size);
+        }
         char clean[128];
         char lower[128];
         char key[160];

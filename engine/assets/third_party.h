@@ -14,6 +14,7 @@ unsigned char* nx_stbi_load(const unsigned char* data, int size, int* width, int
 unsigned char* nx_png_write(const unsigned char* rgba, int width, int height, int* size);
 unsigned char* nx_zlib_compress(const unsigned char* data, int size, int* outSize, int level);
 unsigned char* nx_zlib_uncompress(const unsigned char* data, int size, int* outSize);
+unsigned char* nx_inflate_raw(const unsigned char* data, int size, int* outSize);
 
 typedef struct NxFont NxFont;
 

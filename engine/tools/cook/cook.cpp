@@ -412,11 +412,26 @@ namespace
         fflush(stdout);
     }
 
+    // Pictures in a folder called font or fonts are fonts drawn in pixels: kept as they are, sharp, and readable
+    // pixel by pixel, as image fonts need.
+    bool inFontFolder(const fs::path& source)
+    {
+        for (const fs::path& part : source.parent_path())
+        {
+            const std::string name = lower(utf8(part));
+            if (name == "font" || name == "fonts")
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     // What to do with a file, and what comes of it. Nothing in `out`: it stays as it is.
     const char* cookOne(const fs::path& source, const Bytes& in, Bytes& out, std::string& why)
     {
         const std::string extension = lower(utf8(source.extension()));
-        if (isImage(extension) && g_options.images)
+        if (isImage(extension) && g_options.images && !inFontFolder(source))
         {
             if (!cookImage(in, g_options.xbox, out))
             {

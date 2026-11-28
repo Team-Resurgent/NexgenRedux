@@ -77,6 +77,57 @@ namespace nx
         return out;
     }
 
+    u8* deflateBytes(const u8* data, size_t size, size_t& outSize, int level)
+    {
+        // zlib's format is two bytes, the deflate, and four of its check after.
+        size_t zlib = 0;
+        u8* out = compressBytes(data, size, zlib, level);
+        if (out == nullptr || zlib < 6)
+        {
+            freeImage(out);
+            outSize = 0;
+            return nullptr;
+        }
+        memmove(out, out + 2, zlib - 6);
+        outSize = zlib - 6;
+        return out;
+    }
+
+    u8* inflateBytes(const u8* data, size_t size, size_t& outSize)
+    {
+        int written = 0;
+        u8* out = data && size && size <= 0x3FFFFFFF ? nx_inflate_raw(data, static_cast<int>(size), &written) : nullptr;
+        outSize = out ? static_cast<size_t>(written) : 0;
+        return out;
+    }
+
+    u32 crc32Of(const u8* data, size_t size, u32 crc)
+    {
+        struct Table
+        {
+            u32 entries[256];
+            Table()
+            {
+                for (u32 i = 0; i < 256; i++)
+                {
+                    u32 c = i;
+                    for (int k = 0; k < 8; k++)
+                    {
+                        c = c & 1 ? 0xEDB88320u ^ (c >> 1) : c >> 1;
+                    }
+                    entries[i] = c;
+                }
+            }
+        };
+        static const Table table;  // made once, safely, by whichever thread is first
+        crc = ~crc;
+        for (size_t i = 0; i < size; i++)
+        {
+            crc = table.entries[(crc ^ data[i]) & 0xFF] ^ (crc >> 8);
+        }
+        return ~crc;
+    }
+
     bool renderFont(const u8* data, size_t size, u32 pixels, FontData& font, FontImage& image)
     {
         NxFont* source = nx_font_open(data, size, static_cast<int>(pixels));

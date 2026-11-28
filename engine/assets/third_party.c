@@ -59,6 +59,11 @@ unsigned char* nx_zlib_uncompress(const unsigned char* data, int size, int* outS
     return (unsigned char*)stbi_zlib_decode_malloc((const char*)data, size, outSize);
 }
 
+unsigned char* nx_inflate_raw(const unsigned char* data, int size, int* outSize)
+{
+    return (unsigned char*)stbi_zlib_decode_noheader_malloc((const char*)data, size, outSize);
+}
+
 /* --- SSFN --- */
 
 /* SSFN resizes blocks without saying how big they were, so each remembers its own size. */

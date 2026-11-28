@@ -368,6 +368,21 @@ namespace nx
         bool spring(u32 a, u32 b, Vec2 atA, Vec2 atB, float frequency, float damping, float length);
         bool slider(u32 a, u32 b, Vec2 at, Vec2 axis, float low, float high);
         bool drag(u32 a, Vec2 at, float strength);
+        // a, a wheel, turns freely on a line through b along an axis (in b's directions), sprung towards where it is
+        // now; with a motor, as a hinge's.
+        bool wheel(u32 a, u32 b, Vec2 axis, float frequency, float damping, float motorSpeed, float motorTorque);
+        // A rope from a over a fixed place, and on over another to b: as one end goes up the other comes down,
+        // ratio times as far for b.
+        bool pulley(u32 a, u32 b, Vec2 groundA, Vec2 groundB, Vec2 atA, Vec2 atB, float ratio);
+        // b turns the other way to a, ratio times as far.
+        bool gear(u32 a, u32 b, float ratio);
+        // Slows a's moving and turning against b's (or the world's), no harder than strength times its weight: the
+        // ground, seen from above.
+        bool friction(u32 a, u32 b, float strength);
+        // Pushes b towards where it is now from a, as a moves and turns, no harder than strength times its weight;
+        // followTarget changes where.
+        bool follow(u32 a, u32 b, float strength, float correction);
+        void followTarget(u32 a, u32 b, Vec2 offset, float degrees);
         // Where a drag pulls towards now; and a hinge's motor.
         void dragTo(u32 a, Vec2 target);
         void setMotor(u32 a, float speed, float torque);
@@ -467,7 +482,8 @@ namespace nx
         // Pin holds a place on each together; Weld their turn too; Rope keeps them no further apart than a length;
         // Spring pulls them towards one; Slider lets a move only along a line through b; Drag pulls a towards a place
         // that moves, softly, as a hand would.
-        enum class JointKind : u8 { Pin, Weld, Rope, Spring, Slider, Drag };
+        // From Wheel on, see wheel(), pulley(), gear(), friction() and follow().
+        enum class JointKind : u8 { Pin, Weld, Rope, Spring, Slider, Drag, Wheel, Pulley, Gear, Friction, Follow };
     private:
         struct Joint
         {
@@ -491,6 +507,10 @@ namespace nx
             Vec2 axis, localAxis;
             float axialMass, axialBias, axialImpulse, axialSoftness, along;
             float strength;          // a drag's, as many times its weight
+            // A wheel's spring, along its axis; a pulley's fixed places and ratio, which a gear has too.
+            float springMass, springSoftness, springBias, springImpulse;
+            Vec2 groundA, groundB, axisB;
+            float ratio, correction;
         };
 
         struct Box
@@ -579,6 +599,8 @@ namespace nx
         float chainGround(const Box& box, u32 self) const;
         void prepareJoint(Joint& joint, float dt);
         void solveJoint(Joint& joint);
+        void prepareMore(Joint& joint, float dt);
+        void solveMore(Joint& joint);
         void prepareTouch(Touch& touch, float dt);
         void solveTouch(Touch& touch);
         void buildWalls(const TileMap& map);
